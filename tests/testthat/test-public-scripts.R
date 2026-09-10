@@ -1437,4 +1437,12 @@ test_that("main-paper schooling-access analysis is core while forensic persisten
   expect_match(working_paper, "fig-unequal-schooling-access", fixed = TRUE)
   expect_match(working_paper, "consumption_iv_dynamics.pdf", fixed = TRUE)
   expect_match(working_paper, "fig-consumption-reduced-form-dynamics", fixed = TRUE)
+  expect_match(working_paper, "paper_schooling_welfare.tex", fixed = TRUE)
+  expect_match(working_paper, "tbl-paper-schooling-welfare", fixed = TRUE)
+
+  core_consumption <- repo_text("R", "pipeline", "core_consumption_iv_targets.R")
+  extended_iv <- repo_text("R", "pipeline", "extended_iv_targets.R")
+  expect_match(core_consumption, "schooling_consumption_bridge", fixed = TRUE)
+  expect_false(grepl("tar_target(\n      schooling_consumption_bridge,", extended_iv, fixed = TRUE))
+  expect_match(extended_iv, "save_schooling_consumption_bridge(schooling_consumption_bridge)", fixed = TRUE)
 })

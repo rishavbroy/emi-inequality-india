@@ -595,6 +595,7 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   df_render <- wrap_table_text_columns(grouped$data, name)
   wide_summary_table <- name %in% c("sum_tbl_iv", "sum_tbl_probit_quant", "sum_tbl_probit_cat")
   regression_table <- name %in% c("probit_mfx", "fs_cons", "cons_iv") && !is_formatted_status_table(df_render)
+  compact_result_table <- identical(name, "paper_schooling_welfare")
   if (!regression_table) {
     names(df_render) <- table_header_labels(df_render, name)
   }
@@ -618,6 +619,11 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   )
   if (regression_table) {
     latex_options <- c("hold_position", "repeat_header", "striped")
+  } else if (compact_result_table) {
+    # Keep paired estimate/SE rows visually neutral. Alternating row striping would
+    # separate one coefficient from its standard error and is therefore less
+    # readable than the standard unstriped economics-table convention here.
+    latex_options <- c("repeat_header")
   } else if (wide_summary_table) {
     # Wide summary tables must be true longtables inside pdflscape. A floating
     # table can escape the landscape environment when emitted as raw TeX from
@@ -632,7 +638,7 @@ save_table_tex <- function(table, path, name, public = TRUE) {
     latex_options = latex_options,
     full_width = FALSE,
     position = "center",
-    font_size = if (wide_summary_table || regression_table) 9 else NULL
+    font_size = if (wide_summary_table || regression_table || compact_result_table) 9 else NULL
   )
   if (nrow(grouped$groups)) {
     for (i in rev(seq_len(nrow(grouped$groups)))) {
@@ -661,6 +667,14 @@ save_table_tex <- function(table, path, name, public = TRUE) {
     tex <- tex |>
       kableExtra::column_spec(1, width = "5.4cm") |>
       kableExtra::column_spec(2:ncol(df_render), width = "2.0cm")
+  }
+  if (compact_result_table && nrow(df_render) >= 3L) {
+    # Standard errors occupy every second row; a rule before Observations cleanly
+    # separates coefficient estimates from sample-size information.
+    tex <- kableExtra::row_spec(tex, nrow(df_render) - 1L, hline_after = TRUE)
+    tex <- tex |>
+      kableExtra::column_spec(1, width = "3.8cm") |>
+      kableExtra::column_spec(2:ncol(df_render), width = "2.45cm")
   }
   if (regression_table) {
     header <- switch(name,

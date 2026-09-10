@@ -11,6 +11,7 @@ public_table_caption_text <- function(name) {
     probit_mfx = "Average Marginal Effects and Counterfactual Comparisons for Enrollment Probit",
     sum_tbl_iv = "Summary Statistics for 2SLS Model",
     paper_core_summary = "Core Variables and Summary Statistics",
+    paper_schooling_welfare = "Schooling Margins and Later Household Consumption",
     fs_cons = "First-Stage Regression: EMI Exposure on Linguistic Distance",
     cons_iv = "Second-Stage Regression: Real Log Consumption Growth on EMI Exposure (Fitted)",
     ame_results = "Average Marginal Effects Results",
@@ -33,6 +34,13 @@ public_table_note <- function(name) {
       "Schooling measures use NSS 2007-08 children age 5-19; linguistic distance and predetermined capacity use Census-2001 geography.",
       "Modern consumption rows summarize preferred-eligible small-domain district estimates after the registered survey-design, price, and lineage gates.",
       "p10 and p90 are the 10th and 90th percentiles. Sources and construction details are documented in the data appendix."
+    ),
+    paper_schooling_welfare = paste(
+      "Entries are percent changes in real mean MPCE associated with a 10 percentage-point increase in the schooling margin; state-clustered standard errors are in parentheses.",
+      "All columns use the registered state fixed-effects specification with predetermined Census-2001 controls.",
+      "Within each welfare endpoint and estimand, all five schooling margins use one common complete-case district sample.",
+      regression_star_note(),
+      "Stars use the Holm-adjusted p-value for the predeclared schooling-welfare family within that endpoint; the estimates are descriptive conditional associations, not causal returns."
     ),
     sum_tbl_probit_cat = "Values = all possible values; Mode = most frequent value; Pct. Mode = percent of observations taking the modal value; Least Freq. = least frequent value; Pct. Least Freq. = percent of observations taking the least frequent value; N = number of observations.",
     probit_mfx = "NSS 64th round; design-based SEs in parentheses.",

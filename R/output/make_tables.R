@@ -374,7 +374,8 @@ clustered_model_vcov <- function(model, data = NULL) {
 #' @return A named list of data frames consumed by save_tables().
 make_tables <- function(
     selection_data, ame_results, district_panel, iv_models, first_stage_tests, cfg,
-    selection_model = NULL, consumption_district_welfare = NULL) {
+    selection_model = NULL, consumption_district_welfare = NULL,
+    schooling_consumption_bridge = NULL) {
   cons_iv <- tidy_iv_models(iv_models, district_panel)
   cons_iv_required <- filter_table_model(cons_iv, c("consumption", "baseline"))
   table_failures <- c(
@@ -406,6 +407,9 @@ make_tables <- function(
     paper_core_summary = make_paper_core_summary_table(
       district_panel, consumption_district_welfare
     ),
+    paper_schooling_welfare = make_paper_schooling_welfare_table(
+      schooling_consumption_bridge
+    ),
     fs_cons = fs_cons,
     cons_iv = cons_iv_table,
     ame_results = as.data.frame(ame_results),
@@ -417,6 +421,108 @@ make_tables <- function(
   out
 }
 
+
+
+paper_schooling_welfare_treatment_labels <- function() {
+  c(
+    enrollment = "Enrollment",
+    emi_among_enrolled = "EMI among enrolled",
+    emi_all_children = "All-child EMI",
+    public_emi_all_children = "Public EMI",
+    private_emi_all_children = "Private EMI"
+  )
+}
+
+paper_schooling_welfare_column_registry <- function() {
+  data.frame(
+    outcome_round = c("hces_2022_23", "hces_2022_23", "hces_2023_24", "hces_2023_24"),
+    estimand = c("ancova", "change", "ancova", "change"),
+    column = c("2022 ANCOVA", "2004-2022 change", "2023 ANCOVA", "2004-2023 change"),
+    stringsAsFactors = FALSE
+  )
+}
+
+paper_schooling_welfare_csv_data <- function(estimates) {
+  x <- safe_df(estimates)
+  required <- c(
+    "outcome_round", "estimand", "treatment_id", "adjustment_id",
+    "estimate_per_10_percentage_points", "std_error_state_clustered",
+    "p_value_state_clustered", "p_value_holm_welfare", "n", "status"
+  )
+  if (length(setdiff(required, names(x)))) return(data.frame())
+
+  columns <- paper_schooling_welfare_column_registry()
+  treatments <- paper_schooling_welfare_treatment_labels()
+  keep <- x$adjustment_id == "state_main" &
+    x$treatment_id %in% names(treatments) &
+    paste(x$outcome_round, x$estimand) %in% paste(columns$outcome_round, columns$estimand)
+  x <- x[keep, required, drop = FALSE]
+  if (!nrow(x)) return(data.frame())
+
+  x$schooling_margin <- unname(treatments[x$treatment_id])
+  x$estimate_percent_per_10pp <- 100 * x$estimate_per_10_percentage_points
+  x$std_error_percent_per_10pp <- 1000 * x$std_error_state_clustered
+  out <- x[, c(
+    "outcome_round", "estimand", "treatment_id", "schooling_margin",
+    "estimate_percent_per_10pp", "std_error_percent_per_10pp",
+    "p_value_state_clustered", "p_value_holm_welfare", "n", "status"
+  ), drop = FALSE]
+
+  key <- paste(out$outcome_round, out$estimand, out$treatment_id)
+  expected <- as.vector(outer(
+    paste(columns$outcome_round, columns$estimand), names(treatments), paste
+  ))
+  if (nrow(out) != length(expected) || !setequal(key, expected)) {
+    stop("Paper schooling-welfare table does not contain the registered 4-by-5 state-main design.", call. = FALSE)
+  }
+  out
+}
+
+make_paper_schooling_welfare_table <- function(diagnostics) {
+  estimates <- safe_df(diagnostics$estimates %||% data.frame())
+  csv <- paper_schooling_welfare_csv_data(estimates)
+  if (!nrow(csv)) {
+    return(data.frame(
+      status = "unavailable",
+      reason = "Schooling-consumption bridge estimates are unavailable.",
+      stringsAsFactors = FALSE
+    ))
+  }
+
+  columns <- paper_schooling_welfare_column_registry()
+  treatments <- paper_schooling_welfare_treatment_labels()
+  display <- data.frame(`Schooling margin` = character(), check.names = FALSE)
+  for (label in columns$column) display[[label]] <- character()
+
+  for (id in names(treatments)) {
+    estimate_row <- c(unname(treatments[[id]]))
+    se_row <- c("")
+    for (j in seq_len(nrow(columns))) {
+      hit <- csv$outcome_round == columns$outcome_round[[j]] &
+        csv$estimand == columns$estimand[[j]] & csv$treatment_id == id
+      row <- csv[hit, , drop = FALSE]
+      estimate_row <- c(estimate_row, paste0(
+        sprintf("%.2f", row$estimate_percent_per_10pp[[1L]]),
+        significance_stars(row$p_value_holm_welfare[[1L]])
+      ))
+      se_row <- c(se_row, paste0("(", sprintf("%.2f", row$std_error_percent_per_10pp[[1L]]), ")"))
+    }
+    display[nrow(display) + 1L, ] <- estimate_row
+    display[nrow(display) + 1L, ] <- se_row
+  }
+
+  n_row <- c("Observations")
+  for (j in seq_len(nrow(columns))) {
+    hit <- csv$outcome_round == columns$outcome_round[[j]] & csv$estimand == columns$estimand[[j]]
+    nvals <- unique(csv$n[hit])
+    if (length(nvals) != 1L) stop("Paper schooling-welfare table lost common treatment support.", call. = FALSE)
+    n_row <- c(n_row, sprintf("%.0f", nvals[[1L]]))
+  }
+  display[nrow(display) + 1L, ] <- n_row
+  rownames(display) <- NULL
+  attr(display, "csv_data") <- csv
+  display
+}
 
 paper_summary_numeric <- function(x) {
   stats <- numeric_summary_values(x, c(p10 = 0.10, p90 = 0.90))

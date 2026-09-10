@@ -60,7 +60,8 @@ core_public_target_definitions <- function() {
       tables,
       make_tables(
         selection_data, ame_results, district_panel, revised_iv_models,
-        revised_first_stage_tests, cfg, selection_model, consumption_district_welfare
+        revised_first_stage_tests, cfg, selection_model, consumption_district_welfare,
+        schooling_consumption_bridge
       )
     ),
     tar_target(diag_public_iv_panel, save_public_iv_panel_diagnostics(district_panel, tables), format = "file"),

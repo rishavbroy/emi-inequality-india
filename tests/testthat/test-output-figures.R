@@ -474,51 +474,6 @@ test_that("poster second-stage specifications use preferred variables and one sa
   expect_true(all(is.finite(out$estimate)))
 })
 
-test_that("dynamic welfare figure uses only the prespecified ANCOVA horizons", {
-  rounds <- c(
-    "nss_2009_10_type2", "nss_2011_12_type2",
-    "hces_2022_23", "hces_2023_24"
-  )
-  summary <- rbind(
-    data.frame(
-      outcome_round = rounds,
-      estimand = "ancova",
-      partial_f = c(1.7, 1.6, 1.4, 1.0),
-      effective_f = c(1.5, 1.4, 1.2, 0.9),
-      reduced_form_estimate = c(-0.02, -0.01, 0.02, 0.01),
-      reduced_form_std.error = 0.02,
-      second_stage_estimate = c(-0.02, -0.01, 0.02, 0.01),
-      second_stage_std.error = 0.04,
-      stringsAsFactors = FALSE
-    ),
-    data.frame(
-      outcome_round = rounds,
-      estimand = "change",
-      partial_f = 9,
-      effective_f = 8,
-      reduced_form_estimate = 9,
-      reduced_form_std.error = 1,
-      second_stage_estimate = 9,
-      second_stage_std.error = 1,
-      stringsAsFactors = FALSE
-    )
-  )
-
-  out <- consumption_iv_dynamic_figure_data(list(summary = summary))
-
-  expect_equal(nrow(out), 8L)
-  expect_setequal(unique(out$estimator), c("Reduced form", "Conventional 2SLS"))
-  expect_setequal(unique(out$outcome_round), rounds)
-  expect_false(any(out$estimate == 9))
-  expect_equal(
-    levels(out$horizon),
-    c(
-      "2009-10\nMOP F=1.50", "2011-12\nMOP F=1.40",
-      "2022-23\nMOP F=1.20", "2023-24\nMOP F=0.90"
-    )
-  )
-})
-
 test_that("dynamic welfare figure compares registered reduced-form estimands only", {
   rounds <- c(
     "nss_2009_10_type2", "nss_2011_12_type2",

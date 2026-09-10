@@ -931,3 +931,68 @@ test_that("paper core-summary CSV is tidy and separates panel, period, and unit"
   expect_true(all(nzchar(out$period)))
   expect_match(out$unit[out$period == "2022-23"][[1]], "price Rs/person/month", fixed = TRUE)
 })
+
+test_that("paper schooling-welfare table is the registered 5-by-4 common-support design", {
+  columns <- paper_schooling_welfare_column_registry()
+  treatments <- paper_schooling_welfare_treatment_labels()
+  grid <- expand.grid(
+    outcome_round = unique(columns$outcome_round),
+    estimand = unique(columns$estimand),
+    treatment_id = names(treatments),
+    adjustment_id = c("unadjusted", "region_main", "state_main"),
+    KEEP.OUT.ATTRS = FALSE,
+    stringsAsFactors = FALSE
+  )
+  valid <- paste(grid$outcome_round, grid$estimand) %in%
+    paste(columns$outcome_round, columns$estimand)
+  grid <- grid[valid, , drop = FALSE]
+  grid$estimate_per_10_percentage_points <- seq_len(nrow(grid)) / 1000
+  grid$std_error_state_clustered <- 0.001
+  grid$p_value_state_clustered <- 0.02
+  grid$p_value_holm_welfare <- 0.04
+  grid$n <- ifelse(grid$outcome_round == "hces_2022_23", 524, 522)
+  grid$status <- "estimated"
+
+  table <- make_paper_schooling_welfare_table(list(estimates = grid))
+  csv <- attr(table, "csv_data", exact = TRUE)
+
+  expect_equal(nrow(csv), 20L)
+  expect_setequal(csv$treatment_id, names(treatments))
+  expect_setequal(paste(csv$outcome_round, csv$estimand), paste(columns$outcome_round, columns$estimand))
+  expect_true(all(csv$status == "estimated"))
+  expect_equal(unique(csv$n[csv$outcome_round == "hces_2022_23"]), 524)
+  expect_equal(unique(csv$n[csv$outcome_round == "hces_2023_24"]), 522)
+  expect_equal(nrow(table), 11L)
+  expect_equal(table[[1]][seq(1, 9, by = 2)], unname(treatments))
+  expect_equal(table[[1]][11], "Observations")
+})
+
+test_that("paper schooling-welfare CSV remains semantic while TeX uses paired estimate rows", {
+  columns <- paper_schooling_welfare_column_registry()
+  treatments <- paper_schooling_welfare_treatment_labels()
+  estimates <- do.call(rbind, lapply(seq_len(nrow(columns)), function(i) {
+    data.frame(
+      outcome_round = columns$outcome_round[[i]],
+      estimand = columns$estimand[[i]],
+      treatment_id = names(treatments),
+      adjustment_id = "state_main",
+      estimate_per_10_percentage_points = 0.05,
+      std_error_state_clustered = 0.001,
+      p_value_state_clustered = 0.001,
+      p_value_holm_welfare = 0.01,
+      n = 500,
+      status = "estimated",
+      stringsAsFactors = FALSE
+    )
+  }))
+  table <- make_paper_schooling_welfare_table(list(estimates = estimates))
+  csv <- table_csv_data(table)
+
+  expect_true(all(c(
+    "estimate_percent_per_10pp", "std_error_percent_per_10pp",
+    "p_value_state_clustered", "p_value_holm_welfare"
+  ) %in% names(csv)))
+  expect_false(any(c("Schooling margin", "2022 ANCOVA") %in% names(csv)))
+  expect_equal(unique(csv$estimate_percent_per_10pp), 5)
+  expect_equal(unique(csv$std_error_percent_per_10pp), 1)
+})

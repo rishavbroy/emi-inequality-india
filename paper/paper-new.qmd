@@ -339,6 +339,16 @@ render_public_table("../outputs/tables/main/fs_cons.tex", "fs_cons")
 render_public_table("../outputs/tables/main/cons_iv.tex", "cons_iv")
 ```
 
+Before returning to the instrument, @tbl-paper-schooling-welfare asks a narrower descriptive question: are the schooling margins emphasized in the access analysis associated with later district living standards on common support? The table compares enrollment, conditional EMI, all-child EMI, public EMI, and private EMI using the same state-fixed-effects and predetermined-control specification within each welfare endpoint. English-oriented margins are substantially more positively associated with 2022 consumption than enrollment alone, while the corresponding 2023 relationships are weaker. Because these are conditional district associations rather than experimentally or quasi-experimentally isolated returns, they motivate rather than resolve the identification question.
+
+```{r}
+#| label: tbl-paper-schooling-welfare
+#| echo: false
+#| results: asis
+
+render_public_table("../outputs/tables/main/paper_schooling_welfare.tex", "paper_schooling_welfare")
+```
+
 The reduced form is more informative about the long-run timing pattern than the conventional 2SLS coefficient path because the first stage is weak at every horizon. @fig-consumption-reduced-form-dynamics therefore follows the coefficient on linguistic distance itself across the four registered post-treatment endpoints. It shows both endpoint ANCOVA and the corresponding long change from the common 2004-05 baseline rather than selecting one estimand after seeing the results. The early 2009-10 and 2011-12 estimates are small and imprecise, while the long-change association becomes positive by 2022-23 and remains positive but less precise in 2023-24. These are reduced-form associations, not estimates of an EMI effect.
 
 ![Reduced-form relationship between preferred linguistic distance and real mean household consumption across the registered post-treatment horizons. Points show the ANCOVA and long-change estimands with 95% state-clustered Wald confidence intervals.](../outputs/figures/main/consumption_iv_dynamics.pdf){#fig-consumption-reduced-form-dynamics fig-pos="H" width="90%"}
