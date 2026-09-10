@@ -509,8 +509,27 @@ suppress_atomic_vector_coercion_warning <- function(expr) {
   )
 }
 
+table_csv_data <- function(table, public = TRUE) {
+  raw <- as.data.frame(table, check.names = FALSE, stringsAsFactors = FALSE)
+  if (isTRUE(public) && is_status_only_table(raw)) {
+    return(format_status_table_for_output(raw, public = TRUE))
+  }
+
+  payload <- attr(table, "csv_data", exact = TRUE)
+  if (!is.null(payload)) {
+    payload <- as.data.frame(payload, check.names = FALSE, stringsAsFactors = FALSE)
+    if (nrow(payload)) return(payload)
+  }
+
+  # CSV is the machine-readable companion to the rendered table, not another
+  # presentation format. Keep source-oriented names and values whenever a table
+  # does not provide a more specific payload. LaTeX styling is applied only by
+  # save_table_tex().
+  format_table_for_output(table, public = FALSE)
+}
+
 save_table_csv <- function(table, path, public = TRUE) {
-  utils::write.csv(sanitize_table_for_kable(format_table_for_output(table, public = public)), path, row.names = FALSE)
+  utils::write.csv(table_csv_data(table, public = public), path, row.names = FALSE)
   path
 }
 

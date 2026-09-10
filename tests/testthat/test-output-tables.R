@@ -838,3 +838,96 @@ test_that("paper core summary caption and note describe district support", {
   expect_match(note, "preferred-eligible", fixed = TRUE)
   expect_match(note, "p10 and p90", fixed = TRUE)
 })
+
+test_that("public summary CSVs retain typed analytical values without display rows", {
+  table <- public_numeric_stats(
+    data.frame(x = c(1, 2, 9), y = c(1000, 2000, 3000)),
+    data.frame(
+      var = c("x", "y"),
+      label = c("Measure X", "Measure Y"),
+      stringsAsFactors = FALSE
+    ),
+    count_vars = "y"
+  )
+  csv_data <- attr(table, "csv_data", exact = TRUE)
+  table <- insert_summary_group(table, "Grouped measures:", "y")
+  attr(table, "csv_data") <- csv_data
+
+  path <- tempfile(fileext = ".csv")
+  save_table_csv(table, path, public = TRUE)
+  out <- utils::read.csv(path, check.names = FALSE)
+
+  expect_equal(out$var, c("x", "y"))
+  expect_equal(out$label, c("Measure X", "Measure Y"))
+  expect_true(is.numeric(out$Mean))
+  expect_equal(out$Mean, c(4, 2000))
+  expect_false(any(grepl("Grouped measures", out$label, fixed = TRUE)))
+})
+
+
+test_that("regression CSVs retain coefficient records rather than stacked display cells", {
+  first_stage <- data.frame(
+    model = rep("consumption", 2),
+    term = c("ling_distance_nonzero_mean", "(Intercept)"),
+    estimate = c(3.825, 17.7),
+    std.error = c(1.237, 23.5),
+    statistic = c(3.1, 0.75),
+    p.value = c(0.002, 0.45),
+    partial_f = c(9.56, 9.56),
+    partial_p = c(0.002, 0.002),
+    effective_f = c(8.9, 8.9),
+    effective_f_critical_value = c(10.23, 10.23),
+    status = rep("estimated", 2),
+    reason = c(NA_character_, NA_character_),
+    stringsAsFactors = FALSE
+  )
+  table <- make_first_stage_table(first_stage, list(mode = "final"))
+  path <- tempfile(fileext = ".csv")
+  save_table_csv(table, path, public = TRUE)
+  out <- utils::read.csv(path, check.names = FALSE)
+
+  expect_true(all(c("model", "term", "estimate", "std.error", "p.value", "effective_f") %in% names(out)))
+  expect_equal(out$term, c("ling_distance_nonzero_mean", "(Intercept)"))
+  expect_true(is.numeric(out$estimate))
+  expect_false(any(grepl("\\(", as.character(out$estimate))))
+  expect_false(any(grepl("\\*", as.character(out$estimate))))
+})
+
+
+test_that("paper core-summary CSV is tidy and separates panel, period, and unit", {
+  panel <- data.frame(
+    enrollment_rate_0708 = c(50, 60, 70),
+    emi_share_enrolled_0708 = c(10, 20, 30),
+    emi_exposure_all_children_0708 = c(5, 12, 21),
+    public_emi_exposure_all_children_0708 = c(3, 7, 10),
+    private_emi_exposure_all_children_0708 = c(2, 5, 11),
+    private_share_enrolled_0708 = c(20, 30, 40),
+    ling_distance_nonzero_mean = c(1, 2, 3),
+    ling_share_distance_ge3 = c(10, 20, 30),
+    adult_secondary_plus_share_2001 = c(15, 20, 25),
+    urban_share_2001 = c(25, 35, 45),
+    st_share_2001 = c(2, 4, 6),
+    stringsAsFactors = FALSE
+  )
+  welfare <- data.frame(
+    round_id = rep(c("nss_2004_05", "hces_2022_23", "hces_2023_24"), each = 2),
+    outcome_id = "real_mean_mpce",
+    estimate = c(800, 900, 1800, 2000, 1900, 2100),
+    preferred_eligible = TRUE,
+    stringsAsFactors = FALSE
+  )
+  table <- make_paper_core_summary_table(panel, welfare)
+  path <- tempfile(fileext = ".csv")
+  save_table_csv(table, path, public = TRUE)
+  out <- utils::read.csv(path, check.names = FALSE)
+
+  expect_identical(
+    names(out),
+    c("panel", "variable", "n", "mean", "sd", "p10", "p90", "period", "unit")
+  )
+  expect_false(any(grepl("^Panel ", out$variable)))
+  expect_true(all(vapply(out[c("n", "mean", "sd", "p10", "p90")], is.numeric, logical(1))))
+  expect_true(all(nzchar(out$panel)))
+  expect_true(all(nzchar(out$period)))
+  expect_match(out$unit[out$period == "2022-23"][[1]], "price Rs/person/month", fixed = TRUE)
+})

@@ -44,6 +44,7 @@ public_numeric_stats <- function(df, meta, cost_vars = character(), count_vars =
   })
   out <- safe_bind_rows(rows)
   if (!nrow(out)) return(data.frame(var = character(), label = character(), N = integer()))
+  csv_data <- out
   for (nm in intersect(c("Min", "1Q", "Med", "3Q", "Max", "Mean", "SD"), names(out))) {
     x <- suppressWarnings(as.numeric(out[[nm]]))
     out[[nm]] <- ifelse(
@@ -52,6 +53,7 @@ public_numeric_stats <- function(df, meta, cost_vars = character(), count_vars =
       ifelse(out$var %in% cost_vars, formatC(x, format = "f", big.mark = ",", digits = 2), sprintf("%.2f", x))
     )
   }
+  attr(out, "csv_data") <- csv_data
   out
 }
 
@@ -78,7 +80,9 @@ public_categorical_stats <- function(df, meta) {
     )
   })
   out <- safe_bind_rows(rows)
-  if (!nrow(out)) data.frame(var = character(), label = character(), N = integer()) else out
+  if (!nrow(out)) return(data.frame(var = character(), label = character(), N = integer()))
+  attr(out, "csv_data") <- out
+  out
 }
 
 summary_group_row <- function(label, columns) {
@@ -471,6 +475,29 @@ paper_welfare_summary_row <- function(welfare, round_id, label) {
   )
 }
 
+paper_core_summary_csv_data <- function(table) {
+  x <- as.data.frame(table, check.names = FALSE, stringsAsFactors = FALSE)
+  if (!nrow(x) || !"Variable" %in% names(x)) return(data.frame())
+  group <- grepl("^Panel [A-Z]\\.", x$Variable)
+  panel <- sub(":$", "", x$Variable[group])
+  panel_id <- cumsum(group)
+  keep <- !group
+  if (!any(keep)) return(data.frame())
+  period_unit <- strsplit(x$`Year / unit`[keep], "; ", fixed = TRUE)
+  data.frame(
+    panel = panel[panel_id[keep]],
+    variable = x$Variable[keep],
+    n = suppressWarnings(as.integer(x$N[keep])),
+    mean = suppressWarnings(as.numeric(x$Mean[keep])),
+    sd = suppressWarnings(as.numeric(x$SD[keep])),
+    p10 = suppressWarnings(as.numeric(x$p10[keep])),
+    p90 = suppressWarnings(as.numeric(x$p90[keep])),
+    period = vapply(period_unit, function(z) z[[1L]] %||% "", character(1)),
+    unit = vapply(period_unit, function(z) if (length(z) >= 2L) paste(z[-1L], collapse = "; ") else "", character(1)),
+    stringsAsFactors = FALSE
+  )
+}
+
 #' Compact descriptive table for the paper's headline constructs.
 #'
 #' The table deliberately summarizes district-level analytical constructs rather
@@ -510,7 +537,9 @@ make_paper_core_summary_table <- function(district_panel, consumption_district_w
     paper_welfare_summary_row(consumption_district_welfare, "hces_2023_24", "Real mean MPCE")
   ))
 
-  safe_bind_rows(list(schooling, inherited, capacity, welfare))
+  out <- safe_bind_rows(list(schooling, inherited, capacity, welfare))
+  attr(out, "csv_data") <- paper_core_summary_csv_data(out)
+  out
 }
 
 make_selection_summary_numeric_table <- function(selection_data) {
@@ -520,7 +549,10 @@ make_selection_summary_numeric_table <- function(selection_data) {
     stringsAsFactors = FALSE
   )
   out <- public_numeric_stats(selection_data, meta, cost_vars = "ENROLLMENT_COST")
-  insert_summary_group(out, "District-level aggregates:", "dmean_num_IS_EDU_FREE")
+  csv_data <- attr(out, "csv_data", exact = TRUE)
+  out <- insert_summary_group(out, "District-level aggregates:", "dmean_num_IS_EDU_FREE")
+  attr(out, "csv_data") <- csv_data
+  out
 }
 
 make_selection_summary_categorical_table <- function(selection_data) {
@@ -553,6 +585,9 @@ make_probit_ame_table <- function(ame_results, n = NA_integer_, selection_model 
   if (!is.null(selection_model)) {
     attr(table, "selection_model") <- selection_model
   }
+  csv_data <- as.data.frame(ame_results, check.names = FALSE, stringsAsFactors = FALSE)
+  csv_data <- csv_data[, setdiff(names(csv_data), c("status", "reason")), drop = FALSE]
+  attr(table, "csv_data") <- csv_data
   table
 }
 
@@ -585,9 +620,11 @@ make_iv_summary_table <- function(district_panel) {
     stringsAsFactors = FALSE
   )
   out <- public_numeric_stats(district_panel, meta)
+  csv_data <- attr(out, "csv_data", exact = TRUE)
   out <- insert_summary_group(out, "Treatment and instrument:", spec$instrument)
   out <- insert_summary_group(out, "Consumption outcomes:", "real_consumption_0708")
   out <- insert_summary_group(out, "Census 2001 controls:", controls$variable[[1]])
+  attr(out, "csv_data") <- csv_data
   out
 }
 
@@ -612,6 +649,7 @@ make_first_stage_table <- function(first_stage_tests, cfg = list()) {
   }
   status_reasons <- unique(stats::na.omit(as.character(fs$reason[!is.na(fs$status) & fs$status != "estimated"])))
   fs <- fs[fs$status == "estimated" & !is.na(fs$term), , drop = FALSE]
+  csv_data <- fs[, setdiff(names(fs), c("status", "reason")), drop = FALSE]
   instrument <- preferred_iv_variables()$instrument
   required_terms <- c(instrument, "(Intercept)")
   missing_terms <- setdiff(required_terms, fs$term)
@@ -678,7 +716,7 @@ make_first_stage_table <- function(first_stage_tests, cfg = list()) {
     effective_f_critical_row
   ))
 
-  regression_display_table(
+  out <- regression_display_table(
     terms = iv_table_term_label(fs$term),
     estimates = suppressWarnings(as.numeric(fs$estimate)),
     std_errors = suppressWarnings(as.numeric(fs$std.error)),
@@ -686,6 +724,8 @@ make_first_stage_table <- function(first_stage_tests, cfg = list()) {
     outcome_label = "EMI Exposure",
     gof = gof
   )
+  attr(out, "csv_data") <- csv_data
+  out
 }
 
 first_finite_value <- function(df, cols) {
@@ -769,6 +809,7 @@ make_second_stage_table <- function(iv_models, data = NULL) {
   out <- tidy_iv_models(iv_models, data)
   out <- filter_table_model(out, c("consumption", "baseline"))
   if (!nrow(out)) return(data.frame(Term = character(), `Real Log Consumption Growth` = character(), check.names = FALSE))
+  csv_data <- out[, setdiff(names(out), c("status", "reason")), drop = FALSE]
   model <- NULL
   if (is.list(iv_models) && !inherits(iv_models, c("lm", "ivreg"))) {
     hit <- intersect(c("consumption", "baseline"), names(iv_models))
@@ -776,7 +817,7 @@ make_second_stage_table <- function(iv_models, data = NULL) {
   } else {
     model <- iv_models
   }
-  regression_display_table(
+  display <- regression_display_table(
     terms = iv_table_term_label(out$term),
     estimates = suppressWarnings(as.numeric(out$estimate)),
     std_errors = suppressWarnings(as.numeric(out$std.error)),
@@ -784,6 +825,8 @@ make_second_stage_table <- function(iv_models, data = NULL) {
     outcome_label = "Real Log Consumption Growth",
     gof = model_gof_rows(model, "Real Log Consumption Growth")
   )
+  attr(display, "csv_data") <- csv_data
+  display
 }
 
 iv_table_term_label <- function(term) {
