@@ -716,7 +716,14 @@ paper_identification_boundary_csv_data <- function(
     )
   })
 
-  dynamics <- safe_df(consumption_dynamics)
+  if (!is.list(consumption_dynamics) ||
+      !all(c("summary", "anderson_rubin_grid") %in% names(consumption_dynamics))) {
+    stop(
+      "Paper identification table requires canonical consumption-IV dynamics outputs.",
+      call. = FALSE
+    )
+  }
+  dynamics <- safe_df(consumption_dynamics$summary)
   wanted <- c("long_2022__change", "long_2023__change")
   weak_iv <- dynamics[match(wanted, dynamics$welfare_specification_id), , drop = FALSE]
   if (nrow(weak_iv) != 2L || any(is.na(weak_iv$welfare_specification_id)) ||

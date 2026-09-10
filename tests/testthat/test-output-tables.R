@@ -1311,6 +1311,13 @@ paper_identification_boundary_fixture <- function() {
     status = "estimated",
     stringsAsFactors = FALSE
   )
+  dynamics <- list(
+    summary = dynamics,
+    anderson_rubin_grid = data.frame(
+      specification_id = character(), beta = numeric(), p.value = numeric(),
+      stringsAsFactors = FALSE
+    )
+  )
   list(alternative = alternative, dynamics = dynamics)
 }
 
@@ -1340,6 +1347,17 @@ test_that("paper identification boundary summarizes design classes rather than m
   expect_identical(attr(table, "csv_data"), csv)
   expect_equal(sum(grepl("^Panel [AB]\\.", table[[1L]])), 2L)
   expect_false(any(grepl("408", table[[1L]], fixed = TRUE)))
+})
+
+test_that("paper identification boundary requires canonical dynamics object shape", {
+  fixture <- paper_identification_boundary_fixture()
+  expect_error(
+    paper_identification_boundary_csv_data(
+      fixture$alternative, fixture$dynamics$summary
+    ),
+    "requires canonical consumption-IV dynamics outputs",
+    fixed = TRUE
+  )
 })
 
 test_that("paper identification boundary fails closed when a registered design disappears", {
@@ -1456,6 +1474,67 @@ test_that("paper local-development table fails closed when registered evidence d
       fixture$economic_census, fixture$nss66, fixture$plfs
     ),
     "requires one estimated state_main / nonzero_mean row",
+    fixed = TRUE
+  )
+})
+
+test_that("Appendix E selection exhibits consolidate existing evidence without new estimation", {
+  selection <- data.frame(
+    AGE = c(8, 10, 12), HH_SIZE = c(4, 5, 6),
+    ENROLLMENT_COST = c(100, 200, 300),
+    dmean_num_IS_EDU_FREE = c(.2, .3, .4),
+    dmean_num_TUTION_FEE_WAIVED = c(.1, .2, .3),
+    dmean_num_RECD_SCHOLARSHIP_STIPEND = c(.1, .1, .2),
+    dmean_num_RECD_TXT_BOOKS = c(.3, .4, .5),
+    dmean_num_RECD_STATIONERY = c(.2, .3, .4),
+    dmean_num_MID_DAY_MEAL_ETC_RECD = c(.4, .5, .6),
+    dmean_num_ENROLLMENT_COST = c(150, 180, 210),
+    SEX = c("Male", "Female", "Male"),
+    RELIGION = c("Hindu", "Muslim", "Hindu"),
+    SOCIAL_GROUP = c("Other", "SC", "ST"),
+    SECTOR = c("Rural", "Urban", "Rural"),
+    DIST_FROM_NEAREST_PRIMARY_CLASS = c("<1 km", "1-2 km", "<1 km"),
+    father_educ = c("Primary", "Secondary", "Graduate"),
+    stringsAsFactors = FALSE
+  )
+  missingness <- structure(
+    list(
+      missing_counts = data.frame(
+        missing_var = c("AGE", "father_educ", "Total probit-model with NA"),
+        n_missing = c(0L, 1L, 1L),
+        pct_missing = c(0, 1 / 3, 1 / 3),
+        stringsAsFactors = FALSE
+      ),
+      logit_summary = data.frame(
+        missing_var = "father_educ", n_sig = 2L, pseudoR2 = 0.25,
+        stringsAsFactors = FALSE
+      )
+    ),
+    class = c("emi_missingness_diagnostics", "list")
+  )
+
+  exhibits <- make_appendix_selection_exhibits(selection, missingness)
+  expect_setequal(
+    names(exhibits),
+    c("appendix_e1_selection_sample", "appendix_e4_missingness", "missingness_plot_data")
+  )
+  e1 <- exhibits$appendix_e1_selection_sample
+  expect_true(nrow(e1) >= 6L)
+  expect_true(all(c("Variable", "Type", "N", "Summary") %in% names(e1)))
+  expect_false(any(c("status", "reason") %in% names(attr(e1, "csv_data"))))
+
+  e4 <- exhibits$appendix_e4_missingness
+  e4_csv <- attr(e4, "csv_data")
+  expect_equal(nrow(e4_csv), 2L)
+  expect_false(any(grepl("^Total probit-model", e4_csv$variable)))
+  expect_equal(e4_csv$pseudo_r_squared[e4_csv$variable == "father_educ"], 0.25)
+  expect_true(is.na(e4_csv$pseudo_r_squared[e4_csv$variable == "AGE"]))
+})
+
+test_that("Appendix E missingness exhibit requires canonical diagnostics", {
+  expect_error(
+    appendix_missingness_diagnostics_table(data.frame()),
+    "requires canonical missingness diagnostics",
     fixed = TRUE
   )
 })
