@@ -407,9 +407,6 @@ make_tables <- function(
     paper_core_summary = make_paper_core_summary_table(
       district_panel, consumption_district_welfare
     ),
-    paper_schooling_welfare = make_paper_schooling_welfare_table(
-      schooling_consumption_bridge
-    ),
     fs_cons = fs_cons,
     cons_iv = cons_iv_table,
     ame_results = as.data.frame(ame_results),
@@ -479,52 +476,6 @@ paper_schooling_welfare_csv_data <- function(estimates) {
     stop("Paper schooling-welfare table does not contain the registered 4-by-5 state-main design.", call. = FALSE)
   }
   out
-}
-
-make_paper_schooling_welfare_table <- function(diagnostics) {
-  estimates <- safe_df(diagnostics$estimates %||% data.frame())
-  csv <- paper_schooling_welfare_csv_data(estimates)
-  if (!nrow(csv)) {
-    return(data.frame(
-      status = "unavailable",
-      reason = "Schooling-consumption bridge estimates are unavailable.",
-      stringsAsFactors = FALSE
-    ))
-  }
-
-  columns <- paper_schooling_welfare_column_registry()
-  treatments <- paper_schooling_welfare_treatment_labels()
-  display <- data.frame(`Schooling margin` = character(), check.names = FALSE)
-  for (label in columns$column) display[[label]] <- character()
-
-  for (id in names(treatments)) {
-    estimate_row <- c(unname(treatments[[id]]))
-    se_row <- c("")
-    for (j in seq_len(nrow(columns))) {
-      hit <- csv$outcome_round == columns$outcome_round[[j]] &
-        csv$estimand == columns$estimand[[j]] & csv$treatment_id == id
-      row <- csv[hit, , drop = FALSE]
-      estimate_row <- c(estimate_row, paste0(
-        sprintf("%.2f", row$estimate_percent_per_10pp[[1L]]),
-        significance_stars(row$p_value_holm_welfare[[1L]])
-      ))
-      se_row <- c(se_row, paste0("(", sprintf("%.2f", row$std_error_percent_per_10pp[[1L]]), ")"))
-    }
-    display[nrow(display) + 1L, ] <- estimate_row
-    display[nrow(display) + 1L, ] <- se_row
-  }
-
-  n_row <- c("Observations")
-  for (j in seq_len(nrow(columns))) {
-    hit <- csv$outcome_round == columns$outcome_round[[j]] & csv$estimand == columns$estimand[[j]]
-    nvals <- unique(csv$n[hit])
-    if (length(nvals) != 1L) stop("Paper schooling-welfare table lost common treatment support.", call. = FALSE)
-    n_row <- c(n_row, sprintf("%.0f", nvals[[1L]]))
-  }
-  display[nrow(display) + 1L, ] <- n_row
-  rownames(display) <- NULL
-  attr(display, "csv_data") <- csv
-  display
 }
 
 paper_summary_numeric <- function(x) {

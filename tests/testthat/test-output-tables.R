@@ -932,29 +932,36 @@ test_that("paper core-summary CSV is tidy and separates panel, period, and unit"
   expect_match(out$unit[out$period == "2022-23"][[1]], "price Rs/person/month", fixed = TRUE)
 })
 
-test_that("paper schooling-welfare table is the registered 5-by-4 common-support design", {
+paper_schooling_welfare_fixture <- function(adjustments = "state_main") {
   columns <- paper_schooling_welfare_column_registry()
   treatments <- paper_schooling_welfare_treatment_labels()
   grid <- expand.grid(
     outcome_round = unique(columns$outcome_round),
     estimand = unique(columns$estimand),
     treatment_id = names(treatments),
-    adjustment_id = c("unadjusted", "region_main", "state_main"),
+    adjustment_id = adjustments,
     KEEP.OUT.ATTRS = FALSE,
     stringsAsFactors = FALSE
   )
-  valid <- paste(grid$outcome_round, grid$estimand) %in%
-    paste(columns$outcome_round, columns$estimand)
-  grid <- grid[valid, , drop = FALSE]
+  grid <- grid[
+    paste(grid$outcome_round, grid$estimand) %in% paste(columns$outcome_round, columns$estimand),
+    , drop = FALSE
+  ]
   grid$estimate_per_10_percentage_points <- seq_len(nrow(grid)) / 1000
   grid$std_error_state_clustered <- 0.001
   grid$p_value_state_clustered <- 0.02
   grid$p_value_holm_welfare <- 0.04
-  grid$n <- ifelse(grid$outcome_round == "hces_2022_23", 524, 522)
+  grid$n <- ifelse(grid$outcome_round == "hces_2022_23", 524L, 522L)
   grid$status <- "estimated"
+  grid
+}
 
-  table <- make_paper_schooling_welfare_table(list(estimates = grid))
-  csv <- attr(table, "csv_data", exact = TRUE)
+test_that("paper schooling-welfare evidence is the registered 5-by-4 common-support design", {
+  columns <- paper_schooling_welfare_column_registry()
+  treatments <- paper_schooling_welfare_treatment_labels()
+  csv <- paper_schooling_welfare_csv_data(
+    paper_schooling_welfare_fixture(c("unadjusted", "region_main", "state_main"))
+  )
 
   expect_equal(nrow(csv), 20L)
   expect_setequal(csv$treatment_id, names(treatments))
@@ -962,63 +969,14 @@ test_that("paper schooling-welfare table is the registered 5-by-4 common-support
   expect_false("status" %in% names(csv))
   expect_equal(unique(csv$n[csv$outcome_round == "hces_2022_23"]), 524)
   expect_equal(unique(csv$n[csv$outcome_round == "hces_2023_24"]), 522)
-  expect_equal(nrow(table), 11L)
-  expect_equal(table[[1]][seq(1, 9, by = 2)], unname(treatments))
-  expect_equal(table[[1]][11], "Observations")
+  expect_true(all(csv$estimate_percent_per_10pp > 0))
 })
 
-test_that("paper schooling-welfare CSV remains semantic while TeX uses paired estimate rows", {
-  columns <- paper_schooling_welfare_column_registry()
-  treatments <- paper_schooling_welfare_treatment_labels()
-  estimates <- do.call(rbind, lapply(seq_len(nrow(columns)), function(i) {
-    data.frame(
-      outcome_round = columns$outcome_round[[i]],
-      estimand = columns$estimand[[i]],
-      treatment_id = names(treatments),
-      adjustment_id = "state_main",
-      estimate_per_10_percentage_points = 0.05,
-      std_error_state_clustered = 0.001,
-      p_value_state_clustered = 0.001,
-      p_value_holm_welfare = 0.01,
-      n = 500,
-      status = "estimated",
-      stringsAsFactors = FALSE
-    )
-  }))
-  table <- make_paper_schooling_welfare_table(list(estimates = estimates))
-  csv <- table_csv_data(table)
-
-  expect_true(all(c(
-    "estimate_percent_per_10pp", "std_error_percent_per_10pp",
-    "p_value_state_clustered", "p_value_holm_welfare"
-  ) %in% names(csv)))
-  expect_false(any(c("Schooling margin", "2022 ANCOVA", "status") %in% names(csv)))
-  expect_equal(unique(csv$estimate_percent_per_10pp), 5)
-  expect_equal(unique(csv$std_error_percent_per_10pp), 1)
-})
-
-test_that("paper schooling-welfare table rejects incomplete model status instead of publishing diagnostics", {
-  columns <- paper_schooling_welfare_column_registry()
-  treatments <- paper_schooling_welfare_treatment_labels()
-  estimates <- do.call(rbind, lapply(seq_len(nrow(columns)), function(i) {
-    data.frame(
-      outcome_round = columns$outcome_round[[i]],
-      estimand = columns$estimand[[i]],
-      treatment_id = names(treatments),
-      adjustment_id = "state_main",
-      estimate_per_10_percentage_points = 0.05,
-      std_error_state_clustered = 0.001,
-      p_value_state_clustered = 0.001,
-      p_value_holm_welfare = 0.01,
-      n = 500,
-      status = "estimated",
-      stringsAsFactors = FALSE
-    )
-  }))
+test_that("paper schooling-welfare evidence rejects incomplete model status", {
+  estimates <- paper_schooling_welfare_fixture()
   estimates$status[[1L]] <- "not_estimable"
-
   expect_error(
-    make_paper_schooling_welfare_table(list(estimates = estimates)),
+    paper_schooling_welfare_csv_data(estimates),
     "requires estimated state-main bridge results",
     fixed = TRUE
   )
@@ -1276,9 +1234,6 @@ test_that("paper conversion-complements table is exactly the planned six-plus-tw
   )))
   expect_false(any(c("status", "reason") %in% names(csv)))
 
-  table <- make_paper_conversion_complements_table(fixture$conversion, fixture$it)
-  expect_identical(attr(table, "csv_data"), csv)
-  expect_equal(sum(grepl("^Panel [AB]\\.", table$Complement)), 2L)
 })
 
 test_that("paper conversion-complements table fails closed on incomplete registered evidence", {
@@ -1287,6 +1242,39 @@ test_that("paper conversion-complements table fails closed on incomplete registe
   expect_error(
     paper_conversion_complements_csv_data(fixture$conversion, fixture$it),
     "requires both estimated EC05 IT interactions",
+    fixed = TRUE
+  )
+})
+
+
+test_that("paper economic-conversion table consolidates welfare and complement evidence", {
+  complement <- paper_conversion_complements_fixture()
+  bridge <- list(estimates = paper_schooling_welfare_fixture())
+  csv <- paper_economic_conversion_csv_data(bridge, complement$conversion, complement$it)
+
+  expect_equal(nrow(csv), 28L)
+  expect_equal(sum(csv$panel == "schooling_welfare"), 20L)
+  expect_equal(sum(csv$panel == "predetermined_complements"), 8L)
+  expect_false(any(c("status", "reason") %in% names(csv)))
+  expect_true(all(vapply(csv[c("estimate", "std.error", "p.value", "p.value_holm", "n")], is.numeric, logical(1))))
+  expect_true(all(csv$estimand[csv$panel == "predetermined_complements"] == "change"))
+  expect_true(all(csv$outcome_round[csv$panel == "predetermined_complements"] == "hces_2022_23"))
+
+  table <- make_paper_economic_conversion_table(bridge, complement$conversion, complement$it)
+  expect_identical(attr(table, "csv_data"), csv)
+  expect_equal(sum(grepl("^Panel [AB]\\.", table[[1L]])), 2L)
+  expect_equal(nrow(table), 16L)
+  expect_true(all(table[["2022 ANCOVA"]][9:16] == ""))
+  expect_true(all(nzchar(table[["2004-2022 change"]][9:16])))
+})
+
+test_that("paper economic-conversion table fails closed when a registered welfare cell is absent", {
+  complement <- paper_conversion_complements_fixture()
+  estimates <- paper_schooling_welfare_fixture()
+  estimates <- estimates[-1L, , drop = FALSE]
+  expect_error(
+    paper_economic_conversion_csv_data(list(estimates = estimates), complement$conversion, complement$it),
+    "registered 4-by-5 state-main design",
     fixed = TRUE
   )
 })

@@ -612,9 +612,8 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   df_render <- wrap_table_text_columns(grouped$data, name)
   wide_summary_table <- name %in% c("sum_tbl_iv", "sum_tbl_probit_quant", "sum_tbl_probit_cat")
   regression_table <- name %in% c("probit_mfx", "fs_cons", "cons_iv") && !is_formatted_status_table(df_render)
-  paired_estimate_se_table <- identical(name, "paper_schooling_welfare")
   compact_result_table <- name %in% c(
-    "paper_schooling_welfare", "paper_language_behavior", "paper_conversion_complements",
+    "paper_economic_conversion", "paper_language_behavior",
     "paper_local_development", "paper_identification_boundary"
   )
   schooling_market_table <- identical(name, "paper_schooling_market_geography")
@@ -648,9 +647,8 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   if (regression_table) {
     latex_options <- c("hold_position", "repeat_header", "striped")
   } else if (compact_result_table) {
-    # Keep paired estimate/SE rows visually neutral. Alternating row striping would
-    # separate one coefficient from its standard error and is therefore less
-    # readable than the standard unstriped economics-table convention here.
+    # Keep compact paper-result tables visually neutral. Semantic panel grouping
+    # and parenthesized standard errors already provide the needed row structure.
     latex_options <- c("repeat_header")
   } else if (wide_summary_table) {
     # Wide summary tables must be true longtables inside pdflscape. A floating
@@ -696,18 +694,11 @@ save_table_tex <- function(table, path, name, public = TRUE) {
       kableExtra::column_spec(1, width = "5.4cm") |>
       kableExtra::column_spec(2:ncol(df_render), width = "2.0cm")
   }
-  if (paired_estimate_se_table && nrow(df_render) >= 3L) {
-    # Only the schooling-welfare table stacks estimate and SE rows and ends in
-    # Observations. Other compact result tables have semantic panel groups, so a
-    # positional rule would split a substantive panel at an arbitrary row.
-    tex <- kableExtra::row_spec(tex, nrow(df_render) - 1L, hline_after = TRUE)
-  }
   if (compact_result_table) {
     widths <- switch(
       name,
-      paper_schooling_welfare = c("3.8cm", rep("2.45cm", 4L)),
+      paper_economic_conversion = c("5.2cm", rep("2.35cm", 4L)),
       paper_language_behavior = c("4.1cm", rep("1.25cm", 4L), "1.0cm", "1.8cm", "3.0cm"),
-      paper_conversion_complements = c("4.0cm", rep("2.8cm", 3L)),
       paper_local_development = c("2.1cm", "5.0cm", "1.35cm", "1.2cm", "1.2cm", "4.2cm"),
       paper_identification_boundary = c("3.5cm", "2.2cm", "1.1cm", "1.1cm", "1.3cm", "4.6cm")
     )

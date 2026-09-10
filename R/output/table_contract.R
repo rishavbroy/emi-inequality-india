@@ -11,10 +11,9 @@ public_table_caption_text <- function(name) {
     probit_mfx = "Average Marginal Effects and Counterfactual Comparisons for Enrollment Probit",
     sum_tbl_iv = "Summary Statistics for 2SLS Model",
     paper_core_summary = "Core Variables and Summary Statistics",
-    paper_schooling_welfare = "Schooling Margins and Later Household Consumption",
     paper_schooling_market_geography = "How the Schooling Market Is Geographically Organized",
     paper_language_behavior = "Linguistic Distance and Language Behavior",
-    paper_conversion_complements = "Predetermined Complements to Economic Conversion",
+    paper_economic_conversion = "Economic Conversion: Schooling, Welfare, and Predetermined Complements",
     paper_local_development = "Broader Local-Development Constellation",
     paper_identification_boundary = "Identification Boundary: Linguistic Distance Does Not Isolate EMI",
     fs_cons = "First-Stage Regression: EMI Exposure on Linguistic Distance",
@@ -52,12 +51,13 @@ public_table_note <- function(name) {
       "Continuous-distance coefficients are percentage-point changes per one Shastry distance degree; distant-language rows compare languages at least three degrees from Hindi with the remaining mapped languages.",
       "Panel B applies the predeclared Hindi-belt sample restriction; the table is descriptive mechanism evidence rather than an instrumental-variable first stage."
     ),
-    paper_conversion_complements = paste(
-      "Entries are interaction coefficients with state-clustered standard errors in parentheses; stars use Holm-adjusted p-values within each predeclared panel family.",
-      "Panel A reports the change in the 2004-05 to 2022-23 schooling-consumption association for a one-standard-deviation increase in each predetermined Census-2001 complement, per 10 percentage points of schooling exposure.",
-      "Panel B reports the corresponding 2005 IT-employment-environment interaction for all-child EMI per 10 percentage points and for linguistic distance per one Shastry degree.",
+    paper_economic_conversion = paste(
+      "Panel A reports percent changes in real mean MPCE associated with a 10 percentage-point increase in each schooling margin; state-clustered standard errors are in parentheses.",
+      "Panel-A columns use the registered state fixed-effects specification with predetermined Census-2001 controls and common treatment support within each endpoint/estimand; stars use Holm-adjusted p-values within the predeclared schooling-welfare family.",
+      "Panel B reports how the registered 2004-05 to 2022-23 long-change association varies with one-standard-deviation increases in predetermined complements. All-child/private EMI interactions are scaled per 10 percentage points of schooling exposure; the linguistic-distance interaction is per one Shastry degree.",
+      "Panel-B standard errors are state-clustered and stars use Holm-adjusted p-values within each predeclared complement family.",
       regression_star_note(),
-      "These are descriptive heterogeneity estimates and do not make the schooling exposure or linguistic-distance interaction causal."
+      "These are descriptive conditional and heterogeneous associations, not causal returns or treatment-effect heterogeneity."
     ),
     paper_local_development = paste(
       "Entries are reduced-form associations of one Shastry linguistic-distance degree with the representative outcome in its native unit; raw and Holm-adjusted p-values use state-clustered inference within the registered outcome/specification family.",
@@ -71,13 +71,6 @@ public_table_note <- function(name) {
       "The five-share language vector is a joint test, while the other rows contain one excluded scalar instrument. Historical 1991 reconstructions use a much smaller validated geography and are kept in the appendix rather than mixing noncomparable first-stage support into this panel.",
       "Panel B reports conventional 2SLS coefficients for the registered 2004-05 to 2022-23 and 2023-24 long changes, alongside Montiel Olea-Pflueger effective F and Anderson-Rubin confidence-set topology.",
       "Disconnected AR sets that span both signs do not identify the sign of an EMI effect even when beta=0 is rejected on the finite grid. These diagnostics define an identification boundary, not preferred causal estimates."
-    ),
-    paper_schooling_welfare = paste(
-      "Entries are percent changes in real mean MPCE associated with a 10 percentage-point increase in the schooling margin; state-clustered standard errors are in parentheses.",
-      "All columns use the registered state fixed-effects specification with predetermined Census-2001 controls.",
-      "Within each welfare endpoint and estimand, all five schooling margins use one common complete-case district sample.",
-      regression_star_note(),
-      "Stars use the Holm-adjusted p-value for the predeclared schooling-welfare family within that endpoint; the estimates are descriptive conditional associations, not causal returns."
     ),
     sum_tbl_probit_cat = "Values = all possible values; Mode = most frequent value; Pct. Mode = percent of observations taking the modal value; Least Freq. = least frequent value; Pct. Least Freq. = percent of observations taking the least frequent value; N = number of observations.",
     probit_mfx = "NSS 64th round; design-based SEs in parentheses.",

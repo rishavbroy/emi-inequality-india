@@ -346,62 +346,121 @@ paper_conversion_complements_csv_data <- function(conversion, it_opportunity) {
   safe_bind_rows(list(schooling, it_rows))
 }
 
-paper_conversion_cell <- function(row) {
-  if (!nrow(row)) return("")
-  paste0(
-    sprintf("%.3f", num(row$interaction)[[1L]]),
-    significance_stars(num(row$p.value_holm)[[1L]]),
-    " (", sprintf("%.3f", num(row$std.error)[[1L]]), ")"
+paper_economic_conversion_csv_data <- function(bridge, conversion, it_opportunity) {
+  welfare <- paper_schooling_welfare_csv_data(safe_df(bridge$estimates %||% data.frame()))
+  if (!nrow(welfare)) {
+    stop("Paper economic-conversion table requires the registered schooling-welfare evidence.", call. = FALSE)
+  }
+  welfare_out <- data.frame(
+    panel = "schooling_welfare",
+    result_id = paste(welfare$treatment_id, welfare$outcome_round, welfare$estimand, sep = "__"),
+    measure = welfare$schooling_margin,
+    predictor_id = welfare$treatment_id,
+    complement_id = NA_character_,
+    outcome_round = welfare$outcome_round,
+    estimand = welfare$estimand,
+    estimate = num(welfare$estimate_percent_per_10pp),
+    std.error = num(welfare$std_error_percent_per_10pp),
+    p.value = num(welfare$p_value_state_clustered),
+    p.value_holm = num(welfare$p_value_holm_welfare),
+    n = as.integer(welfare$n),
+    unit = "percent real mean MPCE per 10pp schooling",
+    stringsAsFactors = FALSE
   )
+
+  complements <- paper_conversion_complements_csv_data(conversion, it_opportunity)
+  complement_label <- ifelse(
+    complements$predictor_id == "all_child_emi", "All-child EMI",
+    ifelse(complements$predictor_id == "private_emi", "Private EMI", "Linguistic distance")
+  )
+  predictor_scale <- ifelse(complements$predictor_id == "linguistic_distance", "one distance degree", "10pp schooling")
+  complement_out <- data.frame(
+    panel = "predetermined_complements",
+    result_id = paste(complements$predictor_id, complements$modifier_id, sep = "__"),
+    measure = paste(complement_label, "x", complements$complement),
+    predictor_id = complements$predictor_id,
+    complement_id = complements$modifier_id,
+    outcome_round = "hces_2022_23",
+    estimand = "change",
+    estimate = 100 * num(complements$interaction),
+    std.error = 100 * num(complements$std.error),
+    p.value = num(complements$p.value),
+    p.value_holm = num(complements$p.value_holm),
+    n = as.integer(complements$n),
+    unit = paste0("percent real mean MPCE per ", predictor_scale, " per 1 SD complement"),
+    stringsAsFactors = FALSE
+  )
+
+  out <- safe_bind_rows(list(welfare_out, complement_out))
+  if (nrow(out) != 28L || anyDuplicated(out$result_id)) {
+    stop("Paper economic-conversion table must contain 20 welfare cells and eight complement cells.", call. = FALSE)
+  }
+  out
 }
 
-paper_conversion_group <- function(label) {
+paper_economic_conversion_group <- function(label) {
   data.frame(
-    Complement = paste0(label, ":"), `All-child EMI` = "", `Private EMI` = "",
-    `Linguistic distance` = "", check.names = FALSE, stringsAsFactors = FALSE
+    `Schooling margin / interaction` = paste0(label, ":"),
+    `2022 ANCOVA` = "", `2004-2022 change` = "", `2023 ANCOVA` = "",
+    `2004-2023 change` = "", check.names = FALSE, stringsAsFactors = FALSE
   )
 }
 
-make_paper_conversion_complements_table <- function(conversion, it_opportunity) {
-  csv <- paper_conversion_complements_csv_data(conversion, it_opportunity)
-  capacity <- csv[csv$panel == "predetermined_capacity", , drop = FALSE]
-  complement_order <- paper_conversion_complement_registry()
-  capacity_rows <- safe_bind_rows(lapply(seq_len(nrow(complement_order)), function(i) {
-    modifier <- complement_order$modifier_id[[i]]
-    data.frame(
-      Complement = complement_order$label[[i]],
-      `All-child EMI` = paper_conversion_cell(
-        capacity[capacity$modifier_id == modifier & capacity$predictor_id == "all_child_emi", , drop = FALSE]
-      ),
-      `Private EMI` = paper_conversion_cell(
-        capacity[capacity$modifier_id == modifier & capacity$predictor_id == "private_emi", , drop = FALSE]
-      ),
-      `Linguistic distance` = "",
-      check.names = FALSE, stringsAsFactors = FALSE
-    )
-  }))
-  it <- csv[csv$panel == "predetermined_it_environment", , drop = FALSE]
-  it_row <- data.frame(
-    Complement = "Baseline IT employment share",
-    `All-child EMI` = paper_conversion_cell(
-      it[it$predictor_id == "all_child_emi", , drop = FALSE]
-    ),
-    `Private EMI` = "",
-    `Linguistic distance` = paper_conversion_cell(
-      it[it$predictor_id == "linguistic_distance", , drop = FALSE]
-    ),
-    check.names = FALSE, stringsAsFactors = FALSE
+paper_economic_conversion_cell <- function(estimate, std.error, p.value_holm, digits = 2L) {
+  paste0(
+    sprintf(paste0("%.", digits, "f"), estimate), significance_stars(p.value_holm),
+    " (", sprintf(paste0("%.", digits, "f"), std.error), ")"
   )
+}
+
+make_paper_economic_conversion_table <- function(bridge, conversion, it_opportunity) {
+  csv <- paper_economic_conversion_csv_data(bridge, conversion, it_opportunity)
+  columns <- paper_schooling_welfare_column_registry()
+  treatments <- paper_schooling_welfare_treatment_labels()
+  welfare <- csv[csv$panel == "schooling_welfare", , drop = FALSE]
+
+  welfare_rows <- safe_bind_rows(lapply(names(treatments), function(id) {
+    row <- data.frame(`Schooling margin / interaction` = unname(treatments[[id]]), check.names = FALSE)
+    for (j in seq_len(nrow(columns))) {
+      hit <- welfare$predictor_id == id & welfare$outcome_round == columns$outcome_round[[j]] &
+        welfare$estimand == columns$estimand[[j]]
+      x <- welfare[hit, , drop = FALSE]
+      if (nrow(x) != 1L) stop("Paper economic-conversion table lost a registered welfare cell.", call. = FALSE)
+      row[[columns$column[[j]]]] <- paper_economic_conversion_cell(
+        x$estimate[[1L]], x$std.error[[1L]], x$p.value_holm[[1L]]
+      )
+    }
+    row
+  }))
+  n_row <- data.frame(`Schooling margin / interaction` = "Observations", check.names = FALSE)
+  for (j in seq_len(nrow(columns))) {
+    hit <- welfare$outcome_round == columns$outcome_round[[j]] & welfare$estimand == columns$estimand[[j]]
+    nvals <- unique(welfare$n[hit])
+    if (length(nvals) != 1L) stop("Paper economic-conversion table lost common welfare support.", call. = FALSE)
+    n_row[[columns$column[[j]]]] <- format(nvals[[1L]], big.mark = ",", scientific = FALSE)
+  }
+
+  complements <- csv[csv$panel == "predetermined_complements", , drop = FALSE]
+  complement_rows <- safe_bind_rows(lapply(seq_len(nrow(complements)), function(i) {
+    x <- complements[i, , drop = FALSE]
+    row <- data.frame(`Schooling margin / interaction` = x$measure[[1L]], check.names = FALSE)
+    for (label in columns$column) row[[label]] <- ""
+    row[["2004-2022 change"]] <- paper_economic_conversion_cell(
+      x$estimate[[1L]], x$std.error[[1L]], x$p.value_holm[[1L]]
+    )
+    row
+  }))
+
   out <- safe_bind_rows(list(
-    paper_conversion_group("Panel A. Predetermined Census-2001 complements"),
-    capacity_rows,
-    paper_conversion_group("Panel B. Predetermined IT environment"),
-    it_row
+    paper_economic_conversion_group("Panel A. Schooling and later welfare"),
+    welfare_rows,
+    n_row,
+    paper_economic_conversion_group("Panel B. Predetermined complements"),
+    complement_rows
   ))
   attr(out, "csv_data") <- csv
   out
 }
-
 paper_local_development_registry <- function() {
   # Keep one conventional durable (television) rather than selecting the strongest
   # asset coefficient ex post; banking is represented separately as finance.
