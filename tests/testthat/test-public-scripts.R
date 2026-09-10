@@ -1448,8 +1448,8 @@ test_that("main-paper schooling-access analysis is core while forensic persisten
   expect_match(working_paper, "fig-unequal-schooling-access", fixed = TRUE)
   expect_match(working_paper, "consumption_iv_dynamics.pdf", fixed = TRUE)
   expect_match(working_paper, "fig-consumption-reduced-form-dynamics", fixed = TRUE)
-  expect_match(working_paper, "paper_schooling_welfare.tex", fixed = TRUE)
-  expect_match(working_paper, "tbl-paper-schooling-welfare", fixed = TRUE)
+  expect_match(working_paper, "paper_economic_conversion.tex", fixed = TRUE)
+  expect_match(working_paper, "tbl-economic-conversion", fixed = TRUE)
   expect_match(working_paper, "paper_first_stage_absorption.pdf", fixed = TRUE)
   expect_match(working_paper, "fig-first-stage-absorption", fixed = TRUE)
 
@@ -1547,12 +1547,16 @@ test_that("paper conversion-complements evidence promotes only the required EC05
     "tar_target(\n      economic_census_ec05_raw_archive,",
     extended_ec, fixed = TRUE
   ))
-  expect_match(extended_ec, "it_opportunity = economic_census_it_opportunity", fixed = TRUE)
-  expect_match(core_public, "paper_conversion_complements", fixed = TRUE)
-  expect_match(paper_new, "paper_conversion_complements.tex", fixed = TRUE)
-  expect_match(paper_new, "tbl-conversion-complements", fixed = TRUE)
-  expect_match(public_contract, "paper_conversion_complements.csv", fixed = TRUE)
-  expect_match(public_contract, "paper_conversion_complements.tex", fixed = TRUE)
+  expect_false(grepl("economic_census_it_opportunity", extended_ec, fixed = TRUE))
+  expect_match(core_public, "paper_economic_conversion", fixed = TRUE)
+  expect_match(paper_new, "paper_economic_conversion.tex", fixed = TRUE)
+  expect_match(paper_new, "tbl-economic-conversion", fixed = TRUE)
+  expect_match(public_contract, "paper_economic_conversion.csv", fixed = TRUE)
+  expect_match(public_contract, "paper_economic_conversion.tex", fixed = TRUE)
+  expect_false(grepl("paper_conversion_complements", public_contract, fixed = TRUE))
+  expect_false(grepl("paper_schooling_welfare", public_contract, fixed = TRUE))
+  expect_false(grepl("out$paper_conversion_complements", core_public, fixed = TRUE))
+  expect_false(grepl("paper_schooling_welfare =", repo_text("R", "output", "make_tables.R"), fixed = TRUE))
 })
 
 test_that("paper identification boundary promotes only the bounded alternative-distance first stage", {

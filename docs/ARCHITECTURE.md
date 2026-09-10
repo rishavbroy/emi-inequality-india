@@ -220,22 +220,27 @@ social group and either sex **or** rural/urban sector before calling the canonic
 survey weights, unknown-category handling, and denominators, and deliberately
 avoids a gender-by-sector Cartesian cube.
 
-The schooling-to-welfare bridge now fixes one complete-case district sample per
+The schooling-to-welfare bridge fixes one complete-case district sample per
 welfare estimand across all five registered schooling margins and the complete
 adjustment ladder. This makes comparisons among enrollment, public EMI, private
-EMI, and aggregate EMI support-comparable by construction. The six-cell
-`schooling_consumption_conversion` family is core because the main paper reports
-it directly and tests only the predeclared 2022
-long-difference contingency question: all-child EMI and private-EMI exposure are
-each interacted, one modifier at a time, with predetermined Census-2001 secondary
-human capital, urbanization, and Scheduled-Tribe concentration. Modifiers are
-standardized on the common sample and interactions receive state-clustered
-inference with one family-wide Holm adjustment. These are descriptive
-heterogeneous associations, not causal heterogeneous treatment effects. The
-official EC05 Division-72 IT baseline is likewise isolated in
-`core_economic_census_target_definitions()` so Table 5 can consume the two
-predeclared IT-environment interactions without promoting the unrelated
-EC05--EC13 longitudinal mechanism family.
+EMI, and aggregate EMI support-comparable by construction. The final paper does
+not persist separate welfare and complement tables: `paper_economic_conversion`
+combines the full 5-by-4 schooling-welfare design with the eight predeclared
+complement interactions in one two-panel exhibit, while its semantic CSV keeps
+all 28 inferential cells long-form.
+
+The six-cell `schooling_consumption_conversion` family is core because Panel B of
+that exhibit reports the predeclared 2022 long-difference contingency question:
+all-child EMI and private-EMI exposure are each interacted, one modifier at a
+time, with predetermined Census-2001 secondary human capital, urbanization, and
+Scheduled-Tribe concentration. Modifiers are standardized on the common sample
+and interactions receive state-clustered inference with one family-wide Holm
+adjustment. These are descriptive heterogeneous associations, not causal
+heterogeneous treatment effects. The official EC05 Division-72 IT baseline is
+also core for the two registered IT-environment interactions. The broader
+EC05--EC13 analytical object is separately core because the local-development
+synthesis consumes its bounded sector-composition evidence; extended mode owns
+only persistence and forensic variants, not duplicate analysis definitions.
 
 Because effect modification is scientifically distinct from adjustment, the
 cross-family analysis-design schema records `effect_modifier` and
