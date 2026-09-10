@@ -165,6 +165,7 @@ rm -f "$tmpdir/docs/plan/THOROUGH NOTES Research Paper ECON 623.docx" \
 
 required_public=(
   "paper/paper.pdf"
+  "paper/paper-new.pdf"
 )
 if [[ "$include_samples" == "true" ]]; then
   required_public+=(

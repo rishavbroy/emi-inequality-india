@@ -135,10 +135,7 @@ paper: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
 	EMI_CONFIG=config/final.yml Rscript scripts/run_targets_checked.R --targets paper
 
 paper-new: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
-	EMI_CONFIG=config/final.yml EMI_RUN_EXTENDED_DIAGNOSTICS=true Rscript scripts/run_targets_checked.R --targets english_opportunity_district_mechanisms,dise_iv_nss_validation
-	EMI_CONFIG=config/final.yml Rscript scripts/run_targets_checked.R --targets report_values,figure_files,table_files
-	EMI_CONFIG=config/final.yml Rscript scripts/render_paper_new.R
-	Rscript scripts/audit_crossrefs.R --strict-report paper/paper-new.qmd
+	EMI_CONFIG=config/final.yml Rscript scripts/run_targets_checked.R --targets paper_new
 
 samples: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
 	EMI_CONFIG=config/final.yml EMI_RENDER_APPLICATION_SAMPLES=true Rscript scripts/run_targets_checked.R --targets writing_sample_pdfs,coding_sample_pdfs
@@ -249,7 +246,7 @@ clean-renders-core:
 	rm -rf outputs/figures/* outputs/tables/* outputs/diagnostics/build outputs/diagnostics/public paper/output/*
 	rm -f outputs/diagnostics/*.csv
 	mkdir -p outputs/diagnostics/build outputs/diagnostics/public
-	rm -f paper/paper.pdf paper/paper.html paper/paper.tex paper/appendix.pdf paper/appendix.html paper/appendix.tex
+	rm -f paper/paper.pdf paper/paper.html paper/paper.tex paper/paper-new.pdf paper/paper-new.html paper/paper-new.tex paper/appendix.pdf paper/appendix.html paper/appendix.tex
 	rm -f posters/2026_predoc_conference/poster.pdf posters/2026_predoc_conference/poster.png posters/2026_predoc_conference/RishavRoy-Education.png posters/2026_predoc_conference/poster.typ
 	rm -f docs/district-matching.html docs/district-matching.pdf docs/district-matching.tex
 	rm -f docs/long-paths-and-8-3-filenames.html docs/long-paths-and-8-3-filenames.pdf docs/long-paths-and-8-3-filenames.tex

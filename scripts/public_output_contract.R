@@ -3,6 +3,7 @@
 public_qmd_sources <- function() {
   c(
     "paper/paper.qmd",
+    "paper/paper-new.qmd",
     "paper/appendix.qmd",
     "docs/district-matching.qmd",
     "docs/long-paths-and-8-3-filenames.qmd",
@@ -11,7 +12,7 @@ public_qmd_sources <- function() {
 }
 
 public_report_value_sources <- function() {
-  c("paper/paper.qmd", "paper/appendix.qmd", "docs/district-matching.qmd")
+  c("paper/paper.qmd", "paper/paper-new.qmd", "paper/appendix.qmd", "docs/district-matching.qmd")
 }
 
 required_public_render_inputs <- function() {
@@ -23,6 +24,13 @@ required_public_render_inputs <- function() {
     "outputs/tables/main/sum_tbl_iv.csv",
     "outputs/tables/main/fs_cons.csv",
     "outputs/tables/main/cons_iv.csv",
+    "outputs/tables/main/paper_core_summary.tex",
+    "outputs/tables/main/paper_schooling_market_geography.tex",
+    "outputs/tables/main/paper_schooling_welfare.tex",
+    "outputs/figures/main/paper_language_schooling_maps.pdf",
+    "outputs/figures/main/paper_unequal_schooling_access.pdf",
+    "outputs/figures/main/paper_first_stage_absorption.pdf",
+    "outputs/figures/main/consumption_iv_dynamics.pdf",
     "outputs/figures/main/fig_ilo_trends.png",
     "outputs/figures/main/district_carveouts_shifts.png",
     "outputs/figures/main/poster_emie_expected_values.pdf",
@@ -51,6 +59,7 @@ application_sample_outputs <- function() {
 required_final_documents <- function(require_application_samples = TRUE) {
   files <- c(
     "paper/paper.pdf",
+    "paper/paper-new.pdf",
     "docs/district-matching.html",
     "docs/long-paths-and-8-3-filenames.html",
     "posters/2026_predoc_conference/poster.pdf",
@@ -97,6 +106,16 @@ required_final_artifacts <- function() {
     "outputs/tables/main/sum_tbl_iv.csv",
     "outputs/tables/main/fs_cons.csv",
     "outputs/tables/main/cons_iv.csv",
+    "outputs/tables/main/paper_core_summary.csv",
+    "outputs/tables/main/paper_core_summary.tex",
+    "outputs/tables/main/paper_schooling_market_geography.csv",
+    "outputs/tables/main/paper_schooling_market_geography.tex",
+    "outputs/tables/main/paper_schooling_welfare.csv",
+    "outputs/tables/main/paper_schooling_welfare.tex",
+    "outputs/figures/main/paper_language_schooling_maps.pdf",
+    "outputs/figures/main/paper_unequal_schooling_access.pdf",
+    "outputs/figures/main/paper_first_stage_absorption.pdf",
+    "outputs/figures/main/consumption_iv_dynamics.pdf",
     "outputs/figures/main/fig_ilo_trends.png",
     "outputs/figures/main/district_carveouts_shifts.png",
     "outputs/figures/main/collage_main_maps.png",

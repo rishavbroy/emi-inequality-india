@@ -40,9 +40,9 @@ cite-method: citeproc
 
 <!--
 WORKING PAPER: ChatGPT-assisted edits belong in paper-new.qmd only.
-After manual review, copy approved sections into paper.qmd. This working draft
-is intentionally excluded from the strict public-paper and application-sample
-contracts; render it explicitly with `make paper-new`.
+The strict pipeline renders this draft alongside paper.qmd so every main-paper
+exhibit and dependency is continuously validated. Application-sample excerpts
+remain tied to paper.qmd until corresponding prose is manually approved.
 -->
 
 
@@ -96,7 +96,7 @@ What is the effect of exposure to English-medium instruction enrollment in 2007-
 \end{quote}
 First, note the improvements made here over the previous literature. The setting of 2007-2018 may be more relevant today than the settings of similar literature, all of which are closer to the advent of service job offshoring in the 1990s [e.g., @refeque2022a]. Additionally, note that our response variable here is consumption, not wages. India holds a vast number of informal and self-employed individuals, meaning its labor force varies wildly in the degree to which wages reflect material well-being.^[See @shrivastavInformalityIndianLabour2026 and @bahlInformalityEducationoccupationMismatch2024 for the frequency and wage effects of informality respectively. Wages may still be more responsive to EMI in the medium-run window we study, however. See @sec-alty for more.]
 
-Second, we must highlight that unlike much of this literature, we lack household panel data. We will thus follow previous papers [e.g., @martinBigOutSmall2017] and aggregate data at the district level.^[A district in India is akin to a county in the United States, but with an average population of 2 million. @tbl-sum-tbl-iv contains more information on district populations.] More specifically, we will take cross-sectional data from 2007-08 [@nationalsamplesurveyoffice2008] and 2017-18 [@office2022a], aggregate each at the district level separately, and match districts across the time periods to construct a district pseudo-panel. District-level variables are developed in @sec-iv-model and the district matching method is explained in @sec-distma-spa .
+Second, we must highlight that unlike much of this literature, we lack household panel data. We will thus follow previous papers [e.g., @martinBigOutSmall2017] and aggregate data at the district level.^[A district in India is akin to a county in the United States, but with an average population of 2 million. @tbl-core-summary summarizes the central district-level constructs used in the paper.] More specifically, we will take cross-sectional data from 2007-08 [@nationalsamplesurveyoffice2008] and 2017-18 [@office2022a], aggregate each at the district level separately, and match districts across the time periods to construct a district pseudo-panel. District-level variables are developed in @sec-iv-model and the district matching method is explained in @sec-distma-spa .
 
 Our empirical methodology will then proceed in two parts. In @sec-heckman, we study the composition of our key "EMI exposure" measure by estimating an individual-level probit of school participation in 2007-08. In @sec-iv, we move to the district level and implement two-stage least squares (2SLS): the weighted average of linguistic distance from Hindi in 2001 will be used to instrument for EMI exposure, onto whose fitted values we regress the change in log person-weighted real consumption.^[Future work may incorporate both education selection and EMI exposure as endogenous regressors in a first-difference (FD) 2SLS design. The district-level aggregates of @tbl-sum-tbl-probit-quant may be able to function as education supply-shifting instruments.] The choice of instrument is discussed in @sec-iv-iv.
 
@@ -278,7 +278,7 @@ The scale and dispersion of the paper's central schooling, linguistic, predeterm
 render_public_table("../outputs/tables/main/paper_core_summary.tex", "paper_core_summary")
 ```
 
-Table @tbl-schooling-market-geography collects the institutional-geography evidence that otherwise sits across several diagnostics. Linguistic distance is positively associated with every schooling margin nationally, but the standardized relationship attenuates sharply after region and especially state absorption. State membership explains much more of public EMI than private EMI variation. Finally, DISE and NSS EMI measures remain strongly correlated after state means are removed, so the attenuation is not plausibly explained by NSS measurement error alone.
+@tbl-schooling-market-geography collects the institutional-geography evidence that otherwise sits across several diagnostics. Linguistic distance is positively associated with every schooling margin nationally, but the standardized relationship attenuates sharply after region and especially state absorption. State membership explains much more of public EMI than private EMI variation. Finally, DISE and NSS EMI measures remain strongly correlated after state means are removed, so the attenuation is not plausibly explained by NSS measurement error alone.
 
 ```{r}
 #| label: tbl-schooling-market-geography
@@ -449,7 +449,7 @@ The active harmonization now uses Census-2001 districts as the common unit. Coun
 :::
 
 ### Spatial Autocorrelation, Spatial Spillovers, and Migration {#sec-spa}
-The maps in @fig-map1-fig and @fig-map2-fig now use Census-2001 district geometry for the harmonized pseudo-panel. Districts absent from the analysis maps lack complete two-wave analysis inputs or belong to the small set of explicitly non-identified reorganizations; treatment values are no longer propagated across 2019-20 successor districts.
+The maps in @fig-schooling-geography and @fig-map2-fig now use Census-2001 district geometry for the harmonized pseudo-panel. Districts absent from the analysis maps lack complete two-wave analysis inputs or belong to the small set of explicitly non-identified reorganizations; treatment values are no longer propagated across 2019-20 successor districts.
 
 The presence of true spatial autocorrelation in this environment is plausible. The spatial spillovers of development and the agglomeration of tech firms are key forms of autocorrelation which render the assumption of identical and independent distributions false, and thus many of the results of OLS meaningless. But special attention must be paid to the role of migration here. Note that, if part of EMI’s effect is in enabling children to migrate across the country (e.g., to districts which have more tech firms), then the true structural parameter $\text{EMIE}_d$ in our model would only reflect the EMI-induced benefits which they send back e.g., as remittances. In other words, even in a world of perfect shapefiles, our results could show that EMIE is a substandard tool for local area's development even if it is actually a great tool for a local population's development. How, then, could the effect of EMI ever be identified without being dissipated away by between-district migration?
 

@@ -4,12 +4,9 @@ args <- commandArgs(trailingOnly = TRUE)
 strict_report <- "--strict-report" %in% args
 explicit_qmd_files <- args[!startsWith(args, "--")]
 
-qmd_files <- c(
-  "paper/paper.qmd",
-  "paper/appendix.qmd",
-  "docs/district-matching.qmd",
-  "docs/long-paths-and-8-3-filenames.qmd"
-)
+source("scripts/public_output_contract.R", local = TRUE)
+
+qmd_files <- public_qmd_sources()
 if (length(explicit_qmd_files)) qmd_files <- explicit_qmd_files
 
 work_files <- character()

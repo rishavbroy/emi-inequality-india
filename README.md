@@ -17,7 +17,7 @@ Finally, go to ["Commands for running and auditing"](#commands-for-running-and-a
 
 - **[`paper/paper.pdf`](paper/paper.pdf): Reviewed/current paper**. All of its results, tables, and figures are generated in this codebase.
 - [`paper/paper.qmd`](paper/paper.qmd): Reviewed paper source. Manual edits and approved sections belong here.
-- [`paper/paper-new.qmd`](paper/paper-new.qmd): ChatGPT working paper source. Render with `make paper-new`; after manual review, copy approved sections into `paper.qmd`. The working draft is intentionally outside strict public/application-sample checks.
+- [`paper/paper-new.qmd`](paper/paper-new.qmd): ChatGPT working paper source and emerging final-paper narrative. The strict pipeline now renders it alongside `paper.qmd`; `make paper-new` refreshes only this target. Application-sample excerpts remain tied to manually approved `paper.qmd` prose.
 - [`paper/paper-new.pdf`](paper/paper-new.pdf): Latest explicitly rendered working-paper PDF, when available.
 - [`REPLICATION.md`](REPLICATION.md): Replication guide.
 - [`DATA_AVAILABILITY.md`](DATA_AVAILABILITY.md): Source-by-source data availability and redistribution notes.

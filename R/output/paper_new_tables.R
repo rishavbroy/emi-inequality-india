@@ -1,8 +1,8 @@
-# Opt-in tables for paper-new.qmd.
+# Main-paper tables unique to paper-new.qmd.
 #
-# These exhibits may depend on non-redistributable research inputs used by the
-# extended diagnostic graph. They are therefore built by scripts/render_paper_new.R
-# after the relevant cached targets exist, not added to the strict public graph.
+# Statistical objects are computed upstream in the target graph. This module only
+# reshapes publication evidence and keeps machine-readable CSV payloads separate
+# from presentation-oriented table cells.
 
 paper_schooling_market_measure_registry <- function() {
   data.frame(
@@ -44,7 +44,10 @@ paper_state_membership_r_squared <- function(data, variable, state = "state_code
   if (length(y) < 2L || length(unique(g)) < 2L || !is.finite(stats::var(y)) || stats::var(y) == 0) {
     return(NA_real_)
   }
-  unname(summary(stats::lm(y ~ factor(g)))$r.squared)
+  fitted <- ave(y, g, FUN = mean)
+  total_ss <- sum((y - mean(y))^2)
+  residual_ss <- sum((y - fitted)^2)
+  unname(1 - residual_ss / total_ss)
 }
 
 paper_schooling_market_geography_csv_data <- function(

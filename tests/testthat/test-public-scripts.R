@@ -70,7 +70,6 @@ test_that("current public build helper scripts parse", {
   }
   expect_silent(parse(repo_file("scripts", "check_required_outputs.R")))
   expect_silent(parse(repo_file("scripts", "check_targets_process.R")))
-  expect_silent(parse(repo_file("scripts", "render_paper_new.R")))
   expect_silent(parse(repo_file("scripts", "run_targets_checked.R")))
   expect_silent(parse(repo_file("scripts", "run_targets_strict.R")))
   expect_silent(parse(repo_file("scripts", "target_metadata_helpers.R")))
@@ -1403,19 +1402,28 @@ test_that("extended audit requires bounded exclusion-sensitivity outputs", {
 })
 
 
-test_that("working paper is opt-in and excluded from strict public contracts", {
+test_that("working paper is rendered and checked by the strict publication graph", {
   source(repo_file("scripts", "public_output_contract.R"), local = TRUE)
   makefile <- repo_text("Makefile")
+  core <- repo_text("R", "pipeline", "core_public_targets.R")
   archive <- repo_text("scripts", "make_review_archive.sh")
 
-  expect_true("paper/paper.qmd" %in% public_qmd_sources())
-  expect_false("paper/paper-new.qmd" %in% public_qmd_sources())
-  expect_true("paper/paper.pdf" %in% required_final_documents(FALSE))
-  expect_false("paper/paper-new.pdf" %in% required_final_documents(FALSE))
-  expect_match(makefile, "paper-new:", fixed = TRUE)
-  expect_match(makefile, "scripts/render_paper_new.R", fixed = TRUE)
+  expect_true(all(c("paper/paper.qmd", "paper/paper-new.qmd") %in% public_qmd_sources()))
+  expect_true(all(c("paper/paper.pdf", "paper/paper-new.pdf") %in% required_final_documents(FALSE)))
+  expect_match(makefile, "--targets paper_new", fixed = TRUE)
+  expect_match(core, "tar_target(paper_new_qmd", fixed = TRUE)
+  expect_match(core, "render_paper_pdf(paper_new_qmd", fixed = TRUE)
   expect_match(archive, "paper/paper-new.qmd", fixed = TRUE)
   expect_match(archive, "paper/paper-new.pdf", fixed = TRUE)
+
+  public_text <- repo_text("scripts", "check_public_text.R")
+  rendered_text <- repo_text("scripts", "check_rendered_text.R")
+  required_outputs <- repo_text("scripts", "check_required_outputs.R")
+  expect_false(grepl('startsWith(files, "paper/paper-new.")', public_text, fixed = TRUE))
+  expect_match(rendered_text, '"paper/paper-new.pdf"', fixed = TRUE)
+  expect_false(grepl('source_paths != "paper/paper-new.qmd"', rendered_text, fixed = TRUE))
+  expect_match(required_outputs, 'c("paper/paper.qmd", "paper/paper-new.qmd")', fixed = TRUE)
+  expect_match(makefile, "paper/paper-new.pdf paper/paper-new.html paper/paper-new.tex", fixed = TRUE)
 
   working_paper <- repo_text("paper", "paper-new.qmd")
   expect_match(working_paper, "paper_language_schooling_maps.pdf", fixed = TRUE)
@@ -1466,21 +1474,26 @@ test_that("paper first-stage absorption analysis is core while forensic persiste
   )
 })
 
-test_that("paper-new Table 2 is opt-in and does not widen the strict public data contract", {
-  makefile <- repo_text("Makefile")
-  renderer <- repo_text("scripts", "render_paper_new.R")
+test_that("paper Table 2 and its baseline DISE evidence are strict publication dependencies", {
+  targets <- repo_text("_targets.R")
+  core_dise <- repo_text("R", "pipeline", "core_dise_targets.R")
+  core_public <- repo_text("R", "pipeline", "core_public_targets.R")
+  extended_dise <- repo_text("R", "pipeline", "extended_dise_targets.R")
   paper_new <- repo_text("paper", "paper-new.qmd")
   public_contract <- repo_text("scripts", "public_output_contract.R")
 
-  expect_match(
-    makefile,
-    "EMI_RUN_EXTENDED_DIAGNOSTICS=true Rscript scripts/run_targets_checked.R --targets english_opportunity_district_mechanisms,dise_iv_nss_validation",
-    fixed = TRUE
-  )
-  expect_match(renderer, "targets::tar_read(english_opportunity_district_mechanisms)", fixed = TRUE)
-  expect_match(renderer, "targets::tar_read(dise_iv_nss_validation)", fixed = TRUE)
-  expect_match(renderer, "make_paper_schooling_market_geography_table", fixed = TRUE)
+  expect_match(targets, "core_dise_target_definitions()", fixed = TRUE)
+  expect_match(core_dise, "english_opportunity_district_mechanisms", fixed = TRUE)
+  expect_match(core_dise, "dise_iv_nss_validation", fixed = TRUE)
+  expect_match(core_public, "paper_schooling_market_geography", fixed = TRUE)
+  expect_match(core_public, "out$paper_schooling_market_geography", fixed = TRUE)
+  expect_false(grepl("tar_target(\n      dise_iv_nss_validation,", extended_dise, fixed = TRUE))
+  expect_match(extended_dise, "dise_baseline_treatments_all_constructs", fixed = TRUE)
   expect_match(paper_new, "paper_schooling_market_geography.tex", fixed = TRUE)
   expect_match(paper_new, "tbl-schooling-market-geography", fixed = TRUE)
-  expect_false(grepl("paper_schooling_market_geography", public_contract, fixed = TRUE))
+  expect_match(public_contract, "paper_schooling_market_geography.csv", fixed = TRUE)
+  expect_match(public_contract, "paper_schooling_market_geography.tex", fixed = TRUE)
+
+  crossref_audit <- repo_text("scripts", "audit_crossrefs.R")
+  expect_match(crossref_audit, "qmd_files <- public_qmd_sources()", fixed = TRUE)
 })
