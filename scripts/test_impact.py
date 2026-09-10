@@ -254,7 +254,7 @@ def path_tests(path):
             "test-district-join-map.R", "test-district-keys.R",
             "test-district-tracker.R", "test-manual-district-corrections.R",
         })
-    if path in {"R/output/paper_new_tables.R", "R/output/appendix_selection_exhibits.R"}:
+    if path == "R/output/paper_new_tables.R" or path.startswith("R/output/appendix_"):
         tests.update({"test-output-tables.R", "test-public-scripts.R"})
     if path.startswith("paper/"):
         tests.update({"test-public-scripts.R", "test-output-tables.R", "test-output-figures.R"})

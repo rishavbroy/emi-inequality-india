@@ -122,32 +122,17 @@ make_appendix_selection_exhibits <- function(selection_data, missingness) {
   )
 }
 
-appendix_selection_table_paths <- function(name) {
-  base <- file.path("outputs", "tables", "appendix", name)
-  c(csv = paste0(base, ".csv"), tex = paste0(base, ".tex"))
-}
-
 save_appendix_selection_exhibits <- function(exhibits, cfg) {
   if (!is.list(exhibits) ||
       !all(c("appendix_e1_selection_sample", "appendix_e4_missingness", "missingness_plot_data") %in% names(exhibits))) {
     stop("Appendix E exhibit bundle is incomplete.", call. = FALSE)
   }
-  formats <- table_formats(cfg)
-  written <- character()
-  for (name in c("appendix_e1_selection_sample", "appendix_e4_missingness")) {
-    paths <- appendix_selection_table_paths(name)
-    if ("csv" %in% formats) {
-      dir.create(dirname(paths[["csv"]]), recursive = TRUE, showWarnings = FALSE)
-      written <- c(written, save_table_csv(exhibits[[name]], paths[["csv"]], public = TRUE))
-    }
-    if ("tex" %in% formats) {
-      dir.create(dirname(paths[["tex"]]), recursive = TRUE, showWarnings = FALSE)
-      written <- c(written, save_table_tex(exhibits[[name]], paths[["tex"]], name, public = TRUE))
-    }
-  }
+  written <- save_appendix_tables(
+    exhibits, c("appendix_e1_selection_sample", "appendix_e4_missingness"), cfg
+  )
 
-  figure_path <- file.path(
-    "outputs", "figures", "appendix", "appendix_e5_missingness_predictability.png"
+  figure_path <- paste0(
+    appendix_figure_path_base("appendix_e5_missingness_predictability"), ".png"
   )
   written <- c(
     written,
