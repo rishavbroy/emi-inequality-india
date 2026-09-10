@@ -159,4 +159,6 @@ table_header_labels <- function(df, name) {
 
 caption_for_latex <- function(name) table_caption(name)
 
-latex_escape_text <- function(x) table_contract_column_strings(x)
+latex_escape_text <- function(x) {
+  modelsummary::escape_latex(table_contract_column_strings(x))
+}

@@ -80,7 +80,18 @@ format_public_summary_columns <- function(out) {
   }
   rename <- c("% Mode" = "Pct. Mode", "% Least Freq." = "Pct. Least Freq.")
   for (old in names(rename)) if (old %in% names(out)) names(out)[names(out) == old] <- rename[[old]]
-  preferred <- c("Variable", "Description", "Values", "Mode", "Pct. Mode", "Least Freq.", "Pct. Least Freq.", "Min", "1Q", "Med", "3Q", "Max", "Mean", "SD", "N")
+
+  # Only summary-statistic tables use the canonical summary-column ordering.
+  # A standalone N column is common in result tables and must not silently move
+  # ahead of their inferential columns (for example, Result/Estimate/SE/p-value).
+  summary_fields <- c(
+    "Variable", "Description", "Values", "Mode", "Pct. Mode",
+    "Least Freq.", "Pct. Least Freq.", "Min", "1Q", "Med", "3Q",
+    "Max", "Mean", "SD"
+  )
+  if (!any(names(out) %in% summary_fields)) return(out)
+
+  preferred <- c(summary_fields, "N")
   ordered <- c(intersect(preferred, names(out)), setdiff(names(out), preferred))
   out[, ordered, drop = FALSE]
 }
@@ -468,6 +479,12 @@ sanitize_table_for_kable <- function(df) {
   render_table_math_labels(df)
 }
 
+escape_table_cells_for_latex <- function(df) {
+  df <- as.data.frame(df, check.names = FALSE, stringsAsFactors = FALSE)
+  for (nm in names(df)) df[[nm]] <- latex_escape_text(df[[nm]])
+  df
+}
+
 regression_summary_start <- function(df) {
   if (!"Term" %in% names(df)) return(NA_integer_)
   terms <- table_contract_column_strings(df$Term)
@@ -595,6 +612,7 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   df_render <- wrap_table_text_columns(grouped$data, name)
   wide_summary_table <- name %in% c("sum_tbl_iv", "sum_tbl_probit_quant", "sum_tbl_probit_cat")
   regression_table <- name %in% c("probit_mfx", "fs_cons", "cons_iv") && !is_formatted_status_table(df_render)
+  paired_estimate_se_table <- identical(name, "paper_schooling_welfare")
   compact_result_table <- name %in% c(
     "paper_schooling_welfare", "paper_language_behavior", "paper_conversion_complements"
   )
@@ -607,6 +625,12 @@ save_table_tex <- function(table, path, name, public = TRUE) {
     tex <- modelsummary_regression_table(df_render, name)
     return(write_table_tex(tex, path, name))
   }
+
+  # kableExtra requires escape = FALSE below because header/group styling emits
+  # LaTeX. Escape ordinary cell text first so `%`, `&`, `_`, and other LaTeX
+  # metacharacters cannot corrupt the alignment. kableExtra's own documentation
+  # explicitly requires manual escaping when raw LaTeX output is enabled.
+  df_render <- escape_table_cells_for_latex(df_render)
   tex <- kableExtra::kbl(
     df_render,
     format = "latex",
@@ -671,13 +695,20 @@ save_table_tex <- function(table, path, name, public = TRUE) {
       kableExtra::column_spec(1, width = "5.4cm") |>
       kableExtra::column_spec(2:ncol(df_render), width = "2.0cm")
   }
-  if (compact_result_table && nrow(df_render) >= 3L) {
-    # Standard errors occupy every second row; a rule before Observations cleanly
-    # separates coefficient estimates from sample-size information.
+  if (paired_estimate_se_table && nrow(df_render) >= 3L) {
+    # Only the schooling-welfare table stacks estimate and SE rows and ends in
+    # Observations. Other compact result tables have semantic panel groups, so a
+    # positional rule would split a substantive panel at an arbitrary row.
     tex <- kableExtra::row_spec(tex, nrow(df_render) - 1L, hline_after = TRUE)
-    tex <- tex |>
-      kableExtra::column_spec(1, width = "3.8cm") |>
-      kableExtra::column_spec(2:ncol(df_render), width = "2.45cm")
+  }
+  if (compact_result_table) {
+    widths <- switch(
+      name,
+      paper_schooling_welfare = c("3.8cm", rep("2.45cm", 4L)),
+      paper_language_behavior = c("4.1cm", rep("1.25cm", 4L), "1.0cm", "1.8cm", "3.0cm"),
+      paper_conversion_complements = c("4.0cm", rep("2.8cm", 3L))
+    )
+    tex <- apply_table_column_widths(tex, widths)
   }
   if (schooling_market_table) {
     tex <- tex |>

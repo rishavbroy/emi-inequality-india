@@ -1126,6 +1126,28 @@ test_that("paper schooling-market table fails closed when a canonical specificat
   )
 })
 
+
+
+test_that("public LaTeX cells escape metacharacters before raw kable styling", {
+  escaped <- latex_escape_text(c("10% of children", "A & B", "x_y"))
+  expect_identical(escaped, c("10\\% of children", "A \\& B", "x\\_y"))
+
+  df <- data.frame(Variable = "Enrollment", `Year / unit` = "2007-08; % of children", check.names = FALSE)
+  out <- escape_table_cells_for_latex(df)
+  expect_identical(out$`Year / unit`, "2007-08; \\% of children")
+})
+
+test_that("result tables preserve authored column order when N is present", {
+  df <- data.frame(
+    Result = "Continuous distance -> English acquisition",
+    Estimate = "2.234", SE = "1.448", `p-value` = "0.123",
+    `Partial R2` = "0.025", N = "1,566", Sample = "National",
+    check.names = FALSE, stringsAsFactors = FALSE
+  )
+  out <- format_public_summary_columns(df)
+  expect_identical(names(out), names(df))
+})
+
 paper_language_behavior_fixture <- function() {
   registry <- paper_language_behavior_registry()
   coefficients <- data.frame(
@@ -1171,6 +1193,12 @@ test_that("paper language-behavior table is the bounded national and Hindi-belt 
   table <- make_paper_language_behavior_table(paper_language_behavior_fixture())
   expect_identical(attr(table, "csv_data"), csv)
   expect_equal(sum(grepl("^Panel [AB]\\.", table$Result)), 2L)
+
+  formatted <- format_table_for_output(table, public = TRUE)
+  expect_identical(names(formatted), names(table))
+  grouped <- summary_table_groups(formatted)
+  expect_equal(nrow(grouped$groups), 2L)
+  expect_equal(nrow(grouped$data), 7L)
 })
 
 test_that("paper language-behavior table fails closed when a registered result disappears", {
