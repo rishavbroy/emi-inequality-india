@@ -256,3 +256,15 @@ Both models use state fixed effects and compact Census-2001 controls, and the tw
 interaction p-values receive Holm adjustment. This family is descriptive effect
 modification: EC05 IT is neither an exclusion control nor a proxy for unavailable
 2005-to-2013 IT growth.
+
+### Opt-in paper exhibits with extended-only sources
+
+`paper/paper-new.qmd` is deliberately outside the strict public target graph.
+When a working-paper exhibit depends on a local source that cannot be part of
+the public replication bundle, its analysis remains in the extended target
+family. The `paper-new` Make target explicitly materializes the minimum required
+extended analytical targets, and the standalone renderer may then read those
+cached target objects with the documented external `{targets}` inspection API.
+Presentation code consumes the R objects themselves rather than generated CSVs.
+This boundary prevents working-paper communication needs from silently widening
+the redistributable public-input contract.

@@ -12,6 +12,7 @@ public_table_caption_text <- function(name) {
     sum_tbl_iv = "Summary Statistics for 2SLS Model",
     paper_core_summary = "Core Variables and Summary Statistics",
     paper_schooling_welfare = "Schooling Margins and Later Household Consumption",
+    paper_schooling_market_geography = "How the Schooling Market Is Geographically Organized",
     fs_cons = "First-Stage Regression: EMI Exposure on Linguistic Distance",
     cons_iv = "Second-Stage Regression: Real Log Consumption Growth on EMI Exposure (Fitted)",
     ame_results = "Average Marginal Effects Results",
@@ -34,6 +35,12 @@ public_table_note <- function(name) {
       "Schooling measures use NSS 2007-08 children age 5-19; linguistic distance and predetermined capacity use Census-2001 geography.",
       "Modern consumption rows summarize preferred-eligible small-domain district estimates after the registered survey-design, price, and lineage gates.",
       "p10 and p90 are the 10th and 90th percentiles. Sources and construction details are documented in the data appendix."
+    ),
+    paper_schooling_market_geography = paste(
+      "Panel A reports standardized linguistic-distance associations under the canonical raw, region-plus-controls, and state-plus-controls specifications.",
+      "Panel B reports R-squared from regressions of each district measure on state indicators alone.",
+      "Panel C reports raw and state-residual Pearson correlations between DISE 2007-08 English-medium enrollment shares and the corresponding NSS measures.",
+      "Each Panel-A outcome uses one fixed complete-case sample across specifications; DISE is independent administrative validation rather than a replacement treatment definition."
     ),
     paper_schooling_welfare = paste(
       "Entries are percent changes in real mean MPCE associated with a 10 percentage-point increase in the schooling margin; state-clustered standard errors are in parentheses.",

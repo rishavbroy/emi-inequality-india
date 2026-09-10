@@ -596,6 +596,7 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   wide_summary_table <- name %in% c("sum_tbl_iv", "sum_tbl_probit_quant", "sum_tbl_probit_cat")
   regression_table <- name %in% c("probit_mfx", "fs_cons", "cons_iv") && !is_formatted_status_table(df_render)
   compact_result_table <- identical(name, "paper_schooling_welfare")
+  schooling_market_table <- identical(name, "paper_schooling_market_geography")
   if (!regression_table) {
     names(df_render) <- table_header_labels(df_render, name)
   }
@@ -638,7 +639,7 @@ save_table_tex <- function(table, path, name, public = TRUE) {
     latex_options = latex_options,
     full_width = FALSE,
     position = "center",
-    font_size = if (wide_summary_table || regression_table || compact_result_table) 9 else NULL
+    font_size = if (wide_summary_table || regression_table || compact_result_table || schooling_market_table) 9 else NULL
   )
   if (nrow(grouped$groups)) {
     for (i in rev(seq_len(nrow(grouped$groups)))) {
@@ -675,6 +676,12 @@ save_table_tex <- function(table, path, name, public = TRUE) {
     tex <- tex |>
       kableExtra::column_spec(1, width = "3.8cm") |>
       kableExtra::column_spec(2:ncol(df_render), width = "2.45cm")
+  }
+  if (schooling_market_table) {
+    tex <- tex |>
+      kableExtra::column_spec(1, width = "3.8cm") |>
+      kableExtra::column_spec(2, width = "3.0cm") |>
+      kableExtra::column_spec(3:ncol(df_render), width = "2.15cm")
   }
   if (regression_table) {
     header <- switch(name,

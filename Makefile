@@ -135,6 +135,7 @@ paper: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
 	EMI_CONFIG=config/final.yml Rscript scripts/run_targets_checked.R --targets paper
 
 paper-new: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
+	EMI_CONFIG=config/final.yml EMI_RUN_EXTENDED_DIAGNOSTICS=true Rscript scripts/run_targets_checked.R --targets english_opportunity_district_mechanisms,dise_iv_nss_validation
 	EMI_CONFIG=config/final.yml Rscript scripts/run_targets_checked.R --targets report_values,figure_files,table_files
 	EMI_CONFIG=config/final.yml Rscript scripts/render_paper_new.R
 	Rscript scripts/audit_crossrefs.R --strict-report paper/paper-new.qmd

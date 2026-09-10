@@ -123,3 +123,17 @@ the same estimators at finer granularity.
 ### Weak-IV diagnostic artifact retention
 
 The DISE structural-IV diagnostics still compute Anderson--Rubin grids in memory for each registered construct/specification and retain those grids in the cached diagnostic object. The exhaustive construct-by-specification grid is not serialized as `dise_anderson_rubin_grid.csv`: `dise_weak_iv_outcomes.csv` already persists the beta-zero test, confidence-set bounds/components, and weak-identification status needed for scientific review. This follows the project-wide objects-first/artifacts-last rule and avoids materializing a tens-of-megabytes intermediate table whose rows are only the pointwise inversion path.
+
+## Working-paper validation exhibit
+
+The strict public target graph still does not require the local DISE archive.
+The opt-in `paper-new` build is different: Table 2 deliberately uses DISE as an
+independent administrative validation of the NSS schooling measure. `make
+paper-new` therefore materializes only the cached extended targets
+`english_opportunity_district_mechanisms` and `dise_iv_nss_validation` before
+rendering the working paper. `scripts/render_paper_new.R` reads those completed
+target objects outside the running DAG and passes them directly to the
+paper-table builder. It never reads a generated diagnostic CSV back as an
+analysis input. This preserves the public data-availability boundary while
+keeping the working-paper exhibit reproducible for researchers with the local
+archival source package.

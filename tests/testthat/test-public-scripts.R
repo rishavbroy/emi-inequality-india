@@ -1465,3 +1465,22 @@ test_that("paper first-stage absorption analysis is core while forensic persiste
     fixed = TRUE
   )
 })
+
+test_that("paper-new Table 2 is opt-in and does not widen the strict public data contract", {
+  makefile <- repo_text("Makefile")
+  renderer <- repo_text("scripts", "render_paper_new.R")
+  paper_new <- repo_text("paper", "paper-new.qmd")
+  public_contract <- repo_text("scripts", "public_output_contract.R")
+
+  expect_match(
+    makefile,
+    "EMI_RUN_EXTENDED_DIAGNOSTICS=true Rscript scripts/run_targets_checked.R --targets english_opportunity_district_mechanisms,dise_iv_nss_validation",
+    fixed = TRUE
+  )
+  expect_match(renderer, "targets::tar_read(english_opportunity_district_mechanisms)", fixed = TRUE)
+  expect_match(renderer, "targets::tar_read(dise_iv_nss_validation)", fixed = TRUE)
+  expect_match(renderer, "make_paper_schooling_market_geography_table", fixed = TRUE)
+  expect_match(paper_new, "paper_schooling_market_geography.tex", fixed = TRUE)
+  expect_match(paper_new, "tbl-schooling-market-geography", fixed = TRUE)
+  expect_false(grepl("paper_schooling_market_geography", public_contract, fixed = TRUE))
+})

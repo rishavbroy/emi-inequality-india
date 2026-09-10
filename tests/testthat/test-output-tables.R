@@ -1023,3 +1023,105 @@ test_that("paper schooling-welfare table rejects incomplete model status instead
     fixed = TRUE
   )
 })
+
+test_that("paper schooling-market table preserves three distinct statistical panels", {
+  measures <- paper_schooling_market_measure_registry()
+  estimates <- do.call(rbind, lapply(seq_len(nrow(measures)), function(i) {
+    data.frame(
+      measure_id = measures$measure_id[[i]],
+      specification_id = c("unadjusted", "region_main", "state_main"),
+      standardized_estimate = c(0.4, 0.2, 0.1) + i / 1000,
+      n = 500L,
+      stringsAsFactors = FALSE
+    )
+  }))
+  validation <- data.frame(
+    comparison = c("enrolled_total_denominator", "all_child_context"),
+    n = c(520L, 520L), pearson = c(0.896, 0.882),
+    state_residual_pearson = c(0.607, 0.562), status = "estimated",
+    stringsAsFactors = FALSE
+  )
+  panel <- data.frame(
+    state_code_2001 = rep(c("01", "02"), each = 4L),
+    ling_distance_nonzero_mean = c(1:4, 5:8),
+    emi_exposure_all_children_0708 = c(1:4, 5:8),
+    emi_share_enrolled_0708 = c(2:5, 6:9),
+    emi_share_enrolled_public_0708 = c(3:6, 7:10),
+    emi_share_enrolled_private_0708 = c(4:7, 8:11),
+    enrollment_rate_0708 = c(60:63, 70:73),
+    stringsAsFactors = FALSE
+  )
+
+  table <- make_paper_schooling_market_geography_table(
+    list(estimates = estimates), validation, panel
+  )
+  csv <- table_csv_data(table)
+
+  expect_equal(nrow(csv), 14L)
+  expect_identical(
+    unique(csv$panel),
+    c("association", "state_organization", "administrative_validation")
+  )
+  expect_equal(c(
+    sum(csv$panel == "association"),
+    sum(csv$panel == "state_organization"),
+    sum(csv$panel == "administrative_validation")
+  ), c(6L, 6L, 2L))
+  expect_false(any(c("status", "reason") %in% names(csv)))
+  expect_equal(
+    csv$raw[csv$measure_id == "enrolled_total_denominator"], 0.896
+  )
+  expect_equal(
+    csv$state_controls_or_residual[csv$measure_id == "enrolled_total_denominator"],
+    0.607
+  )
+  expect_equal(sum(grepl("^Panel [ABC]\\.", table$Measure)), 3L)
+})
+
+test_that("paper state-organization statistic is the state-indicator R-squared", {
+  x <- data.frame(
+    state_code_2001 = rep(c("01", "02"), each = 3L),
+    perfectly_sorted = c(1, 1, 1, 4, 4, 4),
+    no_state_signal = c(1, 2, 3, 1, 2, 3),
+    stringsAsFactors = FALSE
+  )
+  expect_equal(paper_state_membership_r_squared(x, "perfectly_sorted"), 1)
+  expect_equal(
+    paper_state_membership_r_squared(x, "no_state_signal"), 0,
+    tolerance = 1e-12
+  )
+})
+
+test_that("paper schooling-market table fails closed when a canonical specification is missing", {
+  measures <- paper_schooling_market_measure_registry()
+  estimates <- do.call(rbind, lapply(seq_len(nrow(measures)), function(i) {
+    data.frame(
+      measure_id = measures$measure_id[[i]],
+      specification_id = c("unadjusted", "region_main", "state_main"),
+      standardized_estimate = c(0.4, 0.2, 0.1), n = 500L,
+      stringsAsFactors = FALSE
+    )
+  }))
+  estimates <- estimates[-1L, ]
+  validation <- data.frame(
+    comparison = c("enrolled_total_denominator", "all_child_context"),
+    n = 500L, pearson = 0.8, state_residual_pearson = 0.6,
+    status = "estimated", stringsAsFactors = FALSE
+  )
+  panel <- data.frame(
+    state_code_2001 = c("01", "02"),
+    ling_distance_nonzero_mean = c(1, 2),
+    emi_exposure_all_children_0708 = c(1, 2),
+    emi_share_enrolled_0708 = c(1, 2),
+    emi_share_enrolled_public_0708 = c(1, 2),
+    emi_share_enrolled_private_0708 = c(1, 2),
+    enrollment_rate_0708 = c(1, 2), stringsAsFactors = FALSE
+  )
+  expect_error(
+    make_paper_schooling_market_geography_table(
+      list(estimates = estimates), validation, panel
+    ),
+    "requires all three canonical specifications",
+    fixed = TRUE
+  )
+})
