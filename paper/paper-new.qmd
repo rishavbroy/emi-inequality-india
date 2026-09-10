@@ -278,6 +278,10 @@ The scale and dispersion of the paper's central schooling, linguistic, predeterm
 render_public_table("../outputs/tables/main/paper_core_summary.tex", "paper_core_summary")
 ```
 
+The same district school market does not imply the same schooling opportunity set for every child. @fig-unequal-schooling-access summarizes the direct NSS-64 within-district gaps between Scheduled Tribe, Scheduled Caste, and Other Backward Class children and children in the residual Other group. Panel A compares the four schooling margins most relevant to the paper; Panel B shows the predeclared rural/urban cross-cut only for the two English-oriented margins where sectoral access is most informative. These are descriptive district gaps rather than causal effects or regression-adjusted estimates.
+
+![Unequal access to English-oriented schooling. Points report mean within-district percentage-point gaps for OBC, SC, and ST children relative to the Other social-group category. Panel A shows overall gaps in enrollment, EMI among enrolled children, private enrollment, and all-child private EMI exposure. Panel B shows rural and urban gaps for EMI among enrolled children and private EMI exposure.](../outputs/figures/main/paper_unequal_schooling_access.pdf){#fig-unequal-schooling-access fig-pos="H" width="100%"}
+
 
 
 

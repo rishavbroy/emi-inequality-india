@@ -610,3 +610,67 @@ test_that("public maps dissolve district geometry to state boundaries", {
   expect_equal(nrow(borders), 1L)
   expect_equal(as.character(borders$state), "01")
 })
+
+schooling_access_figure_fixture <- function() {
+  groups <- c("Other Backward Class", "Scheduled Caste", "Scheduled Tribe")
+  outcomes <- paper_schooling_access_outcome_registry()$outcome
+  access <- expand.grid(
+    social_group = groups,
+    outcome = outcomes,
+    stringsAsFactors = FALSE
+  )
+  access$reference_group <- "Other"
+  access$mean_district_gap_percentage_points <- -seq_len(nrow(access))
+
+  cross_outcomes <- paper_schooling_access_outcome_registry()$outcome[
+    paper_schooling_access_outcome_registry()$panel_b
+  ]
+  cross <- expand.grid(
+    social_group = groups,
+    outcome = cross_outcomes,
+    stratum = c("Rural", "Urban"),
+    stringsAsFactors = FALSE
+  )
+  cross$reference_group <- "Other"
+  cross$crosscut <- "sector"
+  cross$mean_district_gap_percentage_points <- -seq_len(nrow(cross)) / 2
+  list(access_summary = access, access_crosscuts = cross)
+}
+
+
+test_that("paper schooling-access figure uses the bounded Response-9 comparison", {
+  out <- paper_schooling_access_plot_data(schooling_access_figure_fixture())
+
+  expect_equal(nrow(out), 24L)
+  expect_equal(sum(out$panel == "A. Overall within-district gap"), 12L)
+  expect_equal(sum(out$panel == "B. Rural and urban gaps"), 12L)
+  expect_setequal(as.character(unique(out$group)), c("OBC", "SC", "ST"))
+  expect_setequal(
+    as.character(unique(out$outcome_label[out$panel == "A. Overall within-district gap"])),
+    c("Enrollment", "EMI among enrolled", "Private enrollment", "Private EMI exposure")
+  )
+  expect_setequal(
+    as.character(unique(out$outcome_label[out$panel == "B. Rural and urban gaps"])),
+    c("EMI among enrolled", "Private EMI exposure")
+  )
+  expect_setequal(
+    as.character(unique(out$stratum[out$panel == "B. Rural and urban gaps"])),
+    c("Rural", "Urban")
+  )
+})
+
+
+test_that("paper schooling-access figure activates only with both required evidence layers", {
+  cfg <- list(mode = "final", output_formats = list(figures = "png"))
+  panel <- poster_map_fixture(1L)
+
+  missing <- make_figures(panel, character(), cfg, schooling_access = NULL)
+  expect_identical(missing$paper_unequal_schooling_access$kind, "status")
+
+  available <- make_figures(
+    panel, character(), cfg,
+    schooling_access = schooling_access_figure_fixture()
+  )
+  expect_identical(available$paper_unequal_schooling_access$kind, "schooling_access")
+  expect_identical(attr(available, "schooling_access")$access_summary$reference_group[[1]], "Other")
+})

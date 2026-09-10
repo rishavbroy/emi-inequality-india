@@ -94,7 +94,7 @@ add_poster_residual_variables <- function(district_panel) {
 #' @return A named list of figure specifications consumed by save_figures().
 make_figures <- function(
     district_panel, raw_ilo_figures, cfg, iv_models = NULL,
-    map_geometry = NULL, consumption_iv_dynamics = NULL) {
+    map_geometry = NULL, consumption_iv_dynamics = NULL, schooling_access = NULL) {
   district_panel <- add_poster_residual_variables(district_panel)
 
   spec <- preferred_iv_variables()
@@ -155,6 +155,19 @@ make_figures <- function(
       kind = if (!is.null(consumption_iv_dynamics) &&
         nrow(safe_df(consumption_iv_dynamics$summary %||% data.frame()))) {
         "consumption_iv_dynamics"
+      } else {
+        "status"
+      }
+    ),
+    paper_unequal_schooling_access = figure_spec(
+      "paper_unequal_schooling_access",
+      "paper_unequal_schooling_access.png",
+      "Unequal access to English-oriented schooling",
+      "Mean within-district percentage-point gaps relative to Other social groups.",
+      kind = if (!is.null(schooling_access) &&
+        nrow(safe_df(schooling_access$access_summary %||% data.frame())) &&
+        nrow(safe_df(schooling_access$access_crosscuts %||% data.frame()))) {
+        "schooling_access"
       } else {
         "status"
       }
@@ -245,6 +258,7 @@ make_figures <- function(
   attr(out, "map_geometry") <- map_geometry
   attr(out, "iv_models") <- iv_models
   attr(out, "consumption_iv_dynamics") <- consumption_iv_dynamics
+  attr(out, "schooling_access") <- schooling_access
   out
 }
 

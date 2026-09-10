@@ -10,23 +10,9 @@ extended_diagnostic_target_definitions <- function() {
     extended_dise_target_definitions(),
     extended_iv_target_definitions(),
     list(
-      tar_target(
-        nss64_schooling_social_group_margins,
-        build_education_exposure_2007_by_social_group(selection_data)
-      ),
-      tar_target(
-        nss64_schooling_social_group_crosscut_margins,
-        build_education_exposure_2007_by_social_group_crosscut(selection_data)
-      ),
-      tar_target(
-        nss64_schooling_social_group_diagnostic,
-        build_nss64_schooling_social_group_diagnostic(
-          nss64_schooling_social_group_margins,
-          district_panel,
-          census_2001_control_registry,
-          nss64_schooling_social_group_crosscut_margins
-        )
-      ),
+      # The social-group diagnostic now has a main-paper figure consumer, so its
+      # analytical object lives in the core graph. Extended mode persists the
+      # full forensic CSV bundle without recomputing a parallel analysis.
       tar_target(
         diag_ext_nss64_schooling_social_group,
         save_nss64_schooling_social_group_diagnostic(

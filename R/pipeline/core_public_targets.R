@@ -28,12 +28,31 @@ core_public_target_definitions <- function() {
     tar_target(diag_public_multicollinearity, save_multicollinearity_diagnostics(diagnose_multicollinearity(district_panel, revised_iv_models, cfg)), format = "file"),
 
     tar_target(
+      nss64_schooling_social_group_margins,
+      build_education_exposure_2007_by_social_group(selection_data)
+    ),
+    tar_target(
+      nss64_schooling_social_group_crosscut_margins,
+      build_education_exposure_2007_by_social_group_crosscut(selection_data)
+    ),
+    tar_target(
+      nss64_schooling_social_group_diagnostic,
+      build_nss64_schooling_social_group_diagnostic(
+        nss64_schooling_social_group_margins,
+        district_panel,
+        census_2001_control_registry,
+        nss64_schooling_social_group_crosscut_margins
+      )
+    ),
+
+    tar_target(
       figures,
       make_figures(
         district_panel, raw_ilo_figures, cfg,
         iv_models = revised_iv_models,
         map_geometry = lineage_geometry_2001,
-        consumption_iv_dynamics = consumption_iv_dynamics
+        consumption_iv_dynamics = consumption_iv_dynamics,
+        schooling_access = nss64_schooling_social_group_diagnostic
       )
     ),
     tar_target(figure_files, save_figures(figures, cfg), format = "file"),

@@ -1422,3 +1422,17 @@ test_that("working paper is opt-in and excluded from strict public contracts", {
   expect_match(working_paper, "paper_core_summary.tex", fixed = TRUE)
   expect_false(grepl("collage_main_maps.pdf", working_paper, fixed = TRUE))
 })
+
+
+test_that("main-paper schooling-access analysis is core while forensic persistence stays extended", {
+  core <- repo_text("R", "pipeline", "core_public_targets.R")
+  extended <- repo_text("R", "pipeline", "extended_diagnostic_targets.R")
+  working_paper <- repo_text("paper", "paper-new.qmd")
+
+  expect_match(core, "nss64_schooling_social_group_diagnostic", fixed = TRUE)
+  expect_match(core, "schooling_access = nss64_schooling_social_group_diagnostic", fixed = TRUE)
+  expect_false(grepl("build_nss64_schooling_social_group_diagnostic(", extended, fixed = TRUE))
+  expect_match(extended, "save_nss64_schooling_social_group_diagnostic", fixed = TRUE)
+  expect_match(working_paper, "paper_unequal_schooling_access.pdf", fixed = TRUE)
+  expect_match(working_paper, "fig-unequal-schooling-access", fixed = TRUE)
+})

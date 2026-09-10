@@ -929,6 +929,123 @@ save_consumption_iv_dynamic_figure <- function(
   )
 }
 
+paper_schooling_access_outcome_registry <- function() {
+  data.frame(
+    outcome = c(
+      "enrollment_rate_0708",
+      "emi_share_enrolled_0708",
+      "private_share_enrolled_0708",
+      "private_emi_exposure_all_children_0708"
+    ),
+    label = c(
+      "Enrollment",
+      "EMI among enrolled",
+      "Private enrollment",
+      "Private EMI exposure"
+    ),
+    panel_a = TRUE,
+    panel_b = c(FALSE, TRUE, FALSE, TRUE),
+    stringsAsFactors = FALSE
+  )
+}
+
+paper_schooling_access_group_labels <- function(x) {
+  labels <- c(
+    "Other Backward Class" = "OBC",
+    "Scheduled Caste" = "SC",
+    "Scheduled Tribe" = "ST"
+  )
+  out <- unname(labels[as.character(x)])
+  out[is.na(out)] <- as.character(x)[is.na(out)]
+  out
+}
+
+paper_schooling_access_plot_data <- function(diagnostic) {
+  registry <- paper_schooling_access_outcome_registry()
+  groups <- c("Other Backward Class", "Scheduled Caste", "Scheduled Tribe")
+
+  main <- safe_df(diagnostic$access_summary %||% data.frame())
+  required <- c("social_group", "reference_group", "outcome", "mean_district_gap_percentage_points")
+  if (length(setdiff(required, names(main)))) return(data.frame())
+  main <- main[
+    main$social_group %in% groups &
+      main$reference_group == "Other" &
+      main$outcome %in% registry$outcome[registry$panel_a],
+    , drop = FALSE
+  ]
+  main$panel <- "A. Overall within-district gap"
+  main$stratum <- "All children"
+
+  cross <- safe_df(diagnostic$access_crosscuts %||% data.frame())
+  cross_required <- c(required, "crosscut", "stratum")
+  if (length(setdiff(cross_required, names(cross)))) return(data.frame())
+  cross <- cross[
+    cross$social_group %in% groups &
+      cross$reference_group == "Other" &
+      cross$crosscut == "sector" &
+      cross$stratum %in% c("Rural", "Urban") &
+      cross$outcome %in% registry$outcome[registry$panel_b],
+    , drop = FALSE
+  ]
+  cross$panel <- "B. Rural and urban gaps"
+
+  keep <- c("social_group", "outcome", "mean_district_gap_percentage_points", "panel", "stratum")
+  out <- safe_bind_rows(list(main[keep], cross[keep]))
+  if (!nrow(out)) return(out)
+  out$group <- paper_schooling_access_group_labels(out$social_group)
+  out$outcome_label <- registry$label[match(out$outcome, registry$outcome)]
+  out$gap <- suppressWarnings(as.numeric(out$mean_district_gap_percentage_points))
+  out <- out[is.finite(out$gap) & !is.na(out$outcome_label), , drop = FALSE]
+  out$group <- factor(out$group, levels = c("OBC", "SC", "ST"))
+  out$panel <- factor(
+    out$panel,
+    levels = c("A. Overall within-district gap", "B. Rural and urban gaps")
+  )
+  out$stratum <- factor(out$stratum, levels = c("All children", "Rural", "Urban"))
+  out$outcome_label <- factor(
+    out$outcome_label,
+    levels = rev(registry$label)
+  )
+  rownames(out) <- NULL
+  out
+}
+
+save_schooling_access_figure <- function(spec, path_base, formats, diagnostic) {
+  data <- paper_schooling_access_plot_data(diagnostic)
+  if (!nrow(data)) return(save_status_figure(spec, format_path(path_base, "png")))
+
+  p <- ggplot2::ggplot(
+    data,
+    ggplot2::aes(x = gap, y = outcome_label, shape = stratum)
+  ) +
+    ggplot2::geom_vline(xintercept = 0, linewidth = 0.45, linetype = 2) +
+    ggplot2::geom_point(size = 2.5, position = ggplot2::position_dodge(width = 0.45)) +
+    ggplot2::facet_grid(panel ~ group, scales = "free_y", space = "free_y") +
+    ggplot2::labs(
+      title = spec$title,
+      subtitle = spec$subtitle,
+      x = "Mean gap relative to Other (percentage points)",
+      y = NULL,
+      shape = "Sample",
+      caption = paste(
+        "NSS 64th Round, children age 5-19.",
+        "Each point is the mean across common districts of the social-group minus Other district gap.",
+        "Panel B uses the predeclared rural/urban cross-cut; no regression adjustment is applied."
+      )
+    ) +
+    ggplot2::theme_minimal(base_size = 11) +
+    ggplot2::theme(
+      panel.grid.minor = ggplot2::element_blank(),
+      panel.grid.major.y = ggplot2::element_blank(),
+      strip.text = ggplot2::element_text(face = "bold"),
+      axis.title.x = ggplot2::element_text(face = "bold"),
+      plot.caption = ggplot2::element_text(size = 8.5, hjust = 0),
+      legend.position = "bottom"
+    )
+
+  save_plot_formats(p, path_base, formats, width = 8.2, height = 6.2, dpi = 300)
+}
+
 #' save figures
 #'
 #' @return A character vector of generated figure and manifest paths.
@@ -960,6 +1077,10 @@ save_figures <- function(figures, cfg) {
       consumption_iv_dynamics = save_consumption_iv_dynamic_figure(
         spec, path_base, formats,
         attr(figures, "consumption_iv_dynamics")
+      ),
+      schooling_access = save_schooling_access_figure(
+        spec, path_base, formats,
+        attr(figures, "schooling_access")
       ),
       status = save_status_figure(spec, format_path(path_base, "png")),
       save_distribution_figure(spec, format_path(path_base, "png"), attr(figures, "district_panel") %||% data.frame())
