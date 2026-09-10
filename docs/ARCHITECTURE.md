@@ -257,14 +257,15 @@ interaction p-values receive Holm adjustment. This family is descriptive effect
 modification: EC05 IT is neither an exclusion control nor a proxy for unavailable
 2005-to-2013 IT growth.
 
-### Opt-in paper exhibits with extended-only sources
+### Publication dependencies versus extended diagnostics
 
-`paper/paper-new.qmd` is deliberately outside the strict public target graph.
-When a working-paper exhibit depends on a local source that cannot be part of
-the public replication bundle, its analysis remains in the extended target
-family. The `paper-new` Make target explicitly materializes the minimum required
-extended analytical targets, and the standalone renderer may then read those
-cached target objects with the documented external `{targets}` inspection API.
-Presentation code consumes the R objects themselves rather than generated CSVs.
-This boundary prevents working-paper communication needs from silently widening
-the redistributable public-input contract.
+`paper/paper-new.qmd` now runs in the strict publication graph alongside the legacy
+`paper.qmd`. Whether a raw source can be redistributed is not the boundary between
+core and extended work: the project does not redistribute most raw research data.
+Instead, a target is core when a public/main-paper artifact consumes it. Baseline
+DISE ingestion, deterministic lineage, the 2007-08 treatment construction, the
+DISE--NSS validation, and the schooling-market association object therefore live
+in `core_dise_target_definitions()`. Longitudinal age-denominator, school-quality,
+alternative-construct, and weak-IV permutation work remains extended until a paper
+artifact depends on it. This keeps the strict graph scientifically complete without
+turning every forensic diagnostic into a publication dependency.

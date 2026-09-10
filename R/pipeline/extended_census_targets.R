@@ -40,20 +40,6 @@ extended_census_target_definitions <- function() {
       )
     ),
     tar_target(
-      english_opportunity_measure_registry_file,
-      english_opportunity_measure_registry_path(paths),
-      format = "file"
-    ),
-    tar_target(
-      english_opportunity_measure_registry,
-      read_english_opportunity_measure_registry(english_opportunity_measure_registry_file)
-    ),
-    tar_target(
-      diag_ext_english_opportunity_measure_registry,
-      save_english_opportunity_measure_registry(english_opportunity_measure_registry),
-      format = "file"
-    ),
-    tar_target(
       diag_ext_census_2001_c17_mechanism_files,
       save_census_c17_mechanism_diagnostics(census_2001_c17_mechanism),
       format = "file"

@@ -151,6 +151,12 @@ def path_tests(path):
             "test-overidentification.R",
             "test-spatial-weights.R",
         },
+        "R/pipeline/core_dise_targets.R": {
+            "test-dise.R",
+            "test-english-opportunity-mechanisms.R",
+            "test-output-tables.R",
+            "test-raw-file-manifest.R",
+        },
         "R/pipeline/extended_historical_targets.R": {
             "test-historical-baseline-1991.R",
             "test-historical-linguistic-validation.R",

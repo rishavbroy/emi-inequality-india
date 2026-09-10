@@ -606,7 +606,7 @@ test_that("SHRUG Census-2011 PCA population denominator is manifest-backed", {
   expect_identical(source$current_or_future, "current")
 })
 
-test_that("DISE archive is optional but fully documented", {
+test_that("DISE archive is required because main-paper validation consumes it", {
   root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
   manifest <- read.csv(file.path(root, "data", "metadata", "file_manifest.csv"), stringsAsFactors = FALSE)
   sources <- read.csv(file.path(root, "data", "metadata", "data_sources.csv"), stringsAsFactors = FALSE)
@@ -614,10 +614,11 @@ test_that("DISE archive is optional but fully documented", {
   source <- sources[sources$source_id == "dise_district_report_cards", , drop = FALSE]
 
   expect_equal(nrow(row), 1L)
-  expect_identical(tolower(as.character(row$required_for_current_pipeline)), "false")
+  expect_identical(tolower(as.character(row$required_for_current_pipeline)), "true")
   expect_identical(row$relative_path, "data/raw/dise_internet_archive")
   expect_equal(nrow(source), 1L)
-  expect_false(as.logical(source$used_in_current_pipeline))
+  expect_true(as.logical(source$used_in_current_pipeline))
+  expect_identical(source$current_or_future, "current")
   expect_match(source$license_or_terms_notes, "redistribution rights are not asserted", ignore.case = TRUE)
   expect_true(file.exists(file.path(root, "docs", "DISE_TREATMENTS.md")))
 })

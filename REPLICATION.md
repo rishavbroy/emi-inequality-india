@@ -25,6 +25,7 @@ The canonical raw source directories are:
 - `data/raw/nss/nss_2007_consumption_64/`
   - Detailed NSS-64 Schedule 1.0 Block-3 household consumption; the canonical welfare pipeline uses `Household Characteristics.sav` and validates its released MPCE against NSS Report 530 before deflation.
 - `data/raw/nss/nss_2017_education_75/`
+- `data/raw/dise_internet_archive/` (main-paper DISE administrative validation)
 - `data/raw/census_2001/languages/C16/`
 - `data/raw/census_2001/religion/C01/`
 - `data/raw/census_2001/education/C08/`
@@ -121,7 +122,7 @@ make check-public-final
 make check-public-final-no-samples
 ```
 
-`make paper-new` is an opt-in render of `paper/paper-new.qmd`. It refreshes the shared report-value/table/figure dependencies but does not add the working draft to the strict public target graph; public checks and application samples continue to use `paper/paper.qmd`.
+`make paper-new` renders the `paper_new` target from the same strict graph used by the final build. The working draft is therefore continuously checked against its table, figure, report-value, and raw-data dependencies. Application samples continue to use manually approved excerpts from `paper/paper.qmd`.
 
 `make check-public-draft` is the public-render smoke check. It tolerates explicitly deferred geometry/map work but still fails on scaffold prose, broken application-sample specs, render failures, and rendered placeholder phrases. `make check-public-final` uses [`config/final.yml`](config/final.yml), checks all current report quantities, audits final output artifacts, relies on cached `{targets}` render targets for the report, conference poster, docs, and application samples, checks PDF text when the Poppler `pdftotext` executable is available, and fails on visible public-document cross-reference artifacts or incomplete report values/cross-references. `make check-public-final-no-samples` runs the same final checks but omits application-sample targets, text checks, and output requirements.
 
