@@ -185,6 +185,8 @@ for the first stage, reduced form, 2SLS, and Anderson-Rubin test. This prevents
 schema merges or estimator-specific missingness from silently producing
 incomparable horizon diagnostics.
 
+The schooling-to-welfare bridge is also a core analytical object because the working paper now consumes its registered state-main common-support slice directly. The paper-facing Table 4 compares the five predeclared schooling margins across 2022-23 and 2023-24 ANCOVA/change estimands, reports effects per 10 percentage points with state-clustered standard errors, and uses the existing within-endpoint Holm adjustment for significance markers. Extended-diagnostic mode still persists the complete unadjusted/region/state bridge CSVs; it does not recompute a second bridge.
+
 The bridge prepares
 a `consumption_iv_panel`, compiles the welfare rows into the existing canonical
 IV specification schema, and reports complete-case coverage. Canonical IV

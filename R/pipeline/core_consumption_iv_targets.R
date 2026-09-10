@@ -40,6 +40,14 @@ core_consumption_iv_target_definitions <- function() {
       consumption_iv_dynamics_files,
       save_consumption_iv_dynamics(consumption_iv_dynamics),
       format = "file"
+    ),
+    tar_target(
+      schooling_consumption_bridge,
+      diagnose_schooling_consumption_bridge(
+        consumption_iv_panel,
+        consumption_iv_outcome_registry,
+        census_2001_control_registry
+      )
     )
   )
 }
