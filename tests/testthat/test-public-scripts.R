@@ -876,30 +876,41 @@ test_that("poster treatment equation uses the all-child exposure definition", {
 })
 
 
-test_that("poster citations resolve through the project bibliography", {
-  poster <- paste(
-    readLines(repo_file("posters", "2026_predoc_conference", "poster.qmd"), warn = FALSE),
-    collapse = "\n"
-  )
+test_that("active QMD citations resolve through the project bibliography", {
+  source(repo_file("scripts", "public_output_contract.R"), local = TRUE)
+  qmd_sources <- unique(c(public_qmd_sources(), "paper/paper-new.qmd"))
   bibliography <- readLines(repo_file("paper", "references.bib"), warn = FALSE)
-
-  citation_groups <- regmatches(
-    poster,
-    gregexpr("\\[@[^]]+\\]", poster, perl = TRUE)
-  )[[1]]
-  citation_keys <- unique(unlist(regmatches(
-    citation_groups,
-    gregexpr("@[[:alnum:]_:.#$%&+?/-]+", citation_groups, perl = TRUE)
-  )))
-  citation_keys <- sub("^@", "", citation_keys)
   bibliography_keys <- sub(
     "^@[[:alpha:]]+\\{([^,]+),.*$",
     "\\1",
     grep("^@[[:alpha:]]+\\{[^,]+,", bibliography, value = TRUE)
   )
 
+  expect_identical(anyDuplicated(bibliography_keys), 0L)
+
+  for (path in qmd_sources) {
+    text <- repo_text(path)
+    citation_tokens <- unique(unlist(regmatches(
+      text,
+      gregexpr("(?<![[:alnum:]_.+-])@[[:alnum:]_:.#$%&+?/-]+", text, perl = TRUE)
+    )))
+    citation_keys <- sub("^@", "", citation_tokens)
+    citation_keys <- sub("\\.$", "", citation_keys)
+    citation_keys <- citation_keys[!grepl(
+      "^(fig|tbl|sec|eq|app|thm|lem|cor)-",
+      citation_keys
+    )]
+    missing_keys <- setdiff(citation_keys, bibliography_keys)
+
+    expect_identical(
+      missing_keys,
+      character(),
+      info = paste(path, "has unresolved bibliography keys:", paste(missing_keys, collapse = ", "))
+    )
+  }
+
+  poster <- repo_text("posters", "2026_predoc_conference", "poster.qmd")
   expect_match(poster, "\nciteproc: true\n", fixed = TRUE)
-  expect_setequal(intersect(citation_keys, bibliography_keys), citation_keys)
 })
 
 
