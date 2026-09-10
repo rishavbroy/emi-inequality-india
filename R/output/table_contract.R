@@ -15,6 +15,7 @@ public_table_caption_text <- function(name) {
     paper_schooling_market_geography = "How the Schooling Market Is Geographically Organized",
     paper_language_behavior = "Linguistic Distance and Language Behavior",
     paper_conversion_complements = "Predetermined Complements to Economic Conversion",
+    paper_identification_boundary = "Identification Boundary: Linguistic Distance Does Not Isolate EMI",
     fs_cons = "First-Stage Regression: EMI Exposure on Linguistic Distance",
     cons_iv = "Second-Stage Regression: Real Log Consumption Growth on EMI Exposure (Fitted)",
     ame_results = "Average Marginal Effects Results",
@@ -56,6 +57,12 @@ public_table_note <- function(name) {
       "Panel B reports the corresponding 2005 IT-employment-environment interaction for all-child EMI per 10 percentage points and for linguistic distance per one Shastry degree.",
       regression_star_note(),
       "These are descriptive heterogeneity estimates and do not make the schooling exposure or linguistic-distance interaction causal."
+    ),
+    paper_identification_boundary = paste(
+      "Panel A compares excluded-instrument F statistics on one common district support for the unadjusted and state-fixed-effects plus predetermined-controls specifications; partial R-squared refers to the within-state specification.",
+      "The five-share language vector is a joint test, while the other rows contain one excluded scalar instrument. Historical 1991 reconstructions use a much smaller validated geography and are kept in the appendix rather than mixing noncomparable first-stage support into this panel.",
+      "Panel B reports conventional 2SLS coefficients for the registered 2004-05 to 2022-23 and 2023-24 long changes, alongside Montiel Olea-Pflueger effective F and Anderson-Rubin confidence-set topology.",
+      "Disconnected AR sets that span both signs do not identify the sign of an EMI effect even when beta=0 is rejected on the finite grid. These diagnostics define an identification boundary, not preferred causal estimates."
     ),
     paper_schooling_welfare = paste(
       "Entries are percent changes in real mean MPCE associated with a 10 percentage-point increase in the schooling margin; state-clustered standard errors are in parentheses.",

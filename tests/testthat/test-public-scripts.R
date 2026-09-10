@@ -1554,3 +1554,29 @@ test_that("paper conversion-complements evidence promotes only the required EC05
   expect_match(public_contract, "paper_conversion_complements.csv", fixed = TRUE)
   expect_match(public_contract, "paper_conversion_complements.tex", fixed = TRUE)
 })
+
+test_that("paper identification boundary promotes only the bounded alternative-distance first stage", {
+  targets <- repo_text("_targets.R")
+  core_identification <- repo_text("R", "pipeline", "core_identification_targets.R")
+  extended_iv <- repo_text("R", "pipeline", "extended_iv_targets.R")
+  core_public <- repo_text("R", "pipeline", "core_public_targets.R")
+  paper_new <- repo_text("paper", "paper-new.qmd")
+  public_contract <- repo_text("scripts", "public_output_contract.R")
+
+  expect_match(targets, "core_identification_target_definitions()", fixed = TRUE)
+  expect_match(core_identification, "alternative_distance_first_stage_base", fixed = TRUE)
+  expect_false(grepl(
+    "tar_target(\\n      alternative_distance_first_stage_base,",
+    extended_iv, fixed = TRUE
+  ))
+  expect_match(extended_iv, "augment_alternative_distance_diagnostics(", fixed = TRUE)
+  expect_match(extended_iv, "alternative_distance_first_stage_base", fixed = TRUE)
+  expect_match(core_public, "paper_identification_boundary", fixed = TRUE)
+  expect_match(core_public, "out$paper_identification_boundary", fixed = TRUE)
+  expect_match(paper_new, "paper_identification_boundary.tex", fixed = TRUE)
+  expect_match(paper_new, "tbl-identification-boundary", fixed = TRUE)
+  expect_false(grepl("tbl-fs-cons", paper_new, fixed = TRUE))
+  expect_false(grepl("tbl-cons-iv", paper_new, fixed = TRUE))
+  expect_match(public_contract, "paper_identification_boundary.csv", fixed = TRUE)
+  expect_match(public_contract, "paper_identification_boundary.tex", fixed = TRUE)
+})

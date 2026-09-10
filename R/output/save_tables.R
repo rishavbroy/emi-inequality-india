@@ -614,7 +614,8 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   regression_table <- name %in% c("probit_mfx", "fs_cons", "cons_iv") && !is_formatted_status_table(df_render)
   paired_estimate_se_table <- identical(name, "paper_schooling_welfare")
   compact_result_table <- name %in% c(
-    "paper_schooling_welfare", "paper_language_behavior", "paper_conversion_complements"
+    "paper_schooling_welfare", "paper_language_behavior", "paper_conversion_complements",
+    "paper_identification_boundary"
   )
   schooling_market_table <- identical(name, "paper_schooling_market_geography")
   if (!regression_table) {
@@ -706,7 +707,8 @@ save_table_tex <- function(table, path, name, public = TRUE) {
       name,
       paper_schooling_welfare = c("3.8cm", rep("2.45cm", 4L)),
       paper_language_behavior = c("4.1cm", rep("1.25cm", 4L), "1.0cm", "1.8cm", "3.0cm"),
-      paper_conversion_complements = c("4.0cm", rep("2.8cm", 3L))
+      paper_conversion_complements = c("4.0cm", rep("2.8cm", 3L)),
+      paper_identification_boundary = c("3.5cm", "2.2cm", "1.1cm", "1.1cm", "1.3cm", "4.6cm")
     )
     tex <- apply_table_column_widths(tex, widths)
   }

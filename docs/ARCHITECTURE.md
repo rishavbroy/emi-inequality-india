@@ -278,3 +278,19 @@ in `core_dise_target_definitions()`. Longitudinal age-denominator, school-qualit
 alternative-construct, and weak-IV permutation work remains extended until a paper
 artifact depends on it. This keeps the strict graph scientifically complete without
 turning every forensic diagnostic into a publication dependency.
+
+### Paper-facing identification versus forensic IV diagnostics
+
+The main-paper identification boundary uses a small, comparable first-stage grid
+across linguistic-distance constructions. Those common-support first stages now
+live in `core_identification_target_definitions()` because Table 7 consumes them
+in the strict publication graph. The extended IV factory does not re-estimate the
+same grid: it starts from `alternative_distance_first_stage_base` and augments it
+with outcome-specific weak-IV diagnostics, language-basis decompositions,
+monotonicity checks, and other reviewer-facing forensic evidence.
+
+This boundary is semantic rather than computational. A diagnostic becomes core
+when a publication artifact requires its scientific result; larger robustness
+families remain extended unless the paper consumes them. Keeping the base object
+shared avoids two independently maintained versions of the same first-stage
+exercise while preserving an inexpensive strict graph.

@@ -1290,3 +1290,81 @@ test_that("paper conversion-complements table fails closed on incomplete registe
     fixed = TRUE
   )
 })
+
+paper_identification_boundary_fixture <- function() {
+  registry <- paper_identification_distance_registry()
+  summary <- do.call(rbind, lapply(seq_len(nrow(registry)), function(i) {
+    data.frame(
+      construction_id = registry$construction_id[[i]],
+      adjustment_id = c("unadjusted", "state_main"),
+      joint_excluded_f = c(10 + i, i / 10),
+      partial_r_squared = c(0.10, i / 1000),
+      n = 573L,
+      stringsAsFactors = FALSE
+    )
+  }))
+  alternative <- structure(
+    list(summary = summary),
+    class = "emi_alternative_distance_first_stages"
+  )
+  dynamics <- data.frame(
+    welfare_specification_id = c("long_2022__change", "long_2023__change"),
+    second_stage_estimate = c(0.12, 0.14),
+    second_stage_std.error = c(0.15, 0.23),
+    second_stage_p.value = c(0.44, 0.56),
+    effective_f = c(0.69, 0.41),
+    anderson_rubin_p_beta0 = c(0.001, 0.014),
+    ar_95_n_components = 2L,
+    ar_95_disconnected = TRUE,
+    ar_95_contains_zero = FALSE,
+    ar_95_sign_identified = FALSE,
+    ar_95_components = c("[-inf, -0.07] U [0.03, inf]", "[-inf, -0.05] U [0.01, inf]"),
+    n = c(524L, 522L),
+    status = "estimated",
+    stringsAsFactors = FALSE
+  )
+  list(alternative = alternative, dynamics = dynamics)
+}
+
+test_that("paper identification boundary summarizes design classes rather than model permutations", {
+  fixture <- paper_identification_boundary_fixture()
+  csv <- paper_identification_boundary_csv_data(
+    fixture$alternative, fixture$dynamics
+  )
+
+  expect_equal(nrow(csv), 8L)
+  expect_equal(sum(csv$panel == "relevance_robustness"), 6L)
+  expect_equal(sum(csv$panel == "weak_iv_outcomes"), 2L)
+  expect_identical(
+    csv$row_id[csv$panel == "relevance_robustness"],
+    paper_identification_distance_registry()$construction_id
+  )
+  expect_true(all(vapply(
+    csv[c("raw_f", "state_f", "effective_f", "n")],
+    is.numeric, logical(1)
+  )))
+  expect_true(all(csv$ar_disconnected[csv$panel == "weak_iv_outcomes"] %in% TRUE))
+  expect_false(any(c("status", "reason") %in% names(csv)))
+
+  table <- make_paper_identification_boundary_table(
+    fixture$alternative, fixture$dynamics
+  )
+  expect_identical(attr(table, "csv_data"), csv)
+  expect_equal(sum(grepl("^Panel [AB]\\.", table[[1L]])), 2L)
+  expect_false(any(grepl("408", table[[1L]], fixed = TRUE)))
+})
+
+test_that("paper identification boundary fails closed when a registered design disappears", {
+  fixture <- paper_identification_boundary_fixture()
+  fixture$alternative$summary <- fixture$alternative$summary[
+    !(fixture$alternative$summary$construction_id == "glottolog_mean" &
+        fixture$alternative$summary$adjustment_id == "state_main"),
+    , drop = FALSE
+  ]
+
+  expect_error(
+    paper_identification_boundary_csv_data(fixture$alternative, fixture$dynamics),
+    "requires unadjusted and state-main first stages",
+    fixed = TRUE
+  )
+})

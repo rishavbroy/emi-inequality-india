@@ -171,6 +171,12 @@ def path_tests(path):
             "test-public-scripts.R",
             "test-raw-file-manifest.R",
         },
+        "R/pipeline/core_identification_targets.R": {
+            "test-diagnostics.R",
+            "test-iv-estimation.R",
+            "test-output-tables.R",
+            "test-public-scripts.R",
+        },
         "R/pipeline/extended_historical_targets.R": {
             "test-historical-baseline-1991.R",
             "test-historical-linguistic-validation.R",

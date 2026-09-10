@@ -83,6 +83,13 @@ core_public_target_definitions <- function() {
       )
     ),
     tar_target(
+      paper_identification_boundary,
+      make_paper_identification_boundary_table(
+        alternative_distance_first_stage_base,
+        consumption_iv_dynamics
+      )
+    ),
+    tar_target(
       tables,
       {
         out <- make_tables(
@@ -93,6 +100,7 @@ core_public_target_definitions <- function() {
         out$paper_schooling_market_geography <- paper_schooling_market_geography
         out$paper_language_behavior <- paper_language_behavior
         out$paper_conversion_complements <- paper_conversion_complements
+        out$paper_identification_boundary <- paper_identification_boundary
         out
       }
     ),

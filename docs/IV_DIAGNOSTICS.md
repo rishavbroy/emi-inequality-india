@@ -281,3 +281,28 @@ because they are not the same statistic and are not available as a comparable
 ladder across every displayed adjustment. Extended mode continues to persist the
 full semantic registry, common-support audit, deletion diagnostics, influence
 measures, and VIF outputs.
+
+### Main-paper identification boundary
+
+The main paper summarizes alternative linguistic-distance constructions with the
+common-support first-stage object `alternative_distance_first_stage_base` rather
+than the fully augmented reviewer diagnostic. Its rows compare the unadjusted
+state-clustered excluded-instrument F with the registered `state_main` F and
+partial $R^2$. The five-share construction is a joint excluded-instrument test;
+the other displayed constructions are scalar instruments. This common pair of
+specifications makes the cross-construction comparison interpretable without
+mixing statistics from different adjustment ladders.
+
+Table 7 then adds only the two registered long-change 2SLS rows (2022--23 and
+2023--24) from the already-core consumption-IV dynamics object. Conventional
+2SLS coefficients are displayed as diagnostics, beside Montiel Olea--Pflueger
+effective F and Anderson--Rubin confidence-set topology. A disconnected AR set
+that spans both signs is reported as failure to identify the sign even when the
+point null is rejected on the finite inversion grid. The table is therefore an
+identification-boundary exhibit, not a preferred causal-results table.
+
+The extended IV pipeline reuses this base and adds the much larger robustness
+record (alternative-basis decompositions, weak-IV outcome grids,
+monotonicity/leave-one-out exercises, falsification-adaptive sets, and related
+forensics). This prevents the main paper from duplicating or silently selecting
+from the full diagnostic search space.

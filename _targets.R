@@ -25,6 +25,7 @@ source("R/pipeline/core_panel_targets.R")
 source("R/pipeline/core_dise_targets.R")
 source("R/pipeline/core_census_language_targets.R")
 source("R/pipeline/core_economic_census_targets.R")
+source("R/pipeline/core_identification_targets.R")
 source("R/pipeline/core_public_targets.R")
 source("R/pipeline/extended_historical_targets.R")
 source("R/pipeline/extended_lineage_targets.R")
@@ -91,6 +92,7 @@ core_pipeline_targets <- c(
   core_dise_target_definitions(),
   core_consumption_iv_target_definitions(),
   core_economic_census_target_definitions(),
+  core_identification_target_definitions(),
   core_public_target_definitions()
 )
 
