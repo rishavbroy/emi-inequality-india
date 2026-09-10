@@ -1129,8 +1129,14 @@ test_that("paper schooling-market table fails closed when a canonical specificat
 
 
 test_that("public LaTeX cells escape metacharacters before raw kable styling", {
-  escaped <- latex_escape_text(c("10% of children", "A & B", "x_y"))
-  expect_identical(escaped, c("10\\% of children", "A \\& B", "x\\_y"))
+  escaped <- latex_escape_text(c(
+    "10% of children", "A & B", "x_y", "$100 #1", "{group}",
+    "path\\name", "near~far", "x^2"
+  ))
+  expect_identical(escaped, c(
+    "10\\% of children", "A \\& B", "x\\_y", "\\$100 \\#1", "\\{group\\}",
+    "path\\textbackslash{}name", "near\\textasciitilde{}far", "x\\textasciicircum{}2"
+  ))
 
   df <- data.frame(Variable = "Enrollment", `Year / unit` = "2007-08; % of children", check.names = FALSE)
   out <- escape_table_cells_for_latex(df)

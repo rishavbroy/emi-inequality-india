@@ -160,5 +160,15 @@ table_header_labels <- function(df, name) {
 caption_for_latex <- function(name) table_caption(name)
 
 latex_escape_text <- function(x) {
-  modelsummary::escape_latex(table_contract_column_strings(x))
+  # Canonical knitr/kableExtra escaping algorithm. Both packages keep this
+  # helper internal, so calling it through ::: would couple the public table
+  # contract to an undocumented namespace. Keep the tiny transformation here
+  # instead: ordinary table cells are text, while raw LaTeX is introduced only
+  # by the styling layer after escaping.
+  x <- table_contract_column_strings(x)
+  x <- gsub("\\\\", "\\\\textbackslash", x)
+  x <- gsub("([#$%&_{}])", "\\\\\\1", x)
+  x <- gsub("\\\\textbackslash", "\\\\textbackslash{}", x)
+  x <- gsub("~", "\\\\textasciitilde{}", x, fixed = TRUE)
+  gsub("\\\\^", "\\\\textasciicircum{}", x)
 }
