@@ -72,6 +72,17 @@ core_public_target_definitions <- function() {
       )
     ),
     tar_target(
+      paper_language_behavior,
+      make_paper_language_behavior_table(census_2001_c17_mechanism)
+    ),
+    tar_target(
+      paper_conversion_complements,
+      make_paper_conversion_complements_table(
+        schooling_consumption_conversion,
+        economic_census_it_opportunity
+      )
+    ),
+    tar_target(
       tables,
       {
         out <- make_tables(
@@ -80,6 +91,8 @@ core_public_target_definitions <- function() {
           schooling_consumption_bridge
         )
         out$paper_schooling_market_geography <- paper_schooling_market_geography
+        out$paper_language_behavior <- paper_language_behavior
+        out$paper_conversion_complements <- paper_conversion_complements
         out
       }
     ),

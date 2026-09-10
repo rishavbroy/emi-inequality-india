@@ -174,3 +174,230 @@ make_paper_schooling_market_geography_table <- function(
   attr(out, "csv_data") <- csv
   out
 }
+
+paper_language_behavior_registry <- function() {
+  data.frame(
+    panel = c(rep("national", 4L), rep("hindi_belt", 3L)),
+    specification_id = c(
+      "english_linear", "english_distant", "hindi_linear", "multilingual_linear",
+      "english_linear_hindi_belt", "english_distant_hindi_belt", "hindi_linear_hindi_belt"
+    ),
+    term = c(
+      "shastry_degree", "distance_distant", "shastry_degree", "shastry_degree",
+      "shastry_degree", "distance_distant", "shastry_degree"
+    ),
+    label = c(
+      "Continuous distance -> English acquisition",
+      "Distant-language contrast -> English acquisition",
+      "Continuous distance -> Hindi acquisition",
+      "Continuous distance -> multilingualism",
+      "Continuous distance -> English acquisition",
+      "Distant-language contrast -> English acquisition",
+      "Continuous distance -> Hindi acquisition"
+    ),
+    sample_label = c(rep("National", 4L), rep("Hindi-belt states", 3L)),
+    outcome_universe = c(
+      rep("English among multilingual speakers", 2L),
+      "Hindi among multilingual speakers",
+      "Multilingual speakers among native speakers",
+      rep("English among multilingual speakers", 2L),
+      "Hindi among multilingual speakers"
+    ),
+    stringsAsFactors = FALSE
+  )
+}
+
+paper_language_behavior_csv_data <- function(c17_mechanism) {
+  registry <- paper_language_behavior_registry()
+  coefficients <- safe_df(c17_mechanism$coefficients)
+  summaries <- safe_df(c17_mechanism$model_summary)
+
+  rows <- lapply(seq_len(nrow(registry)), function(i) {
+    spec <- registry$specification_id[[i]]
+    term <- registry$term[[i]]
+    coefficient <- coefficients[
+      coefficients$specification_id == spec & coefficients$term == term,
+      , drop = FALSE
+    ]
+    model <- summaries[summaries$specification_id == spec, , drop = FALSE]
+    if (nrow(coefficient) != 1L || nrow(model) != 1L ||
+        !identical(plain_chr(coefficient$status), "estimated") ||
+        !identical(plain_chr(model$status), "estimated")) {
+      stop("Paper language-behavior table requires one estimated row for ", spec,
+           " / ", term, ".", call. = FALSE)
+    }
+    data.frame(
+      panel = registry$panel[[i]],
+      specification_id = spec,
+      result = registry$label[[i]],
+      term = term,
+      estimate = num(coefficient$estimate)[[1L]],
+      std.error = num(coefficient$std.error)[[1L]],
+      p.value = num(coefficient$p.value)[[1L]],
+      partial_r_squared = num(coefficient$partial_r_squared)[[1L]],
+      n = as.integer(model$n[[1L]]),
+      sample = registry$sample_label[[i]],
+      outcome_universe = registry$outcome_universe[[i]],
+      stringsAsFactors = FALSE
+    )
+  })
+  safe_bind_rows(rows)
+}
+
+paper_language_behavior_group <- function(label) {
+  data.frame(
+    Result = paste0(label, ":"), Estimate = "", SE = "", `p-value` = "",
+    `Partial R2` = "", N = "", Sample = "", `Outcome / universe` = "",
+    check.names = FALSE, stringsAsFactors = FALSE
+  )
+}
+
+make_paper_language_behavior_table <- function(c17_mechanism) {
+  csv <- paper_language_behavior_csv_data(c17_mechanism)
+  display_rows <- function(x) {
+    data.frame(
+      Result = x$result,
+      Estimate = sprintf("%.3f", x$estimate),
+      SE = sprintf("%.3f", x$std.error),
+      `p-value` = sprintf("%.3f", x$p.value),
+      `Partial R2` = sprintf("%.3f", x$partial_r_squared),
+      N = format(x$n, big.mark = ",", scientific = FALSE),
+      Sample = x$sample,
+      `Outcome / universe` = x$outcome_universe,
+      check.names = FALSE, stringsAsFactors = FALSE
+    )
+  }
+  national <- csv[csv$panel == "national", , drop = FALSE]
+  hindi_belt <- csv[csv$panel == "hindi_belt", , drop = FALSE]
+  out <- safe_bind_rows(list(
+    paper_language_behavior_group("Panel A. National C-17"),
+    display_rows(national),
+    paper_language_behavior_group("Panel B. Contextual limits"),
+    display_rows(hindi_belt)
+  ))
+  attr(out, "csv_data") <- csv
+  out
+}
+
+paper_conversion_complement_registry <- function() {
+  data.frame(
+    modifier_id = c("baseline_human_capital", "urbanization", "st_concentration"),
+    label = c("Baseline human capital", "Urbanization", "ST concentration"),
+    stringsAsFactors = FALSE
+  )
+}
+
+paper_conversion_complements_csv_data <- function(conversion, it_opportunity) {
+  conversion_estimates <- safe_df(conversion$estimates)
+  complements <- paper_conversion_complement_registry()
+  treatments <- c("emi_all_children", "private_emi_all_children")
+  expected <- merge(
+    complements[c("modifier_id", "label")],
+    data.frame(treatment_id = treatments, stringsAsFactors = FALSE),
+    by = NULL
+  )
+  rows <- merge(
+    expected,
+    conversion_estimates,
+    by = c("modifier_id", "treatment_id"),
+    all.x = TRUE,
+    sort = FALSE
+  )
+  if (nrow(rows) != 6L || any(is.na(rows$status) | plain_chr(rows$status) != "estimated") ||
+      any(!is.finite(num(rows$interaction_per_10pp_schooling_per_modifier_sd)))) {
+    stop("Paper conversion-complements table requires all six estimated schooling interactions.", call. = FALSE)
+  }
+  rows$panel <- "predetermined_capacity"
+  rows$predictor_id <- ifelse(
+    rows$treatment_id == "emi_all_children", "all_child_emi", "private_emi"
+  )
+  rows$complement <- rows$label
+  rows$interaction <- num(rows$interaction_per_10pp_schooling_per_modifier_sd)
+  rows$std.error <- num(rows$interaction_std_error_state_clustered)
+  rows$p.value <- num(rows$interaction_p_value_state_clustered)
+  rows$p.value_holm <- num(rows$interaction_p_value_holm_family)
+  rows$n <- as.integer(rows$n)
+  schooling <- rows[c(
+    "panel", "modifier_id", "complement", "predictor_id", "interaction",
+    "std.error", "p.value", "p.value_holm", "n"
+  )]
+
+  it <- safe_df(it_opportunity$estimates)
+  it <- it[match(c("schooling_exposure", "linguistic_opportunity"), it$predictor_id), , drop = FALSE]
+  if (nrow(it) != 2L || any(is.na(it$predictor_id)) ||
+      any(is.na(it$status) | plain_chr(it$status) != "estimated") ||
+      any(!is.finite(num(it$interaction_per_predictor_scale_per_modifier_sd)))) {
+    stop("Paper conversion-complements table requires both estimated EC05 IT interactions.", call. = FALSE)
+  }
+  it_rows <- data.frame(
+    panel = "predetermined_it_environment",
+    modifier_id = "ec05_it_employment_share",
+    complement = "Baseline IT employment share",
+    predictor_id = ifelse(
+      it$predictor_id == "schooling_exposure", "all_child_emi", "linguistic_distance"
+    ),
+    interaction = num(it$interaction_per_predictor_scale_per_modifier_sd),
+    std.error = num(it$interaction_std_error_clustered),
+    p.value = num(it$interaction_p_value_clustered),
+    p.value_holm = num(it$interaction_p_value_holm_family),
+    n = as.integer(it$n),
+    stringsAsFactors = FALSE
+  )
+  safe_bind_rows(list(schooling, it_rows))
+}
+
+paper_conversion_cell <- function(row) {
+  if (!nrow(row)) return("")
+  paste0(
+    sprintf("%.3f", num(row$interaction)[[1L]]),
+    significance_stars(num(row$p.value_holm)[[1L]]),
+    " (", sprintf("%.3f", num(row$std.error)[[1L]]), ")"
+  )
+}
+
+paper_conversion_group <- function(label) {
+  data.frame(
+    Complement = paste0(label, ":"), `All-child EMI` = "", `Private EMI` = "",
+    `Linguistic distance` = "", check.names = FALSE, stringsAsFactors = FALSE
+  )
+}
+
+make_paper_conversion_complements_table <- function(conversion, it_opportunity) {
+  csv <- paper_conversion_complements_csv_data(conversion, it_opportunity)
+  capacity <- csv[csv$panel == "predetermined_capacity", , drop = FALSE]
+  complement_order <- paper_conversion_complement_registry()
+  capacity_rows <- safe_bind_rows(lapply(seq_len(nrow(complement_order)), function(i) {
+    modifier <- complement_order$modifier_id[[i]]
+    data.frame(
+      Complement = complement_order$label[[i]],
+      `All-child EMI` = paper_conversion_cell(
+        capacity[capacity$modifier_id == modifier & capacity$predictor_id == "all_child_emi", , drop = FALSE]
+      ),
+      `Private EMI` = paper_conversion_cell(
+        capacity[capacity$modifier_id == modifier & capacity$predictor_id == "private_emi", , drop = FALSE]
+      ),
+      `Linguistic distance` = "",
+      check.names = FALSE, stringsAsFactors = FALSE
+    )
+  }))
+  it <- csv[csv$panel == "predetermined_it_environment", , drop = FALSE]
+  it_row <- data.frame(
+    Complement = "Baseline IT employment share",
+    `All-child EMI` = paper_conversion_cell(
+      it[it$predictor_id == "all_child_emi", , drop = FALSE]
+    ),
+    `Private EMI` = "",
+    `Linguistic distance` = paper_conversion_cell(
+      it[it$predictor_id == "linguistic_distance", , drop = FALSE]
+    ),
+    check.names = FALSE, stringsAsFactors = FALSE
+  )
+  out <- safe_bind_rows(list(
+    paper_conversion_group("Panel A. Predetermined Census-2001 complements"),
+    capacity_rows,
+    paper_conversion_group("Panel B. Predetermined IT environment"),
+    it_row
+  ))
+  attr(out, "csv_data") <- csv
+  out
+}

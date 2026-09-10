@@ -1497,3 +1497,57 @@ test_that("paper Table 2 and its baseline DISE evidence are strict publication d
   crossref_audit <- repo_text("scripts", "audit_crossrefs.R")
   expect_match(crossref_audit, "qmd_files <- public_qmd_sources()", fixed = TRUE)
 })
+
+test_that("paper language-behavior evidence is core while full C-17 persistence stays extended", {
+  targets <- repo_text("_targets.R")
+  core_c17 <- repo_text("R", "pipeline", "core_census_language_targets.R")
+  extended_census <- repo_text("R", "pipeline", "extended_census_targets.R")
+  core_public <- repo_text("R", "pipeline", "core_public_targets.R")
+  paper_new <- repo_text("paper", "paper-new.qmd")
+  public_contract <- repo_text("scripts", "public_output_contract.R")
+
+  expect_match(targets, "core_census_language_target_definitions()", fixed = TRUE)
+  expect_match(core_c17, "census_2001_c17_mechanism", fixed = TRUE)
+  expect_false(grepl(
+    "tar_target(\n      census_2001_c17_mechanism,",
+    extended_census, fixed = TRUE
+  ))
+  expect_match(extended_census, "save_census_c17_mechanism_diagnostics(census_2001_c17_mechanism)", fixed = TRUE)
+  expect_match(core_public, "paper_language_behavior", fixed = TRUE)
+  expect_match(core_public, "out$paper_language_behavior", fixed = TRUE)
+  expect_match(paper_new, "paper_language_behavior.tex", fixed = TRUE)
+  expect_match(paper_new, "tbl-language-behavior", fixed = TRUE)
+  expect_match(public_contract, "paper_language_behavior.csv", fixed = TRUE)
+  expect_match(public_contract, "paper_language_behavior.tex", fixed = TRUE)
+})
+
+test_that("paper conversion-complements evidence promotes only the required EC05 baseline chain", {
+  targets <- repo_text("_targets.R")
+  core_consumption <- repo_text("R", "pipeline", "core_consumption_iv_targets.R")
+  extended_iv <- repo_text("R", "pipeline", "extended_iv_targets.R")
+  core_ec <- repo_text("R", "pipeline", "core_economic_census_targets.R")
+  extended_ec <- repo_text("R", "pipeline", "extended_economic_census_targets.R")
+  core_public <- repo_text("R", "pipeline", "core_public_targets.R")
+  paper_new <- repo_text("paper", "paper-new.qmd")
+  public_contract <- repo_text("scripts", "public_output_contract.R")
+
+  expect_match(targets, "core_economic_census_target_definitions()", fixed = TRUE)
+  expect_match(core_consumption, "schooling_consumption_conversion", fixed = TRUE)
+  expect_false(grepl(
+    "tar_target(\n      schooling_consumption_conversion,",
+    extended_iv, fixed = TRUE
+  ))
+  expect_match(extended_iv, "save_schooling_consumption_conversion(schooling_consumption_conversion)", fixed = TRUE)
+  expect_match(core_ec, "economic_census_ec05_raw_archive", fixed = TRUE)
+  expect_match(core_ec, "economic_census_it_opportunity", fixed = TRUE)
+  expect_false(grepl(
+    "tar_target(\n      economic_census_ec05_raw_archive,",
+    extended_ec, fixed = TRUE
+  ))
+  expect_match(extended_ec, "it_opportunity = economic_census_it_opportunity", fixed = TRUE)
+  expect_match(core_public, "paper_conversion_complements", fixed = TRUE)
+  expect_match(paper_new, "paper_conversion_complements.tex", fixed = TRUE)
+  expect_match(paper_new, "tbl-conversion-complements", fixed = TRUE)
+  expect_match(public_contract, "paper_conversion_complements.csv", fixed = TRUE)
+  expect_match(public_contract, "paper_conversion_complements.tex", fixed = TRUE)
+})

@@ -1125,3 +1125,130 @@ test_that("paper schooling-market table fails closed when a canonical specificat
     fixed = TRUE
   )
 })
+
+paper_language_behavior_fixture <- function() {
+  registry <- paper_language_behavior_registry()
+  coefficients <- data.frame(
+    specification_id = registry$specification_id,
+    term = registry$term,
+    estimate = seq_len(nrow(registry)),
+    std.error = rep(0.5, nrow(registry)),
+    p.value = seq(0.01, 0.07, length.out = nrow(registry)),
+    partial_r_squared = seq(0.01, 0.07, length.out = nrow(registry)),
+    status = "estimated",
+    reason = NA_character_,
+    stringsAsFactors = FALSE
+  )
+  model_summary <- data.frame(
+    specification_id = registry$specification_id,
+    n = c(rep(1566L, 3L), 1587L, rep(560L, 3L)),
+    status = "estimated",
+    stringsAsFactors = FALSE
+  )
+  list(coefficients = coefficients, model_summary = model_summary)
+}
+
+test_that("paper language-behavior table is the bounded national and Hindi-belt evidence set", {
+  csv <- paper_language_behavior_csv_data(paper_language_behavior_fixture())
+
+  expect_equal(nrow(csv), 7L)
+  expect_equal(sum(csv$panel == "national"), 4L)
+  expect_equal(sum(csv$panel == "hindi_belt"), 3L)
+  expect_setequal(
+    csv$specification_id,
+    paper_language_behavior_registry()$specification_id
+  )
+  expect_equal(
+    csv$term[csv$specification_id %in% c("english_distant", "english_distant_hindi_belt")],
+    rep("distance_distant", 2L)
+  )
+  expect_true(all(vapply(
+    csv[c("estimate", "std.error", "p.value", "partial_r_squared")],
+    is.numeric, logical(1)
+  )))
+  expect_false(any(c("status", "reason") %in% names(csv)))
+
+  table <- make_paper_language_behavior_table(paper_language_behavior_fixture())
+  expect_identical(attr(table, "csv_data"), csv)
+  expect_equal(sum(grepl("^Panel [AB]\\.", table$Result)), 2L)
+})
+
+test_that("paper language-behavior table fails closed when a registered result disappears", {
+  diagnostic <- paper_language_behavior_fixture()
+  diagnostic$coefficients <- diagnostic$coefficients[-1L, , drop = FALSE]
+
+  expect_error(
+    paper_language_behavior_csv_data(diagnostic),
+    "requires one estimated row",
+    fixed = TRUE
+  )
+})
+
+paper_conversion_complements_fixture <- function() {
+  complements <- paper_conversion_complement_registry()
+  conversion <- merge(
+    complements[c("modifier_id")],
+    data.frame(
+      treatment_id = c("emi_all_children", "private_emi_all_children"),
+      stringsAsFactors = FALSE
+    ),
+    by = NULL
+  )
+  conversion$n <- 524L
+  conversion$interaction_per_10pp_schooling_per_modifier_sd <- seq(0.01, 0.06, length.out = nrow(conversion))
+  conversion$interaction_std_error_state_clustered <- 0.01
+  conversion$interaction_p_value_state_clustered <- 0.02
+  conversion$interaction_p_value_holm_family <- seq(0.01, 0.06, length.out = nrow(conversion))
+  conversion$status <- "estimated"
+
+  it <- data.frame(
+    predictor_id = c("schooling_exposure", "linguistic_opportunity"),
+    n = 514L,
+    interaction_per_predictor_scale_per_modifier_sd = c(0.001, 0.008),
+    interaction_std_error_clustered = c(0.004, 0.010),
+    interaction_p_value_clustered = c(0.88, 0.43),
+    interaction_p_value_holm_family = c(0.88, 0.87),
+    status = "estimated",
+    stringsAsFactors = FALSE
+  )
+  list(
+    conversion = list(estimates = conversion),
+    it = list(estimates = it)
+  )
+}
+
+test_that("paper conversion-complements table is exactly the planned six-plus-two cells", {
+  fixture <- paper_conversion_complements_fixture()
+  csv <- paper_conversion_complements_csv_data(fixture$conversion, fixture$it)
+
+  expect_equal(nrow(csv), 8L)
+  expect_equal(sum(csv$panel == "predetermined_capacity"), 6L)
+  expect_equal(sum(csv$panel == "predetermined_it_environment"), 2L)
+  expect_setequal(
+    csv$predictor_id[csv$panel == "predetermined_capacity"],
+    c("all_child_emi", "private_emi")
+  )
+  expect_setequal(
+    csv$predictor_id[csv$panel == "predetermined_it_environment"],
+    c("all_child_emi", "linguistic_distance")
+  )
+  expect_true(all(vapply(
+    csv[c("interaction", "std.error", "p.value", "p.value_holm")],
+    is.numeric, logical(1)
+  )))
+  expect_false(any(c("status", "reason") %in% names(csv)))
+
+  table <- make_paper_conversion_complements_table(fixture$conversion, fixture$it)
+  expect_identical(attr(table, "csv_data"), csv)
+  expect_equal(sum(grepl("^Panel [AB]\\.", table$Complement)), 2L)
+})
+
+test_that("paper conversion-complements table fails closed on incomplete registered evidence", {
+  fixture <- paper_conversion_complements_fixture()
+  fixture$it$estimates <- fixture$it$estimates[-1L, , drop = FALSE]
+  expect_error(
+    paper_conversion_complements_csv_data(fixture$conversion, fixture$it),
+    "requires both estimated EC05 IT interactions",
+    fixed = TRUE
+  )
+})

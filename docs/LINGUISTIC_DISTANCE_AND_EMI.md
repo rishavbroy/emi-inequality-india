@@ -21,9 +21,9 @@ Native English speakers are an intentional special category rather than unresolv
 
 ## Census 2001 C-17 mechanism source
 
-The 35 state/UT C-17 workbooks are now ingested only as a validated mechanism source; no C-17 regression enters the public paper yet. C-17 is hierarchical rather than a flat language table. For each state × native-language × sex cell, the native-speaker total is the outer denominator, first-subsidiary-language counts partition multilingual speakers, and second-subsidiary-language counts are subsets of their first-subsidiary parent. The reader therefore defines multilingual speakers as the sum of first-subsidiary counts. English acquisition among multilingual speakers is the first-subsidiary English count plus second-subsidiary English counts whose first subsidiary is not English, divided by that multilingual denominator. The analogous Hindi measure uses the same rule. Trilingual counts are never added to the denominator a second time.
+The 35 state/UT C-17 workbooks are a validated publication input for the paper's language-behavior table. C-17 is hierarchical rather than a flat language table. For each state × native-language × sex cell, the native-speaker total is the outer denominator, first-subsidiary-language counts partition multilingual speakers, and second-subsidiary-language counts are subsets of their first-subsidiary parent. The reader therefore defines multilingual speakers as the sum of first-subsidiary counts. English acquisition among multilingual speakers is the first-subsidiary English count plus second-subsidiary English counts whose first subsidiary is not English, divided by that multilingual denominator. The analogous Hindi measure uses the same rule. Trilingual counts are never added to the denominator a second time.
 
-The ingestion contract enforces `0 <= English/Hindi acquisition <= multilingual <= native speakers`, requires every second-subsidiary subtotal to fit within its first-subsidiary parent, checks Persons = Males + Females wherever all three counts are reported, and requires deterministic language-code labels. As an independent cross-table check, C-17 native-speaker totals must reconcile exactly to the corresponding C-16 state language-group totals before the extended target succeeds. C-17 will reuse the same language-identity and Shastry-distance resolver as C-16; it will not acquire a parallel language crosswalk.
+The ingestion contract enforces `0 <= English/Hindi acquisition <= multilingual <= native speakers`, requires every second-subsidiary subtotal to fit within its first-subsidiary parent, checks Persons = Males + Females wherever all three counts are reported, and requires deterministic language-code labels. As an independent cross-table check, C-17 native-speaker totals must reconcile exactly to the corresponding C-16 state language-group totals before the publication target succeeds. C-17 will reuse the same language-identity and Shastry-distance resolver as C-16; it will not acquire a parallel language crosswalk.
 
 C-17, NSS schooling, DISE administration, and district welfare have different observational units. Their eventual juxtaposition is mechanism evidence, not a sequential mediation design and not evidence that the same individuals are followed across sources.
 
@@ -174,7 +174,7 @@ crosswalk identity is either assigned or explicitly frozen unresolved.
 
 ## Census 2001 C-17 English-acquisition mechanism
 
-The extended diagnostics now use Census 2001 C-17 at the state × native-language
+The publication pipeline uses Census 2001 C-17 at the state × native-language
 level to test the behavioral mechanism that motivates linguistic distance. This is
 not a district IV and does not enter the production treatment or welfare model.
 For each state-language cell, the outcome is the share of multilingual native

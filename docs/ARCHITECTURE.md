@@ -207,7 +207,11 @@ This artifact replaces the audit's former depth-limited `find` listing. It is a 
 
 Paper-facing heterogeneity is represented through the same registries and
 construct ontology as the rest of the empirical system rather than through
-standalone regression scripts. The C-17 Hindi-belt check is a sample restriction
+standalone regression scripts. Because the main paper now reports C-17 language
+behavior directly, the minimal Census-2001 C-17 acquisition and mechanism chain
+lives in `core_census_language_target_definitions()`; extended mode only persists
+the full C-17 diagnostic bundle and retains unrelated Census diagnostics. The
+C-17 Hindi-belt check is a sample restriction
 inside `census_c17_mechanism_registry()`: it reuses the reviewed Shastry distance
 basis and the project's frozen Hindi-belt state definition instead of creating a
 new instrument. NSS schooling-access cross-cuts partition the child microdata by
@@ -219,14 +223,19 @@ avoids a gender-by-sector Cartesian cube.
 The schooling-to-welfare bridge now fixes one complete-case district sample per
 welfare estimand across all five registered schooling margins and the complete
 adjustment ladder. This makes comparisons among enrollment, public EMI, private
-EMI, and aggregate EMI support-comparable by construction. A separate six-cell
-`schooling_consumption_conversion` family tests only the predeclared 2022
+EMI, and aggregate EMI support-comparable by construction. The six-cell
+`schooling_consumption_conversion` family is core because the main paper reports
+it directly and tests only the predeclared 2022
 long-difference contingency question: all-child EMI and private-EMI exposure are
 each interacted, one modifier at a time, with predetermined Census-2001 secondary
 human capital, urbanization, and Scheduled-Tribe concentration. Modifiers are
 standardized on the common sample and interactions receive state-clustered
 inference with one family-wide Holm adjustment. These are descriptive
-heterogeneous associations, not causal heterogeneous treatment effects.
+heterogeneous associations, not causal heterogeneous treatment effects. The
+official EC05 Division-72 IT baseline is likewise isolated in
+`core_economic_census_target_definitions()` so Table 5 can consume the two
+predeclared IT-environment interactions without promoting the unrelated
+EC05--EC13 longitudinal mechanism family.
 
 Because effect modification is scientifically distinct from adjustment, the
 cross-family analysis-design schema records `effect_modifier` and

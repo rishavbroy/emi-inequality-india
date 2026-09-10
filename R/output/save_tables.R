@@ -595,7 +595,9 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   df_render <- wrap_table_text_columns(grouped$data, name)
   wide_summary_table <- name %in% c("sum_tbl_iv", "sum_tbl_probit_quant", "sum_tbl_probit_cat")
   regression_table <- name %in% c("probit_mfx", "fs_cons", "cons_iv") && !is_formatted_status_table(df_render)
-  compact_result_table <- identical(name, "paper_schooling_welfare")
+  compact_result_table <- name %in% c(
+    "paper_schooling_welfare", "paper_language_behavior", "paper_conversion_complements"
+  )
   schooling_market_table <- identical(name, "paper_schooling_market_geography")
   if (!regression_table) {
     names(df_render) <- table_header_labels(df_render, name)

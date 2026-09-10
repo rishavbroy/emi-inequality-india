@@ -292,6 +292,16 @@ The same district school market does not imply the same schooling opportunity se
 
 ![Unequal access to English-oriented schooling. Points report mean within-district percentage-point gaps for OBC, SC, and ST children relative to the Other social-group category. Panel A shows overall gaps in enrollment, EMI among enrolled children, private enrollment, and all-child private EMI exposure. Panel B shows rural and urban gaps for EMI among enrolled children and private EMI exposure.](../outputs/figures/main/paper_unequal_schooling_access.pdf){#fig-unequal-schooling-access fig-pos="H" width="100%"}
 
+@tbl-language-behavior asks whether the linguistic-distance measure changes language behavior in the way the opportunity-cost story requires. The national continuous English-acquisition slope is positive but imprecise, whereas the predeclared distant-language contrast is much larger. Hindi acquisition moves in the opposite direction, and greater distance is also associated with lower multilingualism among native speakers. Inside the Hindi belt, however, neither English specification reproduces the national pattern cleanly. The evidence therefore supports a broader language-opportunity interpretation rather than a simple linear English-versus-Hindi substitution rule.
+
+```{r}
+#| label: tbl-language-behavior
+#| echo: false
+#| results: asis
+
+render_public_table("../outputs/tables/main/paper_language_behavior.tex", "paper_language_behavior")
+```
+
 
 
 
@@ -359,6 +369,16 @@ Before returning to the instrument, @tbl-paper-schooling-welfare asks a narrower
 #| results: asis
 
 render_public_table("../outputs/tables/main/paper_schooling_welfare.tex", "paper_schooling_welfare")
+```
+
+@tbl-conversion-complements asks whether the descriptive schooling-welfare association is stronger where predetermined local capacity was greater. Human capital and urbanization strengthen the all-child EMI association, while ST concentration does not. Private-EMI interactions point in the same direction for human capital and urbanization but are less precisely estimated after family correction. The separate 2005 Economic Census check finds little evidence that baseline IT-employment intensity generally amplifies either the all-child EMI association or the reduced-form linguistic-distance relationship. The pattern is therefore one of selective complementarity rather than a generic high-IT-district explanation.
+
+```{r}
+#| label: tbl-conversion-complements
+#| echo: false
+#| results: asis
+
+render_public_table("../outputs/tables/main/paper_conversion_complements.tex", "paper_conversion_complements")
 ```
 
 The reduced form is more informative about the long-run timing pattern than the conventional 2SLS coefficient path because the first stage is weak at every horizon. @fig-consumption-reduced-form-dynamics therefore follows the coefficient on linguistic distance itself across the four registered post-treatment endpoints. It shows both endpoint ANCOVA and the corresponding long change from the common 2004-05 baseline rather than selecting one estimand after seeing the results. The early 2009-10 and 2011-12 estimates are small and imprecise, while the long-change association becomes positive by 2022-23 and remains positive but less precise in 2023-24. These are reduced-form associations, not estimates of an EMI effect.

@@ -48,6 +48,14 @@ core_consumption_iv_target_definitions <- function() {
         consumption_iv_outcome_registry,
         census_2001_control_registry
       )
+    ),
+    tar_target(
+      schooling_consumption_conversion,
+      diagnose_schooling_consumption_conversion(
+        consumption_iv_panel,
+        consumption_iv_outcome_registry,
+        census_2001_control_registry
+      )
     )
   )
 }

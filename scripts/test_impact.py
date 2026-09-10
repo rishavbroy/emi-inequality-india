@@ -122,6 +122,8 @@ def path_tests(path):
             "test-analysis-design-registry.R",
             "test-diagnostics.R",
             "test-output-figures.R",
+            "test-output-tables.R",
+            "test-schooling-consumption-bridge.R",
         },
         "R/pipeline/core_measurement_targets.R": {
             "test-cleaning-contracts.R",
@@ -155,6 +157,18 @@ def path_tests(path):
             "test-dise.R",
             "test-english-opportunity-mechanisms.R",
             "test-output-tables.R",
+            "test-raw-file-manifest.R",
+        },
+        "R/pipeline/core_census_language_targets.R": {
+            "test-census-c17.R",
+            "test-census-c17-mechanism.R",
+            "test-output-tables.R",
+            "test-public-scripts.R",
+        },
+        "R/pipeline/core_economic_census_targets.R": {
+            "test-economic-census.R",
+            "test-output-tables.R",
+            "test-public-scripts.R",
             "test-raw-file-manifest.R",
         },
         "R/pipeline/extended_historical_targets.R": {

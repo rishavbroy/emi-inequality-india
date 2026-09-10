@@ -13,6 +13,8 @@ public_table_caption_text <- function(name) {
     paper_core_summary = "Core Variables and Summary Statistics",
     paper_schooling_welfare = "Schooling Margins and Later Household Consumption",
     paper_schooling_market_geography = "How the Schooling Market Is Geographically Organized",
+    paper_language_behavior = "Linguistic Distance and Language Behavior",
+    paper_conversion_complements = "Predetermined Complements to Economic Conversion",
     fs_cons = "First-Stage Regression: EMI Exposure on Linguistic Distance",
     cons_iv = "Second-Stage Regression: Real Log Consumption Growth on EMI Exposure (Fitted)",
     ame_results = "Average Marginal Effects Results",
@@ -41,6 +43,19 @@ public_table_note <- function(name) {
       "Panel B reports R-squared from regressions of each district measure on state indicators alone.",
       "Panel C reports raw and state-residual Pearson correlations between DISE 2007-08 English-medium enrollment shares and the corresponding NSS measures.",
       "Each Panel-A outcome uses one fixed complete-case sample across specifications; DISE is independent administrative validation rather than a replacement treatment definition."
+    ),
+    paper_language_behavior = paste(
+      "Census-2001 C-17 state-by-native-language regressions are weighted by native speakers and include state fixed effects, native-language state share, and a modal-language indicator.",
+      "Standard errors and p-values use HC1 heteroskedasticity-robust inference; partial R-squared is the one-degree-of-freedom model-based partial R-squared for the reported distance coefficient.",
+      "Continuous-distance coefficients are percentage-point changes per one Shastry distance degree; distant-language rows compare languages at least three degrees from Hindi with the remaining mapped languages.",
+      "Panel B applies the predeclared Hindi-belt sample restriction; the table is descriptive mechanism evidence rather than an instrumental-variable first stage."
+    ),
+    paper_conversion_complements = paste(
+      "Entries are interaction coefficients with state-clustered standard errors in parentheses; stars use Holm-adjusted p-values within each predeclared panel family.",
+      "Panel A reports the change in the 2004-05 to 2022-23 schooling-consumption association for a one-standard-deviation increase in each predetermined Census-2001 complement, per 10 percentage points of schooling exposure.",
+      "Panel B reports the corresponding 2005 IT-employment-environment interaction for all-child EMI per 10 percentage points and for linguistic distance per one Shastry degree.",
+      regression_star_note(),
+      "These are descriptive heterogeneity estimates and do not make the schooling exposure or linguistic-distance interaction causal."
     ),
     paper_schooling_welfare = paste(
       "Entries are percent changes in real mean MPCE associated with a 10 percentage-point increase in the schooling margin; state-clustered standard errors are in parentheses.",

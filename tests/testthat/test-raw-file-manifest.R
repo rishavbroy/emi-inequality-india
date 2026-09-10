@@ -964,3 +964,19 @@ test_that("registered source citation keys resolve to the bibliography", {
     info = paste("Unresolved data_sources.csv citation_key values:", paste(missing_keys, collapse = ", "))
   )
 })
+
+test_that("official EC05 IT baseline archive is required by the publication pipeline", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
+  manifest <- read.csv(
+    file.path(root, "data", "metadata", "file_manifest.csv"),
+    stringsAsFactors = FALSE,
+    check.names = FALSE
+  )
+  row <- manifest[manifest$file_id == "ec05_raw_archive", , drop = FALSE]
+
+  expect_equal(nrow(row), 1L)
+  expect_identical(row$source_id[[1L]], "economic_census_raw")
+  expect_true(as.logical(row$required_for_current_pipeline[[1L]]))
+  expect_identical(row$reader_function[[1L]], "read_economic_census_2005_it_baseline")
+  expect_equal(as.numeric(row$expected_size_bytes[[1L]]), 454938884)
+})

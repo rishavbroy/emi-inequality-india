@@ -1,12 +1,14 @@
 # Economic Census source contract
 
+The official Fifth Economic Census archive is a strict publication input for Table 5's predetermined 2005 IT-employment-environment check. Only this baseline chain is core; EC05-EC13 longitudinal measurement and broader mechanism diagnostics remain extended until a main-paper exhibit consumes them.
+
 ## Production sources
 
 The 2005 production source is Development Data Lab SHRUG v2.1's published district product `ec05_pc01dist.csv`, distributed inside `data/raw/shrug/shrug-ec05-csv.zip`. It is already aggregated on the project's analytical geography: `pc01_state_id` and `pc01_district_id` are Census-2001 district identifiers. Reaggregating the raw Fifth Economic Census is therefore unnecessary for the current estimand.
 
 The 2013 production source is now the local SHRUG `ec13_pc11dist.csv` product in `data/raw/shrug/shrug-ec13-csv.zip`. It contains the documented complete 640-district Census-2011 universe keyed by `pc11_state_id` and `pc11_district_id`. Production pools its **counts** through the existing complete-child Census-2011-to-2001 geography before computing any 2013 shares or 2005-2013 changes. Under the currently reviewed transition, 372 Census-2011 districts reconstruct 359 complete Census-2001 parents; the remaining parents stay unavailable rather than receiving fractional firm counts.
 
-The raw Fifth/Sixth Economic Census archives under `data/raw/ec/` are validation and reconstruction resources, not a parallel production aggregation path when a documented SHRUG district product represents the required estimand.
+The raw Fifth Economic Census archive under `data/raw/ec/` is used only for the predeclared Division-72 IT-employment baseline that is unavailable in the documented SHRUG district product. The raw Sixth Economic Census metadata remain validation resources. Neither raw source is used as a parallel replacement for the SHRUG district aggregates when SHRUG already represents the required longitudinal estimand.
 
 ## Canonical measure semantics
 
