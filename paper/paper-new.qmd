@@ -119,9 +119,9 @@ Geospatial data used to construct the maps in this paper as well as all spatial 
 
 All variables reflecting 2017-18 data come from the 75th Round of the National Sample Survey (NSS), titled "Household Social Consumption: Education" [@office2022a]. All 2007-08 variables but one come from the 64th round of the NSS, on "Participation and Expenditure in Education" [@nationalsamplesurveyoffice2008]; the sole exception to this is the percentage of homes which are pucca (i.e., permanent), which is instead sourced from a separate schedule of the 64th NSS, “Household Consumer Expenditure” [@nationalstatisticalofficeIndiaHouseholdConsumer2011]. Response rates in all of the surveys were above 96%.
 
-Sample weights were applied wherever applicable. All district-level aggregates were formed as sample-weighted averages. The education participation probit of @sec-heckman used survey-weighted generalized linear models and design-based standard errors.^[Clusters were formed at the primary sampling unit, which were rural villages and urban blocks. These clusters were nested, or defined within, substrata which were themselves nested within strata. (Strata generally corresponded to districts, whereas substrata generally corresponded to each side of the rural/urban partition of the district. Multiple urban substrata were allowed for particularly dense areas, with the largest number of substrata within a district being 29.) All were accounted for in the probit.]. Summary statistics for variables used in the probit are given in @tbl-sum-tbl-probit-quant and @tbl-sum-tbl-probit-cat, whereas @tbl-sum-tbl-iv contains summary statistics for variables used in the 2SLS estimation.
+Sample weights were applied wherever applicable. All district-level aggregates were formed as sample-weighted averages. The education participation probit of @sec-heckman used survey-weighted generalized linear models and design-based standard errors.^[Clusters were formed at the primary sampling unit, which were rural villages and urban blocks. These clusters were nested, or defined within, substrata which were themselves nested within strata. (Strata generally corresponded to districts, whereas substrata generally corresponded to each side of the rural/urban partition of the district. Multiple urban substrata were allowed for particularly dense areas, with the largest number of substrata within a district being 29.) All were accounted for in the probit.]. Summary statistics for variables used in the probit are given in @tbl-sum-tbl-probit-quant and @tbl-sum-tbl-probit-cat, whereas @tbl-core-summary summarizes the central district-level constructs used across the paper.
 
-Except for certain individual-level variables in the education probit, we will be aggregating variables at the district level. As will be shown in @tbl-sum-tbl-iv, the average population of a district in either sample period (2007-08 and 2017-18) is 2 million. In the survey samples, however, most districts have between 400 and 1200 people represented in the data, with the exact number varying in line with a district's population.
+Except for certain individual-level variables in the education probit, we aggregate the main empirical constructs at the district level. In the survey samples, however, most districts have between 400 and 1200 people represented in the data, with the exact number varying in line with a district's population.
 
 ## Data Issues: Representativeness and Quality
 
@@ -266,16 +266,16 @@ $$
 \end{aligned}
 $$ {#eq-iv-eq}
 where $X_d$ contains predetermined Census 2001 controls and $\alpha_s$ denotes Census-2001 state fixed effects.
-Summary statistics for all variables in this model, including the controls $k$ in the vector $X_{kd}$, are provided in @tbl-sum-tbl-iv. Maps of these variables, created using 2001 boundaries, are presented in @fig-map1-fig and @fig-map2-fig.
+The scale and dispersion of the paper's central schooling, linguistic, predetermined-capacity, and long-run welfare constructs are summarized in @tbl-core-summary. @fig-schooling-geography places the preferred linguistic condition beside all-child, public, and private EMI exposure on the common Census-2001 district geography; @fig-map2-fig later shows the regional and residual identifying geography.
 
-![(Clockwise from top left) EMI exposure, consumption growth, pucca (permanent) housing, and household heads with secondary education or more. Data from the 64th round of the NSS 2007-08, "Participation and Expenditure in Education" and "Household Consumer Expenditure."](../outputs/figures/main/collage_main_maps.pdf){#fig-map1-fig fig-pos="H" width="100%"}
+![Linguistic conditions and English-oriented schooling on common Census-2001 district geography: linguistic distance from Hindi, all-child EMI exposure, public EMI exposure, and private EMI exposure. State borders are emphasized over district borders and the three EMI panels use a common percentage scale.](../outputs/figures/main/paper_language_schooling_maps.pdf){#fig-schooling-geography fig-pos="H" width="100%"}
 
 ```{r}
-#| label: tbl-sum-tbl-iv
+#| label: tbl-core-summary
 #| echo: false
 #| results: asis
 
-render_public_table("../outputs/tables/main/sum_tbl_iv.tex", "sum_tbl_iv")
+render_public_table("../outputs/tables/main/paper_core_summary.tex", "paper_core_summary")
 ```
 
 

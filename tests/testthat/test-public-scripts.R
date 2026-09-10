@@ -1416,4 +1416,9 @@ test_that("working paper is opt-in and excluded from strict public contracts", {
   expect_match(makefile, "scripts/render_paper_new.R", fixed = TRUE)
   expect_match(archive, "paper/paper-new.qmd", fixed = TRUE)
   expect_match(archive, "paper/paper-new.pdf", fixed = TRUE)
+
+  working_paper <- repo_text("paper", "paper-new.qmd")
+  expect_match(working_paper, "paper_language_schooling_maps.pdf", fixed = TRUE)
+  expect_match(working_paper, "paper_core_summary.tex", fixed = TRUE)
+  expect_false(grepl("collage_main_maps.pdf", working_paper, fixed = TRUE))
 })
