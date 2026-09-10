@@ -1428,6 +1428,9 @@ test_that("working paper is rendered and checked by the strict publication graph
   working_paper <- repo_text("paper", "paper-new.qmd")
   expect_match(working_paper, "paper_language_schooling_maps.pdf", fixed = TRUE)
   expect_match(working_paper, "paper_core_summary.tex", fixed = TRUE)
+  expect_match(working_paper, "inherited linguistic opportunity gradient", fixed = TRUE)
+  expect_match(working_paper, "descriptive associations, not causal returns", fixed = TRUE)
+  expect_false(grepl("affected growth in average household consumption between 2007 and 2018", working_paper, fixed = TRUE))
   expect_false(grepl("collage_main_maps.pdf", working_paper, fixed = TRUE))
 })
 
