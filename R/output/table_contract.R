@@ -160,15 +160,28 @@ table_header_labels <- function(df, name) {
 caption_for_latex <- function(name) table_caption(name)
 
 latex_escape_text <- function(x) {
-  # Canonical knitr/kableExtra escaping algorithm. Both packages keep this
-  # helper internal, so calling it through ::: would couple the public table
-  # contract to an undocumented namespace. Keep the tiny transformation here
-  # instead: ordinary table cells are text, while raw LaTeX is introduced only
-  # by the styling layer after escaping.
+  # Public table cells are ordinary text while kableExtra styling is raw LaTeX.
+  # Escape character-by-character instead of chaining gsub() replacements:
+  # replacement backslashes have their own semantics in sub()/gsub(), which can
+  # silently double or consume escapes (notably for ~ and ^). A lookup table is
+  # explicit, deterministic, and leaves all non-LaTeX characters untouched.
   x <- table_contract_column_strings(x)
-  x <- gsub("\\\\", "\\\\textbackslash", x)
-  x <- gsub("([#$%&_{}])", "\\\\\\1", x)
-  x <- gsub("\\\\textbackslash", "\\\\textbackslash{}", x)
-  x <- gsub("~", "\\\\textasciitilde{}", x, fixed = TRUE)
-  gsub("\\\\^", "\\\\textasciicircum{}", x)
+  latex_escapes <- c(
+    "\\" = "\\textbackslash{}",
+    "#" = "\\#",
+    "$" = "\\$",
+    "%" = "\\%",
+    "&" = "\\&",
+    "_" = "\\_",
+    "{" = "\\{",
+    "}" = "\\}",
+    "~" = "\\textasciitilde{}",
+    "^" = "\\textasciicircum{}"
+  )
+  vapply(x, function(value) {
+    chars <- strsplit(value, "", fixed = TRUE)[[1L]]
+    escaped <- latex_escapes[chars]
+    escaped[is.na(escaped)] <- chars[is.na(escaped)]
+    paste0(escaped, collapse = "")
+  }, character(1), USE.NAMES = FALSE)
 }

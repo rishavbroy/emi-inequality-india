@@ -1137,6 +1137,10 @@ test_that("public LaTeX cells escape metacharacters before raw kable styling", {
     "10\\% of children", "A \\& B", "x\\_y", "\\$100 \\#1", "\\{group\\}",
     "path\\textbackslash{}name", "near\\textasciitilde{}far", "x\\textasciicircum{}2"
   ))
+  expect_identical(
+    latex_escape_text("50% & x_y ~ z^2"),
+    "50\\% \\& x\\_y \\textasciitilde{} z\\textasciicircum{}2"
+  )
 
   df <- data.frame(Variable = "Enrollment", `Year / unit` = "2007-08; % of children", check.names = FALSE)
   out <- escape_table_cells_for_latex(df)
