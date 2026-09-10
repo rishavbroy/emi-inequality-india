@@ -15,24 +15,30 @@ table_status_failures <- function(x, cfg, label) {
   paste0("Final table generation requires completed model output for ", label, ".", suffix)
 }
 
+numeric_summary_values <- function(x, probs = c(`1Q` = 0.25, Med = 0.50, `3Q` = 0.75)) {
+  x <- suppressWarnings(as.numeric(x))
+  x <- x[is.finite(x)]
+  if (!length(x)) return(NULL)
+  quantiles <- stats::quantile(x, probs = unname(probs), names = FALSE)
+  stats::setNames(
+    c(length(x), min(x), quantiles, max(x), mean(x), if (length(x) > 1L) stats::sd(x) else NA_real_),
+    c("N", "Min", names(probs), "Max", "Mean", "SD")
+  )
+}
+
 public_numeric_stats <- function(df, meta, cost_vars = character(), count_vars = character()) {
   df <- as.data.frame(df)
   rows <- lapply(seq_len(nrow(meta)), function(i) {
     v <- meta$var[[i]]
     if (!v %in% names(df)) return(NULL)
-    x <- suppressWarnings(as.numeric(as.character(df[[v]])))
-    ok <- is.finite(x)
-    if (!any(ok)) return(NULL)
-    stats <- c(
-      Min = min(x[ok], na.rm = TRUE),
-      `1Q` = unname(stats::quantile(x[ok], .25, na.rm = TRUE)),
-      Med = stats::median(x[ok], na.rm = TRUE),
-      `3Q` = unname(stats::quantile(x[ok], .75, na.rm = TRUE)),
-      Max = max(x[ok], na.rm = TRUE),
-      Mean = mean(x[ok], na.rm = TRUE),
-      SD = stats::sd(x[ok], na.rm = TRUE)
+    stats <- numeric_summary_values(df[[v]])
+    if (is.null(stats)) return(NULL)
+    z <- data.frame(
+      var = v, label = meta$label[[i]],
+      N = unname(stats[["N"]]),
+      t(stats[c("Min", "1Q", "Med", "3Q", "Max", "Mean", "SD")]),
+      check.names = FALSE, stringsAsFactors = FALSE
     )
-    z <- data.frame(var = v, label = meta$label[[i]], N = sum(ok), t(stats), check.names = FALSE, stringsAsFactors = FALSE)
     if ("desc" %in% names(meta)) z$desc <- meta$desc[[i]]
     z
   })
@@ -362,7 +368,9 @@ clustered_model_vcov <- function(model, data = NULL) {
 #' make tables
 #'
 #' @return A named list of data frames consumed by save_tables().
-make_tables <- function(selection_data, ame_results, district_panel, iv_models, first_stage_tests, cfg, selection_model = NULL) {
+make_tables <- function(
+    selection_data, ame_results, district_panel, iv_models, first_stage_tests, cfg,
+    selection_model = NULL, consumption_district_welfare = NULL) {
   cons_iv <- tidy_iv_models(iv_models, district_panel)
   cons_iv_required <- filter_table_model(cons_iv, c("consumption", "baseline"))
   table_failures <- c(
@@ -391,6 +399,9 @@ make_tables <- function(selection_data, ame_results, district_panel, iv_models, 
     sum_tbl_probit_cat = make_selection_summary_categorical_table(selection_data),
     probit_mfx = make_probit_ame_table(ame_results, nrow(as.data.frame(selection_data)), selection_model),
     sum_tbl_iv = make_iv_summary_table(district_panel),
+    paper_core_summary = make_paper_core_summary_table(
+      district_panel, consumption_district_welfare
+    ),
     fs_cons = fs_cons,
     cons_iv = cons_iv_table,
     ame_results = as.data.frame(ame_results),
@@ -400,6 +411,106 @@ make_tables <- function(selection_data, ame_results, district_panel, iv_models, 
   table_failures <- unique(stats::na.omit(table_failures))
   if (length(table_failures)) attr(out, "table_input_failures") <- table_failures
   out
+}
+
+
+paper_summary_numeric <- function(x) {
+  stats <- numeric_summary_values(x, c(p10 = 0.10, p90 = 0.90))
+  if (is.null(stats)) {
+    return(c(N = 0, Mean = NA_real_, SD = NA_real_, p10 = NA_real_, p90 = NA_real_))
+  }
+  stats[c("N", "Mean", "SD", "p10", "p90")]
+}
+
+paper_summary_row <- function(variable, values, period, unit) {
+  stats <- paper_summary_numeric(values)
+  data.frame(
+    Variable = variable,
+    N = sprintf("%.0f", stats[["N"]]),
+    Mean = ifelse(is.finite(stats[["Mean"]]), sprintf("%.2f", stats[["Mean"]]), ""),
+    SD = ifelse(is.finite(stats[["SD"]]), sprintf("%.2f", stats[["SD"]]), ""),
+    p10 = ifelse(is.finite(stats[["p10"]]), sprintf("%.2f", stats[["p10"]]), ""),
+    p90 = ifelse(is.finite(stats[["p90"]]), sprintf("%.2f", stats[["p90"]]), ""),
+    `Year / unit` = paste(period, unit, sep = "; "),
+    check.names = FALSE,
+    stringsAsFactors = FALSE
+  )
+}
+
+paper_summary_group <- function(label) {
+  data.frame(
+    Variable = paste0(label, ":"), N = "", Mean = "", SD = "",
+    p10 = "", p90 = "", `Year / unit` = "",
+    check.names = FALSE, stringsAsFactors = FALSE
+  )
+}
+
+paper_summary_round_label <- function(round_id) {
+  labels <- c(
+    nss_2004_05 = "2004-05",
+    hces_2022_23 = "2022-23",
+    hces_2023_24 = "2023-24"
+  )
+  unname(labels[[round_id]] %||% round_id)
+}
+
+paper_welfare_summary_row <- function(welfare, round_id, label) {
+  x <- safe_df(welfare)
+  required <- c("round_id", "outcome_id", "estimate")
+  if (length(setdiff(required, names(x)))) {
+    return(paper_summary_row(label, numeric(), paper_summary_round_label(round_id), "2011-12-price Rs/person/month"))
+  }
+  keep <- plain_chr(x$round_id) == round_id & plain_chr(x$outcome_id) == "real_mean_mpce"
+  if ("preferred_eligible" %in% names(x)) {
+    eligible <- tolower(plain_chr(x$preferred_eligible)) %in% c("true", "1")
+    keep <- keep & eligible
+  }
+  paper_summary_row(
+    label, x$estimate[keep], paper_summary_round_label(round_id),
+    "2011-12-price Rs/person/month"
+  )
+}
+
+#' Compact descriptive table for the paper's headline constructs.
+#'
+#' The table deliberately summarizes district-level analytical constructs rather
+#' than raw microdata. Modern welfare rows use only preferred-eligible district
+#' estimates, so small-domain support rules are respected before presentation.
+make_paper_core_summary_table <- function(district_panel, consumption_district_welfare = NULL) {
+  panel <- safe_df(district_panel)
+  get <- function(variable) if (variable %in% names(panel)) panel[[variable]] else numeric()
+
+  schooling <- safe_bind_rows(list(
+    paper_summary_group("Panel A. Schooling, 2007-08"),
+    paper_summary_row("Enrollment", get("enrollment_rate_0708"), "2007-08", "% of children age 5-19"),
+    paper_summary_row("EMI among enrolled", get("emi_share_enrolled_0708"), "2007-08", "% of enrolled children"),
+    paper_summary_row("All-child EMI exposure", get("emi_exposure_all_children_0708"), "2007-08", "% of children age 5-19"),
+    paper_summary_row("Public EMI exposure", get("public_emi_exposure_all_children_0708"), "2007-08", "% of children age 5-19"),
+    paper_summary_row("Private EMI exposure", get("private_emi_exposure_all_children_0708"), "2007-08", "% of children age 5-19"),
+    paper_summary_row("Private enrollment", get("private_share_enrolled_0708"), "2007-08", "% of enrolled children")
+  ))
+
+  inherited <- safe_bind_rows(list(
+    paper_summary_group("Panel B. Inherited linguistic conditions"),
+    paper_summary_row("Linguistic distance from Hindi", get("ling_distance_nonzero_mean"), "2001", "Shastry degrees"),
+    paper_summary_row("Distant-language speaker share", get("ling_share_distance_ge3"), "2001", "% of mapped speakers")
+  ))
+
+  capacity <- safe_bind_rows(list(
+    paper_summary_group("Panel C. Predetermined district capacity"),
+    paper_summary_row("Secondary-plus share, age 7+", get("adult_secondary_plus_share_2001"), "2001", "%"),
+    paper_summary_row("Urban population share", get("urban_share_2001"), "2001", "%"),
+    paper_summary_row("Scheduled Tribe share", get("st_share_2001"), "2001", "%")
+  ))
+
+  welfare <- safe_bind_rows(list(
+    paper_summary_group("Panel D. Later welfare"),
+    paper_welfare_summary_row(consumption_district_welfare, "nss_2004_05", "Real mean MPCE"),
+    paper_welfare_summary_row(consumption_district_welfare, "hces_2022_23", "Real mean MPCE"),
+    paper_welfare_summary_row(consumption_district_welfare, "hces_2023_24", "Real mean MPCE")
+  ))
+
+  safe_bind_rows(list(schooling, inherited, capacity, welfare))
 }
 
 make_selection_summary_numeric_table <- function(selection_data) {

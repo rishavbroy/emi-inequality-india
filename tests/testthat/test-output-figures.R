@@ -9,6 +9,8 @@ poster_map_fixture <- function(n = 2L) {
     region = rep("Northern", n),
     state_code_2001 = sprintf("%02d", seq_len(n)),
     wavg_ling_degrees = seq_len(n) + 4,
+    public_emi_exposure_all_children_0708 = seq_len(n),
+    private_emi_exposure_all_children_0708 = seq_len(n),
     stringsAsFactors = FALSE
   )
   for (v in census_2001_absorption_controls()) out[[v]] <- seq_len(n)
@@ -53,7 +55,12 @@ test_that("final figures include public map collages when geometry is validated"
   panel <- sf::st_sf(panel_df, geometry = geometry)
 
   figures <- make_figures(panel, character(), cfg)
-  expect_true(all(c("map_emi_exposure", "map_consumption_growth", "map_residual_emi_exposure", "map_residual_linguistic_distance", "collage_main_maps", "collage_iv_region_maps") %in% names(figures)))
+  expect_true(all(c(
+    "map_emi_exposure", "map_public_emi_exposure", "map_private_emi_exposure",
+    "map_consumption_growth", "map_residual_emi_exposure",
+    "map_residual_linguistic_distance", "collage_main_maps",
+    "collage_iv_region_maps", "paper_language_schooling_maps"
+  ) %in% names(figures)))
 })
 
 test_that("district carve-out figure data uses pct_91in01 values", {
@@ -109,6 +116,10 @@ test_that("map collage order matches public captions", {
   expect_equal(
     figs$collage_iv_region_maps$inputs,
     c("map_region", "map_linguistic_distance", "map_residual_linguistic_distance", "map_residual_emi_exposure")
+  )
+  expect_equal(
+    figs$paper_language_schooling_maps$inputs,
+    c("map_linguistic_distance", "map_emi_exposure", "map_public_emi_exposure", "map_private_emi_exposure")
   )
 })
 
@@ -564,4 +575,38 @@ test_that("shared figure registry carries validated dynamic welfare diagnostics"
     attr(figures, "consumption_iv_dynamics"),
     dynamics
   )
+})
+
+
+test_that("paper EMI maps use one comparable percentage scale", {
+  variables <- c(
+    "emi_exposure_all_children_0708",
+    "public_emi_exposure_all_children_0708",
+    "private_emi_exposure_all_children_0708"
+  )
+  styles <- lapply(variables, public_map_style)
+
+  expect_true(all(vapply(styles, function(x) identical(x$style, "fixed"), logical(1))))
+  expect_true(all(vapply(styles, function(x) identical(x$breaks, styles[[1]]$breaks), logical(1))))
+  expect_true(all(vapply(styles, function(x) grepl("%", x$title, fixed = TRUE), logical(1))))
+})
+
+test_that("public maps dissolve district geometry to state boundaries", {
+  skip_if_not_installed("sf")
+  geometry <- sf::st_sfc(
+    sf::st_polygon(list(rbind(c(0, 0), c(1, 0), c(1, 1), c(0, 1), c(0, 0)))),
+    sf::st_polygon(list(rbind(c(1, 0), c(2, 0), c(2, 1), c(1, 1), c(1, 0)))),
+    crs = 4326
+  )
+  panel <- sf::st_sf(
+    state_code_2001 = c("01", "01"),
+    target_unit_2001 = c("a", "b"),
+    geometry = geometry
+  )
+
+  borders <- public_map_state_boundaries(panel)
+
+  expect_s3_class(borders, "sf")
+  expect_equal(nrow(borders), 1L)
+  expect_equal(as.character(borders$state), "01")
 })

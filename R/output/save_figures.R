@@ -136,16 +136,22 @@ primary_figure_path <- function(paths) {
   if (length(png)) png[[1]] else paths[[1]]
 }
 
+emi_exposure_map_style <- function(title) {
+  list(
+    palette = "brewer.blues",
+    title = paste0(title, " (%)"),
+    style = "fixed",
+    breaks = c(0, 2.5, 10, 25, 50, 100),
+    labels = c("0-2.5", "2.5-10", "10-25", "25-50", "50-100")
+  )
+}
+
 public_map_style <- function(variable) {
   switch(
     variable,
-    emi_exposure_all_children_0708 = list(
-      palette = "brewer.blues",
-      title = "EMI Exposure",
-      style = "fixed",
-      breaks = c(0, 2.5, 10, 25, 50, 100),
-      labels = c("0-2.5", "2.5-10", "10-25", "25-50", "50-100")
-    ),
+    emi_exposure_all_children_0708 = emi_exposure_map_style("All-child EMI exposure"),
+    public_emi_exposure_all_children_0708 = emi_exposure_map_style("Public EMI exposure"),
+    private_emi_exposure_all_children_0708 = emi_exposure_map_style("Private EMI exposure"),
     real_log_consumption_change = list(
       palette = "poster.consumption",
       title = "Real Log Consumption Change",
@@ -372,6 +378,21 @@ map_legend_override <- function(colors) {
   )
 }
 
+public_map_state_boundaries <- function(plot_data) {
+  if (!inherits(plot_data, "sf")) return(NULL)
+  state_col <- intersect(
+    c("state_code_2001", "state_01", "state_std"),
+    names(plot_data)
+  )
+  if (!length(state_col)) return(NULL)
+  state_col <- state_col[[1]]
+  state <- plain_chr(plot_data[[state_col]])
+  keep <- !is.na(state) & nzchar(state)
+  if (!any(keep)) return(NULL)
+  data <- plot_data[keep, c(state_col, attr(plot_data, "sf_column")), drop = FALSE]
+  stats::aggregate(data, by = list(state = state[keep]), FUN = length)
+}
+
 build_public_ggplot_map <- function(plot_data, spec) {
   need_pkg("ggplot2", "classified choropleth maps")
   style <- public_map_style(spec$variable)
@@ -382,8 +403,15 @@ build_public_ggplot_map <- function(plot_data, spec) {
     stop("Map figure '", spec$name, "' has no non-missing overlay districts for variable '", spec$variable, "'.", call. = FALSE)
   }
 
+  state_boundaries <- public_map_state_boundaries(plot_data)
   base <- ggplot2::ggplot() +
-    ggplot2::geom_sf(data = plot_data, ggplot2::aes(fill = .data[[fill$fill]]), color = "grey35", linewidth = 0.05) +
+    ggplot2::geom_sf(data = plot_data, ggplot2::aes(fill = .data[[fill$fill]]), color = "grey55", linewidth = 0.04)
+  if (!is.null(state_boundaries) && nrow(state_boundaries)) {
+    base <- base + ggplot2::geom_sf(
+      data = state_boundaries, fill = NA, color = "grey15", linewidth = 0.28
+    )
+  }
+  base <- base +
     ggplot2::coord_sf(datum = NA) +
     ggplot2::labs(fill = fill$title) +
     ggplot2::theme_void(base_size = 10) +

@@ -37,7 +37,13 @@ core_public_target_definitions <- function() {
       )
     ),
     tar_target(figure_files, save_figures(figures, cfg), format = "file"),
-    tar_target(tables, make_tables(selection_data, ame_results, district_panel, revised_iv_models, revised_first_stage_tests, cfg, selection_model)),
+    tar_target(
+      tables,
+      make_tables(
+        selection_data, ame_results, district_panel, revised_iv_models,
+        revised_first_stage_tests, cfg, selection_model, consumption_district_welfare
+      )
+    ),
     tar_target(diag_public_iv_panel, save_public_iv_panel_diagnostics(district_panel, tables), format = "file"),
     tar_target(table_files, save_tables(tables, cfg), format = "file"),
     tar_target(report_values, { diag_public_spatial_autocorrelation_files; build_report_values(ame_results, revised_first_stage_tests, revised_iv_models, selection_data, district_panel, diag_public_spatial_autocorrelation, cfg) }),

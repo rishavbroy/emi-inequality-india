@@ -787,3 +787,54 @@ test_that("public longtable notes combine significance and table-specific contex
   expect_true(grepl("singlespacing", wrapped, fixed = TRUE))
   expect_true(grepl("BODY", wrapped, fixed = TRUE))
 })
+
+
+test_that("paper core summary uses p10/p90 and preferred modern welfare support", {
+  panel <- data.frame(
+    enrollment_rate_0708 = c(50, 60, 70),
+    emi_share_enrolled_0708 = c(10, 20, 30),
+    emi_exposure_all_children_0708 = c(5, 12, 21),
+    public_emi_exposure_all_children_0708 = c(2, 4, 6),
+    private_emi_exposure_all_children_0708 = c(3, 8, 15),
+    private_share_enrolled_0708 = c(20, 30, 40),
+    ling_distance_nonzero_mean = c(1, 2, 3),
+    ling_share_distance_ge3 = c(20, 30, 40),
+    adult_secondary_plus_share_2001 = c(10, 20, 30),
+    urban_share_2001 = c(20, 40, 60),
+    st_share_2001 = c(0, 10, 20),
+    stringsAsFactors = FALSE
+  )
+  welfare <- data.frame(
+    round_id = c("nss_2004_05", "hces_2022_23", "hces_2022_23", "hces_2023_24"),
+    outcome_id = "real_mean_mpce",
+    estimate = c(1000, 2000, 9000, 2500),
+    preferred_eligible = c(TRUE, TRUE, FALSE, TRUE),
+    stringsAsFactors = FALSE
+  )
+
+  out <- make_paper_core_summary_table(panel, welfare)
+
+  expect_identical(names(out), c("Variable", "N", "Mean", "SD", "p10", "p90", "Year / unit"))
+  expect_true(all(c(
+    "Panel A. Schooling, 2007-08:",
+    "Panel B. Inherited linguistic conditions:",
+    "Panel C. Predetermined district capacity:",
+    "Panel D. Later welfare:"
+  ) %in% out$Variable))
+  emi <- out[out$Variable == "All-child EMI exposure", , drop = FALSE]
+  expect_equal(emi$N, "3")
+  expect_equal(emi$p10, "6.40")
+  expect_equal(emi$p90, "19.20")
+  hces22 <- out[out$Variable == "Real mean MPCE" & grepl("2022-23", out$`Year / unit`, fixed = TRUE), , drop = FALSE]
+  expect_equal(hces22$N, "1")
+  expect_equal(hces22$Mean, "2000.00")
+})
+
+
+test_that("paper core summary caption and note describe district support", {
+  expect_equal(public_table_caption_text("paper_core_summary"), "Core Variables and Summary Statistics")
+  note <- public_table_note("paper_core_summary")
+  expect_match(note, "District-level descriptive statistics", fixed = TRUE)
+  expect_match(note, "preferred-eligible", fixed = TRUE)
+  expect_match(note, "p10 and p90", fixed = TRUE)
+})

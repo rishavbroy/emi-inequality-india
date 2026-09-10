@@ -106,7 +106,9 @@ make_figures <- function(
     "pct_head_secondary_plus",
     "region",
     "resid_emi_exposure_region_expanded",
-    "resid_ling_distance_region_expanded"
+    "resid_ling_distance_region_expanded",
+    "public_emi_exposure_all_children_0708",
+    "private_emi_exposure_all_children_0708"
   )
 
   out <- list(
@@ -170,6 +172,16 @@ make_figures <- function(
     map_education = figure_spec("map_education", "map_education.png", "% HH Head w/ Sec.+", kind = if (maps_available) "map" else "status", variable = "pct_head_secondary_plus"),
     map_region = figure_spec("map_region", "map_region.png", "Region", kind = if (maps_available) "map" else "status", variable = "region"),
     map_linguistic_distance = figure_spec("map_linguistic_distance", "map_linguistic_distance.png", "Linguistic Distance", kind = if (maps_available) "map" else "status", variable = spec$instrument),
+    map_public_emi_exposure = figure_spec(
+      "map_public_emi_exposure", "map_public_emi_exposure.png",
+      "Public EMI Exposure", kind = if (maps_available) "map" else "status",
+      variable = "public_emi_exposure_all_children_0708"
+    ),
+    map_private_emi_exposure = figure_spec(
+      "map_private_emi_exposure", "map_private_emi_exposure.png",
+      "Private EMI Exposure", kind = if (maps_available) "map" else "status",
+      variable = "private_emi_exposure_all_children_0708"
+    ),
     map_residual_emi_exposure = figure_spec(
       "map_residual_emi_exposure",
       "map_residual_emi_exposure.png",
@@ -197,6 +209,16 @@ make_figures <- function(
       "Instrument and region map inputs",
       kind = "collage",
       inputs = c("map_region", "map_linguistic_distance", "map_residual_linguistic_distance", "map_residual_emi_exposure")
+    ),
+    paper_language_schooling_maps = figure_spec(
+      "paper_language_schooling_maps",
+      "paper_language_schooling_maps.png",
+      "Linguistic conditions and English-oriented schooling",
+      kind = "collage",
+      inputs = c(
+        "map_linguistic_distance", "map_emi_exposure",
+        "map_public_emi_exposure", "map_private_emi_exposure"
+      )
     )
   )
 
