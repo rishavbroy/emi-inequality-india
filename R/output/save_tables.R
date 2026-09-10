@@ -617,6 +617,9 @@ save_table_tex <- function(table, path, name, public = TRUE) {
     "paper_local_development", "paper_identification_boundary"
   )
   schooling_market_table <- identical(name, "paper_schooling_market_geography")
+  appendix_compact_table <- name %in% c(
+    "appendix_e1_selection_sample", "appendix_e4_missingness"
+  )
   if (!regression_table) {
     names(df_render) <- table_header_labels(df_render, name)
   }
@@ -646,7 +649,7 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   )
   if (regression_table) {
     latex_options <- c("hold_position", "repeat_header", "striped")
-  } else if (compact_result_table) {
+  } else if (compact_result_table || appendix_compact_table) {
     # Keep compact paper-result tables visually neutral. Semantic panel grouping
     # and parenthesized standard errors already provide the needed row structure.
     latex_options <- c("repeat_header")
@@ -664,7 +667,7 @@ save_table_tex <- function(table, path, name, public = TRUE) {
     latex_options = latex_options,
     full_width = FALSE,
     position = "center",
-    font_size = if (wide_summary_table || regression_table || compact_result_table || schooling_market_table) 9 else NULL
+    font_size = if (wide_summary_table || regression_table || compact_result_table || schooling_market_table || appendix_compact_table) 9 else NULL
   )
   if (nrow(grouped$groups)) {
     for (i in rev(seq_len(nrow(grouped$groups)))) {
@@ -701,6 +704,14 @@ save_table_tex <- function(table, path, name, public = TRUE) {
       paper_language_behavior = c("4.1cm", rep("1.25cm", 4L), "1.0cm", "1.8cm", "3.0cm"),
       paper_local_development = c("2.1cm", "5.0cm", "1.35cm", "1.2cm", "1.2cm", "4.2cm"),
       paper_identification_boundary = c("3.5cm", "2.2cm", "1.1cm", "1.1cm", "1.3cm", "4.6cm")
+    )
+    tex <- apply_table_column_widths(tex, widths)
+  }
+  if (appendix_compact_table) {
+    widths <- switch(
+      name,
+      appendix_e1_selection_sample = c("3.8cm", "1.7cm", "1.2cm", "8.0cm"),
+      appendix_e4_missingness = c("4.5cm", "1.6cm", "1.6cm", "1.7cm", "2.6cm")
     )
     tex <- apply_table_column_widths(tex, widths)
   }

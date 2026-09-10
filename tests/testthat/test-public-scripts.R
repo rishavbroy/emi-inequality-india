@@ -1627,3 +1627,28 @@ test_that("paper local-development synthesis promotes only publication analysis 
   expect_match(public_contract, "paper_local_development.csv", fixed = TRUE)
   expect_match(public_contract, "paper_local_development.tex", fixed = TRUE)
 })
+
+test_that("final-paper selection missingness is core-owned and extended mode only persists it", {
+  core_measurement <- repo_text("R", "pipeline", "core_measurement_targets.R")
+  extended_lineage <- repo_text("R", "pipeline", "extended_lineage_targets.R")
+  core_public <- repo_text("R", "pipeline", "core_public_targets.R")
+  public_contract <- repo_text("scripts", "public_output_contract.R")
+
+  expect_match(core_measurement, "selection_missingness_diagnostics", fixed = TRUE)
+  expect_match(core_measurement, "diagnose_missingness(selection_data, cfg)", fixed = TRUE)
+  expect_match(
+    extended_lineage,
+    "save_missingness_diagnostics(selection_missingness_diagnostics)",
+    fixed = TRUE
+  )
+  expect_false(grepl(
+    "save_missingness_diagnostics(diagnose_missingness(selection_data, cfg))",
+    extended_lineage,
+    fixed = TRUE
+  ))
+  expect_match(core_public, "appendix_selection_files", fixed = TRUE)
+  expect_match(public_contract, "appendix_e1_selection_sample.tex", fixed = TRUE)
+  expect_match(public_contract, "probit_mfx.tex", fixed = TRUE)
+  expect_match(public_contract, "appendix_e4_missingness.tex", fixed = TRUE)
+  expect_match(public_contract, "appendix_e5_missingness_predictability.png", fixed = TRUE)
+})

@@ -88,6 +88,10 @@ core_measurement_target_definitions <- function() {
     tar_target(selection_model_data, project_selection_model_data(selection_data)),
     tar_target(selection_model, estimate_selection_probit(selection_model_data, cfg)),
     tar_target(ame_results, compute_average_marginal_effects(selection_model, cfg)),
+    tar_target(
+      selection_missingness_diagnostics,
+      diagnose_missingness(selection_data, cfg)
+    ),
 
     tar_target(
       consumption_households_2007,

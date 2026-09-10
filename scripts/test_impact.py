@@ -129,7 +129,9 @@ def path_tests(path):
             "test-cleaning-contracts.R",
             "test-district-keys.R",
             "test-measures.R",
+            "test-output-tables.R",
             "test-prices-and-controls.R",
+            "test-public-scripts.R",
             "test-selection.R",
         },
         "R/pipeline/core_lineage_targets.R": {
@@ -252,7 +254,7 @@ def path_tests(path):
             "test-district-join-map.R", "test-district-keys.R",
             "test-district-tracker.R", "test-manual-district-corrections.R",
         })
-    if path == "R/output/paper_new_tables.R":
+    if path in {"R/output/paper_new_tables.R", "R/output/appendix_selection_exhibits.R"}:
         tests.update({"test-output-tables.R", "test-public-scripts.R"})
     if path.startswith("paper/"):
         tests.update({"test-public-scripts.R", "test-output-tables.R", "test-output-figures.R"})

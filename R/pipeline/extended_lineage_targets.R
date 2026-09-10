@@ -178,7 +178,10 @@ extended_lineage_target_definitions <- function() {
       diag_ext_lineage_downstream,
       save_lineage_downstream_review(lineage_downstream_review)
     ),
-    tar_target(diag_ext_missingness, save_missingness_diagnostics(diagnose_missingness(selection_data, cfg))),
+    tar_target(
+      diag_ext_missingness,
+      save_missingness_diagnostics(selection_missingness_diagnostics)
+    ),
     tar_target(diag_ext_district_tracker_sources, save_tracker_source_diagnostics(diagnose_district_tracker_sources(raw_district_changes, district_tracker, cfg))),
     tar_target(diag_ext_district_matching, save_district_matching_diagnostics(diagnose_district_matching(district_panel, district_join_map, cfg))),
     tar_target(diag_ext_fuzzy_matching, save_fuzzy_matching_diagnostics(diagnose_fuzzy_matching(district_tracker, district_join_map, cfg))),

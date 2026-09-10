@@ -305,3 +305,15 @@ exercise while preserving an inexpensive strict graph.
 The main-paper local-development synthesis is built from existing domain estimators rather than a new cross-domain regression engine. `core_census_development_target_definitions()` owns only the Census migration, housing, and household-capacity analytical objects consumed by the synthesis; `core_economic_census_target_definitions()` owns the registered 2005-13 Economic Census analytical object; and `core_labor_target_definitions()` owns the primary NSS66 and PLFS 2017-18 labor objects. Their full measurement bundles, conservative geography variants, weak-IV grids, and persisted reviewer diagnostics remain in the extended factories.
 
 This boundary follows the publication-dependency rule rather than the age of a module or whether raw inputs are redistributed. The table intentionally combines heterogeneous native-unit reduced forms and retains null rows; it therefore reshapes already-registered results and never standardizes them onto a synthetic common scale. Census 2001-11 and Economic Census 2005-13 changes are documented as co-evolving local-development margins because their windows overlap the 2007 schooling measurement.
+
+### Final-paper appendix exhibits
+
+Final-paper appendix exhibits follow the same ownership rule as main-text exhibits: an
+analysis required by the published appendix is a core analytical dependency, while the
+large forensic persistence bundle may remain extended. Appendix E therefore computes the
+selection missingness diagnostic once in the core measurement graph, reuses the existing
+public enrollment-probit table for the full AME exhibit, and writes only the additional
+compact sample/missingness summaries plus missingness-predictability figure under
+`outputs/tables/appendix/` and `outputs/figures/appendix/`. Extended mode persists the full
+missingness matrices, regional screens, and case-study diagnostics from that same object;
+it does not rerun the analysis.

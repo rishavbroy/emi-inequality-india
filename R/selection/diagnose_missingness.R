@@ -36,10 +36,10 @@ missingness_variables <- function(selection_data) {
 
 #' diagnose missingness
 #'
-#' Port the legacy Chunk 8 missingness diagnostics into an opt-in diagnostic
-#' object.  The returned list preserves the legacy sequence: variable counts,
-#' regional rankings, missingness correlation matrices, BH-adjusted logit screens,
-#' and notes for commented case-study / chi-square checks.
+#' Construct the canonical missingness diagnostic object used by final-paper
+#' Appendix E and by the extended forensic outputs. The returned list preserves
+#' the legacy sequence: variable counts, regional rankings, missingness correlation
+#' matrices, BH-adjusted logit screens, and case-study / chi-square checks.
 diagnose_missingness <- function(selection_data, cfg) {
   df <- as.data.frame(selection_data, stringsAsFactors = FALSE)
   vars <- missingness_variables(df)

@@ -16,6 +16,8 @@ public_table_caption_text <- function(name) {
     paper_economic_conversion = "Economic Conversion: Schooling, Welfare, and Predetermined Complements",
     paper_local_development = "Broader Local-Development Constellation",
     paper_identification_boundary = "Identification Boundary: Linguistic Distance Does Not Isolate EMI",
+    appendix_e1_selection_sample = "Appendix E1. Enrollment Selection Sample and Covariates",
+    appendix_e4_missingness = "Appendix E4. Missingness in the Enrollment Selection Sample",
     fs_cons = "First-Stage Regression: EMI Exposure on Linguistic Distance",
     cons_iv = "Second-Stage Regression: Real Log Consumption Growth on EMI Exposure (Fitted)",
     ame_results = "Average Marginal Effects Results",
@@ -65,6 +67,16 @@ public_table_note <- function(name) {
       "The 2001-11 Census and 2005-13 Economic Census windows overlap the 2007 schooling measurement, so these rows are co-evolving development margins rather than post-treatment EMI mechanisms.",
       "PLFS 2017-18 supplies the displayed labor endpoint; the semantic CSV also retains matched NSS66 Holm p-values so the broad-labor null is auditable across survey waves.",
       "Heterogeneous units are intentionally not standardized onto a common axis. Null rows are retained by design because the table asks whether the pattern reflects selective transformation or broad local expansion."
+    ),
+    appendix_e1_selection_sample = paste(
+      "NSS 64th-round child-level enrollment sample used by the descriptive selection model.",
+      "Numeric rows report mean, standard deviation, and range; categorical rows report the modal category and observed levels.",
+      "This exhibit establishes sample composition only and is not a causal adjustment set."
+    ),
+    appendix_e4_missingness = paste(
+      "Missing percentages are computed on the selection-analysis data before model-specific complete-case restriction.",
+      "Pseudo R2 and significant-predictor counts come from the registered missingness-logit screen when a variable is screened; blank cells denote variables outside that screen.",
+      "These diagnostics describe structured missingness and do not impute missing values."
     ),
     paper_identification_boundary = paste(
       "Panel A compares excluded-instrument F statistics on one common district support for the unadjusted and state-fixed-effects plus predetermined-controls specifications; partial R-squared refers to the within-state specification.",
