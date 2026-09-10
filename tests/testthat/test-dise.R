@@ -670,7 +670,10 @@ test_that("Census-2001 DISE attachment is one-to-one and preserves panel order",
 test_that("DISE metadata inputs are explicit file dependencies in the targets graph", {
   root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
   targets_text <- paste(
-    readLines(file.path(root, "R", "pipeline", "extended_dise_targets.R"), warn = FALSE),
+    c(
+      readLines(file.path(root, "R", "pipeline", "core_dise_targets.R"), warn = FALSE),
+      readLines(file.path(root, "R", "pipeline", "extended_dise_targets.R"), warn = FALSE)
+    ),
     collapse = "\n"
   )
   metadata_targets <- c(
