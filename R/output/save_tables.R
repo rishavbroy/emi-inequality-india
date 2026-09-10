@@ -622,6 +622,9 @@ save_table_tex <- function(table, path, name, public = TRUE) {
     "appendix_a4_nss_schooling_constructs", "appendix_a5_dise_construction",
     "appendix_a6_linguistic_measures", "appendix_a7_consumption_construction",
     "appendix_a8_other_outcome_panels",
+    "appendix_b1_lineage_readiness", "appendix_b3_consumption_reconstruction", "appendix_b4_hces_consistency_summary", "appendix_b6_language_source_validation",
+    "appendix_b9_dise_publication_validation", "appendix_c7_historical_balance",
+    "appendix_c9_historical_first_stage",
     "appendix_e1_selection_sample", "appendix_e4_missingness"
   )
   if (!regression_table) {
@@ -721,6 +724,13 @@ save_table_tex <- function(table, path, name, public = TRUE) {
       appendix_a6_linguistic_measures = c("3.2cm", "3.6cm", "4.6cm", "2.5cm"),
       appendix_a7_consumption_construction = c("3.4cm", "1.9cm", "2.2cm", "2.2cm", "3.0cm", "2.0cm"),
       appendix_a8_other_outcome_panels = c("3.0cm", "2.4cm", "3.8cm", "4.6cm"),
+      appendix_b1_lineage_readiness = c("3.6cm", "6.8cm", "2.0cm"),
+      appendix_b3_consumption_reconstruction = c("2.3cm", "1.4cm", "1.3cm", "2.0cm", "2.0cm", "2.0cm"),
+      appendix_b4_hces_consistency_summary = c("6.0cm", "1.8cm", "3.0cm"),
+      appendix_b6_language_source_validation = c("4.0cm", "1.2cm", "2.7cm", "1.4cm", "3.3cm", "1.6cm"),
+      appendix_b9_dise_publication_validation = c("1.2cm", "2.8cm", "3.0cm", "1.5cm", "1.5cm", "1.3cm", "3.5cm"),
+      appendix_c7_historical_balance = c("2.8cm", "2.5cm", "1.5cm", "1.4cm", "1.4cm", "1.2cm"),
+      appendix_c9_historical_first_stage = c("5.0cm", "1.5cm", "1.9cm", "1.5cm", "1.9cm", "1.2cm"),
       appendix_e1_selection_sample = c("3.8cm", "1.7cm", "1.2cm", "8.0cm"),
       appendix_e4_missingness = c("4.5cm", "1.6cm", "1.6cm", "1.7cm", "2.6cm")
     )

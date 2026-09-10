@@ -207,24 +207,30 @@ test_that("targets graph separates public diagnostics, extended diagnostics, and
   expect_false(grepl('tar_cue(mode = "always")', public_spatial_line, fixed = TRUE))
 })
 
-test_that("historical geography validation stays out of the public core graph", {
+test_that("paper historical validation is core while forensic geography remains extended", {
   core <- repo_core_target_text()
   extended <- repo_extended_target_text()
-  historical_targets <- c(
+  publication_targets <- c(
     "historical_linguistic_geography_1991_2001",
-    "historical_vanneman_source_qa",
-    "historical_vanneman_panel4_geography",
+    "census_1991_primary_validation",
+    "helms_lim_linguistic_distance_benchmark",
+    "historical_linguistic_persistence_validation",
+    "historical_linguistic_first_stage_robustness",
+    "historical_baseline_balance_1991"
+  )
+  forensic_targets <- c(
     "historical_linguistic_geography_external_benchmark",
     "multivintage_geography_1991_2001_2011",
-    "historical_linguistic_consensus_geography"
+    "historical_linguistic_consensus_geography",
+    "historical_vanneman_pretrend_validation"
   )
 
-  for (target in historical_targets) {
-    expect_false(grepl(target, core, fixed = TRUE), info = target)
-    expect_match(extended, target, fixed = TRUE, info = target)
+  for (target in publication_targets) {
+    expect_match(core, target, fixed = TRUE, info = target)
+    expect_false(grepl(paste0("tar_target(\n      ", target, ","), extended, fixed = TRUE), info = target)
   }
-  expect_match(core, "district_lineage_sources", fixed = TRUE)
-  expect_match(core, "district_transition_2001_2011", fixed = TRUE)
+  for (target in forensic_targets) expect_match(extended, target, fixed = TRUE, info = target)
+  expect_match(extended, "save_historical_linguistic_inference_validation", fixed = TRUE)
 })
 
 test_that("target warning metadata is written to build diagnostics", {
@@ -1673,4 +1679,36 @@ test_that("Appendix A construction exhibits are strict publication artifacts wit
   )) {
     expect_match(public_contract, path, fixed = TRUE)
   }
+})
+
+
+test_that("Appendix B/C validation exhibits are strict outputs with single analytical ownership", {
+  targets <- repo_text("_targets.R")
+  core_hist <- repo_text("R", "pipeline", "core_historical_validation_targets.R")
+  extended_hist <- repo_text("R", "pipeline", "extended_historical_targets.R")
+  core_dise <- repo_text("R", "pipeline", "core_dise_targets.R")
+  extended_dise <- repo_text("R", "pipeline", "extended_dise_targets.R")
+  core_public <- repo_text("R", "pipeline", "core_public_targets.R")
+  contract <- repo_text("scripts", "public_output_contract.R")
+
+  expect_match(targets, "core_historical_validation_target_definitions()", fixed = TRUE)
+  for (target in c("census_1991_primary_validation", "historical_linguistic_persistence_validation",
+                   "helms_lim_linguistic_distance_benchmark", "historical_baseline_balance_1991",
+                   "historical_linguistic_first_stage_robustness")) {
+    expect_match(core_hist, target, fixed = TRUE)
+    expect_false(grepl(paste0("tar_target(\n      ", target, ","), extended_hist, fixed = TRUE))
+  }
+  expect_match(core_dise, "dise_publication_validation", fixed = TRUE)
+  expect_false(grepl("tar_target(\n      dise_publication_checks,", extended_dise, fixed = TRUE))
+  expect_match(core_public, "appendix_validation_identification_files", fixed = TRUE)
+  for (path in c(
+    "appendix_b1_lineage_readiness.tex", "appendix_b3_consumption_reconstruction.tex", "appendix_b4_hces_consistency_summary.tex",
+    "appendix_b4_hces_consistency.pdf",
+    "appendix_b5_historical_language_persistence.pdf", "appendix_b6_language_source_validation.tex",
+    "appendix_b7_nss_dise_agreement.pdf", "appendix_b9_dise_publication_validation.tex",
+    "appendix_c7_historical_balance.tex", "appendix_c9_historical_first_stage.tex"
+  )) expect_match(contract, path, fixed = TRUE)
+
+  module <- repo_text("R", "output", "appendix_validation_identification_exhibits.R")
+  expect_false(grepl("lm\\(|fixest::|feols\\(|ivreg\\(", module))
 })

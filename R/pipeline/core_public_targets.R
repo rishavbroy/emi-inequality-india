@@ -124,6 +124,23 @@ core_public_target_definitions <- function() {
       format = "file"
     ),
     tar_target(
+      appendix_validation_identification_exhibits,
+      make_appendix_validation_identification_exhibits(
+        district_lineage, consumption_mpce_validation, consumption_district_welfare,
+        census_1991_primary_validation, historical_linguistic_persistence_validation,
+        helms_lim_linguistic_distance_benchmark, district_panel, district_panel_with_dise,
+        dise_iv_nss_validation, dise_publication_validation,
+        historical_baseline_balance_1991, historical_linguistic_first_stage_robustness
+      )
+    ),
+    tar_target(
+      appendix_validation_identification_files,
+      save_appendix_validation_identification_exhibits(
+        appendix_validation_identification_exhibits, cfg
+      ),
+      format = "file"
+    ),
+    tar_target(
       appendix_selection_exhibits,
       make_appendix_selection_exhibits(
         selection_data, selection_missingness_diagnostics

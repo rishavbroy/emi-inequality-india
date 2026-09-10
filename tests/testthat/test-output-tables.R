@@ -1624,3 +1624,141 @@ test_that("Appendix A fails closed when publication source metadata drifts", {
     fixed = TRUE
   )
 })
+
+test_that("Appendix B/C historical validation tables preserve registered scientific families", {
+  primary <- list(comparison_summary = data.frame(
+    measure_id = paste0("m", 1:2), exact_required = TRUE,
+    compared_districts = c(10L, 10L), exact_matches = c(10L, 10L), stringsAsFactors = FALSE
+  ))
+  helms <- list(summary = data.frame(
+    n_atlas_preferred_overlap = 12L, pearson_correlation = .99,
+    median_absolute_difference = .01, stringsAsFactors = FALSE
+  ))
+  persistence <- list(summary = data.frame(
+    sample = "preferred_geography", measure_id = "nonzero_mean", n_districts = 9L,
+    pearson = .90, population_weighted_pearson = .93, stringsAsFactors = FALSE
+  ))
+  panel <- data.frame(
+    ling_distance_nonzero_mean = c(1, 2, 3), ling_mapped_speaker_share = c(.9, .8, .7),
+    ling_distance_glottolog_nonhindi_mean = c(2, 3, NA), ling_glottolog_mapped_speaker_share = c(.8, .7, .6),
+    ling_distance_dyen_noncognate_pct = c(40, NA, 60), ling_dyen_mapped_speaker_share = c(.7, .6, .5),
+    stringsAsFactors = FALSE
+  )
+  b6 <- appendix_b6_language_source_validation(primary, helms, persistence, panel)
+  b6_csv <- attr(b6, "csv_data")
+  expect_equal(nrow(b6_csv), 6L)
+  expect_identical(b6_csv$validation[1:3], c(
+    "Shastry 2001 district coverage", "Glottolog 2001 district coverage", "Dyen 2001 district coverage"
+  ))
+  expect_identical(b6_csv$validation[4:6], c(
+    "Official Census 1991 source checks", "Helms-Lim vs project 1991 distance",
+    "Project 1991 vs 2001 distance"
+  ))
+
+  predictors <- c("eventual_emie", "census_2001_ld", "helms_lim_ld_1991")
+  domains <- c("demography", "human_capital", "economic_structure", "rural_development", "urban_development")
+  joint <- expand.grid(predictor_id = predictors, domain = domains, stringsAsFactors = FALSE)
+  joint$sample <- "preferred_geography"; joint$predictor <- joint$predictor_id
+  joint$n_tested_covariates <- 2L; joint$joint_f <- seq_len(nrow(joint)) / 10
+  joint$joint_p <- .5; joint$n <- 90L; joint$n_states <- 20L
+  joint$status <- "estimated"; joint$reason <- NA_character_
+  c7 <- appendix_c7_historical_balance(list(joint_balance = joint))
+  expect_equal(nrow(attr(c7, "csv_data")), 15L)
+  expect_false(any(c("status", "reason") %in% names(attr(c7, "csv_data"))))
+
+  ids <- c("instrument_only", "region_fe_census_controls", "state_fe_census_controls", "region_fe_expanded_controls", "state_fe_expanded_controls")
+  comp <- data.frame(
+    sample = "preferred_geography", specification_id = ids, specification = ids,
+    excluded_instrument_f_1991 = 1:5, partial_r_squared_1991 = seq(.01, .05, .01), n_1991 = 89L,
+    excluded_instrument_f_2001 = 2:6, partial_r_squared_2001 = seq(.02, .06, .01), n_2001 = 89L,
+    status_1991 = "estimated", status_2001 = "estimated", stringsAsFactors = FALSE
+  )
+  c9 <- appendix_c9_historical_first_stage(list(comparison = comp))
+  expect_equal(nrow(attr(c9, "csv_data")), 5L)
+  expect_identical(attr(c9, "csv_data")$specification_id, ids)
+})
+
+test_that("Appendix B validation plots enforce common registered support", {
+  welfare <- expand.grid(
+    district_2001 = c("d1", "d2", "d3"),
+    round_id = c("hces_2022_23", "hces_2023_24"),
+    outcome_id = c("real_mean_mpce", "mean_log_real_mpce", "weighted_median_real_mpce"),
+    stringsAsFactors = FALSE
+  )
+  welfare$estimate <- seq_len(nrow(welfare)); welfare$preferred_eligible <- TRUE
+  b4 <- appendix_b4_hces_consistency_data(welfare)
+  expect_equal(table(b4$outcome_id), setNames(rep(3L, 3L), c("mean_log_real_mpce", "real_mean_mpce", "weighted_median_real_mpce")))
+  b4_summary <- appendix_b4_hces_consistency_summary(welfare)
+  expect_equal(nrow(attr(b4_summary, "csv_data")), 3L)
+  expect_true(all(attr(b4_summary, "csv_data")$n == 3L))
+
+  panel <- data.frame(
+    state_code_2001 = rep(c("01", "02"), each = 2),
+    dise_emi_enrollment_share_total_0708 = c(10, 20, 30, 40),
+    emi_share_enrolled_0708 = c(12, 18, 29, 43), stringsAsFactors = FALSE
+  )
+  validation <- data.frame(
+    comparison = "enrolled_total_denominator", n = 4L, status = "estimated",
+    stringsAsFactors = FALSE
+  )
+  b7 <- appendix_b7_nss_dise_data(panel, validation)
+  expect_equal(nrow(b7), 4L)
+  expect_lt(abs(mean(b7$dise_residual[b7$state == "01"])), 1e-12)
+  expect_lt(abs(mean(b7$nss_residual[b7$state == "02"])), 1e-12)
+})
+
+test_that("Appendix B1 lineage readiness fails closed and reports the three registered panel variants", {
+  lineage <- list(
+    summary = data.frame(
+      metric = c("admin_units_2001", "accepted_source_matches"),
+      value = c(593, 1254), stringsAsFactors = FALSE
+    ),
+    readiness = data.frame(gate = c("a", "b"), passed = TRUE, stringsAsFactors = FALSE),
+    blockers = data.frame(),
+    panel_variant_summary = data.frame(
+      panel_variant = c("conservative", "primary", "full_reviewed"),
+      two_wave_target_districts = c(427, 573, 587), stringsAsFactors = FALSE
+    )
+  )
+  out <- appendix_b1_lineage_readiness(lineage)
+  csv <- attr(out, "csv_data")
+  expect_equal(nrow(csv), 7L)
+  expect_identical(csv$metric[5:7], c("Conservative", "Primary", "Full reviewed"))
+  expect_identical(as.integer(csv$value[5:7]), c(427L, 573L, 587L))
+
+  lineage$readiness$passed[[1]] <- FALSE
+  expect_error(appendix_b1_lineage_readiness(lineage), "all lineage readiness gates pass", fixed = TRUE)
+})
+
+
+test_that("Appendix B benchmark and DISE publication tables fail closed on validation failures", {
+  mpce <- data.frame(
+    survey_id = rep(paste0("survey_", 1:9), each = 2L),
+    sector = rep(c("rural", "urban"), 9L),
+    mpce_definition = "registered detailed MPCE",
+    expected_mpce = seq_len(18L) * 100,
+    estimate_mpce = seq_len(18L) * 100,
+    abs_difference = 0,
+    passed = TRUE,
+    stringsAsFactors = FALSE
+  )
+  b3 <- appendix_b3_consumption_reconstruction(mpce)
+  expect_equal(nrow(attr(b3, "csv_data")), 18L)
+  expect_error(
+    appendix_b3_consumption_reconstruction(mpce[-1L, , drop = FALSE]),
+    "all 18 registered national consumption benchmark cells",
+    fixed = TRUE
+  )
+  mpce$passed[[2]] <- FALSE
+  expect_error(appendix_b3_consumption_reconstruction(mpce), "may only publish passed consumption benchmarks", fixed = TRUE)
+
+  dise <- data.frame(
+    academic_year = "2005-06", state = "Jammu and Kashmir", district = "Kupwara",
+    metric = "medium_slot_1", expected_value = 10, actual_value = 10, difference = 0,
+    matches = TRUE, source_pdf = "report.pdf", source_page = 1L, stringsAsFactors = FALSE
+  )
+  b9 <- appendix_b9_dise_publication_validation(dise)
+  expect_equal(nrow(attr(b9, "csv_data")), 1L)
+  dise$matches[[1]] <- FALSE
+  expect_error(appendix_b9_dise_publication_validation(dise), "requires passing DISE publication checks", fixed = TRUE)
+})

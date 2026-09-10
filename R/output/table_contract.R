@@ -23,6 +23,13 @@ public_table_caption_text <- function(name) {
     appendix_a6_linguistic_measures = "Appendix A6. Linguistic-Measure Construction",
     appendix_a7_consumption_construction = "Appendix A7. Consumption Survey Construction",
     appendix_a8_other_outcome_panels = "Appendix A8. Other Outcome Panels",
+    appendix_b1_lineage_readiness = "Appendix B1. District-Lineage Readiness and Coverage",
+    appendix_b3_consumption_reconstruction = "Appendix B3. Consumption Reconstruction Benchmarks",
+    appendix_b4_hces_consistency_summary = "Appendix B4. HCES Cross-Round Consistency Summary",
+    appendix_b6_language_source_validation = "Appendix B6. Historical Language-Source Validation",
+    appendix_b9_dise_publication_validation = "Appendix B9. DISE Publication Validation",
+    appendix_c7_historical_balance = "Appendix C7. Historical Balance Across Baseline Domains",
+    appendix_c9_historical_first_stage = "Appendix C9. Historical First-Stage Comparison",
     appendix_e1_selection_sample = "Appendix E1. Enrollment Selection Sample and Covariates",
     appendix_e4_missingness = "Appendix E4. Missingness in the Enrollment Selection Sample",
     fs_cons = "First-Stage Regression: EMI Exposure on Linguistic Distance",
@@ -102,6 +109,34 @@ public_table_note <- function(name) {
     appendix_a8_other_outcome_panels = paste(
       "These panels provide the broader local-development outcomes used in the paper.",
       "Their observation windows differ, so they are interpreted as co-evolving development margins rather than mechanically post-treatment mediators of 2007-08 schooling."
+    ),
+    appendix_b1_lineage_readiness = paste(
+      "All lineage readiness gates must pass before this table is produced.",
+      "Panel-variant counts show common two-wave Census-2001 districts under increasingly permissive but still reviewed mapping rules."
+    ),
+    appendix_b3_consumption_reconstruction = paste(
+      "Reconstructed national MPCE is compared with the registered official benchmark for every supported survey-sector cell.",
+      "Only benchmarks that satisfy the survey-specific absolute-rupee tolerance enter this final validation exhibit."
+    ),
+    appendix_b4_hces_consistency_summary = paste(
+      "Correlations use the common set of preferred-eligible Census-2001 districts observed in both HCES 2022-23 and 2023-24 for each registered outcome.",
+      "The companion scatterplots show the same district pairs and a 45-degree reference line."
+    ),
+    appendix_b6_language_source_validation = paste(
+      "The table combines three independent validation layers: exact official-Census source reconciliation, Helms-Lim agreement with the project 1991 construction, and persistence from 1991 to 2001.",
+      "The rows use their native validation metric rather than forcing unlike checks onto one statistical scale."
+    ),
+    appendix_b9_dise_publication_validation = paste(
+      "Published DISE report cells are compared with values reconstructed from the archived machine-readable source.",
+      "All registered publication checks must match exactly before this exhibit can be produced."
+    ),
+    appendix_c7_historical_balance = paste(
+      "Joint tests use the preferred historical geography and compare eventual EMI with Census-2001 linguistic distance and the independent Helms-Lim 1991 distance across five predetermined baseline domains.",
+      "This is a historical-balance diagnostic, not evidence that any predictor is randomly assigned."
+    ),
+    appendix_c9_historical_first_stage = paste(
+      "The same validated historical district support is used for the 1991 and 2001 distance constructions within each specification.",
+      "The comparison asks whether historical reconstruction rescues within-state relevance; it is not pooled with the larger modern first-stage sample."
     ),
     appendix_e1_selection_sample = paste(
       "NSS 64th-round child-level enrollment sample used by the descriptive selection model.",
