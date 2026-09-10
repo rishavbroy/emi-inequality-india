@@ -97,6 +97,7 @@ core_pipeline_targets <- c(
   core_economic_census_target_definitions(),
   core_labor_target_definitions(),
   core_identification_target_definitions(),
+  core_historical_validation_target_definitions(),
   core_public_target_definitions()
 )
 

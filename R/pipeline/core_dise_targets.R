@@ -47,6 +47,15 @@ core_dise_target_definitions <- function() {
       )
     ),
     tar_target(
+      dise_publication_checks_file,
+      path_metadata(paths, "dise_publication_checks.csv"),
+      format = "file"
+    ),
+    tar_target(
+      dise_publication_checks,
+      read_dise_publication_checks(paths, dise_publication_checks_file)
+    ),
+    tar_target(
       raw_dise_baseline,
       {
         raw_data_preflight
@@ -87,6 +96,10 @@ core_dise_target_definitions <- function() {
         )
         finalize_dise_school_quality_measures(baseline)
       }
+    ),
+    tar_target(
+      dise_publication_validation,
+      dise_publication_check_values(dise_baseline_district_year, dise_publication_checks)
     ),
     tar_target(
       dise_all_district_year,

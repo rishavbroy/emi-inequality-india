@@ -506,7 +506,7 @@ test_that("1991 Atlas state and PCA review inputs have explicit source contracts
 
   pca <- manifest[manifest$file_id == "shrug_pca91_archive", , drop = FALSE]
   expect_equal(nrow(pca), 1L)
-  expect_false(as.logical(pca$required_for_current_pipeline))
+  expect_true(as.logical(pca$required_for_current_pipeline))
   expect_identical(pca$relative_path, "data/raw/shrug/census_1991/shrug-pca91-csv.zip")
   expect_equal(pca$expected_size_bytes, 42996056)
 
@@ -752,13 +752,13 @@ test_that("unexpected carve-out continuation rows fail closed", {
   expect_error(read_district_carveouts(path), "Unexpected wrapped row")
 })
 
-test_that("SHRUG 1991 baseline archives are manifest-backed optional diagnostics", {
+test_that("SHRUG 1991 baseline archives are strict historical-validation inputs", {
   root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
   manifest <- read.csv(file.path(root, "data", "metadata", "file_manifest.csv"), stringsAsFactors = FALSE)
   rows <- manifest[manifest$file_id %in% c("shrug_pca91_archive", "shrug_vd91_archive", "shrug_td91_archive"), , drop = FALSE]
 
   expect_setequal(rows$file_id, c("shrug_pca91_archive", "shrug_vd91_archive", "shrug_td91_archive"))
-  expect_true(all(tolower(as.character(rows$required_for_current_pipeline)) == "false"))
+  expect_true(all(tolower(as.character(rows$required_for_current_pipeline)) == "true"))
   expect_true(all(startsWith(rows$relative_path, "data/raw/shrug/census_1991/")))
   expect_true(all(grepl("91-csv\\.zip$", rows$relative_path)))
 })

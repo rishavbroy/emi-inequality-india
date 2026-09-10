@@ -7,18 +7,9 @@
 extended_dise_target_definitions <- function() {
   list(
     tar_target(
-      dise_publication_checks_file,
-      path_metadata(paths, "dise_publication_checks.csv"),
-      format = "file"
-    ),
-    tar_target(
       dise_report_school_quality_file,
       path_metadata(paths, "dise_report_school_quality_2011_15.csv"),
       format = "file"
-    ),
-    tar_target(
-      dise_publication_checks,
-      read_dise_publication_checks(paths, dise_publication_checks_file)
     ),
     tar_target(
       dise_report_school_quality,

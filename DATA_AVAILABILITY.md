@@ -50,7 +50,7 @@ The principal additional source families are:
 | IPUMS GEO2_IN | `data/raw/ipums/geo2_in1987_2009/` | [IPUMS International](https://international.ipums.org/international-action/variables/GEO2_IN) | Stable-geography sensitivity analysis | Harmonized combined units, not exact Census 2001 districts. |
 | Administrative Atlas and official orders | `data/raw_future/Administrative Atlas/` and targeted local evidence | Census Atlas portal and state gazettes | Resolve consequential event dates and component membership | Download only when an unresolved event requires it. |
 
-Large locality attributes and village/SHRID polygon archives are not ordinary public-build inputs. Dedicated lineage targets reduce them to compact reviewed crosswalks; the production Census-2001 GeoPackage is converted directly from the DataMeet shapefile; historical and exploratory sources are loaded only by extended diagnostics or benchmarks.
+Large locality attributes and village/SHRID polygon archives are not ordinary public-build inputs. Dedicated lineage targets reduce them to compact reviewed crosswalks; the production Census-2001 GeoPackage is converted directly from the DataMeet shapefile. The bounded Census-1991/SHRUG historical-validation sources used by final-paper Appendices B/C are strict inputs; unrelated historical geography sensitivity and exploratory sources remain extended or benchmark-only.
 
 ## Redistribution and provenance policy
 

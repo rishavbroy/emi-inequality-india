@@ -193,6 +193,16 @@ def path_tests(path):
             "test-output-tables.R",
             "test-public-scripts.R",
         },
+        "R/pipeline/core_historical_validation_targets.R": {
+            "test-historical-baseline-1991.R",
+            "test-historical-linguistic-validation.R",
+            "test-output-tables.R",
+            "test-public-scripts.R",
+        },
+        "R/output/appendix_validation_identification_exhibits.R": {
+            "test-output-tables.R",
+            "test-public-scripts.R",
+        },
         "R/pipeline/extended_historical_targets.R": {
             "test-historical-baseline-1991.R",
             "test-historical-linguistic-validation.R",
