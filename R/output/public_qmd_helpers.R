@@ -77,8 +77,37 @@ render_public_tex <- function(path) {
 
 wrap_table_text <- function(df) as.data.frame(df, check.names = FALSE, stringsAsFactors = FALSE)
 
+public_probit_ame_rows <- function(df) {
+  required <- c("Term", "estimate", "std.error", "p.value")
+  if (!all(required %in% names(df))) return(df)
+
+  estimate <- suppressWarnings(as.numeric(df$estimate))
+  std_error <- suppressWarnings(as.numeric(df$std.error))
+  p_value <- suppressWarnings(as.numeric(df$p.value))
+  if (any(!is.finite(estimate)) || any(!is.finite(std_error)) || any(!is.finite(p_value))) {
+    stop("Canonical probit AME rows require finite estimates, standard errors, and p-values.", call. = FALSE)
+  }
+
+  stars <- ifelse(
+    p_value < 0.001, "***",
+    ifelse(p_value < 0.01, "**", ifelse(p_value < 0.05, "*", ""))
+  )
+  out <- data.frame(
+    Term = rep(as.character(df$Term), each = 2L),
+    Estimate = as.vector(rbind(
+      paste0(sprintf("%.3f", estimate), stars),
+      paste0("(", sprintf("%.3f", std_error), ")")
+    )),
+    stringsAsFactors = FALSE,
+    check.names = FALSE
+  )
+  out$Term[seq.int(2L, nrow(out), by = 2L)] <- ""
+  out
+}
+
 render_regression_table <- function(df, name) {
   if (!requireNamespace("modelsummary", quietly = TRUE)) stop("modelsummary is required for regression table rendering.", call. = FALSE)
+  if (identical(name, "probit_mfx")) df <- public_probit_ame_rows(df)
   if (ncol(df) < 2L) return(knitr::kable(df, row.names = FALSE))
   model_col <- switch(name, probit_mfx = "Enrolled (1 = yes)", fs_cons = "EMI Exposure", cons_iv = "Real Log Consumption Growth", names(df)[[2]])
   out <- data.frame(Term = latex_escape_text(df[[1]]), stringsAsFactors = FALSE, check.names = FALSE)

@@ -60,7 +60,7 @@ appendix_public_render_inputs <- function() {
     "outputs/figures/appendix/appendix_d8_raw_spatial_geography.pdf",
     "outputs/tables/appendix/appendix_d9_residual_spatial_diagnostics.tex",
     "outputs/tables/appendix/appendix_e1_selection_sample.tex",
-    "outputs/tables/main/probit_mfx.tex",
+    "outputs/tables/main/probit_mfx.csv",
     "outputs/tables/appendix/appendix_e4_missingness.tex",
     "outputs/figures/appendix/appendix_e5_missingness_predictability.png"
   )

@@ -298,7 +298,7 @@ test_that("current QMD sources load shared public rendering helpers", {
     "appendix_c13_robustness_family_census.tex",
     "appendix_d8_raw_spatial_geography.pdf",
     "appendix_e1_selection_sample.tex",
-    "probit_mfx.tex",
+    "probit_mfx.csv",
     "appendix_e5_missingness_predictability.png"
   ), function(path) grepl(path, appendix, fixed = TRUE), logical(1))))
   for (legacy_marker in c(
@@ -1725,16 +1725,31 @@ test_that("paper local-development synthesis promotes only publication analysis 
   expect_match(public_contract, "paper_local_development.tex", fixed = TRUE)
 })
 
-test_that("Appendix E reuses the canonical probit table label for raw TeX", {
+test_that("Appendix E renders canonical probit AMEs through the shared Markdown path", {
   appendix <- repo_text("paper", "appendix.qmd")
+  helper_env <- new.env(parent = globalenv())
+  sys.source(repo_file("R", "output", "public_qmd_helpers.R"), envir = helper_env)
 
   expect_match(appendix, "#| label: tbl-probit-mfx", fixed = TRUE)
   expect_match(
     appendix,
-    'render_public_table("../outputs/tables/main/probit_mfx.tex", "probit_mfx")',
+    'render_public_table("../outputs/tables/main/probit_mfx.csv", "probit_mfx")',
     fixed = TRUE
   )
-  expect_false(grepl("#| label: tbl-app-e2", appendix, fixed = TRUE))
+  expect_false(grepl("probit_mfx.tex", appendix, fixed = TRUE))
+
+  fixture <- data.frame(
+    Term = c("Age", "Female"),
+    term = c("AGE", "SEX"),
+    estimate = c(-0.02834, 0.04417),
+    std.error = c(0.00044, 0.00302),
+    p.value = c(0, 0.02),
+    stringsAsFactors = FALSE
+  )
+  rows <- helper_env$public_probit_ame_rows(fixture)
+  expect_equal(names(rows), c("Term", "Estimate"))
+  expect_equal(rows$Term, c("Age", "", "Female", ""))
+  expect_equal(rows$Estimate, c("-0.028***", "(0.000)", "0.044*", "(0.003)"))
 })
 
 test_that("final-paper selection missingness is core-owned and extended mode only persists it", {
@@ -1757,7 +1772,7 @@ test_that("final-paper selection missingness is core-owned and extended mode onl
   ))
   expect_match(core_public, "appendix_selection_files", fixed = TRUE)
   expect_match(public_contract, "appendix_e1_selection_sample.tex", fixed = TRUE)
-  expect_match(public_contract, "probit_mfx.tex", fixed = TRUE)
+  expect_match(public_contract, "probit_mfx.csv", fixed = TRUE)
   expect_match(public_contract, "appendix_e4_missingness.tex", fixed = TRUE)
   expect_match(public_contract, "appendix_e5_missingness_predictability.png", fixed = TRUE)
 })

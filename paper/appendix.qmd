@@ -325,7 +325,7 @@ render_public_table("../outputs/tables/appendix/appendix_e1_selection_sample.tex
 #| label: tbl-probit-mfx
 #| echo: false
 #| results: asis
-render_public_table("../outputs/tables/main/probit_mfx.tex", "probit_mfx")
+render_public_table("../outputs/tables/main/probit_mfx.csv", "probit_mfx")
 ```
 
 ```{r}
