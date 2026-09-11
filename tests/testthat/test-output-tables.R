@@ -1887,41 +1887,75 @@ test_that("Appendix C2 maps the actual within-state identifying variation", {
 })
 
 
-test_that("Appendix C4 summarizes registered geography, scale, and influence checks", {
-  added <- function(kind) {
-    data.frame(
-      adjustment_id = c("main", "region_main"),
-      baseline_excluded_instrument_f = c(14, 3),
-      n = c(500L, 500L), status = "estimated",
-      stringsAsFactors = FALSE
-    )
-  }
-  h <- added("hindi")
-  h$hindi_belt_excluded_instrument_f <- c(9, 3.1)
-  cp <- added("child")
-  cp$augmented_excluded_instrument_f <- c(13.5, 3.2)
-  hindi <- structure(list(summary = h), class = "emi_hindi_belt_first_stage")
-  child <- structure(list(summary = cp), class = "emi_child_population_first_stage")
-  absorption <- structure(
-    list(
-      state_deletion = data.frame(
-        omitted_state = c("01", "02", "03"),
-        excluded_instrument_f = c(0.4, 1.2, 0.8), stringsAsFactors = FALSE
-      ),
-      district_influence = data.frame(
-        state_code_2001 = c("01", "02"), district_code_2001 = c("001", "002"),
-        cooks_distance = c(0.1, 0.3), instrument_dfbeta = c(-0.4, 0.2),
-        stringsAsFactors = FALSE
-      )
-    ),
-    class = "emi_first_stage_absorption"
+c4_exhibit_fixture <- function(leverage = c(0.2, 0.3), cooks_distance = c(0.1, 0.3)) {
+  added <- data.frame(
+    adjustment_id = c("main", "region_main"),
+    baseline_excluded_instrument_f = c(14, 3), n = c(500L, 500L),
+    status = "estimated", stringsAsFactors = FALSE
   )
-  out <- appendix_c4_geographic_scale_sensitivity(absorption, hindi, child)
+  h <- added
+  h$hindi_belt_excluded_instrument_f <- c(9, 3.1)
+  cp <- added
+  cp$augmented_excluded_instrument_f <- c(13.5, 3.2)
+  list(
+    hindi = structure(list(summary = h), class = "emi_hindi_belt_first_stage"),
+    child = structure(list(summary = cp), class = "emi_child_population_first_stage"),
+    absorption = structure(
+      list(
+        state_deletion = data.frame(
+          omitted_state = c("01", "02", "03"),
+          excluded_instrument_f = c(0.4, 1.2, 0.8), stringsAsFactors = FALSE
+        ),
+        district_influence = data.frame(
+          state_code_2001 = sprintf("%02d", seq_along(leverage)),
+          district_code_2001 = sprintf("%03d", seq_along(leverage)),
+          leverage = leverage, cooks_distance = cooks_distance,
+          instrument_dfbeta = seq(-0.4, 0.2, length.out = length(leverage)),
+          stringsAsFactors = FALSE
+        )
+      ),
+      class = "emi_first_stage_absorption"
+    )
+  )
+}
+
+
+test_that("Appendix C4 summarizes registered geography, scale, and influence checks", {
+  fixture <- c4_exhibit_fixture()
+  out <- appendix_c4_geographic_scale_sensitivity(
+    fixture$absorption, fixture$hindi, fixture$child
+  )
   csv <- attr(out, "csv_data")
   expect_equal(nrow(csv), 8L)
   expect_setequal(csv$section, c("Added controls", "Leave-one-state-out", "District influence"))
   expect_equal(sum(csv$diagnostic == "Hindi-belt indicator"), 2L)
   expect_equal(sum(csv$diagnostic == "Child population"), 2L)
+})
+
+
+test_that("Appendix C4 treats leverage-one Cook's distance as structurally undefined", {
+  fixture <- c4_exhibit_fixture(
+    leverage = c(0.2, 1, 0.3),
+    cooks_distance = c(0.1, NA_real_, 0.3)
+  )
+
+  out <- appendix_c4_geographic_scale_sensitivity(
+    fixture$absorption, fixture$hindi, fixture$child
+  )
+  csv <- attr(out, "csv_data")
+  cook <- csv[csv$diagnostic == "Maximum Cook's distance", , drop = FALSE]
+
+  expect_equal(cook$value, 0.3)
+  expect_match(cook$context, "2/3 finite", fixed = TRUE)
+  expect_match(cook$context, "1 leverage=1 omitted", fixed = TRUE)
+
+  fixture$absorption$district_influence$cooks_distance[[1L]] <- NA_real_
+  expect_error(
+    appendix_c4_geographic_scale_sensitivity(
+      fixture$absorption, fixture$hindi, fixture$child
+    ),
+    "leverage below one", fixed = TRUE
+  )
 })
 
 

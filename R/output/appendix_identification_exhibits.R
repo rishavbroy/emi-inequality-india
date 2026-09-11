@@ -207,23 +207,50 @@ appendix_c4_geographic_scale_sensitivity <- function(absorption, hindi_belt, chi
   )
 
   influence <- safe_df(absorption$district_influence)
-  req_inf <- c("state_code_2001", "district_code_2001", "cooks_distance", "instrument_dfbeta")
+  req_inf <- c(
+    "state_code_2001", "district_code_2001", "leverage",
+    "cooks_distance", "instrument_dfbeta"
+  )
   if (length(setdiff(req_inf, names(influence))) || !nrow(influence)) {
     stop("Appendix C4 requires district influence diagnostics.", call. = FALSE)
   }
+  leverage <- num(influence$leverage)
   cook <- num(influence$cooks_distance)
   dfbeta <- num(influence$instrument_dfbeta)
-  if (any(!is.finite(cook)) || any(!is.finite(dfbeta))) {
-    stop("Appendix C4 requires finite district-influence diagnostics.", call. = FALSE)
+  leverage_one <- is.finite(leverage) & abs(leverage - 1) <= sqrt(.Machine$double.eps)
+  undefined_cook <- !is.finite(cook)
+  unexpected_undefined_cook <- undefined_cook & !leverage_one
+  if (any(unexpected_undefined_cook) || any(!is.finite(dfbeta)) || !any(is.finite(cook))) {
+    stop(
+      paste(
+        "Appendix C4 requires finite DFBETAs and Cook's distance wherever",
+        "the fitted first stage has leverage below one."
+      ),
+      call. = FALSE
+    )
   }
-  cook_i <- which.max(cook); dfb_i <- which.max(abs(dfbeta))
+  cook_valid <- which(is.finite(cook))
+  cook_i <- cook_valid[[which.max(cook[cook_valid])]]
+  dfb_i <- which.max(abs(dfbeta))
+  n_cook_undefined <- sum(undefined_cook)
+  cook_context <- sprintf(
+    "State %s, district %s; %d/%d finite%s",
+    plain_chr(influence$state_code_2001)[cook_i],
+    plain_chr(influence$district_code_2001)[cook_i],
+    length(cook_valid), nrow(influence),
+    if (n_cook_undefined) sprintf(" (%d leverage=1 omitted)", n_cook_undefined) else ""
+  )
   influence_rows <- data.frame(
     section = "District influence", diagnostic = c("Maximum Cook's distance", "Maximum absolute instrument DFBETA"),
     specification = "State FE + expanded controls", baseline_f = NA_real_, comparison_f = NA_real_,
     value = c(cook[cook_i], abs(dfbeta[dfb_i])),
     context = c(
-      sprintf("State %s, district %s", plain_chr(influence$state_code_2001)[cook_i], plain_chr(influence$district_code_2001)[cook_i]),
-      sprintf("State %s, district %s", plain_chr(influence$state_code_2001)[dfb_i], plain_chr(influence$district_code_2001)[dfb_i])
+      cook_context,
+      sprintf(
+        "State %s, district %s",
+        plain_chr(influence$state_code_2001)[dfb_i],
+        plain_chr(influence$district_code_2001)[dfb_i]
+      )
     ), stringsAsFactors = FALSE
   )
   csv <- safe_bind_rows(list(added, deletion_rows, influence_rows))

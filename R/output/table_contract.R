@@ -160,7 +160,8 @@ public_table_note <- function(name) {
     ),
     appendix_c4_geographic_scale_sensitivity = paste(
       "The added-control rows compare the same common-support first stage before and after the Shastry Hindi-belt indicator or 2001 child-population control.",
-      "Leave-one-state-out and district-influence rows summarize the registered state-deletion and influence diagnostics from the state-FE expanded-control first stage."
+      "Leave-one-state-out and district-influence rows summarize the registered state-deletion and influence diagnostics from the state-FE expanded-control first stage.",
+      "Cook's distance is undefined for leverage-one observations; those saturated fixed-effect cells are reported in the row context and omitted only from the Cook's-distance maximum, while DFBETA retains every finite district."
     ),
     appendix_c5_alternative_scalar_distances = paste(
       "All scalar linguistic-distance constructions are estimated on the common alternative-distance support under unadjusted, six-region-plus-controls, and state-plus-controls specifications.",
