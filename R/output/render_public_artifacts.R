@@ -34,8 +34,9 @@ render_public_pdf <- function(qmd, dependencies = list()) {
 #' Render a paper PDF
 #'
 #' Backward-compatible paper wrapper around `render_public_pdf()`. Keeping the
-#' domain-specific arguments here makes the main-paper dependency contract easy
-#' to read while the shared renderer also serves the final appendix.
+#' domain-specific arguments here makes the legacy-paper dependency contract easy
+#' to read. The current paper calls the shared renderer directly because its
+#' in-document appendices add explicit exhibit dependencies.
 render_paper_pdf <- function(paper_qmd, report_values, figure_files, table_files) {
   render_public_pdf(
     paper_qmd,
@@ -43,36 +44,6 @@ render_paper_pdf <- function(paper_qmd, report_values, figure_files, table_files
   )
 }
 
-
-#' Render a public Quarto HTML document
-#'
-#' @param qmd Path to the source QMD.
-#' @param dependencies Optional objects to force as target dependencies before
-#'   rendering. This keeps source-only notes explicit when they read targets at
-#'   render time, such as named report values.
-#' @return Character vector of rendered HTML output paths for a `format = "file"`
-#'   target.
-render_public_html <- function(qmd, dependencies = list()) {
-  force(dependencies)
-
-  if (!file.exists(qmd)) {
-    stop("Public note source QMD does not exist: ", qmd, call. = FALSE)
-  }
-  if (!nzchar(Sys.which("quarto"))) {
-    stop("Quarto CLI was not found on PATH; cannot render ", qmd, call. = FALSE)
-  }
-
-  html_path <- file.path(dirname(qmd), paste0(tools::file_path_sans_ext(basename(qmd)), ".html"))
-  status <- system2("quarto", c("render", qmd, "--to", "html"))
-  if (!identical(status, 0L)) {
-    stop("quarto render ", qmd, " --to html failed with status ", status, call. = FALSE)
-  }
-  if (!file.exists(html_path) || file.info(html_path)$size <= 0L) {
-    stop("quarto render did not create a non-empty ", html_path, call. = FALSE)
-  }
-
-  html_path
-}
 
 poster_typst_template_paths <- function(poster_qmd) {
   extension_dir <- file.path(dirname(poster_qmd), "_extensions", "poster")

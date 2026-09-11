@@ -86,22 +86,21 @@ test_that("current public build helper scripts parse", {
   expect_silent(parse(repo_file("R", "application_samples", "extract_qmd_excerpts.R")))
 })
 
-test_that("public render targets own final report, notes, and sample rendering", {
+test_that("public render targets own both self-contained papers and sample rendering", {
   targets <- paste(repo_core_target_text(), repo_text("_targets.R"), sep = "\n")
   renderer <- repo_text("R", "output", "render_public_artifacts.R")
   samples <- repo_text("R", "application_samples", "render_writing_sample.R")
 
   expect_match(targets, 'tar_target(paper_qmd, "paper/paper.qmd", format = "file")', fixed = TRUE)
-  expect_match(targets, 'tar_target(district_matching_qmd, "docs/district-matching.qmd", format = "file")', fixed = TRUE)
-  expect_match(targets, 'render_public_html(district_matching_qmd, dependencies = list(report_values))', fixed = TRUE)
+  expect_match(targets, 'tar_target(paper_new_qmd, "paper/paper-new.qmd", format = "file")', fixed = TRUE)
   expect_match(targets, 'tar_target(paper, render_paper_pdf(paper_qmd, report_values, figure_files, table_files), format = "file")', fixed = TRUE)
-  expect_match(targets, 'tar_target(appendix_qmd, "paper/appendix.qmd", format = "file")', fixed = TRUE)
   expect_match(targets, 'render_public_pdf(', fixed = TRUE)
   expect_match(targets, 'appendix_data_construction_files, appendix_validation_identification_files', fixed = TRUE)
+  expect_false(grepl("appendix_qmd|district_matching_qmd|long_paths_qmd", targets))
   expect_match(targets, 'tar_target(application_sample_inputs, application_sample_input_files(), format = "file")', fixed = TRUE)
   expect_match(renderer, 'render_public_pdf <- function', fixed = TRUE)
   expect_match(renderer, 'system2("quarto", c("render", qmd, "--to", "pdf"))', fixed = TRUE)
-  expect_match(renderer, 'render_public_html <- function', fixed = TRUE)
+  expect_false(grepl("render_public_html <- function", renderer, fixed = TRUE))
   expect_match(samples, "application_sample_input_files", fixed = TRUE)
   expect_false(grepl("tar_render\\(paper|tar_quarto\\(paper", targets, perl = TRUE))
 })
@@ -269,46 +268,46 @@ test_that("writing sample YAML includes LaTeX table packages for raw table excer
   expect_true(any(out == "  - \\usepackage{xcolor}"))
 })
 
-test_that("current QMD sources load shared public rendering helpers", {
+test_that("both paper QMDs own their appendices and load shared rendering helpers", {
   paper <- repo_text("paper", "paper.qmd")
-  appendix <- repo_text("paper", "appendix.qmd")
-  docs_note <- repo_text("docs", "district-matching.qmd")
+  paper_new <- repo_text("paper", "paper-new.qmd")
   helper <- repo_text("R", "output", "public_qmd_helpers.R")
 
   expect_match(paper, "public-output-table-helper", fixed = TRUE)
+  expect_match(paper_new, "public-output-table-helper", fixed = TRUE)
   expect_match(paper, "source_public_qmd_helpers", fixed = TRUE)
-  expect_match(appendix, "source_public_qmd_helpers", fixed = TRUE)
+  expect_match(paper_new, "source_public_qmd_helpers", fixed = TRUE)
+  paper_appendix_hits <- gregexpr("\\appendix", paper, fixed = TRUE)[[1]]
+  paper_new_appendix_hits <- gregexpr("\\appendix", paper_new, fixed = TRUE)[[1]]
+  expect_equal(length(paper_appendix_hits), 1L)
+  expect_equal(length(paper_new_appendix_hits), 1L)
+  expect_gt(paper_appendix_hits[[1]], 0L)
+  expect_gt(paper_new_appendix_hits[[1]], 0L)
+
   appendix_sections <- c(
-    "# Data Construction and Provenance",
-    "# Measurement and Source Validation",
-    "# Identification Diagnostics",
-    "# Extended Local-Development Outcomes",
-    "# Selection into Education"
+    "# Data Construction and Provenance {#sec-app-data}",
+    "# Measurement and Source Validation {#sec-app-validation}",
+    "# Identification Diagnostics {#sec-app-identification}",
+    "# Extended Local-Development Outcomes {#sec-app-development}",
+    "# Selection into Education {#sec-app-selection}"
   )
-  appendix_positions <- vapply(
-    appendix_sections,
-    function(section) regexpr(section, appendix, fixed = TRUE)[[1]],
-    integer(1)
-  )
-  expect_true(all(appendix_positions > 0L))
+  appendix_positions <- vapply(appendix_sections, function(section) regexpr(section, paper_new, fixed = TRUE)[[1]], integer(1))
+  appendix_boundary <- regexpr("\\appendix", paper_new, fixed = TRUE)[[1]]
+  expect_true(all(appendix_positions > appendix_boundary))
   expect_true(all(diff(appendix_positions) > 0L))
   expect_true(all(vapply(c(
-    "appendix_a1_data_source_timing.tex",
-    "appendix_b7_nss_dise_agreement.pdf",
-    "appendix_c13_robustness_family_census.tex",
-    "appendix_d8_raw_spatial_geography.pdf",
-    "appendix_e1_selection_sample.tex",
-    "probit_mfx.csv",
-    "appendix_e5_missingness_predictability.png"
-  ), function(path) grepl(path, appendix, fixed = TRUE), logical(1))))
-  for (legacy_marker in c(
-    "Alternative Response and Further Control Variables",
-    "Bartik-style methodology",
-    "spatial Durbin"
-  )) {
-    expect_false(grepl(legacy_marker, appendix, fixed = TRUE))
-  }
-  expect_match(docs_note, "source_public_qmd_helpers", fixed = TRUE)
+    "appendix_a1_data_source_timing.tex", "appendix_b7_nss_dise_agreement.pdf",
+    "appendix_c13_robustness_family_census.tex", "appendix_d8_raw_spatial_geography.pdf",
+    "appendix_e1_selection_sample.tex", "probit_mfx.csv", "appendix_e5_missingness_predictability.png"
+  ), function(path) grepl(path, paper_new, fixed = TRUE), logical(1))))
+
+  old_appendix_boundary <- regexpr("\\appendix", paper, fixed = TRUE)[[1]]
+  expect_gt(regexpr("# Appendix {#sec-appendix}", paper, fixed = TRUE)[[1]], old_appendix_boundary)
+  expect_gt(regexpr("## District Matching and Spatial Autocorrelation {#sec-distma-spa}", paper, fixed = TRUE)[[1]], old_appendix_boundary)
+
+  expect_false(file.exists(repo_file("paper", "appendix.qmd")))
+  expect_false(file.exists(repo_file("docs", "district-matching.qmd")))
+  expect_false(file.exists(repo_file("docs", "long-paths-and-8-3-filenames.qmd")))
   expect_match(helper, "render_public_tex", fixed = TRUE)
   expect_match(helper, "knitr::asis_output(paste0", fixed = TRUE)
   expect_match(paper, "\\usepackage{xcolor}", fixed = TRUE)
@@ -318,14 +317,13 @@ test_that("current QMD sources load shared public rendering helpers", {
 
 test_that("report values use current named keys", {
   paper <- repo_text("paper", "paper.qmd")
-  docs_note <- repo_text("docs", "district-matching.qmd")
-  appendix <- repo_text("paper", "appendix.qmd")
+  paper_new <- repo_text("paper", "paper-new.qmd")
   builder <- repo_text("R", "output", "build_report_values.R")
   spatial_values <- repo_text("R", "output", "report_value_spatial.R")
   checker <- repo_text("scripts", "check_report_values.R")
 
   expect_match(paper, "report_value(\"ame_edu_free_pct\")", fixed = TRUE)
-  expect_match(docs_note, "report_value(\"moran_iv_residual_p\")", fixed = TRUE)
+  expect_match(paper_new, "sec-app-development", fixed = TRUE)
   expect_match(builder, "moran_iv_residual_p", fixed = TRUE)
   expect_match(builder, "moran_consumption_growth_p", fixed = TRUE)
   expect_match(spatial_values, "spatial_p_value", fixed = TRUE)
@@ -341,10 +339,10 @@ test_that("public-output checks share one file contract", {
   audit <- repo_text("scripts", "audit_outputs_final.R")
 
   expect_match(contract, "required_public_render_inputs", fixed = TRUE)
-  expect_match(contract, "appendix_public_render_inputs", fixed = TRUE)
+  expect_match(contract, "paper_new_appendix_render_inputs", fixed = TRUE)
   expect_match(contract, "appendix_c13_robustness_family_census.tex", fixed = TRUE)
   expect_match(contract, "appendix_d8_raw_spatial_geography.pdf", fixed = TRUE)
-  expect_match(contract, '"paper/appendix.pdf"', fixed = TRUE)
+  expect_false(grepl('"paper/appendix.pdf"', contract, fixed = TRUE))
   expect_match(contract, "required_extended_diagnostic_outputs", fixed = TRUE)
   expect_match(contract, "schooling_consumption_bridge_estimates.csv", fixed = TRUE)
   expect_match(contract, "schooling_consumption_conversion_estimates.csv", fixed = TRUE)
@@ -371,12 +369,16 @@ test_that("public-output checks share one file contract", {
   expect_match(audit, "disconnected or grid-truncated confidence set", fixed = TRUE)
 })
 
-test_that("public documentation and samples do not advertise superseded methods work", {
-  docs_note <- repo_text("docs", "district-matching.qmd")
+test_that("duplicated appendix publications are retired while samples keep legacy-paper ownership", {
   samples <- repo_text("R", "application_samples", "render_writing_sample.R")
+  archive <- repo_text("scripts", "make_review_archive.sh")
 
-  expect_false(grepl("depending on the results of LM tests", docs_note, fixed = TRUE))
-  expect_match(docs_note, "do not by themselves determine which causal spatial model", fixed = TRUE)
+  expect_false(file.exists(repo_file("paper", "appendix.qmd")))
+  expect_false(file.exists(repo_file("docs", "district-matching.qmd")))
+  expect_false(file.exists(repo_file("docs", "long-paths-and-8-3-filenames.qmd")))
+  expect_false(grepl("paper/appendix.qmd", archive, fixed = TRUE))
+  expect_false(grepl("docs/district-matching.qmd", archive, fixed = TRUE))
+  expect_false(grepl("docs/long-paths-and-8-3-filenames.qmd", archive, fixed = TRUE))
   expect_false(grepl("pending a validated district-geometry join", samples, fixed = TRUE))
   expect_match(samples, "weakly identified", fixed = TRUE)
 })
@@ -1471,10 +1473,11 @@ test_that("working paper is rendered and checked by the strict publication graph
   archive <- repo_text("scripts", "make_review_archive.sh")
 
   expect_true(all(c("paper/paper.qmd", "paper/paper-new.qmd") %in% public_qmd_sources()))
-  expect_true(all(c("paper/paper.pdf", "paper/paper-new.pdf", "paper/appendix.pdf") %in% required_final_documents(FALSE)))
+  expect_equal(required_final_documents(FALSE)[1:2], c("paper/paper.pdf", "paper/paper-new.pdf"))
+  expect_false("paper/appendix.pdf" %in% required_final_documents(FALSE))
   expect_match(makefile, "--targets paper_new", fixed = TRUE)
   expect_match(core, "tar_target(paper_new_qmd", fixed = TRUE)
-  expect_match(core, "render_paper_pdf(paper_new_qmd", fixed = TRUE)
+  expect_match(core, "render_public_pdf(\n        paper_new_qmd", fixed = TRUE)
   expect_match(archive, "paper/paper-new.qmd", fixed = TRUE)
   expect_match(archive, "paper/paper-new.pdf", fixed = TRUE)
 
@@ -1484,7 +1487,7 @@ test_that("working paper is rendered and checked by the strict publication graph
   expect_false(grepl('startsWith(files, "paper/paper-new.")', public_text, fixed = TRUE))
   expect_match(rendered_text, '"paper/paper-new.pdf"', fixed = TRUE)
   expect_false(grepl('source_paths != "paper/paper-new.qmd"', rendered_text, fixed = TRUE))
-  expect_match(required_outputs, 'c("paper/paper.qmd", "paper/paper-new.qmd", "paper/appendix.qmd")', fixed = TRUE)
+  expect_match(required_outputs, 'c("paper/paper.qmd", "paper/paper-new.qmd")', fixed = TRUE)
   expect_match(makefile, "paper/paper-new.pdf paper/paper-new.html paper/paper-new.tex", fixed = TRUE)
 
   working_paper <- repo_text("paper", "paper-new.qmd")
@@ -1518,13 +1521,19 @@ test_that("working paper is rendered and checked by the strict publication graph
   expect_true(all(marker_positions > 0L))
   expect_true(all(diff(marker_positions) > 0L))
 
+  appendix_boundary <- regexpr("\\appendix", working_paper, fixed = TRUE)[[1]]
+  expect_gt(appendix_boundary, 0L)
+  main_text <- substr(working_paper, 1L, appendix_boundary - 1L)
   for (legacy_marker in c(
     "fig_ilo_trends", "tbl-probit-mfx", "tbl-sum-tbl-probit-quant",
     "tbl-sum-tbl-probit-cat", "# Appendix {#sec-appendix}",
     "sample-excerpt"
   )) {
-    expect_false(grepl(legacy_marker, working_paper, fixed = TRUE))
+    expect_false(grepl(legacy_marker, main_text, fixed = TRUE))
   }
+  expect_match(working_paper, "# Data Construction and Provenance {#sec-app-data}", fixed = TRUE)
+  expect_match(main_text, "@sec-app-identification", fixed = TRUE)
+  expect_match(main_text, "@sec-app-selection", fixed = TRUE)
   expect_match(working_paper, "English can be economically valuable without functioning as a universal equalizer", fixed = TRUE)
   expect_match(working_paper, "co-evolving development margins", fixed = TRUE)
   expect_match(working_paper, "Only now do we ask whether the inherited linguistic gradient can isolate the causal effect of EMI", fixed = TRUE)
@@ -1726,7 +1735,7 @@ test_that("paper local-development synthesis promotes only publication analysis 
 })
 
 test_that("Appendix E renders canonical probit AMEs through the shared Markdown path", {
-  appendix <- repo_text("paper", "appendix.qmd")
+  appendix <- repo_text("paper", "paper-new.qmd")
   helper_env <- new.env(parent = globalenv())
   sys.source(repo_file("R", "output", "public_qmd_helpers.R"), envir = helper_env)
 

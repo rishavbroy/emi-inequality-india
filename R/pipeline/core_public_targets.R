@@ -210,24 +210,14 @@ core_public_target_definitions <- function() {
     tar_target(report_values, { diag_public_spatial_autocorrelation_files; build_report_values(ame_results, revised_first_stage_tests, revised_iv_models, selection_data, district_panel, diag_public_spatial_autocorrelation, cfg) }),
     tar_target(paper_qmd, "paper/paper.qmd", format = "file"),
     tar_target(paper_new_qmd, "paper/paper-new.qmd", format = "file"),
-    tar_target(appendix_qmd, "paper/appendix.qmd", format = "file"),
     tar_target(poster_qmd, "posters/2026_predoc_conference/poster.qmd", format = "file"),
     tar_target(poster_assets, poster_required_assets(), format = "file"),
-    tar_target(district_matching_qmd, "docs/district-matching.qmd", format = "file"),
-    tar_target(long_paths_qmd, "docs/long-paths-and-8-3-filenames.qmd", format = "file"),
 
-    tar_target(district_matching_note, render_public_html(district_matching_qmd, dependencies = list(report_values)), format = "file"),
-    tar_target(long_paths_note, render_public_html(long_paths_qmd), format = "file"),
     tar_target(paper, render_paper_pdf(paper_qmd, report_values, figure_files, table_files), format = "file"),
     tar_target(
       paper_new,
-      render_paper_pdf(paper_new_qmd, report_values, figure_files, table_files),
-      format = "file"
-    ),
-    tar_target(
-      appendix,
       render_public_pdf(
-        appendix_qmd,
+        paper_new_qmd,
         dependencies = list(
           report_values, table_files, figure_files,
           appendix_data_construction_files, appendix_validation_identification_files,

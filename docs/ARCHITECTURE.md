@@ -273,12 +273,13 @@ modification: EC05 IT is neither an exclusion control nor a proxy for unavailabl
 
 ### Publication dependencies versus extended diagnostics
 
-`paper/paper-new.qmd` now carries the final claim architecture and runs in the strict
-publication graph alongside the legacy `paper.qmd`. The companion `paper/appendix.qmd`
-is likewise a thin publication layer over the registered Appendix A--E artifacts and
-is rendered as a required final PDF. Neither manuscript QMD owns estimators: both
-consume the paper-facing output contract, while `paper.qmd` remains only for legacy
-compatibility until its application-sample excerpts are migrated. Whether a raw source
+`paper/paper-new.qmd` now carries the final claim architecture and its Appendix A--E
+material in one self-contained Quarto document. The legacy `paper.qmd` likewise retains
+its historical appendix in-document. Both manuscripts use a raw `\appendix` boundary,
+so labeled appendix sections share the same cross-reference namespace as their main text.
+Neither manuscript QMD owns estimators: both consume the paper-facing output contract,
+while `paper.qmd` remains for legacy compatibility and application-sample excerpts.
+Whether a raw source
 can be redistributed is not the boundary between core and extended work: the project
 does not redistribute most raw research data.
 Instead, a target is core when a public/main-paper artifact consumes it. Baseline
@@ -356,12 +357,13 @@ so later Appendix B--D bundles reuse one artifact contract rather than duplicati
 save loops.
 
 Appendix artifacts are listed in `required_final_artifacts()` as soon as their
-builders exist. Now that `paper/appendix.qmd` renders the final A--E architecture,
-its exact TeX and figure inputs are also centralized in
-`appendix_public_render_inputs()` and reused by the strict render-input contract.
-This keeps the full machine-readable exhibit inventory distinct from the smaller
-document-render dependency list while making every file consumed by the appendix
-an explicit publication dependency.
+builders exist. The exact TeX and figure inputs consumed by the in-document appendices
+of `paper/paper-new.qmd` are centralized in `paper_new_appendix_render_inputs()` and
+reused by the strict render-input contract. This keeps the full machine-readable exhibit
+inventory distinct from the smaller document-render dependency list while making every
+file consumed by the new paper's appendices an explicit publication dependency. The
+standalone appendix QMD/PDF and the duplicated district-matching/8.3-filename public notes
+were removed once their material was owned by the manuscripts.
 
 
 ### Final-paper validation and historical-identification exhibits

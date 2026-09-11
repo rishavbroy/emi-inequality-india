@@ -38,10 +38,7 @@ source_paths <- source_paths[file.exists(source_paths)]
 
 pdf_paths <- c(
   "paper/paper.pdf",
-  "paper/paper-new.pdf",
-  "paper/appendix.pdf",
-  "docs/district-matching.pdf",
-  "docs/long-paths-and-8-3-filenames.pdf"
+  "paper/paper-new.pdf"
 )
 if (check_application_samples) {
   pdf_paths <- c(

@@ -4,19 +4,16 @@ public_qmd_sources <- function() {
   c(
     "paper/paper.qmd",
     "paper/paper-new.qmd",
-    "paper/appendix.qmd",
-    "docs/district-matching.qmd",
-    "docs/long-paths-and-8-3-filenames.qmd",
     "posters/2026_predoc_conference/poster.qmd"
   )
 }
 
 public_report_value_sources <- function() {
-  c("paper/paper.qmd", "paper/paper-new.qmd", "paper/appendix.qmd", "docs/district-matching.qmd")
+  c("paper/paper.qmd", "paper/paper-new.qmd")
 }
 
 
-appendix_public_render_inputs <- function() {
+paper_new_appendix_render_inputs <- function() {
   c(
     "outputs/tables/appendix/appendix_a1_data_source_timing.tex",
     "outputs/figures/appendix/appendix_a2_lineage_logic.pdf",
@@ -96,7 +93,7 @@ required_public_render_inputs <- function() {
     "outputs/figures/main/map_residual_linguistic_distance.pdf",
     "assets/uw-logo-horizontal-full-color-print.pdf",
     "assets/repo-qr.svg",
-    appendix_public_render_inputs()
+    paper_new_appendix_render_inputs()
   )
 }
 
@@ -115,9 +112,6 @@ required_final_documents <- function(require_application_samples = TRUE) {
   files <- c(
     "paper/paper.pdf",
     "paper/paper-new.pdf",
-    "paper/appendix.pdf",
-    "docs/district-matching.html",
-    "docs/long-paths-and-8-3-filenames.html",
     "posters/2026_predoc_conference/poster.pdf",
     "posters/2026_predoc_conference/RishavRoy-Education.png"
   )

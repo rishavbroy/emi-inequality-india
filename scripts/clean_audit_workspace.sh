@@ -7,6 +7,11 @@ derived_root="${root%/}/outputs/derived"
 paper_root="${root%/}/paper"
 
 rm -f "$paper_root"/*_bibertool.bib 2>/dev/null || true
+rm -f \
+  "$paper_root/appendix.pdf" "$paper_root/appendix.html" "$paper_root/appendix.tex" \
+  "${root%/}/docs/district-matching.html" "${root%/}/docs/district-matching.pdf" "${root%/}/docs/district-matching.tex" \
+  "${root%/}/docs/long-paths-and-8-3-filenames.html" "${root%/}/docs/long-paths-and-8-3-filenames.pdf" "${root%/}/docs/long-paths-and-8-3-filenames.tex" \
+  2>/dev/null || true
 
 rm -rf \
   "$diagnostics_root/build" \

@@ -357,7 +357,9 @@ The Census controls reduce concern that the instrument is merely proxying for ba
 
 :::
 
+```{=latex}
 \appendix
+```
 
 # Appendix {#sec-appendix}
 

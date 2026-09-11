@@ -41,7 +41,7 @@ if (!extended_only) {
 }
 
 if (!extended_only) {
-  for (paper_qmd in c("paper/paper.qmd", "paper/paper-new.qmd", "paper/appendix.qmd")) {
+  for (paper_qmd in c("paper/paper.qmd", "paper/paper-new.qmd")) {
     if (!file.exists(paper_qmd)) next
     report <- paste(readLines(paper_qmd, warn = FALSE), collapse = "\n")
     if (grepl("render_public_table\\(", report) &&
