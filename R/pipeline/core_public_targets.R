@@ -210,6 +210,7 @@ core_public_target_definitions <- function() {
     tar_target(report_values, { diag_public_spatial_autocorrelation_files; build_report_values(ame_results, revised_first_stage_tests, revised_iv_models, selection_data, district_panel, diag_public_spatial_autocorrelation, cfg) }),
     tar_target(paper_qmd, "paper/paper.qmd", format = "file"),
     tar_target(paper_new_qmd, "paper/paper-new.qmd", format = "file"),
+    tar_target(appendix_qmd, "paper/appendix.qmd", format = "file"),
     tar_target(poster_qmd, "posters/2026_predoc_conference/poster.qmd", format = "file"),
     tar_target(poster_assets, poster_required_assets(), format = "file"),
     tar_target(district_matching_qmd, "docs/district-matching.qmd", format = "file"),
@@ -221,6 +222,19 @@ core_public_target_definitions <- function() {
     tar_target(
       paper_new,
       render_paper_pdf(paper_new_qmd, report_values, figure_files, table_files),
+      format = "file"
+    ),
+    tar_target(
+      appendix,
+      render_public_pdf(
+        appendix_qmd,
+        dependencies = list(
+          report_values, table_files, figure_files,
+          appendix_data_construction_files, appendix_validation_identification_files,
+          appendix_identification_files, appendix_local_development_files,
+          appendix_selection_files
+        )
+      ),
       format = "file"
     ),
     tar_target(poster, render_poster_pdf(poster_qmd, figure_files, poster_assets, paths$root), format = "file")

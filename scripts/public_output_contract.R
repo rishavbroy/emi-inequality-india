@@ -15,6 +15,57 @@ public_report_value_sources <- function() {
   c("paper/paper.qmd", "paper/paper-new.qmd", "paper/appendix.qmd", "docs/district-matching.qmd")
 }
 
+
+appendix_public_render_inputs <- function() {
+  c(
+    "outputs/tables/appendix/appendix_a1_data_source_timing.tex",
+    "outputs/figures/appendix/appendix_a2_lineage_logic.pdf",
+    "outputs/tables/appendix/appendix_a3_lineage_source_hierarchy.tex",
+    "outputs/tables/appendix/appendix_a4_nss_schooling_constructs.tex",
+    "outputs/tables/appendix/appendix_a5_dise_construction.tex",
+    "outputs/tables/appendix/appendix_a6_linguistic_measures.tex",
+    "outputs/tables/appendix/appendix_a7_consumption_construction.tex",
+    "outputs/tables/appendix/appendix_a8_other_outcome_panels.tex",
+    "outputs/tables/appendix/appendix_b1_lineage_readiness.tex",
+    "outputs/tables/appendix/appendix_b2_lineage_sensitivity.tex",
+    "outputs/tables/appendix/appendix_b3_consumption_reconstruction.tex",
+    "outputs/figures/appendix/appendix_b4_hces_consistency.pdf",
+    "outputs/tables/appendix/appendix_b4_hces_consistency_summary.tex",
+    "outputs/figures/appendix/appendix_b5_historical_language_persistence.pdf",
+    "outputs/tables/appendix/appendix_b6_language_source_validation.tex",
+    "outputs/figures/appendix/appendix_b7_nss_dise_agreement.pdf",
+    "outputs/tables/appendix/appendix_b8_census_universe_reconciliation.tex",
+    "outputs/tables/appendix/appendix_b9_dise_publication_validation.tex",
+    "outputs/tables/appendix/appendix_c1_full_absorption_ladder.tex",
+    "outputs/figures/appendix/appendix_c2_residual_geography.pdf",
+    "outputs/tables/appendix/appendix_c3_control_block_absorption.tex",
+    "outputs/tables/appendix/appendix_c4_geographic_scale_sensitivity.tex",
+    "outputs/tables/appendix/appendix_c5_alternative_scalar_distances.tex",
+    "outputs/tables/appendix/appendix_c6_mapping_composition_sensitivity.tex",
+    "outputs/tables/appendix/appendix_c7_historical_balance.tex",
+    "outputs/figures/appendix/appendix_c8_historical_pretrends.pdf",
+    "outputs/tables/appendix/appendix_c9_historical_first_stage.tex",
+    "outputs/figures/appendix/appendix_c10_monotonicity.pdf",
+    "outputs/tables/appendix/appendix_c11_multiple_instruments.tex",
+    "outputs/figures/appendix/appendix_c12_consumption_iv_dynamics.pdf",
+    "outputs/tables/appendix/appendix_c13_robustness_family_census.tex",
+    "outputs/tables/appendix/appendix_c14_exclusion_sensitivity.tex",
+    "outputs/tables/appendix/appendix_d1_migration.tex",
+    "outputs/tables/appendix/appendix_d2_migration_context.tex",
+    "outputs/tables/appendix/appendix_d3_housing_assets.tex",
+    "outputs/tables/appendix/appendix_d4_economic_census.tex",
+    "outputs/tables/appendix/appendix_d5_labor.tex",
+    "outputs/tables/appendix/appendix_d6_household_capacity.tex",
+    "outputs/tables/appendix/appendix_d7_social_heterogeneity.tex",
+    "outputs/figures/appendix/appendix_d8_raw_spatial_geography.pdf",
+    "outputs/tables/appendix/appendix_d9_residual_spatial_diagnostics.tex",
+    "outputs/tables/appendix/appendix_e1_selection_sample.tex",
+    "outputs/tables/main/probit_mfx.tex",
+    "outputs/tables/appendix/appendix_e4_missingness.tex",
+    "outputs/figures/appendix/appendix_e5_missingness_predictability.png"
+  )
+}
+
 required_public_render_inputs <- function() {
   c(
     "paper/references.bib",
@@ -44,7 +95,8 @@ required_public_render_inputs <- function() {
     "outputs/figures/main/map_linguistic_distance.pdf",
     "outputs/figures/main/map_residual_linguistic_distance.pdf",
     "assets/uw-logo-horizontal-full-color-print.pdf",
-    "assets/repo-qr.svg"
+    "assets/repo-qr.svg",
+    appendix_public_render_inputs()
   )
 }
 
@@ -63,6 +115,7 @@ required_final_documents <- function(require_application_samples = TRUE) {
   files <- c(
     "paper/paper.pdf",
     "paper/paper-new.pdf",
+    "paper/appendix.pdf",
     "docs/district-matching.html",
     "docs/long-paths-and-8-3-filenames.html",
     "posters/2026_predoc_conference/poster.pdf",

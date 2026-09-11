@@ -273,9 +273,14 @@ modification: EC05 IT is neither an exclusion control nor a proxy for unavailabl
 
 ### Publication dependencies versus extended diagnostics
 
-`paper/paper-new.qmd` now runs in the strict publication graph alongside the legacy
-`paper.qmd`. Whether a raw source can be redistributed is not the boundary between
-core and extended work: the project does not redistribute most raw research data.
+`paper/paper-new.qmd` now carries the final claim architecture and runs in the strict
+publication graph alongside the legacy `paper.qmd`. The companion `paper/appendix.qmd`
+is likewise a thin publication layer over the registered Appendix A--E artifacts and
+is rendered as a required final PDF. Neither manuscript QMD owns estimators: both
+consume the paper-facing output contract, while `paper.qmd` remains only for legacy
+compatibility until its application-sample excerpts are migrated. Whether a raw source
+can be redistributed is not the boundary between core and extended work: the project
+does not redistribute most raw research data.
 Instead, a target is core when a public/main-paper artifact consumes it. Baseline
 DISE ingestion, deterministic lineage, the 2007-08 treatment construction, the
 DISE--NSS validation, and the schooling-market association object therefore live
@@ -344,11 +349,12 @@ so later Appendix B--D bundles reuse one artifact contract rather than duplicati
 save loops.
 
 Appendix artifacts are listed in `required_final_artifacts()` as soon as their
-builders exist. They are added to `required_public_render_inputs()` only when an
-active final-paper QMD actually consumes them. This keeps the final exhibit
-inventory distinct from the document-render dependency list and prevents the
-public contract from claiming dependencies that the current manuscript has not
-yet wired in.
+builders exist. Now that `paper/appendix.qmd` renders the final A--E architecture,
+its exact TeX and figure inputs are also centralized in
+`appendix_public_render_inputs()` and reused by the strict render-input contract.
+This keeps the full machine-readable exhibit inventory distinct from the smaller
+document-render dependency list while making every file consumed by the appendix
+an explicit publication dependency.
 
 
 ### Final-paper validation and historical-identification exhibits
