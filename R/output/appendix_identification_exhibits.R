@@ -521,12 +521,17 @@ appendix_c14_exclusion_sensitivity <- function(sensitivity) {
   x <- safe_df(sensitivity$summary)
   required <- c(
     "specification_id", "outcome_round", "estimand", "calibration_id",
-    "reduced_form_estimate", "reduced_form.std.error", "exclusion_ar_p_beta0",
+    "reduced_form_estimate", "reduced_form_std.error", "exclusion_ar_p_beta0",
     "exclusion_ar_95_contains_zero", "minimum_gamma_for_zero_95",
     "minimum_gamma_share_of_reduced_form_for_zero_95", "exclusion_ar_95_information"
   )
-  if (length(setdiff(required, names(x)))) {
-    stop("Appendix C14 exclusion sensitivity lacks required inversion fields.", call. = FALSE)
+  missing <- setdiff(required, names(x))
+  if (length(missing)) {
+    stop(
+      "Appendix C14 exclusion sensitivity is missing canonical fields: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
   }
   x <- x[plain_chr(x$calibration_id) == "exact_exclusion", , drop = FALSE]
   expected <- c(
@@ -545,7 +550,7 @@ appendix_c14_exclusion_sensitivity <- function(sensitivity) {
   out <- data.frame(
     Outcome = unname(round_labels[plain_chr(x$outcome_round)]),
     Estimand = unname(estimand_labels[plain_chr(x$estimand)]),
-    `Reduced form (SE)` = sprintf("%.3f (%.3f)", num(x$reduced_form_estimate), num(x$reduced_form.std.error)),
+    `Reduced form (SE)` = sprintf("%.3f (%.3f)", num(x$reduced_form_estimate), num(x$reduced_form_std.error)),
     `Exact AR p, beta=0` = sprintf("%.3f", num(x$exclusion_ar_p_beta0)),
     `Zero in exact 95% set` = ifelse(as.logical(x$exclusion_ar_95_contains_zero), "Yes", "No"),
     `Min direct effect for zero` = sprintf("%.3f", num(x$minimum_gamma_for_zero_95)),

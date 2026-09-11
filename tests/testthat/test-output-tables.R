@@ -2179,7 +2179,7 @@ test_that("Appendix C14 reports exact-exclusion fragility for all four long-run 
     estimand = rep(c("ancova", "change"), 2L),
     calibration_id = "exact_exclusion",
     reduced_form_estimate = c(.02, .06, .01, .05),
-    reduced_form.std.error = .02,
+    reduced_form_std.error = .02,
     exclusion_ar_p_beta0 = c(.3, .01, .6, .02),
     exclusion_ar_95_contains_zero = c(TRUE, FALSE, TRUE, FALSE),
     minimum_gamma_for_zero_95 = c(0, .025, 0, .01),
@@ -2187,6 +2187,9 @@ test_that("Appendix C14 reports exact-exclusion fragility for all four long-run 
     exclusion_ar_95_information = c("zero_included", "zero_excluded", "zero_included", "zero_excluded"),
     stringsAsFactors = FALSE
   )
+  expect_true("reduced_form_std.error" %in% names(exact))
+  expect_false("reduced_form.std.error" %in% names(exact))
+
   nuisance <- exact
   nuisance$calibration_id <- "same_sign_rf_050"
   out <- appendix_c14_exclusion_sensitivity(list(summary = rbind(exact, nuisance)))
@@ -2195,4 +2198,28 @@ test_that("Appendix C14 reports exact-exclusion fragility for all four long-run 
   expect_identical(out$Outcome, c("2022-23", "2022-23", "2023-24", "2023-24"))
   expect_identical(out$`Zero in exact 95% set`, c("Yes", "No", "Yes", "No"))
   expect_identical(out$`Share of |reduced form|`, c("0.0%", "42.0%", "0.0%", "20.0%"))
+})
+
+
+test_that("Appendix C14 rejects noncanonical reduced-form SE aliases", {
+  x <- data.frame(
+    specification_id = "consumption__long_2022__ancova",
+    outcome_round = "hces_2022_23",
+    estimand = "ancova",
+    calibration_id = "exact_exclusion",
+    reduced_form_estimate = 0.02,
+    reduced_form.std.error = 0.01,
+    exclusion_ar_p_beta0 = 0.3,
+    exclusion_ar_95_contains_zero = TRUE,
+    minimum_gamma_for_zero_95 = 0,
+    minimum_gamma_share_of_reduced_form_for_zero_95 = 0,
+    exclusion_ar_95_information = "zero_included",
+    stringsAsFactors = FALSE
+  )
+
+  expect_error(
+    appendix_c14_exclusion_sensitivity(list(summary = x)),
+    "reduced_form_std.error",
+    fixed = TRUE
+  )
 })
