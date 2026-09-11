@@ -629,6 +629,10 @@ save_table_tex <- function(table, path, name, public = TRUE) {
     "appendix_c6_mapping_composition_sensitivity", "appendix_c7_historical_balance",
     "appendix_c9_historical_first_stage", "appendix_c11_multiple_instruments",
     "appendix_c13_robustness_family_census", "appendix_c14_exclusion_sensitivity",
+    "appendix_d1_migration", "appendix_d2_migration_context",
+    "appendix_d3_housing_assets", "appendix_d4_economic_census",
+    "appendix_d5_labor", "appendix_d6_household_capacity",
+    "appendix_d7_social_heterogeneity", "appendix_d9_residual_spatial_diagnostics",
     "appendix_e1_selection_sample", "appendix_e4_missingness"
   )
   appendix_long_table <- identical(name, "appendix_c1_full_absorption_ladder")
@@ -746,6 +750,14 @@ save_table_tex <- function(table, path, name, public = TRUE) {
       appendix_c11_multiple_instruments = c("3.7cm", "1.3cm", "1.5cm", "1.5cm", "1.3cm", "1.8cm", "1.7cm", "1.0cm"),
       appendix_c13_robustness_family_census = c("3.5cm", "1.0cm", "1.5cm", "1.6cm", "1.5cm", "1.5cm", "1.5cm", "1.4cm"),
       appendix_c14_exclusion_sensitivity = c("1.4cm", "1.5cm", "2.4cm", "1.7cm", "1.8cm", "2.2cm", "2.3cm"),
+      appendix_d1_migration = c("3.5cm", "2.0cm", "2.0cm", "1.3cm", "1.2cm", "1.2cm", "1.2cm", "1.0cm"),
+      appendix_d2_migration_context = c("2.8cm", "5.0cm", "1.5cm", "1.3cm", "1.3cm", "1.0cm"),
+      appendix_d3_housing_assets = c("3.5cm", "2.0cm", "2.0cm", "1.3cm", "1.2cm", "1.2cm", "1.2cm", "1.0cm"),
+      appendix_d4_economic_census = c("3.5cm", "2.0cm", "2.0cm", "1.3cm", "1.2cm", "1.2cm", "1.2cm", "1.0cm"),
+      appendix_d5_labor = c("2.7cm", "3.2cm", "1.8cm", "1.8cm", "1.1cm", "1.1cm", "1.1cm", "1.1cm", "0.9cm"),
+      appendix_d6_household_capacity = c("2.5cm", "2.3cm", "1.9cm", "1.2cm", "1.1cm", "1.1cm", "1.1cm", "0.9cm"),
+      appendix_d7_social_heterogeneity = c("2.4cm", "1.5cm", "2.6cm", "2.2cm", "1.8cm", "1.1cm", "1.0cm", "1.1cm", "0.9cm"),
+      appendix_d9_residual_spatial_diagnostics = c("4.2cm", "1.4cm", "1.4cm", "1.0cm", "1.7cm", "1.7cm"),
       appendix_e1_selection_sample = c("3.8cm", "1.7cm", "1.2cm", "8.0cm"),
       appendix_e4_missingness = c("4.5cm", "1.6cm", "1.6cm", "1.7cm", "2.6cm")
     )

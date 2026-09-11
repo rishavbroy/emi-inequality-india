@@ -2,42 +2,8 @@
 
 extended_labor_target_definitions <- function() {
   list(
-    tar_target(
-      plfs_2017_18_lineaged_conservative,
-      attach_plfs_2017_18_reviewed_lineage(
-        plfs_2017_18_usual_activity_source,
-        district_lineage$conservative_source_crosswalk,
-        variant = "deterministic"
-      )
-    ),
-    tar_target(
-      plfs_2017_18_conservative_diagnostics,
-      build_plfs_2017_18_diagnostics(
-        plfs_2017_18_usual_activity_source,
-        plfs_2017_18_lineaged_conservative,
-        "conservative"
-      )
-    ),
-    tar_target(
-      plfs_2017_18_conservative_district_outcomes,
-      estimate_nss_labor_district_outcomes(
-        plfs_2017_18_lineaged_conservative,
-        plfs_2017_18_conservative_diagnostics$target_support,
-        plfs_2017_18_outcome_registry(),
-        label = "PLFS 2017-18 conservative labor"
-      )
-    ),
-    tar_target(
-      plfs_2017_18_conservative_labor_mechanism,
-      build_labor_mechanism_inference(
-        district_panel,
-        plfs_2017_18_conservative_district_outcomes$estimates,
-        wave_id = "plfs_2017_18",
-        cfg = cfg,
-        control_registry = census_2001_control_registry,
-        sample_suffix = "conservative"
-      )
-    ),
+    # Conservative-lineage PLFS analysis is core-owned for Appendix D5.
+    # Extended mode persists the shared analytical object below.
     tar_target(
       diag_ext_plfs_2017_18_labor_mechanism_files,
       save_labor_mechanism_inference(plfs_2017_18_labor_mechanism, "plfs_2017_18"),

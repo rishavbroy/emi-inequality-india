@@ -164,6 +164,21 @@ core_public_target_definitions <- function() {
       format = "file"
     ),
     tar_target(
+      appendix_local_development_exhibits,
+      make_appendix_local_development_exhibits(
+        census_migration_diagnostics, census_housing_diagnostics, economic_census_diagnostics,
+        nss66_labor_mechanism, plfs_2017_18_labor_mechanism,
+        plfs_2017_18_conservative_labor_mechanism, census_household_capacity,
+        nss64_schooling_social_group_diagnostic, english_opportunity_st_heterogeneity,
+        diag_public_spatial_autocorrelation
+      )
+    ),
+    tar_target(
+      appendix_local_development_files,
+      save_appendix_local_development_exhibits(appendix_local_development_exhibits, cfg),
+      format = "file"
+    ),
+    tar_target(
       appendix_selection_exhibits,
       make_appendix_selection_exhibits(
         selection_data, selection_missingness_diagnostics

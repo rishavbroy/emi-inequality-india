@@ -68,6 +68,44 @@ core_labor_target_definitions <- function() {
         control_registry = census_2001_control_registry
       )
     ),
+    # Conservative reviewed-lineage PLFS is a final-paper Appendix-D sensitivity,
+    # so analytical ownership is core; extended mode only persists its diagnostics.
+    tar_target(
+      plfs_2017_18_lineaged_conservative,
+      attach_plfs_2017_18_reviewed_lineage(
+        plfs_2017_18_usual_activity_source,
+        district_lineage$conservative_source_crosswalk,
+        variant = "deterministic"
+      )
+    ),
+    tar_target(
+      plfs_2017_18_conservative_diagnostics,
+      build_plfs_2017_18_diagnostics(
+        plfs_2017_18_usual_activity_source,
+        plfs_2017_18_lineaged_conservative,
+        "conservative"
+      )
+    ),
+    tar_target(
+      plfs_2017_18_conservative_district_outcomes,
+      estimate_nss_labor_district_outcomes(
+        plfs_2017_18_lineaged_conservative,
+        plfs_2017_18_conservative_diagnostics$target_support,
+        plfs_2017_18_outcome_registry(),
+        label = "PLFS 2017-18 conservative labor"
+      )
+    ),
+    tar_target(
+      plfs_2017_18_conservative_labor_mechanism,
+      build_labor_mechanism_inference(
+        district_panel,
+        plfs_2017_18_conservative_district_outcomes$estimates,
+        wave_id = "plfs_2017_18",
+        cfg = cfg,
+        control_registry = census_2001_control_registry,
+        sample_suffix = "conservative"
+      )
+    ),
     tar_target(
       nss66_eus_ddi_file,
       manifest_file_by_id(paths, "nss_2009_10_employment", "nss66_eus_ddi", "NSS66 EUS DDI"),

@@ -56,13 +56,8 @@ extended_dise_target_definitions <- function() {
         dise_lineage_bridge
       )
     ),
-    tar_target(
-      english_opportunity_st_heterogeneity,
-      diagnose_english_opportunity_st_heterogeneity(
-        district_panel_with_dise,
-        control_registry = census_2001_control_registry
-      )
-    ),
+    # ST-concentration heterogeneity is core-owned for Appendix D7.
+    # Extended mode persists the shared object below.
     tar_target(
       diag_ext_english_opportunity_st_heterogeneity_files,
       save_english_opportunity_st_heterogeneity(

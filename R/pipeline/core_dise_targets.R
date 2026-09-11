@@ -150,6 +150,13 @@ core_dise_target_definitions <- function() {
     tar_target(
       dise_iv_nss_validation,
       diagnose_dise_nss_validation(district_panel_with_dise)
+    ),
+    tar_target(
+      english_opportunity_st_heterogeneity,
+      diagnose_english_opportunity_st_heterogeneity(
+        district_panel_with_dise,
+        control_registry = census_2001_control_registry
+      )
     )
   )
 }

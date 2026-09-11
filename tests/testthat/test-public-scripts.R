@@ -1807,3 +1807,33 @@ test_that("Appendix C1-C14 publication exhibits have bounded core ownership", {
   expect_match(module, "values - ave(values", fixed = TRUE)
   expect_match(core_lineage, "lineage_panel_variant_review", fixed = TRUE)
 })
+
+
+test_that("Appendix D local-development tables have bounded core ownership", {
+  core_public <- repo_text("R", "pipeline", "core_public_targets.R")
+  core_labor <- repo_text("R", "pipeline", "core_labor_targets.R")
+  extended_labor <- repo_text("R", "pipeline", "extended_labor_targets.R")
+  core_dise <- repo_text("R", "pipeline", "core_dise_targets.R")
+  extended_dise <- repo_text("R", "pipeline", "extended_dise_targets.R")
+  module <- repo_text("R", "output", "appendix_local_development_exhibits.R")
+  contract <- repo_text("scripts", "public_output_contract.R")
+
+  expect_match(core_public, "appendix_local_development_files", fixed = TRUE)
+  expect_match(core_labor, "plfs_2017_18_conservative_labor_mechanism", fixed = TRUE)
+  expect_false(grepl("tar_target(\n      plfs_2017_18_conservative_labor_mechanism,", extended_labor, fixed = TRUE))
+  expect_match(extended_labor, "save_labor_mechanism_inference(\n        plfs_2017_18_conservative_labor_mechanism", fixed = TRUE)
+  expect_match(core_dise, "english_opportunity_st_heterogeneity", fixed = TRUE)
+  expect_false(grepl("tar_target(\n      english_opportunity_st_heterogeneity,", extended_dise, fixed = TRUE))
+  expect_match(extended_dise, "save_english_opportunity_st_heterogeneity", fixed = TRUE)
+  expect_false(grepl("lm\\(|fixest::|feols\\(|ivreg\\(", module))
+
+  for (name in c(
+    "appendix_d1_migration", "appendix_d2_migration_context",
+    "appendix_d3_housing_assets", "appendix_d4_economic_census",
+    "appendix_d5_labor", "appendix_d6_household_capacity",
+    "appendix_d7_social_heterogeneity", "appendix_d9_residual_spatial_diagnostics"
+  )) {
+    expect_match(contract, paste0(name, ".csv"), fixed = TRUE)
+    expect_match(contract, paste0(name, ".tex"), fixed = TRUE)
+  }
+})
