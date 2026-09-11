@@ -334,7 +334,10 @@ selection missingness diagnostic once in the core measurement graph and reuses t
 canonical `probit_mfx.csv` estimates for the full AME exhibit. The shared public-QMD
 renderer converts those canonical AME rows to Markdown, so Pandoc owns the final table
 alignment instead of injecting the legacy modelsummary longtable into a second Quarto
-document. The legacy TeX artifact remains available to the legacy paper, but it is not an
+document. For appendix tables that remain LaTeX artifacts, the shared table writer escapes
+both body cells and column headers before handing text to `kableExtra` with raw-LaTeX
+styling enabled; publication labels may therefore contain `%`, `&`, `_`, and other TeX
+metacharacters without corrupting the tabular alignment. The legacy TeX artifact remains available to the legacy paper, but it is not an
 Appendix E render dependency. Appendix E writes only the additional compact sample/missingness summaries
 plus missingness-predictability figure under
 `outputs/tables/appendix/` and `outputs/figures/appendix/`. Extended mode persists the full

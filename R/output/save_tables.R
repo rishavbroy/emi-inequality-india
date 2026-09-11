@@ -479,9 +479,10 @@ sanitize_table_for_kable <- function(df) {
   render_table_math_labels(df)
 }
 
-escape_table_cells_for_latex <- function(df) {
+escape_table_for_latex <- function(df) {
   df <- as.data.frame(df, check.names = FALSE, stringsAsFactors = FALSE)
   for (nm in names(df)) df[[nm]] <- latex_escape_text(df[[nm]])
+  names(df) <- latex_escape_text(names(df))
   df
 }
 
@@ -649,7 +650,7 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   # LaTeX. Escape ordinary cell text first so `%`, `&`, `_`, and other LaTeX
   # metacharacters cannot corrupt the alignment. kableExtra's own documentation
   # explicitly requires manual escaping when raw LaTeX output is enabled.
-  df_render <- escape_table_cells_for_latex(df_render)
+  df_render <- escape_table_for_latex(df_render)
   tex <- kableExtra::kbl(
     df_render,
     format = "latex",

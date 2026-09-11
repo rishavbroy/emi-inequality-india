@@ -1086,7 +1086,7 @@ test_that("paper schooling-market table fails closed when a canonical specificat
 
 
 
-test_that("public LaTeX cells escape metacharacters before raw kable styling", {
+test_that("public LaTeX table text escapes metacharacters before raw kable styling", {
   escaped <- latex_escape_text(c(
     "10% of children", "A & B", "x_y", "$100 #1", "{group}",
     "path\\name", "near~far", "x^2"
@@ -1101,8 +1101,13 @@ test_that("public LaTeX cells escape metacharacters before raw kable styling", {
   )
 
   df <- data.frame(Variable = "Enrollment", `Year / unit` = "2007-08; % of children", check.names = FALSE)
-  out <- escape_table_cells_for_latex(df)
+  out <- escape_table_for_latex(df)
+  expect_identical(names(out), c("Variable", "Year / unit"))
   expect_identical(out$`Year / unit`, "2007-08; \\% of children")
+
+  header_df <- data.frame(`Zero in exact 95% set` = "Yes", check.names = FALSE)
+  escaped_header <- escape_table_for_latex(header_df)
+  expect_identical(names(escaped_header), "Zero in exact 95\\% set")
 })
 
 test_that("result tables preserve authored column order when N is present", {
@@ -2198,6 +2203,10 @@ test_that("Appendix C14 reports exact-exclusion fragility for all four long-run 
   expect_identical(out$Outcome, c("2022-23", "2022-23", "2023-24", "2023-24"))
   expect_identical(out$`Zero in exact 95% set`, c("Yes", "No", "Yes", "No"))
   expect_identical(out$`Share of |reduced form|`, c("0.0%", "42.0%", "0.0%", "20.0%"))
+
+  escaped <- escape_table_for_latex(out)
+  expect_true("Zero in exact 95\\% set" %in% names(escaped))
+  expect_true("Share of |reduced form|" %in% names(escaped))
 })
 
 
