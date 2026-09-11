@@ -305,9 +305,6 @@ test_that("both paper QMDs own their appendices and load shared rendering helper
   expect_gt(regexpr("# Appendix {#sec-appendix}", paper, fixed = TRUE)[[1]], old_appendix_boundary)
   expect_gt(regexpr("## District Matching and Spatial Autocorrelation {#sec-distma-spa}", paper, fixed = TRUE)[[1]], old_appendix_boundary)
 
-  expect_false(file.exists(repo_file("paper", "appendix.qmd")))
-  expect_false(file.exists(repo_file("docs", "district-matching.qmd")))
-  expect_false(file.exists(repo_file("docs", "long-paths-and-8-3-filenames.qmd")))
   expect_match(helper, "render_public_tex", fixed = TRUE)
   expect_match(helper, "knitr::asis_output(paste0", fixed = TRUE)
   expect_match(paper, "\\usepackage{xcolor}", fixed = TRUE)
@@ -373,9 +370,13 @@ test_that("duplicated appendix publications are retired while samples keep legac
   samples <- repo_text("R", "application_samples", "render_writing_sample.R")
   archive <- repo_text("scripts", "make_review_archive.sh")
 
-  expect_false(file.exists(repo_file("paper", "appendix.qmd")))
-  expect_false(file.exists(repo_file("docs", "district-matching.qmd")))
-  expect_false(file.exists(repo_file("docs", "long-paths-and-8-3-filenames.qmd")))
+  retired_sources <- c(
+    "paper/appendix.qmd",
+    "docs/district-matching.qmd",
+    "docs/long-paths-and-8-3-filenames.qmd"
+  )
+  repo_root <- dirname(repo_file(".gitattributes"))
+  expect_false(any(file.exists(file.path(repo_root, retired_sources))))
   expect_false(grepl("paper/appendix.qmd", archive, fixed = TRUE))
   expect_false(grepl("docs/district-matching.qmd", archive, fixed = TRUE))
   expect_false(grepl("docs/long-paths-and-8-3-filenames.qmd", archive, fixed = TRUE))
