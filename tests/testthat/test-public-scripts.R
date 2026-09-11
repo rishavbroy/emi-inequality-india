@@ -1725,6 +1725,18 @@ test_that("paper local-development synthesis promotes only publication analysis 
   expect_match(public_contract, "paper_local_development.tex", fixed = TRUE)
 })
 
+test_that("Appendix E reuses the canonical probit table label for raw TeX", {
+  appendix <- repo_text("paper", "appendix.qmd")
+
+  expect_match(appendix, "#| label: tbl-probit-mfx", fixed = TRUE)
+  expect_match(
+    appendix,
+    'render_public_table("../outputs/tables/main/probit_mfx.tex", "probit_mfx")',
+    fixed = TRUE
+  )
+  expect_false(grepl("#| label: tbl-app-e2", appendix, fixed = TRUE))
+})
+
 test_that("final-paper selection missingness is core-owned and extended mode only persists it", {
   core_measurement <- repo_text("R", "pipeline", "core_measurement_targets.R")
   extended_lineage <- repo_text("R", "pipeline", "extended_lineage_targets.R")
