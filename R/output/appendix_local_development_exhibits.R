@@ -192,6 +192,101 @@ appendix_d7_social_heterogeneity <- function(schooling_access, st_heterogeneity)
   out
 }
 
+
+appendix_d8_raw_spatial_geography <- function(spatial) {
+  x <- safe_df(spatial)
+  ids <- c("linguistic_distance", "emie", "real_consumption_growth")
+  labels <- c(
+    linguistic_distance = "Linguistic distance",
+    emie = "All-child EMI exposure",
+    real_consumption_growth = "Real log consumption change"
+  )
+  map_names <- c(
+    linguistic_distance = "map_linguistic_distance",
+    emie = "map_emi_exposure",
+    real_consumption_growth = "map_consumption_growth"
+  )
+  required <- c("estimand", "estimate", "p.value", "n", "contiguity", "weights_style", "status")
+  if (length(setdiff(required, names(x)))) {
+    stop("Appendix D8 spatial diagnostics are missing required Moran fields.", call. = FALSE)
+  }
+  x <- x[match(ids, plain_chr(x$estimand)), , drop = FALSE]
+  if (nrow(x) != length(ids) || any(is.na(x$estimand)) ||
+      any(plain_chr(x$status) != "estimated") ||
+      any(!is.finite(num(x$estimate))) || any(!is.finite(num(x$p.value))) ||
+      length(unique(as.integer(x$n))) != 1L ||
+      length(unique(plain_chr(x$contiguity))) != 1L ||
+      length(unique(plain_chr(x$weights_style))) != 1L) {
+    stop("Appendix D8 requires the three preferred raw Moran diagnostics on one spatial-support contract.", call. = FALSE)
+  }
+  data.frame(
+    panel = c("A", "B", "C"),
+    estimand = ids,
+    label = unname(labels[ids]),
+    map_name = unname(map_names[ids]),
+    moran_i = num(x$estimate),
+    p.value = num(x$p.value),
+    n = as.integer(x$n),
+    contiguity = plain_chr(x$contiguity),
+    weights_style = plain_chr(x$weights_style),
+    stringsAsFactors = FALSE
+  )
+}
+
+appendix_d8_map_paths <- function(figure_files, map_names) {
+  figure_files <- plain_chr(figure_files)
+  wanted <- paste0(map_names, ".png")
+  out <- vapply(wanted, function(file) {
+    hits <- figure_files[basename(figure_files) == file & file.exists(figure_files)]
+    if (length(hits) != 1L) {
+      stop("Appendix D8 requires exactly one rendered source map: ", file, ".", call. = FALSE)
+    }
+    hits[[1L]]
+  }, character(1))
+  unname(out)
+}
+
+appendix_d8_labeled_map_image <- function(path, panel, label, moran_i) {
+  need_pkg("magick", "Appendix D8 raw spatial map panel")
+  image <- magick::image_read(path)
+  image <- magick::image_background(image, "white", flatten = TRUE)
+  image <- magick::image_scale(image, "800")
+  info <- magick::image_info(image)
+  image <- magick::image_extent(
+    image,
+    geometry = sprintf("%dx%d", info$width[[1L]], info$height[[1L]] + 90L),
+    gravity = "south",
+    color = "white"
+  )
+  magick::image_annotate(
+    image,
+    text = sprintf("%s. %s\nMoran's I = %.3f", panel, label, moran_i),
+    gravity = "north",
+    location = "+0+10",
+    size = 24
+  )
+}
+
+save_appendix_d8_raw_spatial_geography <- function(summary, figure_files, cfg) {
+  if (!identical(cfg$mode, "final")) return(character())
+  if (!is.data.frame(summary) || nrow(summary) != 3L) {
+    stop("Appendix D8 requires its three-row raw spatial summary.", call. = FALSE)
+  }
+  paths <- appendix_d8_map_paths(figure_files, summary$map_name)
+  images <- Map(
+    appendix_d8_labeled_map_image,
+    paths, summary$panel, summary$label, summary$moran_i
+  )
+  panel <- magick::image_append(magick::image_join(images), stack = FALSE)
+  base <- appendix_figure_path_base("appendix_d8_raw_spatial_geography")
+  formats <- figure_formats(cfg)
+  written <- save_magick_formats(panel, base, formats)
+  csv_path <- paste0(base, ".csv")
+  dir.create(dirname(csv_path), recursive = TRUE, showWarnings = FALSE)
+  utils::write.csv(summary, csv_path, row.names = FALSE, na = "")
+  c(written, csv_path)
+}
+
 appendix_d9_residual_spatial_diagnostics <- function(spatial) {
   x <- safe_df(spatial)
   ids <- c("consumption_iv_residual", "consumption_first_stage_residual")
@@ -230,12 +325,13 @@ make_appendix_local_development_exhibits <- function(
     appendix_d5_labor = appendix_d5_labor(nss66_labor, plfs_labor, plfs_conservative_labor),
     appendix_d6_household_capacity = appendix_d6_household_capacity(household_capacity),
     appendix_d7_social_heterogeneity = appendix_d7_social_heterogeneity(schooling_access, st_heterogeneity),
+    appendix_d8_raw_spatial_geography = appendix_d8_raw_spatial_geography(spatial_autocorrelation),
     appendix_d9_residual_spatial_diagnostics = appendix_d9_residual_spatial_diagnostics(spatial_autocorrelation)
   )
 }
 
-save_appendix_local_development_exhibits <- function(exhibits, cfg) {
-  save_appendix_tables(
+save_appendix_local_development_exhibits <- function(exhibits, figure_files, cfg) {
+  written <- save_appendix_tables(
     exhibits,
     c(
       "appendix_d1_migration", "appendix_d2_migration_context",
@@ -245,4 +341,11 @@ save_appendix_local_development_exhibits <- function(exhibits, cfg) {
     ),
     cfg
   )
+  written <- c(
+    written,
+    save_appendix_d8_raw_spatial_geography(
+      exhibits$appendix_d8_raw_spatial_geography, figure_files, cfg
+    )
+  )
+  unique(normalizePath(written, mustWork = FALSE))
 }

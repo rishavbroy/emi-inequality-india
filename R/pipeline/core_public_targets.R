@@ -175,7 +175,7 @@ core_public_target_definitions <- function() {
     ),
     tar_target(
       appendix_local_development_files,
-      save_appendix_local_development_exhibits(appendix_local_development_exhibits, cfg),
+      save_appendix_local_development_exhibits(appendix_local_development_exhibits, figure_files, cfg),
       format = "file"
     ),
     tar_target(

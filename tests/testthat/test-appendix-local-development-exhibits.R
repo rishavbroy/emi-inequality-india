@@ -86,3 +86,63 @@ test_that("Appendix D residual spatial table uses only preferred residual diagno
   expect_equal(nrow(csv), 2L)
   expect_setequal(csv$estimand, c("consumption_iv_residual", "consumption_first_stage_residual"))
 })
+
+test_that("Appendix D raw spatial panel uses the three canonical map diagnostics", {
+  spatial <- data.frame(
+    estimand = c(
+      "linguistic_distance", "emie", "real_consumption_growth",
+      "consumption_iv_residual", "consumption_first_stage_residual"
+    ),
+    estimate = c(0.886, 0.661, 0.307, 0.003, -0.010),
+    p.value = c(1e-10, 1e-10, 1e-8, 0.435, 0.625),
+    n = 573L, contiguity = "rook", weights_style = "W",
+    status = "estimated", stringsAsFactors = FALSE
+  )
+
+  d8 <- appendix_d8_raw_spatial_geography(spatial)
+
+  expect_identical(d8$panel, c("A", "B", "C"))
+  expect_identical(
+    d8$estimand,
+    c("linguistic_distance", "emie", "real_consumption_growth")
+  )
+  expect_identical(
+    d8$map_name,
+    c("map_linguistic_distance", "map_emi_exposure", "map_consumption_growth")
+  )
+  expect_equal(d8$moran_i, c(0.886, 0.661, 0.307))
+  expect_true(length(unique(d8$n)) == 1L)
+  expect_true(length(unique(d8$contiguity)) == 1L)
+  expect_true(length(unique(d8$weights_style)) == 1L)
+})
+
+test_that("Appendix D raw spatial panel reuses rendered maps rather than rebuilding geometry", {
+  paths <- file.path(tempdir(), c(
+    "map_linguistic_distance.png", "map_emi_exposure.png", "map_consumption_growth.png"
+  ))
+  file.create(paths)
+
+  resolved <- appendix_d8_map_paths(
+    paths,
+    c("map_linguistic_distance", "map_emi_exposure", "map_consumption_growth")
+  )
+
+  expect_identical(normalizePath(resolved), normalizePath(paths))
+  expect_error(
+    appendix_d8_map_paths(paths[-1L], "map_linguistic_distance"),
+    "exactly one rendered source map"
+  )
+})
+
+test_that("Appendix D map labels add Moran context without changing the source map", {
+  skip_if_not_installed("magick")
+  path <- tempfile(fileext = ".png")
+  magick::image_write(magick::image_blank(width = 120, height = 80, color = "white"), path)
+
+  labeled <- appendix_d8_labeled_map_image(path, "A", "Linguistic distance", 0.886)
+  info <- magick::image_info(labeled)
+
+  expect_s3_class(labeled, "magick-image")
+  expect_equal(info$width, 800L)
+  expect_gt(info$height, round(80 * 800 / 120))
+})

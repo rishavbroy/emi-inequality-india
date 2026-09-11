@@ -1836,4 +1836,12 @@ test_that("Appendix D local-development tables have bounded core ownership", {
     expect_match(contract, paste0(name, ".csv"), fixed = TRUE)
     expect_match(contract, paste0(name, ".tex"), fixed = TRUE)
   }
+  expect_match(core_public, "save_appendix_local_development_exhibits(appendix_local_development_exhibits, figure_files, cfg)", fixed = TRUE)
+  expect_match(module, "appendix_d8_map_paths", fixed = TRUE)
+  expect_match(module, "map_linguistic_distance", fixed = TRUE)
+  expect_match(module, "map_emi_exposure", fixed = TRUE)
+  expect_match(module, "map_consumption_growth", fixed = TRUE)
+  expect_match(contract, "appendix_d8_raw_spatial_geography.pdf", fixed = TRUE)
+  expect_match(contract, "appendix_d8_raw_spatial_geography.png", fixed = TRUE)
+  expect_match(contract, "appendix_d8_raw_spatial_geography.csv", fixed = TRUE)
 })
