@@ -549,21 +549,6 @@ extended_iv_target_definitions <- function() {
       format = "file"
     ),
     tar_target(
-      alternative_distance_augmentation_panel,
-      project_alternative_distance_panel(
-        district_panel,
-        retain = "real_log_consumption_change",
-        control_registry = census_2001_control_registry
-      )
-    ),
-    tar_target(
-      alternative_distance_first_stages,
-      augment_alternative_distance_inference_diagnostics(
-        alternative_distance_measurement_diagnostics,
-        alternative_distance_augmentation_panel
-      )
-    ),
-    tar_target(
       diag_ext_alternative_distance_first_stages,
       save_alternative_distance_first_stages(alternative_distance_first_stages)$path,
       format = "file"

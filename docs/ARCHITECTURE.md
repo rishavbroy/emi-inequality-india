@@ -290,17 +290,19 @@ The main-paper identification boundary and final Appendix C share a bounded
 publication layer. Common-support alternative-distance first stages, Hindi-belt
 and child-population added-control comparisons, and the linguistic measurement /
 composition diagnostics used by Appendix C1--C6 live in
-`core_identification_target_definitions()`. The extended IV factory does not
-re-estimate those objects: it starts from `alternative_distance_measurement_diagnostics`
-and adds outcome-specific weak-IV inference, monotonicity, overidentification, FAS,
-and other reviewer-facing forensic evidence.
+`core_identification_target_definitions()`. Appendix C10--C11 also consumes the
+registered alternative-distance weak-IV, monotonicity, overidentification, and FAS
+object, so that bounded inference augmentation now lives in core as well. The
+extended IV factory persists that shared object and retains the much larger consumption
+robustness, exclusion-sensitivity, and other reviewer-facing forensic families.
 
 This split is intentionally scientific rather than "cheap versus expensive".
 Mapping coverage, distance-4 composition, leave-language-out checks, and the
 richer language vectors are measurement/relevance evidence consumed directly by
-the final appendix, so they are strict. Weak-IV outcome grids and partial-
-identification exercises remain extended until their own appendix exhibits are
-wired into the publication contract. Appendix C2 is rebuilt from within-state
+the final appendix, so they are strict. C10--C11 make the bounded monotonicity,
+overidentification, and falsification-adaptive diagnostics strict too; the 408-model
+consumption robustness census and exclusion-sensitivity family remain extended until
+their own appendix exhibits are wired into the publication contract. Appendix C2 is rebuilt from within-state
 demeaned linguistic distance and all-child EMI rather than reusing the legacy
 poster residual maps, which partialled six-region fixed effects and expanded
 controls and therefore answered a different geographic question.

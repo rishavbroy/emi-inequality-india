@@ -334,3 +334,22 @@ record (alternative-basis decompositions, weak-IV outcome grids,
 monotonicity/leave-one-out exercises, falsification-adaptive sets, and related
 forensics). This prevents the main paper from duplicating or silently selecting
 from the full diagnostic search space.
+
+
+### Final Appendix C10--C12 identification exhibits
+
+Appendix C10 and C11 consume the registered `alternative_distance_first_stages`
+object directly. Because these are final-paper exhibits, the bounded inference
+augmentation (weak-IV outcomes, monotonicity, overidentification, and the
+falsification-adaptive-set calculations for the registered language-share vectors)
+is computed once in the core identification graph. Extended mode persists the same
+object; it does not recompute a parallel copy. C10 displays the preferred state-main
+monotonicity bins together with the distribution of estimable state-specific slopes.
+C11 reports only the three registered state-main five-share systems and keeps weak
+constituent first stages visible alongside the Sargan test and FAS.
+
+Appendix C12 is built from the already-core `consumption_iv_dynamics` object. Reduced
+form and conventional 2SLS estimates are plotted on separate scales because their
+units differ. The companion CSV retains the Anderson--Rubin topology fields; those
+weak-IV-robust set characteristics take interpretive precedence over the conventional
+2SLS Wald intervals. No additional IV estimator is run by the appendix output layer.

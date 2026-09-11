@@ -954,12 +954,17 @@ test_that("reviewed lineage variants have one analytical owner and extended mode
   expect_match(core, "estimate_2sls(district_panel, revised_iv_formulas, cfg)", fixed = TRUE)
 
   expect_match(
-    repo_target_command("iv_models_conservative"),
+    gsub("[[:space:]]+", " ", repo_target_command("iv_models_conservative")),
     "estimate_2sls(district_panel_conservative, revised_iv_formulas, cfg)",
     fixed = TRUE
   )
   expect_match(
-    repo_target_command("iv_models_conservative_legacy_spec"),
+    extended,
+    "tar_target(\n      iv_models_conservative_legacy_spec,",
+    fixed = TRUE
+  )
+  expect_match(
+    extended,
     "estimate_2sls(district_panel_conservative, legacy_iv_formulas, cfg)",
     fixed = TRUE
   )
@@ -1735,7 +1740,7 @@ test_that("Appendix B/C validation exhibits are strict outputs with single analy
 })
 
 
-test_that("Appendix C1-C6 are strict summaries with measurement diagnostics core-owned", {
+test_that("Appendix C1-C6 and C10-C12 are strict identification summaries", {
   core_id <- repo_text("R", "pipeline", "core_identification_targets.R")
   extended_id <- repo_text("R", "pipeline", "extended_iv_targets.R")
   core_lineage <- repo_text("R", "pipeline", "core_lineage_targets.R")
@@ -1747,6 +1752,7 @@ test_that("Appendix C1-C6 are strict summaries with measurement diagnostics core
   expect_match(core_id, "alternative_distance_measurement_diagnostics", fixed = TRUE)
   expect_match(core_id, "hindi_belt_first_stage_diagnostics", fixed = TRUE)
   expect_match(core_id, "child_population_first_stage_diagnostics", fixed = TRUE)
+  expect_match(core_id, "alternative_distance_first_stages", fixed = TRUE)
   expect_false(grepl(
     "tar_target(\n      hindi_belt_first_stage_diagnostics,", extended_lineage, fixed = TRUE
   ))
@@ -1755,11 +1761,10 @@ test_that("Appendix C1-C6 are strict summaries with measurement diagnostics core
   ))
   expect_match(extended_lineage, "save_hindi_belt_first_stage_diagnostics", fixed = TRUE)
   expect_match(extended_lineage, "save_child_population_first_stage_diagnostics", fixed = TRUE)
-  expect_match(
-    extended_id,
-    "augment_alternative_distance_inference_diagnostics(\n        alternative_distance_measurement_diagnostics",
-    fixed = TRUE
-  )
+  expect_false(grepl(
+    "tar_target(\n      alternative_distance_first_stages,", extended_id, fixed = TRUE
+  ))
+  expect_match(extended_id, "save_alternative_distance_first_stages(alternative_distance_first_stages)", fixed = TRUE)
   expect_false(grepl(
     "augment_alternative_distance_measurement_diagnostics(", extended_id, fixed = TRUE
   ))
@@ -1771,7 +1776,12 @@ test_that("Appendix C1-C6 are strict summaries with measurement diagnostics core
     "appendix_c3_control_block_absorption.tex",
     "appendix_c4_geographic_scale_sensitivity.tex",
     "appendix_c5_alternative_scalar_distances.tex",
-    "appendix_c6_mapping_composition_sensitivity.tex"
+    "appendix_c6_mapping_composition_sensitivity.tex",
+    "appendix_c10_monotonicity.pdf",
+    "appendix_c10_monotonicity.csv",
+    "appendix_c11_multiple_instruments.tex",
+    "appendix_c12_consumption_iv_dynamics.pdf",
+    "appendix_c12_consumption_iv_dynamics.csv"
   )) expect_match(contract, path, fixed = TRUE)
 
   expect_false(grepl("lm\\(|fixest::|feols\\(|ivreg\\(", module))

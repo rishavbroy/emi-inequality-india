@@ -627,7 +627,7 @@ save_table_tex <- function(table, path, name, public = TRUE) {
     "appendix_c1_full_absorption_ladder", "appendix_c3_control_block_absorption",
     "appendix_c4_geographic_scale_sensitivity", "appendix_c5_alternative_scalar_distances",
     "appendix_c6_mapping_composition_sensitivity", "appendix_c7_historical_balance",
-    "appendix_c9_historical_first_stage",
+    "appendix_c9_historical_first_stage", "appendix_c11_multiple_instruments",
     "appendix_e1_selection_sample", "appendix_e4_missingness"
   )
   appendix_long_table <- identical(name, "appendix_c1_full_absorption_ladder")
@@ -742,6 +742,7 @@ save_table_tex <- function(table, path, name, public = TRUE) {
       appendix_c6_mapping_composition_sensitivity = c("3.0cm", "5.4cm", "2.2cm", "1.4cm", "1.7cm", "1.1cm"),
       appendix_c7_historical_balance = c("2.8cm", "2.5cm", "1.5cm", "1.4cm", "1.4cm", "1.2cm"),
       appendix_c9_historical_first_stage = c("5.0cm", "1.5cm", "1.9cm", "1.5cm", "1.9cm", "1.2cm"),
+      appendix_c11_multiple_instruments = c("3.7cm", "1.3cm", "1.5cm", "1.5cm", "1.3cm", "1.8cm", "1.7cm", "1.0cm"),
       appendix_e1_selection_sample = c("3.8cm", "1.7cm", "1.2cm", "8.0cm"),
       appendix_e4_missingness = c("4.5cm", "1.6cm", "1.6cm", "1.7cm", "2.6cm")
     )

@@ -343,10 +343,189 @@ appendix_c6_mapping_composition_sensitivity <- function(diagnostics) {
   out
 }
 
+
+appendix_c10_monotonicity_plot_data <- function(diagnostics) {
+  if (!inherits(diagnostics, "emi_alternative_distance_first_stages")) {
+    stop("Appendix C10 requires canonical alternative-distance inference diagnostics.", call. = FALSE)
+  }
+  spec <- "state_main__nonzero_mean"
+  bins <- safe_df(diagnostics$monotonicity_bins)
+  states <- safe_df(diagnostics$monotonicity_state_slopes)
+  summary <- safe_df(diagnostics$monotonicity_summary)
+  bins <- bins[plain_chr(bins$specification_id) == spec, , drop = FALSE]
+  states <- states[plain_chr(states$specification_id) == spec & plain_chr(states$status) == "estimated", , drop = FALSE]
+  summary <- summary[plain_chr(summary$specification_id) == spec, , drop = FALSE]
+  if (nrow(bins) < 5L || nrow(states) < 5L || nrow(summary) != 1L ||
+      any(!is.finite(num(bins$instrument))) || any(!is.finite(num(bins$treatment))) ||
+      any(!is.finite(num(states$slope)))) {
+    stop("Appendix C10 requires the registered state-main monotonicity diagnostics.", call. = FALSE)
+  }
+  list(bins = bins, states = states, summary = summary)
+}
+
+appendix_c10_monotonicity_plot <- function(diagnostics) {
+  need_pkg("ggplot2", "Appendix C monotonicity figure")
+  d <- appendix_c10_monotonicity_plot_data(diagnostics)
+  bins <- d$bins
+  states <- d$states
+  bins$panel <- "A. Residualized first-stage bins"
+  bins$x <- num(bins$instrument)
+  bins$y <- num(bins$treatment)
+  bins$state <- NA_character_
+  states$panel <- "B. State-specific slopes"
+  states$x <- seq_len(nrow(states))
+  states$y <- sort(num(states$slope))
+  states$state <- plain_chr(states$state_code_2001)[order(num(states$slope))]
+  plot_data <- safe_bind_rows(list(
+    bins[, c("panel", "x", "y", "state")],
+    states[, c("panel", "x", "y", "state")]
+  ))
+  p <- ggplot2::ggplot(plot_data, ggplot2::aes(x = x, y = y)) +
+    ggplot2::geom_hline(yintercept = 0, linewidth = 0.4, linetype = 2) +
+    ggplot2::geom_line(
+      data = plot_data[plot_data$panel == "A. Residualized first-stage bins", , drop = FALSE],
+      linewidth = 0.55
+    ) +
+    ggplot2::geom_point(size = 2) +
+    ggplot2::facet_wrap(~ panel, scales = "free_x", nrow = 1) +
+    ggplot2::labs(
+      title = "Appendix C10. Monotonicity and sign heterogeneity",
+      x = NULL,
+      y = "Residualized EMI / state-specific slope",
+      caption = paste(
+        "Panel A shows the registered decile-bin diagnostic for the preferred state-FE first stage.",
+        "Panel B orders estimated state-specific slopes; states below zero indicate sign heterogeneity.",
+        "These are shape diagnostics, not additional identifying assumptions."
+      )
+    ) +
+    ggplot2::theme_minimal(base_size = 10) +
+    ggplot2::theme(
+      panel.grid.minor = ggplot2::element_blank(),
+      strip.text = ggplot2::element_text(face = "bold"),
+      plot.caption = ggplot2::element_text(size = 8, hjust = 0)
+    )
+  attr(p, "csv_data") <- plot_data
+  p
+}
+
+appendix_c11_multiple_instruments <- function(diagnostics) {
+  if (!inherits(diagnostics, "emi_alternative_distance_first_stages")) {
+    stop("Appendix C11 requires canonical alternative-distance inference diagnostics.", call. = FALSE)
+  }
+  fas <- safe_df(diagnostics$falsification_adaptive_summary)
+  ids <- paste("state_main", c("distance_shares_all", "distance_shares_all_unmapped", "distance_shares_mapped"), sep = "__")
+  fas <- fas[match(ids, plain_chr(fas$specification_id)), , drop = FALSE]
+  required <- c(
+    "specification_id", "construction_id", "n_instruments", "fas_lower", "fas_upper",
+    "fas_contains_zero", "min_conditional_first_stage_f", "n_conditional_first_stage_f_below_10",
+    "constituent_relevance_caution", "sargan_status", "sargan_p.value", "n", "status"
+  )
+  if (length(setdiff(required, names(fas))) || nrow(fas) != length(ids) || any(is.na(fas$specification_id)) ||
+      any(!plain_chr(fas$status) %in% "estimated")) {
+    stop("Appendix C11 requires all registered state-main multi-instrument FAS diagnostics.", call. = FALSE)
+  }
+  csv <- fas[, required, drop = FALSE]
+  labels <- c(
+    distance_shares_all = "All distance shares",
+    distance_shares_all_unmapped = "All shares + unmapped",
+    distance_shares_mapped = "Mapped-speaker shares"
+  )
+  out <- data.frame(
+    Construction = unname(labels[plain_chr(csv$construction_id)]),
+    `Sargan p` = ifelse(plain_chr(csv$sargan_status) == "estimated", sprintf("%.3f", num(csv$sargan_p.value)), "n/a"),
+    `FAS lower` = sprintf("%.3f", num(csv$fas_lower)),
+    `FAS upper` = sprintf("%.3f", num(csv$fas_upper)),
+    `Contains 0` = ifelse(as.logical(csv$fas_contains_zero), "Yes", "No"),
+    `Min conditional F` = sprintf("%.3f", num(csv$min_conditional_first_stage_f)),
+    `Components F<10` = as.integer(csv$n_conditional_first_stage_f_below_10),
+    N = formatC(as.integer(csv$n), format = "d", big.mark = ","),
+    check.names = FALSE, stringsAsFactors = FALSE
+  )
+  attr(out, "csv_data") <- csv
+  out
+}
+
+appendix_c12_consumption_iv_dynamics_data <- function(dynamics) {
+  if (is.null(dynamics) || !is.list(dynamics) || is.null(dynamics$summary)) {
+    stop("Appendix C12 requires canonical consumption-IV dynamics outputs.", call. = FALSE)
+  }
+  x <- safe_df(dynamics$summary)
+  required <- c(
+    "outcome_round", "estimand", "reduced_form_estimate", "reduced_form_std.error",
+    "second_stage_estimate", "second_stage_std.error", "ar_95_information", "ar_95_disconnected",
+    "ar_95_contains_zero", "status"
+  )
+  if (length(setdiff(required, names(x))) || nrow(x) != 8L || any(!plain_chr(x$status) %in% "estimated")) {
+    stop("Appendix C12 requires all eight registered consumption-IV horizon/estimand rows.", call. = FALSE)
+  }
+  rounds <- c("nss_2009_10_type2", "nss_2011_12_type2", "hces_2022_23", "hces_2023_24")
+  estimands <- c("ancova", "change")
+  expected <- as.vector(outer(rounds, estimands, paste, sep = "__"))
+  key <- paste(plain_chr(x$outcome_round), plain_chr(x$estimand), sep = "__")
+  if (anyDuplicated(key) || !setequal(key, expected)) {
+    stop("Appendix C12 requires the registered four-horizon ANCOVA/change design.", call. = FALSE)
+  }
+  x <- x[match(expected, key), , drop = FALSE]
+  horizon <- consumption_dynamic_round_label(x$outcome_round)
+  metric_rows <- function(metric, estimate, se) data.frame(
+    horizon = horizon,
+    estimand = plain_chr(x$estimand),
+    metric = metric,
+    estimate = num(x[[estimate]]),
+    std.error = num(x[[se]]),
+    ar_information = plain_chr(x$ar_95_information),
+    ar_disconnected = as.logical(x$ar_95_disconnected),
+    ar_contains_zero = as.logical(x$ar_95_contains_zero),
+    stringsAsFactors = FALSE
+  )
+  out <- safe_bind_rows(list(
+    metric_rows("Reduced form", "reduced_form_estimate", "reduced_form_std.error"),
+    metric_rows("2SLS", "second_stage_estimate", "second_stage_std.error")
+  ))
+  if (any(!is.finite(out$estimate)) || any(!is.finite(out$std.error))) {
+    stop("Appendix C12 requires finite reduced-form and 2SLS estimates.", call. = FALSE)
+  }
+  out$conf.low <- out$estimate - stats::qnorm(0.975) * out$std.error
+  out$conf.high <- out$estimate + stats::qnorm(0.975) * out$std.error
+  out
+}
+
+appendix_c12_consumption_iv_dynamics_plot <- function(dynamics) {
+  need_pkg("ggplot2", "Appendix C full consumption-IV dynamics figure")
+  d <- appendix_c12_consumption_iv_dynamics_data(dynamics)
+  d$horizon <- factor(d$horizon, levels = c("2009-10", "2011-12", "2022-23", "2023-24"))
+  d$estimand <- factor(ifelse(d$estimand == "ancova", "ANCOVA", "Long change"), levels = c("ANCOVA", "Long change"))
+  d$metric <- factor(d$metric, levels = c("Reduced form", "2SLS"))
+  dodge <- ggplot2::position_dodge(width = 0.35)
+  p <- ggplot2::ggplot(d, ggplot2::aes(x = horizon, y = estimate, shape = estimand, group = estimand)) +
+    ggplot2::geom_hline(yintercept = 0, linewidth = 0.4, linetype = 2) +
+    ggplot2::geom_errorbar(ggplot2::aes(ymin = conf.low, ymax = conf.high), width = 0.1, position = dodge) +
+    ggplot2::geom_point(size = 2.2, position = dodge) +
+    ggplot2::facet_wrap(~ metric, nrow = 2, scales = "free_y") +
+    ggplot2::labs(
+      title = "Appendix C12. Full consumption IV dynamics",
+      x = "Outcome horizon", y = "Coefficient with 95% Wald interval", shape = NULL,
+      caption = paste(
+        "Reduced-form and conventional 2SLS coefficients are shown on separate scales because their units differ.",
+        "Anderson-Rubin topology is retained in the machine-readable companion data; disconnected or zero-containing sets",
+        "are the weak-IV-robust interpretation and take precedence over the conventional 2SLS intervals."
+      )
+    ) +
+    ggplot2::theme_minimal(base_size = 10) +
+    ggplot2::theme(
+      panel.grid.minor = ggplot2::element_blank(),
+      strip.text = ggplot2::element_text(face = "bold"),
+      legend.position = "bottom", plot.caption = ggplot2::element_text(size = 8, hjust = 0)
+    )
+  attr(p, "csv_data") <- d
+  p
+}
+
 make_appendix_identification_exhibits <- function(
     first_stage_absorption, district_panel, hindi_belt_first_stage,
     child_population_first_stage, alternative_distance_first_stage,
-    alternative_distance_measurement, control_registry = NULL) {
+    alternative_distance_measurement, alternative_distance_inference,
+    consumption_iv_dynamics, control_registry = NULL) {
   list(
     appendix_c1_full_absorption_ladder = appendix_c1_full_absorption_ladder(first_stage_absorption, control_registry),
     appendix_c2_residual_geography = appendix_c2_residual_geography_plot(district_panel),
@@ -355,7 +534,10 @@ make_appendix_identification_exhibits <- function(
       first_stage_absorption, hindi_belt_first_stage, child_population_first_stage
     ),
     appendix_c5_alternative_scalar_distances = appendix_c5_alternative_scalar_distances(alternative_distance_first_stage),
-    appendix_c6_mapping_composition_sensitivity = appendix_c6_mapping_composition_sensitivity(alternative_distance_measurement)
+    appendix_c6_mapping_composition_sensitivity = appendix_c6_mapping_composition_sensitivity(alternative_distance_measurement),
+    appendix_c10_monotonicity = appendix_c10_monotonicity_plot(alternative_distance_inference),
+    appendix_c11_multiple_instruments = appendix_c11_multiple_instruments(alternative_distance_inference),
+    appendix_c12_consumption_iv_dynamics = appendix_c12_consumption_iv_dynamics_plot(consumption_iv_dynamics)
   )
 }
 
@@ -363,20 +545,38 @@ save_appendix_identification_exhibits <- function(exhibits, cfg) {
   table_names <- c(
     "appendix_c1_full_absorption_ladder", "appendix_c3_control_block_absorption",
     "appendix_c4_geographic_scale_sensitivity", "appendix_c5_alternative_scalar_distances",
-    "appendix_c6_mapping_composition_sensitivity"
+    "appendix_c6_mapping_composition_sensitivity", "appendix_c11_multiple_instruments"
   )
-  figure_names <- "appendix_c2_residual_geography"
+  figure_names <- c(
+    "appendix_c2_residual_geography", "appendix_c10_monotonicity",
+    "appendix_c12_consumption_iv_dynamics"
+  )
   if (!is.list(exhibits) || !all(c(table_names, figure_names) %in% names(exhibits))) {
     stop("Appendix C identification exhibit bundle is incomplete.", call. = FALSE)
   }
   written <- save_appendix_tables(exhibits, table_names, cfg)
   formats <- figure_formats(cfg)
-  written <- c(
-    written,
-    save_plot_formats(
-      exhibits[[figure_names]], appendix_figure_path_base(figure_names), formats,
-      width = 8.2, height = 4.3
-    )
+  figure_sizes <- list(
+    appendix_c2_residual_geography = c(8.2, 4.3),
+    appendix_c10_monotonicity = c(8.2, 4.5),
+    appendix_c12_consumption_iv_dynamics = c(7.2, 6.5)
   )
+  for (name in figure_names) {
+    size <- figure_sizes[[name]]
+    written <- c(
+      written,
+      save_plot_formats(
+        exhibits[[name]], appendix_figure_path_base(name), formats,
+        width = size[[1]], height = size[[2]]
+      )
+    )
+    plot_csv <- attr(exhibits[[name]], "csv_data")
+    if (!is.null(plot_csv)) {
+      csv_path <- paste0(appendix_figure_path_base(name), ".csv")
+      dir.create(dirname(csv_path), recursive = TRUE, showWarnings = FALSE)
+      utils::write.csv(plot_csv, csv_path, row.names = FALSE, na = "")
+      written <- c(written, csv_path)
+    }
+  }
   unique(normalizePath(written, mustWork = FALSE))
 }

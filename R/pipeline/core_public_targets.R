@@ -150,6 +150,8 @@ core_public_target_definitions <- function() {
         child_population_first_stage_diagnostics,
         alternative_distance_first_stage_base,
         alternative_distance_measurement_diagnostics,
+        alternative_distance_first_stages,
+        consumption_iv_dynamics,
         census_2001_control_registry
       )
     ),

@@ -1987,3 +1987,79 @@ test_that("Appendix C5-C6 summarize registered linguistic alternatives without m
   )
   expect_lt(nrow(csv), 25L)
 })
+
+
+test_that("Appendix C10 summarizes registered within-state monotonicity diagnostics", {
+  bins <- data.frame(
+    bin = 1:10,
+    instrument = seq(-1, 1, length.out = 10),
+    treatment = seq(-0.5, 0.5, length.out = 10),
+    n = 50L,
+    specification_id = "state_main__nonzero_mean",
+    stringsAsFactors = FALSE
+  )
+  states <- data.frame(
+    state_code_2001 = sprintf("%02d", 1:8), n = 10L,
+    slope = c(-2, -1, -0.2, 0.1, 0.5, 1, 2, 3), status = "estimated",
+    specification_id = "state_main__nonzero_mean", stringsAsFactors = FALSE
+  )
+  summary <- data.frame(
+    specification_id = "state_main__nonzero_mean", linear_slope = 0.5,
+    spearman_rho = 0.2, isotonic_r_squared = 0.1,
+    share_negative_state_slopes = 3 / 8, status = "estimated",
+    stringsAsFactors = FALSE
+  )
+  diagnostics <- structure(
+    list(monotonicity_bins = bins, monotonicity_state_slopes = states, monotonicity_summary = summary),
+    class = "emi_alternative_distance_first_stages"
+  )
+  out <- appendix_c10_monotonicity_plot_data(diagnostics)
+  expect_equal(nrow(out$bins), 10L)
+  expect_equal(nrow(out$states), 8L)
+  expect_true(any(out$states$slope < 0) && any(out$states$slope > 0))
+})
+
+
+test_that("Appendix C11 reports registered rich-vector identification limits", {
+  ids <- paste("state_main", c("distance_shares_all", "distance_shares_all_unmapped", "distance_shares_mapped"), sep = "__")
+  fas <- data.frame(
+    specification_id = ids,
+    construction_id = c("distance_shares_all", "distance_shares_all_unmapped", "distance_shares_mapped"),
+    n_instruments = 5L, n_components_estimated = 5L,
+    fas_lower = c(-0.13, -0.14, -0.07), fas_upper = c(0.11, 0.15, 0.33),
+    fas_contains_zero = TRUE,
+    min_conditional_first_stage_f = c(0.12, 0.09, 0.06),
+    n_conditional_first_stage_f_below_10 = c(4L, 4L, 5L),
+    constituent_relevance_caution = TRUE, n = 573L, status = "estimated",
+    reason = NA_character_, sargan_status = "estimated", sargan_p.value = c(.03, .06, .07),
+    stringsAsFactors = FALSE
+  )
+  diagnostics <- structure(list(falsification_adaptive_summary = fas), class = "emi_alternative_distance_first_stages")
+  out <- appendix_c11_multiple_instruments(diagnostics)
+  csv <- attr(out, "csv_data")
+  expect_equal(nrow(csv), 3L)
+  expect_true(all(csv$fas_contains_zero))
+  expect_true(all(csv$n_conditional_first_stage_f_below_10 > 0L))
+})
+
+
+test_that("Appendix C12 preserves the full registered consumption-IV design", {
+  rounds <- c("nss_2009_10_type2", "nss_2011_12_type2", "hces_2022_23", "hces_2023_24")
+  estimands <- c("ancova", "change")
+  grid <- expand.grid(outcome_round = rounds, estimand = estimands, stringsAsFactors = FALSE)
+  grid$reduced_form_estimate <- seq_len(nrow(grid)) / 100
+  grid$reduced_form_std.error <- 0.02
+  grid$second_stage_estimate <- seq_len(nrow(grid)) / 50
+  grid$second_stage_std.error <- 0.05
+  grid$ar_95_information <- rep(c("zero_included", "zero_excluded_both_signs"), length.out = nrow(grid))
+  grid$ar_95_disconnected <- grid$estimand == "change"
+  grid$ar_95_contains_zero <- grid$estimand == "ancova"
+  grid$status <- "estimated"
+  dynamics <- list(summary = grid, anderson_rubin_grid = data.frame())
+  out <- appendix_c12_consumption_iv_dynamics_data(dynamics)
+  expect_equal(nrow(out), 16L)
+  expect_setequal(out$metric, c("Reduced form", "2SLS"))
+  counts <- table(out$metric)
+  expect_equal(unname(as.integer(counts[c("2SLS", "Reduced form")])), c(8L, 8L))
+  expect_true(all(is.finite(out$conf.low)) && all(is.finite(out$conf.high)))
+})

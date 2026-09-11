@@ -37,6 +37,7 @@ public_table_caption_text <- function(name) {
     appendix_c6_mapping_composition_sensitivity = "Appendix C6. Mapping and Language-Composition Sensitivity",
     appendix_c7_historical_balance = "Appendix C7. Historical Balance Across Baseline Domains",
     appendix_c9_historical_first_stage = "Appendix C9. Historical First-Stage Comparison",
+    appendix_c11_multiple_instruments = "Appendix C11. Multiple Instruments, Overidentification, and Falsification-Adaptive Sets",
     appendix_e1_selection_sample = "Appendix E1. Enrollment Selection Sample and Covariates",
     appendix_e4_missingness = "Appendix E4. Missingness in the Enrollment Selection Sample",
     fs_cons = "First-Stage Regression: EMI Exposure on Linguistic Distance",
@@ -174,6 +175,11 @@ public_table_note <- function(name) {
     appendix_c9_historical_first_stage = paste(
       "The same validated historical district support is used for the 1991 and 2001 distance constructions within each specification.",
       "The comparison asks whether historical reconstruction rescues within-state relevance; it is not pooled with the larger modern first-stage sample."
+    ),
+    appendix_c11_multiple_instruments = paste(
+      "Rows report the registered five-share language-vector specifications under state fixed effects and predetermined controls.",
+      "Sargan tests are shown alongside falsification-adaptive sets and constituent conditional first-stage strength.",
+      "A wide FAS containing zero or weak constituent instruments means richer language vectors do not repair identification even when the joint first stage is predictive."
     ),
     appendix_e1_selection_sample = paste(
       "NSS 64th-round child-level enrollment sample used by the descriptive selection model.",

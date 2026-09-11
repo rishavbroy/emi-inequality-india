@@ -55,6 +55,21 @@ core_identification_target_definitions <- function() {
       )
     ),
     tar_target(
+      alternative_distance_augmentation_panel,
+      project_alternative_distance_panel(
+        district_panel,
+        retain = "real_log_consumption_change",
+        control_registry = census_2001_control_registry
+      )
+    ),
+    tar_target(
+      alternative_distance_first_stages,
+      augment_alternative_distance_inference_diagnostics(
+        alternative_distance_measurement_diagnostics,
+        alternative_distance_augmentation_panel
+      )
+    ),
+    tar_target(
       hindi_belt_first_stage_diagnostics,
       diagnose_hindi_belt_first_stage(
         district_panel, control_registry = census_2001_control_registry
