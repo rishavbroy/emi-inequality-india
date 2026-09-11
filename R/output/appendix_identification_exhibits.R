@@ -421,11 +421,13 @@ appendix_c8_historical_pretrend_data <- function(pretrend_validation) {
 appendix_c8_historical_pretrend_plot <- function(pretrend_validation) {
   need_pkg("ggplot2", "Appendix C historical-pretrend figure")
   d <- appendix_c8_historical_pretrend_data(pretrend_validation)
-  period_domain <- unlist(lapply(
-    c("1961-1971", "1971-1981", "1981-1991"),
-    function(period) paste(period, c("Demography", "Labor", "Education"), sep = "\n"),
+  period_domain <- unlist(
+    lapply(
+      c("1961-1971", "1971-1981", "1981-1991"),
+      function(period) paste(period, c("Demography", "Labor", "Education"), sep = "\n")
+    ),
     use.names = FALSE
-  ))
+  )
   d$cell <- factor(d$cell, levels = period_domain)
   d$predictor_label <- factor(
     d$predictor_label,

@@ -2099,26 +2099,45 @@ test_that("Appendix C12 preserves the full registered consumption-IV design", {
 })
 
 
-test_that("Appendix C8 uses the complete common-support decade-domain pretrend grid", {
-  predictors <- c("eventual_emie", "census_2001_ld", "helms_lim_ld_1991")
-  periods <- c("1961_1971", "1971_1981", "1981_1991")
-  domains <- c("demography", "labor", "education")
+c8_pretrend_fixture <- function() {
   x <- expand.grid(
-    predictor_id = predictors, sample_id = "historical_ld_support",
-    period_id = periods, domain = domains, stringsAsFactors = FALSE
+    predictor_id = c("eventual_emie", "census_2001_ld", "helms_lim_ld_1991"),
+    sample_id = "historical_ld_support",
+    period_id = c("1961_1971", "1971_1981", "1981_1991"),
+    domain = c("demography", "labor", "education"),
+    stringsAsFactors = FALSE
   )
   x$joint_f <- seq_len(nrow(x)) / 10
   x$joint_p <- seq(.01, .81, length.out = nrow(x))
   x$n <- 150L
   x$status <- "estimated"
-  d <- appendix_c8_historical_pretrend_data(list(joint_balance = x))
+  list(joint_balance = x)
+}
+
+
+test_that("Appendix C8 uses the complete common-support decade-domain pretrend grid", {
+  d <- appendix_c8_historical_pretrend_data(c8_pretrend_fixture())
 
   expect_equal(nrow(d), 27L)
-  expect_setequal(unique(d$predictor_id), predictors)
-  expect_setequal(unique(d$period_id), periods)
-  expect_setequal(unique(d$domain), domains)
+  expect_setequal(unique(d$predictor_id), c("eventual_emie", "census_2001_ld", "helms_lim_ld_1991"))
+  expect_setequal(unique(d$period_id), c("1961_1971", "1971_1981", "1981_1991"))
+  expect_setequal(unique(d$domain), c("demography", "labor", "education"))
   expect_true(all(d$sample_id == "historical_ld_support"))
   expect_true(all(is.finite(d$minus_log10_p)))
+})
+
+
+test_that("Appendix C8 plot materializes the full heatmap without leaking helper arguments", {
+  skip_if_not_installed("ggplot2")
+
+  plot <- appendix_c8_historical_pretrend_plot(c8_pretrend_fixture())
+  csv <- attr(plot, "csv_data")
+
+  expect_s3_class(plot, "ggplot")
+  expect_s3_class(csv, "data.frame")
+  expect_equal(nrow(csv), 27L)
+  expect_equal(nlevels(csv$cell), 9L)
+  expect_equal(nlevels(csv$predictor_label), 3L)
 })
 
 
