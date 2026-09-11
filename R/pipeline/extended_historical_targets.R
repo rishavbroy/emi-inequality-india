@@ -62,14 +62,6 @@ extended_historical_target_definitions <- function() {
       format = "file"
     ),
     tar_target(
-      historical_vanneman_pretrend_geography,
-      build_vanneman_pretrend_geography(
-        historical_vanneman_panel4_dist91_crosswalk,
-        historical_linguistic_geography_1991_2001$source_districts,
-        historical_linguistic_geography_1991_2001$transition
-      )
-    ),
-    tar_target(
       diag_ext_historical_vanneman_pretrend_geography,
       save_vanneman_pretrend_geography(historical_vanneman_pretrend_geography),
       format = "file"
@@ -213,18 +205,6 @@ extended_historical_target_definitions <- function() {
       format = "file"
     ),
     tar_target(
-      population_interpolation_geography_1991_2001_2011,
-      build_population_interpolation_crosswalk(
-        list(
-          shrug_1991_2001 =
-            historical_linguistic_geography_1991_2001$canonical_transition,
-          production_2011_2001 =
-            district_lineage$canonical_transition_2001_2011
-        ),
-        target_vintage = 2001L
-      )
-    ),
-    tar_target(
       diag_ext_population_interpolation_geography,
       save_population_interpolation_geography(
         population_interpolation_geography_1991_2001_2011
@@ -257,15 +237,6 @@ extended_historical_target_definitions <- function() {
       format = "file"
     ),
     tar_target(
-      historical_baseline_g2_sensitivity,
-      build_historical_baseline_g2_sensitivity(
-        raw_shrug_1991_baseline$pca,
-        population_interpolation_geography_1991_2001_2011$crosswalk,
-        district_panel,
-        coverage_thresholds = c(.90, .95, .99)
-      )
-    ),
-    tar_target(
       diag_ext_historical_baseline_g2_sensitivity,
       save_historical_baseline_g2_sensitivity(
         historical_baseline_g2_sensitivity
@@ -285,23 +256,6 @@ extended_historical_target_definitions <- function() {
         historical_baseline_geography_comparison
       ),
       format = "file"
-    ),
-    tar_target(
-      historical_vanneman_pretrend_levels,
-      build_vanneman_pretrend_levels_from_sources(
-        historical_vanneman_source_qa,
-        historical_vanneman_pretrend_geography,
-        paths
-      )
-    ),
-    tar_target(
-      historical_vanneman_pretrend_validation,
-      build_vanneman_pretrend_validation(
-        historical_vanneman_pretrend_levels,
-        district_panel,
-        historical_distance = historical_linguistic_distance_validation$preferred_distance,
-        external_historical_distance = helms_lim_linguistic_distance_1991
-      )
     ),
     tar_target(
       diag_ext_historical_vanneman_pretrend_validation,

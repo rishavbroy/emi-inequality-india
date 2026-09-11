@@ -2063,3 +2063,83 @@ test_that("Appendix C12 preserves the full registered consumption-IV design", {
   expect_equal(unname(as.integer(counts[c("2SLS", "Reduced form")])), c(8L, 8L))
   expect_true(all(is.finite(out$conf.low)) && all(is.finite(out$conf.high)))
 })
+
+
+test_that("Appendix C8 uses the complete common-support decade-domain pretrend grid", {
+  predictors <- c("eventual_emie", "census_2001_ld", "helms_lim_ld_1991")
+  periods <- c("1961_1971", "1971_1981", "1981_1991")
+  domains <- c("demography", "labor", "education")
+  x <- expand.grid(
+    predictor_id = predictors, sample_id = "historical_ld_support",
+    period_id = periods, domain = domains, stringsAsFactors = FALSE
+  )
+  x$joint_f <- seq_len(nrow(x)) / 10
+  x$joint_p <- seq(.01, .81, length.out = nrow(x))
+  x$n <- 150L
+  x$status <- "estimated"
+  d <- appendix_c8_historical_pretrend_data(list(joint_balance = x))
+
+  expect_equal(nrow(d), 27L)
+  expect_setequal(unique(d$predictor_id), predictors)
+  expect_setequal(unique(d$period_id), periods)
+  expect_setequal(unique(d$domain), domains)
+  expect_true(all(d$sample_id == "historical_ld_support"))
+  expect_true(all(is.finite(d$minus_log10_p)))
+})
+
+
+test_that("Appendix C13 reconciles the seven registered robustness families to the realized grid", {
+  families <- c(
+    "scalar_iv", "intensive_margin", "welfare_definition", "control_strategy",
+    "control_parameterization", "historical_adjustment", "historical_concept_matched"
+  )
+  n_models <- c(48L, 48L, 120L, 48L, 64L, 32L, 48L)
+  summary <- data.frame(
+    family = families,
+    n_models = n_models,
+    n_strong_first_stage = 0L,
+    max_effective_f = seq_along(families),
+    n_reduced_form_family_signals = c(1L, 1L, 0L, 2L, 0L, 3L, 5L),
+    n_ar_family_signals = c(1L, 1L, 0L, 2L, 0L, 3L, 5L),
+    n_bounded_ar_sets = seq_along(families),
+    min_n = 440L,
+    max_n = 525L,
+    stringsAsFactors = FALSE
+  )
+  grid <- data.frame(model = seq_len(sum(n_models)))
+  out <- appendix_c13_robustness_family_census(list(grid = grid, family_summary = summary))
+
+  expect_equal(nrow(out), 8L)
+  expect_equal(out$Models[out$Family == "All registered families"], 408L)
+  expect_equal(out$`Strong first stage`[out$Family == "All registered families"], 0L)
+})
+
+
+test_that("Appendix C14 reports exact-exclusion fragility for all four long-run designs", {
+  specs <- c(
+    "consumption__long_2022__ancova", "consumption__long_2022__change",
+    "consumption__long_2023__ancova", "consumption__long_2023__change"
+  )
+  exact <- data.frame(
+    specification_id = specs,
+    outcome_round = rep(c("hces_2022_23", "hces_2023_24"), each = 2L),
+    estimand = rep(c("ancova", "change"), 2L),
+    calibration_id = "exact_exclusion",
+    reduced_form_estimate = c(.02, .06, .01, .05),
+    reduced_form.std.error = .02,
+    exclusion_ar_p_beta0 = c(.3, .01, .6, .02),
+    exclusion_ar_95_contains_zero = c(TRUE, FALSE, TRUE, FALSE),
+    minimum_gamma_for_zero_95 = c(0, .025, 0, .01),
+    minimum_gamma_share_of_reduced_form_for_zero_95 = c(0, .42, 0, .20),
+    exclusion_ar_95_information = c("zero_included", "zero_excluded", "zero_included", "zero_excluded"),
+    stringsAsFactors = FALSE
+  )
+  nuisance <- exact
+  nuisance$calibration_id <- "same_sign_rf_050"
+  out <- appendix_c14_exclusion_sensitivity(list(summary = rbind(exact, nuisance)))
+
+  expect_equal(nrow(out), 4L)
+  expect_identical(out$Outcome, c("2022-23", "2022-23", "2023-24", "2023-24"))
+  expect_identical(out$`Zero in exact 95% set`, c("Yes", "No", "Yes", "No"))
+  expect_identical(out$`Share of |reduced form|`, c("0.0%", "42.0%", "0.0%", "20.0%"))
+})

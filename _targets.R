@@ -19,6 +19,7 @@ tar_source("R/application_samples")
 source("R/pipeline/core_consumption_targets.R")
 source("R/pipeline/core_consumption_outcome_targets.R")
 source("R/pipeline/core_consumption_iv_targets.R")
+source("R/pipeline/core_consumption_robustness_targets.R")
 source("R/pipeline/core_measurement_targets.R")
 source("R/pipeline/core_lineage_targets.R")
 source("R/pipeline/core_panel_targets.R")
@@ -95,6 +96,7 @@ core_pipeline_targets <- c(
   core_census_development_target_definitions(),
   core_dise_target_definitions(),
   core_consumption_iv_target_definitions(),
+  core_consumption_robustness_target_definitions(),
   core_economic_census_target_definitions(),
   core_labor_target_definitions(),
   core_identification_target_definitions(),

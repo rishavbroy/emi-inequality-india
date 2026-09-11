@@ -199,6 +199,13 @@ def path_tests(path):
         "R/pipeline/core_historical_validation_targets.R": {
             "test-historical-baseline-1991.R",
             "test-historical-linguistic-validation.R",
+            "test-historical-vanneman-pretrends.R",
+            "test-output-tables.R",
+            "test-public-scripts.R",
+        },
+        "R/pipeline/core_consumption_robustness_targets.R": {
+            "test-analysis-design-registry.R",
+            "test-diagnostics.R",
             "test-output-tables.R",
             "test-public-scripts.R",
         },

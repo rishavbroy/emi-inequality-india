@@ -2,8 +2,8 @@
 #
 # This factory owns only the bounded historical construction, source-validation,
 # persistence, first-stage, and 1991 balance objects consumed by publication
-# exhibits. Vanneman pretrend, geography-sensitivity, and other forensic
-# diagnostics remain in extended_historical_targets.R.
+# exhibits. The strict Vanneman pretrend design is publication evidence; parent-
+# bridge/geography sensitivities and other forensic variants remain extended.
 
 core_historical_validation_target_definitions <- function() {
   list(
@@ -190,6 +190,52 @@ core_historical_validation_target_definitions <- function() {
       build_historical_baseline_balance_1991(
         historical_baseline_1991,
         historical_linguistic_geography_1991_2001,
+        district_panel,
+        historical_distance = historical_linguistic_distance_validation$preferred_distance,
+        external_historical_distance = helms_lim_linguistic_distance_1991
+      )
+    ),
+    tar_target(
+      population_interpolation_geography_1991_2001_2011,
+      build_population_interpolation_crosswalk(
+        list(
+          shrug_1991_2001 =
+            historical_linguistic_geography_1991_2001$canonical_transition,
+          production_2011_2001 =
+            district_lineage$canonical_transition_2001_2011
+        ),
+        target_vintage = 2001L
+      )
+    ),
+    tar_target(
+      historical_baseline_g2_sensitivity,
+      build_historical_baseline_g2_sensitivity(
+        raw_shrug_1991_baseline$pca,
+        population_interpolation_geography_1991_2001_2011$crosswalk,
+        district_panel,
+        coverage_thresholds = c(.90, .95, .99)
+      )
+    ),
+    tar_target(
+      historical_vanneman_pretrend_geography,
+      build_vanneman_pretrend_geography(
+        historical_vanneman_panel4_dist91_crosswalk,
+        historical_linguistic_geography_1991_2001$source_districts,
+        historical_linguistic_geography_1991_2001$transition
+      )
+    ),
+    tar_target(
+      historical_vanneman_pretrend_levels,
+      build_vanneman_pretrend_levels_from_sources(
+        historical_vanneman_source_qa,
+        historical_vanneman_pretrend_geography,
+        paths
+      )
+    ),
+    tar_target(
+      historical_vanneman_pretrend_validation,
+      build_vanneman_pretrend_validation(
+        historical_vanneman_pretrend_levels,
         district_panel,
         historical_distance = historical_linguistic_distance_validation$preferred_distance,
         external_historical_distance = helms_lim_linguistic_distance_1991

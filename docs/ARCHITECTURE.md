@@ -293,25 +293,26 @@ composition diagnostics used by Appendix C1--C6 live in
 `core_identification_target_definitions()`. Appendix C10--C11 also consumes the
 registered alternative-distance weak-IV, monotonicity, overidentification, and FAS
 object, so that bounded inference augmentation now lives in core as well. The
-extended IV factory persists that shared object and retains the much larger consumption
-robustness, exclusion-sensitivity, and other reviewer-facing forensic families.
+extended IV factory persists that shared object. Appendix C13/C14 now make the registered
+consumption robustness and exclusion-sensitivity analyses strict too; extended mode retains
+their large persisted evidence grids, registries, and other reviewer-facing forensics.
 
 This split is intentionally scientific rather than "cheap versus expensive".
 Mapping coverage, distance-4 composition, leave-language-out checks, and the
 richer language vectors are measurement/relevance evidence consumed directly by
-the final appendix, so they are strict. C10--C11 make the bounded monotonicity,
-overidentification, and falsification-adaptive diagnostics strict too; the 408-model
-consumption robustness census and exclusion-sensitivity family remain extended until
-their own appendix exhibits are wired into the publication contract. Appendix C2 is rebuilt from within-state
+the final appendix, so they are strict. C8 and C10--C14 now complete the strict
+identification appendix: the strict Vanneman pretrend design, bounded monotonicity/FAS
+diagnostics, seven registered consumption robustness families, and bounded exclusion
+sensitivity are computed once because final exhibits consume them. Appendix C2 is rebuilt from within-state
 demeaned linguistic distance and all-child EMI rather than reusing the legacy
 poster residual maps, which partialled six-region fixed effects and expanded
 controls and therefore answered a different geographic question.
 
-This boundary is semantic rather than computational. A diagnostic becomes core
-when a publication artifact requires its scientific result; larger robustness
-families remain extended unless the paper consumes them. Keeping the base object
-shared avoids two independently maintained versions of the same first-stage
-exercise while preserving an inexpensive strict graph.
+This boundary is semantic rather than computational. An analysis becomes core when
+a publication artifact requires its scientific result, even when that publication
+dependency is computationally expensive. Extended ownership therefore means
+"not required by a final exhibit," not "large." Shared analytical objects avoid
+independently maintained publication and forensic versions of the same exercise.
 
 ### Paper-facing local development versus extended outcome diagnostics
 
@@ -352,7 +353,7 @@ yet wired in.
 
 ### Final-paper validation and historical-identification exhibits
 
-Appendix B and the historical subset of Appendix C share one bounded historical-validation chain. `core_historical_validation_target_definitions()` owns the official Census-1991 reconciliation, preferred 1991 linguistic construction, Helms-Lim agreement, 1991-to-2001 persistence, common-support historical first-stage comparison, and 1991 baseline balance objects because final-paper exhibits consume them directly. `extended_historical_target_definitions()` reuses those objects for persisted diagnostics and retains the larger Vanneman pretrend, geography-sensitivity, consensus, and other forensic families.
+Appendix B and the historical subset of Appendix C share one bounded historical-validation chain. `core_historical_validation_target_definitions()` owns the official Census-1991 reconciliation, preferred 1991 linguistic construction, Helms-Lim agreement, 1991-to-2001 persistence, common-support historical first-stage comparison, 1991 baseline balance, and strict Vanneman 1961--91 pretrend objects because final-paper exhibits consume them directly. `extended_historical_target_definitions()` reuses those objects for persisted diagnostics and retains the parent-bridge, alternative-geography, consensus, and other forensic variants.
 
 The same ownership rule applies to DISE publication checks: the registered source cells and their reconstructed values are core because Appendix B reports them; archive-wide DISE robustness remains extended. Appendix exhibit builders only reshape these canonical objects and never refit the underlying historical or schooling analyses.
 

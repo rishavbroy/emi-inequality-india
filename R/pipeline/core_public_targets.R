@@ -152,6 +152,9 @@ core_public_target_definitions <- function() {
         alternative_distance_measurement_diagnostics,
         alternative_distance_first_stages,
         consumption_iv_dynamics,
+        historical_vanneman_pretrend_validation,
+        consumption_robustness_evidence,
+        consumption_exclusion_sensitivity,
         census_2001_control_registry
       )
     ),

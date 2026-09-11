@@ -156,6 +156,7 @@ test_that("targets graph separates public diagnostics, extended diagnostics, and
     "core_consumption_targets.R",
     "core_consumption_outcome_targets.R",
     "core_consumption_iv_targets.R",
+    "core_consumption_robustness_targets.R",
     "core_measurement_targets.R",
     "core_lineage_targets.R",
     "core_panel_targets.R",
@@ -172,6 +173,7 @@ test_that("targets graph separates public diagnostics, extended diagnostics, and
     "core_consumption_target_definitions()",
     "core_consumption_outcome_target_definitions()",
     "core_consumption_iv_target_definitions()",
+    "core_consumption_robustness_target_definitions()",
     "core_measurement_target_definitions()",
     "core_lineage_target_definitions()",
     "core_panel_target_definitions()",
@@ -216,13 +218,13 @@ test_that("paper historical validation is core while forensic geography remains 
     "helms_lim_linguistic_distance_benchmark",
     "historical_linguistic_persistence_validation",
     "historical_linguistic_first_stage_robustness",
-    "historical_baseline_balance_1991"
+    "historical_baseline_balance_1991",
+    "historical_vanneman_pretrend_validation"
   )
   forensic_targets <- c(
     "historical_linguistic_geography_external_benchmark",
     "multivintage_geography_1991_2001_2011",
-    "historical_linguistic_consensus_geography",
-    "historical_vanneman_pretrend_validation"
+    "historical_linguistic_consensus_geography"
   )
 
   for (target in publication_targets) {
@@ -1595,8 +1597,9 @@ test_that("paper identification boundary and Appendix C share bounded core diagn
     "tar_target(\\n      alternative_distance_first_stage_base,",
     extended_iv, fixed = TRUE
   ))
-  expect_match(extended_iv, "augment_alternative_distance_inference_diagnostics(", fixed = TRUE)
-  expect_match(extended_iv, "alternative_distance_measurement_diagnostics", fixed = TRUE)
+  expect_match(core_identification, "augment_alternative_distance_inference_diagnostics(", fixed = TRUE)
+  expect_match(core_identification, "alternative_distance_measurement_diagnostics", fixed = TRUE)
+  expect_false(grepl("augment_alternative_distance_inference_diagnostics(", extended_iv, fixed = TRUE))
   expect_match(core_public, "paper_identification_boundary", fixed = TRUE)
   expect_match(core_public, "out$paper_identification_boundary", fixed = TRUE)
   expect_match(paper_new, "paper_identification_boundary.tex", fixed = TRUE)
@@ -1740,9 +1743,12 @@ test_that("Appendix B/C validation exhibits are strict outputs with single analy
 })
 
 
-test_that("Appendix C1-C6 and C10-C12 are strict identification summaries", {
+test_that("Appendix C1-C14 publication exhibits have bounded core ownership", {
   core_id <- repo_text("R", "pipeline", "core_identification_targets.R")
+  core_robust <- repo_text("R", "pipeline", "core_consumption_robustness_targets.R")
+  core_historical <- repo_text("R", "pipeline", "core_historical_validation_targets.R")
   extended_id <- repo_text("R", "pipeline", "extended_iv_targets.R")
+  extended_historical <- repo_text("R", "pipeline", "extended_historical_targets.R")
   core_lineage <- repo_text("R", "pipeline", "core_lineage_targets.R")
   extended_lineage <- repo_text("R", "pipeline", "extended_lineage_targets.R")
   core_public <- repo_text("R", "pipeline", "core_public_targets.R")
@@ -1769,6 +1775,15 @@ test_that("Appendix C1-C6 and C10-C12 are strict identification summaries", {
     "augment_alternative_distance_measurement_diagnostics(", extended_id, fixed = TRUE
   ))
   expect_match(core_public, "appendix_identification_files", fixed = TRUE)
+  expect_match(core_historical, "historical_vanneman_pretrend_validation", fixed = TRUE)
+  expect_false(grepl("tar_target(\n      historical_vanneman_pretrend_validation,", extended_historical, fixed = TRUE))
+  expect_match(extended_historical, "save_vanneman_pretrend_validation(historical_vanneman_pretrend_validation)", fixed = TRUE)
+  expect_match(core_robust, "consumption_robustness_evidence", fixed = TRUE)
+  expect_match(core_robust, "consumption_exclusion_sensitivity", fixed = TRUE)
+  expect_false(grepl("tar_target(\n      consumption_robustness_evidence,", extended_id, fixed = TRUE))
+  expect_false(grepl("tar_target(\n      consumption_exclusion_sensitivity,", extended_id, fixed = TRUE))
+  expect_match(extended_id, "save_consumption_robustness_evidence(consumption_robustness_evidence)", fixed = TRUE)
+  expect_match(extended_id, "save_consumption_exclusion_sensitivity(consumption_exclusion_sensitivity)", fixed = TRUE)
 
   for (path in c(
     "appendix_c1_full_absorption_ladder.tex",
@@ -1781,7 +1796,11 @@ test_that("Appendix C1-C6 and C10-C12 are strict identification summaries", {
     "appendix_c10_monotonicity.csv",
     "appendix_c11_multiple_instruments.tex",
     "appendix_c12_consumption_iv_dynamics.pdf",
-    "appendix_c12_consumption_iv_dynamics.csv"
+    "appendix_c12_consumption_iv_dynamics.csv",
+    "appendix_c8_historical_pretrends.pdf",
+    "appendix_c8_historical_pretrends.csv",
+    "appendix_c13_robustness_family_census.tex",
+    "appendix_c14_exclusion_sensitivity.tex"
   )) expect_match(contract, path, fixed = TRUE)
 
   expect_false(grepl("lm\\(|fixest::|feols\\(|ivreg\\(", module))

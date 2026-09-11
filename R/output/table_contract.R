@@ -38,6 +38,8 @@ public_table_caption_text <- function(name) {
     appendix_c7_historical_balance = "Appendix C7. Historical Balance Across Baseline Domains",
     appendix_c9_historical_first_stage = "Appendix C9. Historical First-Stage Comparison",
     appendix_c11_multiple_instruments = "Appendix C11. Multiple Instruments, Overidentification, and Falsification-Adaptive Sets",
+    appendix_c13_robustness_family_census = "Appendix C13. Registered Consumption-IV Robustness Families",
+    appendix_c14_exclusion_sensitivity = "Appendix C14. Sensitivity to Imperfect Exclusion",
     appendix_e1_selection_sample = "Appendix E1. Enrollment Selection Sample and Covariates",
     appendix_e4_missingness = "Appendix E4. Missingness in the Enrollment Selection Sample",
     fs_cons = "First-Stage Regression: EMI Exposure on Linguistic Distance",
@@ -180,6 +182,16 @@ public_table_note <- function(name) {
       "Rows report the registered five-share language-vector specifications under state fixed effects and predetermined controls.",
       "Sargan tests are shown alongside falsification-adaptive sets and constituent conditional first-stage strength.",
       "A wide FAS containing zero or weak constituent instruments means richer language vectors do not repair identification even when the joint first stage is predictive."
+    ),
+    appendix_c13_robustness_family_census = paste(
+      "The seven rows exhaust the predeclared consumption-IV robustness families; the final row reconciles their model counts to the realized robustness grid.",
+      "Strong first stage compares each model's effective F with its registered critical value; RF and AR signals use family-adjusted p-values.",
+      "This table summarizes the robustness census and does not select a preferred specification from it."
+    ),
+    appendix_c14_exclusion_sensitivity = paste(
+      "Rows use the four registered long-run HCES exclusion-sensitivity designs under exact exclusion as the benchmark.",
+      "The minimum direct effect is the smallest bounded violation needed for beta=0 to enter the 95% Anderson-Rubin inversion; its scale is also reported as a share of the absolute reduced form.",
+      "A zero threshold means beta=0 is already admitted under exact exclusion. These are sensitivity diagnostics, not point estimates of a direct effect."
     ),
     appendix_e1_selection_sample = paste(
       "NSS 64th-round child-level enrollment sample used by the descriptive selection model.",

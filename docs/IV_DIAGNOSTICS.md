@@ -353,3 +353,26 @@ form and conventional 2SLS estimates are plotted on separate scales because thei
 units differ. The companion CSV retains the Anderson--Rubin topology fields; those
 weak-IV-robust set characteristics take interpretive precedence over the conventional
 2SLS Wald intervals. No additional IV estimator is run by the appendix output layer.
+
+### Final Appendix C8/C13/C14 publication summaries
+
+Appendix C8 promotes only the strict Vanneman pretrend construction and validation used
+by the final heatmap. The exhibit reshapes the common historical-language-support joint
+tests for eventual EMI, Census-2001 linguistic distance, and the independent Helms--Lim
+1991 distance across the three adjacent pre-1991 decades and the registered demography,
+labor, and education domains. Parent-bridge and alternative-geography pretrend variants
+remain extended forensic checks.
+
+Appendix C13 consumes `consumption_robustness_evidence`, which reconciles the seven
+predeclared robustness families to the realized 408-model grid. Because the table is a
+strict publication artifact, the registered family estimations are core-owned once;
+extended mode persists their full family CSVs and the cross-family evidence grid rather
+than rerunning a parallel paper analysis. The table reports model counts, strong-first-
+stage counts, maximum effective F, family-adjusted reduced-form/Anderson--Rubin signals,
+and bounded AR-set counts without selecting a preferred model ex post.
+
+Appendix C14 consumes the existing bounded exclusion-sensitivity inversion for the four
+registered long-run HCES designs. It reports the exact-exclusion benchmark and the
+smallest direct-effect allowance needed for beta=0 to enter the 95% Anderson--Rubin set,
+both in outcome units and as a share of the observed reduced form. The output layer only
+reshapes the registered inversion; no additional IV or sensitivity model is estimated.
