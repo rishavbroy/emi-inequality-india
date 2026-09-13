@@ -143,10 +143,9 @@ I use several alternatives when testing whether results depend on one linguistic
 
 The preferred district regressions compare districts within states and condition on characteristics measured before the 2007--08 schooling outcomes. The Census-2001 controls are log population, urban population share, secondary-or-higher educational attainment among people age seven and older, Scheduled Caste share, Scheduled Tribe share, Muslim share, the agricultural share of workers, the dependency ratio, household electricity access, and log population density [@officeoftheregistrargeneralandcensuscommissionerofindiaCensusIndia20012001; @asherDevelopmentResearch2021]. I refer to the education and urbanization measures separately when they are used as predetermined complements to English-medium schooling rather than as baseline controls.
 
-@tbl-core-summary reports the scale and dispersion of the principal variables. Enrollment averages about 74 percent of children ages 5--19, while English-medium exposure among all children averages about 15 percent. Private-school English-medium exposure averages about 9 percent and public-school English-medium exposure about 6 percent. The speaker-weighted distance from Hindi averages 3.05 Shastry degrees across districts, and the district mean of the share speaking languages at distance three or greater is 42 percent. Real consumption per person rises from an average of about Rs. 928 per month in 2004--05 to Rs. 2,152 in 2022--23 and Rs. 2,242 in 2023--24, all expressed in 2011--12 prices.
+Table~\ref{tbl-paper-core-summary} reports the scale and dispersion of the principal variables. Enrollment averages about 74 percent of children ages 5--19, while English-medium exposure among all children averages about 15 percent. Private-school English-medium exposure averages about 9 percent and public-school English-medium exposure about 6 percent. The speaker-weighted distance from Hindi averages 3.05 Shastry degrees across districts, and the district mean of the share speaking languages at distance three or greater is 42 percent. Real consumption per person rises from an average of about Rs. 928 per month in 2004--05 to Rs. 2,152 in 2022--23 and Rs. 2,242 in 2023--24, all expressed in 2011--12 prices.
 
 ```{r}
-#| label: tbl-core-summary
 #| echo: false
 #| results: asis
 

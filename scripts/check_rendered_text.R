@@ -58,6 +58,9 @@ fixed_patterns <- c(
   "Figure Figure",
   "Table ?@",
   "Figure ?@",
+  "Table ??",
+  "Figure ??",
+  "Section ??",
   "active figures below use district-level empirical distributions",
   "Draft diagnostic for unavailable"
 )

@@ -556,7 +556,7 @@ test_that("probit TeX stacks standard errors below AME estimates", {
   expect_false(grepl("\\multicolumn{2}{c}{Enrolled in School (1 = yes)}", tex, fixed = TRUE))
 })
 
-test_that("landscape paper tables render as non-floating longtables", {
+test_that("landscape tables use the page model appropriate to their length", {
   skip_if_not_installed("kableExtra")
   old <- setwd(tempdir())
   on.exit(setwd(old), add = TRUE)
@@ -586,12 +586,16 @@ test_that("landscape paper tables render as non-floating longtables", {
   )
 
   save_tables(fixtures, list(output_formats = list(tables = "tex")))
-  for (name in names(fixtures)) {
-    tex <- paste(readLines(file.path("outputs", "tables", "main", paste0(name, ".tex")), warn = FALSE), collapse = "\n")
-    expect_match(tex, "\\begin{landscape}", fixed = TRUE, info = name)
-    expect_match(tex, "\\begin{longtable}", fixed = TRUE, info = name)
-    expect_false(grepl("\\begin{table}", tex, fixed = TRUE), info = name)
-  }
+  iv_tex <- paste(readLines(file.path("outputs", "tables", "main", "sum_tbl_iv.tex"), warn = FALSE), collapse = "\n")
+  core_tex <- paste(readLines(file.path("outputs", "tables", "main", "paper_core_summary.tex"), warn = FALSE), collapse = "\n")
+
+  expect_match(iv_tex, "\\begin{landscape}", fixed = TRUE)
+  expect_match(iv_tex, "\\begin{longtable}", fixed = TRUE)
+  expect_false(grepl("\\begin{table}", iv_tex, fixed = TRUE))
+
+  expect_match(core_tex, "\\begin{landscape}", fixed = TRUE)
+  expect_match(core_tex, "\\begin{table}[H]", fixed = TRUE)
+  expect_false(grepl("\\begin{longtable}", core_tex, fixed = TRUE))
 })
 
 
