@@ -32,10 +32,9 @@ appendix_d_mechanism_rows <- function(x, source_label, expected_rows = NULL) {
 
 appendix_d_mechanism_display <- function(csv) {
   adjustment <- c(region_main = "Region + controls", state_main = "State + controls")
-  construction <- c(
-    nonzero_mean = "Shastry mean", glottolog_mean = "Glottolog mean",
-    dyen_noncognate = "Dyen noncognate"
-  )
+  construction <- paper_linguistic_distance_display_labels()[c(
+    "nonzero_mean", "glottolog_mean", "dyen_noncognate"
+  )]
   data.frame(
     Outcome = gsub("_", " ", plain_chr(csv$outcome_id)),
     Adjustment = unname(adjustment[plain_chr(csv$adjustment_id)]),

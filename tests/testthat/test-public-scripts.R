@@ -339,6 +339,39 @@ test_that("background distinguishes school sector from medium of instruction", {
   expect_false(grepl("\\b(?:we|our|us)\\b", background, ignore.case = TRUE, perl = TRUE))
 })
 
+test_that("data section defines reader-facing measures and cites their source families", {
+  paper_new <- repo_text("paper", "paper-new.qmd")
+  data_section <- sub(
+    "^[\\s\\S]*?# Data and Variables \\{#sec-data\\}\\n",
+    "",
+    paper_new,
+    perl = TRUE
+  )
+  data_section <- sub(
+    "\\n# [^\\n]+ \\{#sec-access\\}[\\s\\S]*$",
+    "",
+    data_section,
+    perl = TRUE
+  )
+
+  for (label in c("#eq-enrollment", "#eq-emi-enrolled", "#eq-emie", "#eq-speaker-weighted-distance")) {
+    expect_match(data_section, label, fixed = TRUE, info = label)
+  }
+  for (citation in c(
+    "@nationalsamplesurveyoffice2008",
+    "@officeoftheregistrargeneralandcensuscommissionerofindiaCensusIndia20012001",
+    "@diseDistrictReportCardsArchive2017",
+    "@nssHouseholdConsumerExpenditure2004",
+    "@nsoHCES2022", "@nsoHCES2023"
+  )) {
+    expect_match(data_section, citation, fixed = TRUE, info = citation)
+  }
+  expect_match(data_section, "@sec-app-data", fixed = TRUE)
+  expect_match(data_section, "@sec-app-validation", fixed = TRUE)
+  expect_false(grepl("paper_language_schooling_maps.pdf", data_section, fixed = TRUE))
+  expect_false(grepl("\\b(?:we|our|us)\\b", data_section, ignore.case = TRUE, perl = TRUE))
+})
+
 test_that("both paper QMDs own their appendices and load shared rendering helpers", {
   paper <- repo_text("paper", "paper.qmd")
   paper_new <- repo_text("paper", "paper-new.qmd")

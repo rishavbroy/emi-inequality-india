@@ -230,8 +230,11 @@ appendix_a6_linguistic_measures <- function() {
   csv <- data.frame(
     measure_id = c("shastry_2001", "historical_1991", "glottolog", "dyen", "distant_share"),
     measure = c(
-      "Preferred Shastry distance", "Historical 1991 reconstruction", "Glottolog genealogy",
-      "Dyen noncognate distance", "Share speaking distant languages"
+      paper_linguistic_distance_display_labels()[["nonzero_mean"]],
+      paper_linguistic_distance_display_labels()[["historical_1991"]],
+      paper_linguistic_distance_display_labels()[["glottolog_mean"]],
+      paper_linguistic_distance_display_labels()[["dyen_noncognate"]],
+      paper_linguistic_distance_display_labels()[["distant_share"]]
     ),
     source = c(
       "Shastry concordance + Census 2001 C-16", "1991 Census language reconstruction",

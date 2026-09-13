@@ -567,20 +567,22 @@ make_paper_core_summary_table <- function(district_panel, consumption_district_w
   panel <- safe_df(district_panel)
   get <- function(variable) if (variable %in% names(panel)) panel[[variable]] else numeric()
 
+  schooling_labels <- paper_schooling_display_labels()
+  linguistic_labels <- paper_linguistic_distance_display_labels()
   schooling <- safe_bind_rows(list(
     paper_summary_group("Panel A. Schooling, 2007-08"),
-    paper_summary_row("Enrollment", get("enrollment_rate_0708"), "2007-08", "% of children age 5-19"),
-    paper_summary_row("EMI among enrolled", get("emi_share_enrolled_0708"), "2007-08", "% of enrolled children"),
-    paper_summary_row("All-child EMI exposure", get("emi_exposure_all_children_0708"), "2007-08", "% of children age 5-19"),
-    paper_summary_row("Public EMI exposure", get("public_emi_exposure_all_children_0708"), "2007-08", "% of children age 5-19"),
-    paper_summary_row("Private EMI exposure", get("private_emi_exposure_all_children_0708"), "2007-08", "% of children age 5-19"),
-    paper_summary_row("Private enrollment", get("private_share_enrolled_0708"), "2007-08", "% of enrolled children")
+    paper_summary_row(schooling_labels[["enrollment"]], get("enrollment_rate_0708"), "2007-08", "% of children age 5-19"),
+    paper_summary_row(schooling_labels[["emi_enrolled"]], get("emi_share_enrolled_0708"), "2007-08", "% of enrolled children"),
+    paper_summary_row(schooling_labels[["emi_all_children"]], get("emi_exposure_all_children_0708"), "2007-08", "% of children age 5-19"),
+    paper_summary_row(schooling_labels[["public_emi"]], get("public_emi_exposure_all_children_0708"), "2007-08", "% of children age 5-19"),
+    paper_summary_row(schooling_labels[["private_emi"]], get("private_emi_exposure_all_children_0708"), "2007-08", "% of children age 5-19"),
+    paper_summary_row(schooling_labels[["private_enrollment"]], get("private_share_enrolled_0708"), "2007-08", "% of enrolled children")
   ))
 
   inherited <- safe_bind_rows(list(
     paper_summary_group("Panel B. Inherited linguistic conditions"),
-    paper_summary_row("Linguistic distance from Hindi", get("ling_distance_nonzero_mean"), "2001", "Shastry degrees"),
-    paper_summary_row("Distant-language speaker share", get("ling_share_distance_ge3"), "2001", "% of mapped speakers")
+    paper_summary_row(linguistic_labels[["nonzero_mean"]], get("ling_distance_nonzero_mean"), "2001", "Shastry degrees"),
+    paper_summary_row(linguistic_labels[["distant_share"]], get("ling_share_distance_ge3"), "2001", "% of mother-tongue speakers")
   ))
 
   capacity <- safe_bind_rows(list(
@@ -592,9 +594,9 @@ make_paper_core_summary_table <- function(district_panel, consumption_district_w
 
   welfare <- safe_bind_rows(list(
     paper_summary_group("Panel D. Later welfare"),
-    paper_welfare_summary_row(consumption_district_welfare, "nss_2004_05", "Real mean MPCE"),
-    paper_welfare_summary_row(consumption_district_welfare, "hces_2022_23", "Real mean MPCE"),
-    paper_welfare_summary_row(consumption_district_welfare, "hces_2023_24", "Real mean MPCE")
+    paper_welfare_summary_row(consumption_district_welfare, "nss_2004_05", "Real mean consumption per person"),
+    paper_welfare_summary_row(consumption_district_welfare, "hces_2022_23", "Real mean consumption per person"),
+    paper_welfare_summary_row(consumption_district_welfare, "hces_2023_24", "Real mean consumption per person")
   ))
 
   out <- safe_bind_rows(list(schooling, inherited, capacity, welfare))

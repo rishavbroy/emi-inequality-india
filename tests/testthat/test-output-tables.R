@@ -789,6 +789,16 @@ test_that("public longtable notes combine significance and table-specific contex
 })
 
 
+test_that("paper display labels use reader-facing construct names", {
+  schooling <- paper_schooling_display_labels()
+  linguistic <- paper_linguistic_distance_display_labels()
+  expect_identical(schooling[["emi_enrolled"]], "English-medium share among enrolled")
+  expect_identical(schooling[["emi_all_children"]], "English-medium exposure among all children")
+  expect_identical(linguistic[["nonzero_mean"]], "Speaker-weighted distance from Hindi")
+  expect_identical(linguistic[["glottolog_mean"]], "Genealogical distance from Hindi")
+  expect_identical(linguistic[["dyen_noncognate"]], "Lexical noncognacy with Hindi")
+})
+
 test_that("paper core summary uses p10/p90 and preferred modern welfare support", {
   panel <- data.frame(
     enrollment_rate_0708 = c(50, 60, 70),
@@ -821,22 +831,25 @@ test_that("paper core summary uses p10/p90 and preferred modern welfare support"
     "Panel C. Predetermined district capacity:",
     "Panel D. Later welfare:"
   ) %in% out$Variable))
-  emi <- out[out$Variable == "All-child EMI exposure", , drop = FALSE]
+  emi <- out[out$Variable == "English-medium exposure among all children", , drop = FALSE]
   expect_equal(emi$N, "3")
   expect_equal(emi$p10, "6.40")
   expect_equal(emi$p90, "19.20")
-  hces22 <- out[out$Variable == "Real mean MPCE" & grepl("2022-23", out$`Year / unit`, fixed = TRUE), , drop = FALSE]
+  distant <- out[out$Variable == "Share speaking languages distant from Hindi", , drop = FALSE]
+  expect_match(distant$`Year / unit`, "% of mother-tongue speakers", fixed = TRUE)
+  hces22 <- out[out$Variable == "Real mean consumption per person" & grepl("2022-23", out$`Year / unit`, fixed = TRUE), , drop = FALSE]
   expect_equal(hces22$N, "1")
   expect_equal(hces22$Mean, "2000.00")
 })
 
 
 test_that("paper core summary caption and note describe district support", {
-  expect_equal(public_table_caption_text("paper_core_summary"), "Core Variables and Summary Statistics")
+  expect_match(public_table_caption_text("paper_core_summary"), "Sources: NSS 64th Round", fixed = TRUE)
   note <- public_table_note("paper_core_summary")
   expect_match(note, "District-level descriptive statistics", fixed = TRUE)
   expect_match(note, "preferred-eligible", fixed = TRUE)
   expect_match(note, "p10 and p90", fixed = TRUE)
+  expect_match(note, "Sources: NSS 64th Round", fixed = TRUE)
 })
 
 test_that("public summary CSVs retain typed analytical values without display rows", {

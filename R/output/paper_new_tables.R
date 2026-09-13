@@ -10,10 +10,10 @@ paper_schooling_market_measure_registry <- function() {
       "nss_enrollment", "nss_emi_enrolled", "nss_emie_all_children",
       "nss_emi_public", "nss_emi_private", "dise_emi_enrollment"
     ),
-    label = c(
-      "Enrollment", "EMI among enrolled", "All-child EMI",
-      "Public EMI", "Private EMI", "DISE EMI"
-    ),
+    label = unname(paper_schooling_display_labels()[c(
+      "enrollment", "emi_enrolled", "emi_all_children",
+      "public_emi", "private_emi", "dise_emi"
+    )]),
     stringsAsFactors = FALSE
   )
 }
@@ -26,8 +26,12 @@ paper_schooling_market_state_registry <- function() {
       "emi_share_enrolled_private_0708", "enrollment_rate_0708"
     ),
     label = c(
-      "Linguistic distance", "All-child EMI", "EMI among enrolled",
-      "Public EMI", "Private EMI", "Enrollment"
+      paper_linguistic_distance_display_labels()[["nonzero_mean"]],
+      paper_schooling_display_labels()[["emi_all_children"]],
+      paper_schooling_display_labels()[["emi_enrolled"]],
+      paper_schooling_display_labels()[["public_emi"]],
+      paper_schooling_display_labels()[["private_emi"]],
+      paper_schooling_display_labels()[["enrollment"]]
     ),
     stringsAsFactors = FALSE
   )
@@ -107,8 +111,8 @@ paper_schooling_market_geography_csv_data <- function(
     stop("Paper schooling-market table requires both estimated DISE-NSS validation comparisons.", call. = FALSE)
   }
   labels <- c(
-    enrolled_total_denominator = "DISE EMI vs NSS EMI among enrolled",
-    all_child_context = "DISE EMI vs NSS all-child EMI"
+    enrolled_total_denominator = "DISE vs NSS English-medium share among enrolled",
+    all_child_context = "DISE vs NSS English-medium exposure among all children"
   )
   validation_rows <- data.frame(
     panel = "administrative_validation",
@@ -657,10 +661,10 @@ paper_identification_distance_registry <- function() {
       "nonzero_mean", "top3_legacy", "glottolog_mean",
       "dyen_noncognate", "distant_share", "distance_shares_all"
     ),
-    label = c(
-      "Preferred Shastry mean", "Legacy top-three mean", "Glottolog mean",
-      "Dyen noncognate", "Distant-language share", "Five-share language vector"
-    ),
+    label = unname(paper_linguistic_distance_display_labels()[c(
+      "nonzero_mean", "top3_legacy", "glottolog_mean",
+      "dyen_noncognate", "distant_share", "distance_shares_all"
+    )]),
     interpretation = c(
       "Weak within states", "No scalar rescue", "No scalar rescue",
       "No scalar rescue", "No scalar rescue", "Raw joint prediction does not survive state absorption"

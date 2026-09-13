@@ -1,6 +1,33 @@
 # Shared public-table captions and notes.
 # This module is sourced by both the targets table writer and standalone Quarto helpers.
 
+# Reader-facing vocabulary shared across manuscript tables.  These labels are
+# deliberately descriptive rather than implementation-specific so table text stays
+# synchronized with the definitions in paper-new.qmd.
+paper_schooling_display_labels <- function() {
+  c(
+    enrollment = "Enrollment",
+    emi_enrolled = "English-medium share among enrolled",
+    emi_all_children = "English-medium exposure among all children",
+    public_emi = "Public-school English-medium exposure",
+    private_emi = "Private-school English-medium exposure",
+    private_enrollment = "Private-school enrollment",
+    dise_emi = "DISE English-medium enrollment share"
+  )
+}
+
+paper_linguistic_distance_display_labels <- function() {
+  c(
+    nonzero_mean = "Speaker-weighted distance from Hindi",
+    top3_legacy = "Top-three-language distance from Hindi",
+    glottolog_mean = "Genealogical distance from Hindi",
+    dyen_noncognate = "Lexical noncognacy with Hindi",
+    distant_share = "Share speaking languages distant from Hindi",
+    distance_shares_all = "Language-distance composition",
+    historical_1991 = "Historical speaker-weighted distance from Hindi"
+  )
+}
+
 regression_star_note <- function() "* p < 0.05, ** p < 0.01, *** p < 0.001"
 
 public_table_caption_text <- function(name) {
@@ -10,7 +37,7 @@ public_table_caption_text <- function(name) {
     sum_tbl_probit_cat = "Summary Statistics for Enrollment Participation Model (Categorical Variables)",
     probit_mfx = "Average Marginal Effects and Counterfactual Comparisons for Enrollment Probit",
     sum_tbl_iv = "Summary Statistics for 2SLS Model",
-    paper_core_summary = "Core Variables and Summary Statistics",
+    paper_core_summary = "Core Variables and Summary Statistics. Sources: NSS 64th Round; Census of India 2001; NSS 61st Round; HCES 2022-23 and 2023-24.",
     paper_schooling_market_geography = "How the Schooling Market Is Geographically Organized",
     paper_language_behavior = "Linguistic Distance and Language Behavior",
     paper_economic_conversion = "Economic Conversion: Schooling, Welfare, and Predetermined Complements",
@@ -70,8 +97,9 @@ public_table_note <- function(name) {
     paper_core_summary = paste(
       "District-level descriptive statistics; N is the number of districts with finite values.",
       "Schooling measures use NSS 2007-08 children age 5-19; linguistic distance and predetermined capacity use Census-2001 geography.",
-      "Modern consumption rows summarize preferred-eligible small-domain district estimates after the registered survey-design, price, and lineage gates.",
-      "p10 and p90 are the 10th and 90th percentiles. Sources and construction details are documented in the data appendix."
+      "Modern consumption rows summarize districts meeting the survey-design, price, and district-lineage requirements used for the preferred estimates.",
+      "p10 and p90 are the 10th and 90th percentiles.",
+      "Sources: NSS 64th Round; Census of India 2001; NSS 61st Round; HCES 2022-23 and 2023-24. Construction details are documented in the data appendix."
     ),
     paper_schooling_market_geography = paste(
       "Panel A reports standardized linguistic-distance associations under the canonical raw, region-plus-controls, and state-plus-controls specifications.",
@@ -222,7 +250,7 @@ public_table_note <- function(name) {
     ),
     paper_identification_boundary = paste(
       "Panel A compares excluded-instrument F statistics on one common district support for the unadjusted and state-fixed-effects plus predetermined-controls specifications; partial R-squared refers to the within-state specification.",
-      "The five-share language vector is a joint test, while the other rows contain one excluded scalar instrument. Historical 1991 reconstructions use a much smaller validated geography and are kept in the appendix rather than mixing noncomparable first-stage support into this panel.",
+      "The language-distance composition is a joint test, while the other rows contain one excluded scalar instrument. Historical 1991 reconstructions use a much smaller validated geography and are kept in the appendix rather than mixing noncomparable first-stage support into this panel.",
       "Panel B reports conventional 2SLS coefficients for the registered 2004-05 to 2022-23 and 2023-24 long changes, alongside Montiel Olea-Pflueger effective F and Anderson-Rubin confidence-set topology.",
       "Disconnected AR sets that span both signs do not identify the sign of an EMI effect even when beta=0 is rejected on the finite grid. These diagnostics define an identification boundary, not preferred causal estimates."
     ),

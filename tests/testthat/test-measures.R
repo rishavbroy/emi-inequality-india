@@ -452,7 +452,7 @@ test_that("Hindi Census-group leaves require leaf evidence rather than inheritin
   expect_equal(reviewed$ling_distance_nonzero_mean, 2.5)
 })
 
-test_that("linguistic constructions use the full distribution and expose mapping coverage", {
+test_that("linguistic constructions use total speaker mass for distant-language shares", {
   census <- data.frame(
     state_std = rep("10", 5), district_std = rep("01", 5),
     canonical_language = c("Hindi", "Urdu", "Bengali", "Tamil", "Dogri"),
