@@ -675,12 +675,12 @@ save_table_tex <- function(table, path, name, public = TRUE) {
     # and parenthesized standard errors already provide the needed row structure.
     latex_options <- c("repeat_header")
   } else if (single_page_landscape_table) {
-    # Keep compact landscape tables on one page. hold_position emits a [H]
-    # table, so the float cannot escape the pdflscape environment. A longtable
-    # is inappropriate here because ThreePartTable reserves its notes at the
-    # end of the environment and can force an otherwise short table onto a
-    # second landscape page.
-    latex_options <- c("hold_position", "striped")
+    # Keep compact landscape tables on one page. HOLD_position emits a [H]
+    # table via kableExtra, so the float cannot escape the pdflscape environment.
+    # A longtable is inappropriate here because ThreePartTable reserves its notes
+    # at the end of the environment and can force an otherwise short table onto
+    # a second landscape page.
+    latex_options <- c("HOLD_position", "striped")
   } else if (landscape_longtable) {
     # Genuinely long landscape tables remain non-floating longtables so they
     # can break across pages without escaping the pdflscape environment.
