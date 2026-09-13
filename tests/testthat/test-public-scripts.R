@@ -268,7 +268,7 @@ test_that("writing sample YAML includes LaTeX table packages for raw table excer
   expect_true(any(out == "  - \\usepackage{xcolor}"))
 })
 
-test_that("Prompt 12 title and introduction frame the final working paper", {
+test_that("final outline title and introduction frame the working paper", {
   paper_new <- repo_text("paper", "paper-new.qmd")
   references <- repo_text("paper", "references.bib")
   intro <- sub(
@@ -278,7 +278,7 @@ test_that("Prompt 12 title and introduction frame the final working paper", {
     perl = TRUE
   )
   intro <- sub(
-    "\\n# English Opportunity in a Multilingual Economy \\{#sec-background\\}[\\s\\S]*$",
+    "\\n# [^\\n]+ \\{#sec-background\\}[\\s\\S]*$",
     "",
     intro,
     perl = TRUE
@@ -312,6 +312,31 @@ test_that("Prompt 12 title and introduction frame the final working paper", {
 
   expect_match(references, "@article{roweLanguageDevelopmentContext2020,", fixed = TRUE)
   expect_match(references, "10.1146/annurev-devpsych-042220-121816", fixed = TRUE)
+})
+
+test_that("background distinguishes school sector from medium of instruction", {
+  paper_new <- repo_text("paper", "paper-new.qmd")
+  background <- sub(
+    "^[\\s\\S]*?# Background \\{#sec-background\\}\\n",
+    "",
+    paper_new,
+    perl = TRUE
+  )
+  background <- sub(
+    "\\n# [^\\n]+ \\{#sec-data\\}[\\s\\S]*$",
+    "",
+    background,
+    perl = TRUE
+  )
+
+  for (citation in c(
+    "@nair2015a", "@jain2017a", "@lahoti2019a",
+    "@joshiUnderstandingConsumerDemographics2017",
+    "@muralidharan2015a", "@munshi2006a"
+  )) {
+    expect_match(background, citation, fixed = TRUE, info = citation)
+  }
+  expect_false(grepl("\\b(?:we|our|us)\\b", background, ignore.case = TRUE, perl = TRUE))
 })
 
 test_that("both paper QMDs own their appendices and load shared rendering helpers", {
@@ -1543,8 +1568,8 @@ test_that("working paper is rendered and checked by the strict publication graph
   expect_false(grepl("affected growth in average household consumption between 2007 and 2018", working_paper, fixed = TRUE))
   expect_false(grepl("collage_main_maps.pdf", working_paper, fixed = TRUE))
 
-  # Publication tests own dependency coverage, not editorial sequencing.  Prompt
-  # 12 now governs the manuscript order, and later section rewrites should not
+  # Publication tests own dependency coverage, not editorial sequencing.  The
+  # final outline governs manuscript order, and later section rewrites should not
   # require changing a filename-order snapshot in testthat.
   required_markers <- c(
     "paper_language_schooling_maps.pdf",
