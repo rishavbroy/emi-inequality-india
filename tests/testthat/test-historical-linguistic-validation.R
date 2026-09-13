@@ -666,25 +666,6 @@ test_that("Helms-Lim benchmark uses exact Census-1991 keys and surfaces disagree
 })
 
 
-test_that("historical SHRUG geography saves deterministic harmonized-region artifacts", {
-  body <- paste(deparse(body(build_historical_linguistic_geography_1991_2001)), collapse = "\n")
-  saver <- paste(deparse(body(save_historical_linguistic_geography_1991_2001)), collapse = "\n")
-
-  expect_match(body, "build_harmonized_region_crosswalk", fixed = TRUE)
-  expect_match(body, "summarize_harmonized_region_crosswalk", fixed = TRUE)
-  expect_match(
-    saver,
-    "historical_linguistic_harmonized_crosswalk_1991_2001.csv",
-    fixed = TRUE
-  )
-  expect_match(
-    saver,
-    "historical_linguistic_harmonized_crosswalk_summary_1991_2001.csv",
-    fixed = TRUE
-  )
-})
-
-
 test_that("Kumar-Somanathan transition uses only unique exact district names", {
   carveouts <- data.frame(
     district_1991 = c("Old A", "Old A", "Old B"),

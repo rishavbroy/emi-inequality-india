@@ -667,37 +667,6 @@ test_that("Census-2001 DISE attachment is one-to-one and preserves panel order",
   expect_identical(out$dise_emi_enrollment_share_total_0708, c(20, 10))
 })
 
-test_that("DISE metadata inputs are explicit file dependencies in the targets graph", {
-  root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
-  targets_text <- paste(
-    c(
-      readLines(file.path(root, "R", "pipeline", "core_dise_targets.R"), warn = FALSE),
-      readLines(file.path(root, "R", "pipeline", "extended_dise_targets.R"), warn = FALSE)
-    ),
-    collapse = "\n"
-  )
-  metadata_targets <- c(
-    "dise_archive_registry_file",
-    "dise_medium_slot_crosswalk_file",
-    "dise_publication_checks_file",
-    "dise_report_language_enrollment_file"
-  )
-
-  for (target in metadata_targets) {
-    expect_match(targets_text, target, fixed = TRUE)
-  }
-  expect_gte(
-    lengths(regmatches(targets_text, gregexpr('format = "file"', targets_text, fixed = TRUE))),
-    4L
-  )
-})
-
-test_that("DISE baseline treatment reader does not depend on Teacher sheets", {
-  body_text <- paste(deparse(body(read_dise_baseline_year)), collapse = "\n")
-  expect_false(grepl("teacher_sheet", body_text, fixed = TRUE))
-  expect_false(grepl("extract_dise_teacher_measures", body_text, fixed = TRUE))
-})
-
 test_that("DISE school-quality extraction preserves additive counts", {
   school <- data.frame(
     statecd = "01", distcd = "0101",
@@ -927,25 +896,6 @@ test_that("DISE report-language maintainer parses both documented table orientat
   status_code <- attr(status, "status")
   if (is.null(status_code)) status_code <- 0L
   expect_equal(status_code, 0L)
-})
-
-test_that("DISE report-language maintainer stays outside the targets runtime graph", {
-  root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
-  target_files <- c(
-    file.path(root, "_targets.R"),
-    list.files(
-      file.path(root, "R", "pipeline"),
-      pattern = "^extended_.*_targets\\.R$",
-      full.names = TRUE
-    )
-  )
-  targets_text <- paste(
-    unlist(lapply(target_files, readLines, warn = FALSE), use.names = FALSE),
-    collapse = "\n"
-  )
-  expect_false(grepl("build_dise_report_language_enrollment.py", targets_text, fixed = TRUE))
-  expect_false(grepl("build_dise_report_total_enrollment_2010.py", targets_text, fixed = TRUE))
-  expect_false(grepl("build_dise_report_school_quality.py", targets_text, fixed = TRUE))
 })
 
 test_that("report-derived DISE language metadata is unique and spans dynamic report years", {

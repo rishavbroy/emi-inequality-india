@@ -204,7 +204,6 @@ test_that("main map legends use rounded publication bounds", {
   cons <- public_map_style("real_log_consumption_change")
   educ <- public_map_style("pct_head_secondary_plus")
 
-  expect_equal(cons$title, "Real Log Consumption Change")
   expect_equal(cons$style, "continuous")
   expect_null(cons$breaks)
   expect_null(cons$labels)

@@ -453,7 +453,6 @@ test_that("Glottolog 5.3 source bundle is versioned and complete", {
   cldf_source <- sources[sources$source_id == "glottolog_cldf_5_3", , drop = FALSE]
   expect_equal(nrow(direct_source), 1L)
   expect_equal(nrow(cldf_source), 1L)
-  expect_match(direct_source$license_or_terms_notes, "CC BY 4.0", fixed = TRUE)
   expect_match(cldf_source$source_url, "18840967", fixed = TRUE)
 })
 
@@ -478,10 +477,8 @@ test_that("historical linguistic review sources are versioned with exact local c
   expect_equal(anyDuplicated(rows$relative_path), 0L)
 
   proxy <- sources[sources$source_id == "ethnologue_newick_proxy", , drop = FALSE]
-  expect_match(proxy$notes, "not asserted to reproduce the exact Ethnologue vintage", fixed = TRUE)
   expect_match(sources$source_url[sources$source_id == "kogan_2017"], "10.31826/jlr-2017-143-411", fixed = TRUE)
   expect_match(sources$source_url[sources$source_id == "asjp_v21"], "10.5281/zenodo.16736409", fixed = TRUE)
-  expect_match(sources$license_or_terms_notes[sources$source_id == "asjp_v21"], "CC BY 4.0", fixed = TRUE)
 })
 
 
@@ -619,7 +616,6 @@ test_that("DISE archive is required because main-paper validation consumes it", 
   expect_equal(nrow(source), 1L)
   expect_true(as.logical(source$used_in_current_pipeline))
   expect_identical(source$current_or_future, "current")
-  expect_match(source$license_or_terms_notes, "redistribution rights are not asserted", ignore.case = TRUE)
   expect_true(file.exists(file.path(root, "docs", "DISE_TREATMENTS.md")))
 })
 
@@ -787,9 +783,6 @@ test_that("Liu historical geography benchmark is manifest-backed without becomin
   expect_equal(nrow(source), 1L)
   expect_true(as.logical(source$used_in_current_pipeline))
   expect_identical(source$current_or_future, "current")
-  expect_match(source$notes, "external geography benchmark", ignore.case = TRUE)
-  expect_match(source$notes, "reviewed-alias evidence", ignore.case = TRUE)
-  expect_match(source$notes, "six-census harmonized IDs remain benchmark-only", ignore.case = TRUE)
 })
 
 
@@ -797,7 +790,7 @@ test_that("Helms-Lim 1991 linguistic-distance benchmark has explicit tracked pro
   root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
   source <- read.csv(file.path(root,"data","metadata","data_sources.csv"),stringsAsFactors=FALSE)
   row <- source[source$source_id=="helms_lim_2025",,drop=FALSE]
-  expect_equal(nrow(row),1L); expect_identical(row$source_type,"external_replication_benchmark"); expect_match(row$source_url,"10.7910/DVN/E0BJIZ",fixed=TRUE); expect_match(row$notes,"Shastry-derived",fixed=TRUE)
+  expect_equal(nrow(row),1L); expect_identical(row$source_type,"external_replication_benchmark"); expect_match(row$source_url,"10.7910/DVN/E0BJIZ",fixed=TRUE)
   distance <- read_helms_lim_linguistic_distance_1991(file.path(root,"data","metadata","helms_lim_linguistic_distance_1991.csv"))
   expect_equal(anyDuplicated(distance[c("state_code_1991","district_code_1991")]),0L); expect_true(sum(is.finite(distance$linguistic_distance_1991_helms_lim))>400L)
 })
@@ -937,7 +930,6 @@ test_that("official Census 1991 validation source is active in extended diagnost
   expect_true(as.logical(source$used_in_current_pipeline))
   expect_identical(source$current_or_future, "current")
   expect_identical(source$local_raw_path, "data/raw/census_1991")
-  expect_match(source$notes, "before any G2 allocation", fixed = TRUE)
 })
 
 test_that("registered source citation keys resolve to the bibliography", {

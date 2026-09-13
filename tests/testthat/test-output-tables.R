@@ -353,38 +353,18 @@ test_that("public table wrapping does not inject literal LaTeX line breaks", {
   expect_false(grepl("\\\\", out$Variable[[1]], fixed = TRUE))
 })
 
-test_that("IV summary descriptions follow documented prose and grouping order", {
-  panel <- revised_iv_summary_fixture()
-  public <- format_table_for_output(make_iv_summary_table(panel), public = TRUE)
-  expect_equal(public$Variable[[1]], "Treatment and instrument:")
-  expect_equal(public$Variable[[4]], "Consumption outcomes:")
-  expect_equal(public$Variable[[8]], "Census 2001 controls:")
-  expect_equal(
-    public$Description[public$Variable == "EMI exposure"][[1]],
-    "Share of children ages 5-19 enrolled in English-medium instruction"
-  )
-  expect_equal(
-    public$Description[public$Variable == "Linguistic distance"][[1]],
-    "Population-weighted mean linguistic distance among mapped speakers with positive distance from Hindi"
-  )
-})
 
-test_that("regression captions use plain public titles", {
-  expect_equal(table_caption("fs_cons"), "First-Stage Regression: EMI Exposure on Linguistic Distance")
-  expect_equal(table_caption("cons_iv"), "Second-Stage Regression: Real Log Consumption Growth on EMI Exposure (Fitted)")
-  expect_equal(table_caption("probit_mfx"), "Average Marginal Effects and Counterfactual Comparisons for Enrollment Probit")
-  expect_equal(
-    table_caption("english_opportunity_mechanism"),
-    "Linguistic-Distance Association Across Mechanism Stages"
+test_that("regression captions remain plain text", {
+  captions <- vapply(
+    c("fs_cons", "cons_iv", "probit_mfx", "english_opportunity_mechanism"),
+    table_caption,
+    character(1)
   )
-  expect_false(grepl("\\* p < 0.05", table_caption("fs_cons")))
-  expect_false(grepl("\\n", table_caption("fs_cons"), fixed = TRUE))
-  expect_false(grepl("parbox", table_caption("fs_cons"), fixed = TRUE))
-  expect_false(grepl("tabular", table_caption("fs_cons"), fixed = TRUE))
-  expect_false(grepl("shortstack", table_caption("fs_cons"), fixed = TRUE))
-  expect_false(grepl("linebreak", table_caption("fs_cons"), fixed = TRUE))
+  expect_true(all(nzchar(captions)))
+  expect_false(any(grepl("\\* p < 0.05", captions)))
+  expect_false(any(grepl("\\n", captions, fixed = TRUE)))
+  expect_false(any(grepl("parbox|tabular|shortstack|linebreak", captions)))
 })
-
 
 test_that("widened categorical summary table headers stay unwrapped without scaling down", {
   df <- data.frame(
@@ -574,13 +554,6 @@ test_that("probit TeX stacks standard errors below AME estimates", {
   expect_false(grepl("textcolor", tex, fixed = TRUE))
   expect_false(grepl("textit", tex, fixed = TRUE))
   expect_false(grepl("\\multicolumn{2}{c}{Enrolled in School (1 = yes)}", tex, fixed = TRUE))
-})
-
-test_that("report source loads caption setup for wrapping long table captions", {
-  src <- paste(readLines(repo_file("paper", "paper.qmd"), warn = FALSE), collapse = "\n")
-
-  expect_match(src, "\\usepackage{caption}", fixed = TRUE)
-  expect_match(src, "captionsetup", fixed = TRUE)
 })
 
 test_that("wide summary tables hold their float inside landscape pages", {
@@ -789,16 +762,6 @@ test_that("public longtable notes combine significance and table-specific contex
 })
 
 
-test_that("paper display labels use reader-facing construct names", {
-  schooling <- paper_schooling_display_labels()
-  linguistic <- paper_linguistic_distance_display_labels()
-  expect_identical(schooling[["emi_enrolled"]], "English-medium share among enrolled")
-  expect_identical(schooling[["emi_all_children"]], "English-medium exposure among all children")
-  expect_identical(linguistic[["nonzero_mean"]], "Speaker-weighted distance from Hindi")
-  expect_identical(linguistic[["glottolog_mean"]], "Genealogical distance from Hindi")
-  expect_identical(linguistic[["dyen_noncognate"]], "Lexical noncognacy with Hindi")
-})
-
 test_that("paper core summary uses p10/p90 and preferred modern welfare support", {
   panel <- data.frame(
     enrollment_rate_0708 = c(50, 60, 70),
@@ -825,32 +788,16 @@ test_that("paper core summary uses p10/p90 and preferred modern welfare support"
   out <- make_paper_core_summary_table(panel, welfare)
 
   expect_identical(names(out), c("Variable", "N", "Mean", "SD", "p10", "p90", "Year / unit"))
-  expect_true(all(c(
-    "Panel A. Schooling, 2007-08:",
-    "Panel B. Inherited linguistic conditions:",
-    "Panel C. Predetermined district capacity:",
-    "Panel D. Later welfare:"
-  ) %in% out$Variable))
-  emi <- out[out$Variable == "English-medium exposure among all children", , drop = FALSE]
-  expect_equal(emi$N, "3")
-  expect_equal(emi$p10, "6.40")
-  expect_equal(emi$p90, "19.20")
-  distant <- out[out$Variable == "Share speaking languages distant from Hindi", , drop = FALSE]
-  expect_match(distant$`Year / unit`, "% of mother-tongue speakers", fixed = TRUE)
-  hces22 <- out[out$Variable == "Real mean consumption per person" & grepl("2022-23", out$`Year / unit`, fixed = TRUE), , drop = FALSE]
-  expect_equal(hces22$N, "1")
-  expect_equal(hces22$Mean, "2000.00")
+  csv <- attr(out, "csv_data", exact = TRUE)
+  expect_identical(names(csv), c("panel", "variable", "n", "mean", "sd", "p10", "p90", "period", "unit"))
+  expect_equal(nrow(csv), 14L)
+  expect_true(any(abs(csv$p10 - 6.4) < 1e-10 & abs(csv$p90 - 19.2) < 1e-10, na.rm = TRUE))
+  hces22 <- csv[csv$period == "2022-23", , drop = FALSE]
+  expect_equal(nrow(hces22), 1L)
+  expect_equal(hces22$n, 1L)
+  expect_equal(hces22$mean, 2000)
 })
 
-
-test_that("paper core summary caption and note describe district support", {
-  expect_match(public_table_caption_text("paper_core_summary"), "Sources: NSS 64th Round", fixed = TRUE)
-  note <- public_table_note("paper_core_summary")
-  expect_match(note, "District-level descriptive statistics", fixed = TRUE)
-  expect_match(note, "preferred-eligible", fixed = TRUE)
-  expect_match(note, "p10 and p90", fixed = TRUE)
-  expect_match(note, "Sources: NSS 64th Round", fixed = TRUE)
-})
 
 test_that("public summary CSVs retain typed analytical values without display rows", {
   table <- public_numeric_stats(

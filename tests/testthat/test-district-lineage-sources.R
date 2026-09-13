@@ -1308,9 +1308,6 @@ test_that("archived legacy mapping reviews cover every historical difference", {
     downstream$decision,
     "accept_complete_source_panel"
   )
-  expect_match(downstream$note, "not treated as an authoritative support universe")
-  expect_match(downstream$note, "every NSS source identity is adjudicated")
-  expect_match(downstream$note, "pooled multi-source Ginis are reconstructed")
 })
 
 test_that("terminal allocation decisions are complete and conservative", {

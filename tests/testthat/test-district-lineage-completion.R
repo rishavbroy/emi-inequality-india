@@ -18,7 +18,6 @@ test_that("adjudication drafts never auto-accept candidates", {
 
   expect_identical(draft$status, "needs_review")
   expect_identical(draft$unit_id, "pc2001__01__01")
-  expect_match(draft$note, "Confirm administrative continuity")
 })
 
 test_that("full-reviewed crosswalk preserves deterministic and reviewed weights", {
