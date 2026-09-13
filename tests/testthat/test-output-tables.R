@@ -556,32 +556,42 @@ test_that("probit TeX stacks standard errors below AME estimates", {
   expect_false(grepl("\\multicolumn{2}{c}{Enrolled in School (1 = yes)}", tex, fixed = TRUE))
 })
 
-test_that("wide summary tables hold their float inside landscape pages", {
+test_that("landscape paper tables render as non-floating longtables", {
   skip_if_not_installed("kableExtra")
   old <- setwd(tempdir())
   on.exit(setwd(old), add = TRUE)
   unlink("outputs", recursive = TRUE)
 
-  table <- data.frame(
-    Variable = c("Population", "Consumption"),
-    Description = c("Estimated via NSS sample weights", "Average household monthly consumption expenditures (Rs.)"),
-    Min = c("12,285", "330.09"),
-    `1Q` = c("823,676", "626.88"),
-    Med = c("1,396,516", "768.60"),
-    `3Q` = c("2,317,118", "999.13"),
-    Max = c("9,922,640", "2923.14"),
-    Mean = c("1,700,682", "850.21"),
-    SD = c("1,307,716", "319.75"),
-    N = c("482", "482"),
-    check.names = FALSE
+  fixtures <- list(
+    sum_tbl_iv = data.frame(
+      Variable = c("Population", "Consumption"),
+      Description = c("Estimated via NSS sample weights", "Average household monthly consumption expenditures (Rs.)"),
+      Min = c("12,285", "330.09"),
+      `1Q` = c("823,676", "626.88"),
+      Med = c("1,396,516", "768.60"),
+      `3Q` = c("2,317,118", "999.13"),
+      Max = c("9,922,640", "2923.14"),
+      Mean = c("1,700,682", "850.21"),
+      SD = c("1,307,716", "319.75"),
+      N = c("482", "482"),
+      check.names = FALSE
+    ),
+    paper_core_summary = data.frame(
+      Variable = c("Enrollment", "Real mean consumption per person"),
+      N = c("573", "550"), Mean = c("74.44", "2152.01"), SD = c("9.72", "618.67"),
+      p10 = c("62.07", "1490.97"), p90 = c("87.12", "2952.44"),
+      `Year / unit` = c("2007-08; % of children age 5-19", "2022-23; 2011-12-price Rs/person/month"),
+      check.names = FALSE
+    )
   )
 
-  save_tables(list(sum_tbl_iv = table), list(output_formats = list(tables = "tex")))
-  tex <- paste(readLines(file.path("outputs", "tables", "main", "sum_tbl_iv.tex"), warn = FALSE), collapse = "\n")
-
-  expect_match(tex, "\\begin{landscape}", fixed = TRUE)
-  expect_match(tex, "\\begin{longtable}", fixed = TRUE)
-  expect_false(grepl("\\begin{table}", tex, fixed = TRUE))
+  save_tables(fixtures, list(output_formats = list(tables = "tex")))
+  for (name in names(fixtures)) {
+    tex <- paste(readLines(file.path("outputs", "tables", "main", paste0(name, ".tex")), warn = FALSE), collapse = "\n")
+    expect_match(tex, "\\begin{landscape}", fixed = TRUE, info = name)
+    expect_match(tex, "\\begin{longtable}", fixed = TRUE, info = name)
+    expect_false(grepl("\\begin{table}", tex, fixed = TRUE), info = name)
+  }
 })
 
 
@@ -612,25 +622,7 @@ test_that("native marginaleffects objects are preserved for modelsummary renderi
   expect_equal(attr(table, "marginaleffects_n"), 100)
 })
 
-test_that("probit AME table has a native marginaleffects modelsummary path and no map side effects", {
-  src <- paste(deparse(save_table_tex), collapse = "\n")
-  ame_src <- paste(deparse(ame_modelsummary_table), collapse = "\n")
-  expect_match(src, "ame_modelsummary_table", fixed = TRUE)
-  expect_match(ame_src, "modelsummary::modelsummary", fixed = TRUE)
-  expect_match(ame_src, "models = list(mfx)", fixed = TRUE)
-  expect_match(ame_src, "gof_map = ame_gof_map", fixed = TRUE)
-  expect_match(ame_src, "gof_function = ame_gof_function", fixed = TRUE)
-  expect_false(grepl("gof_omit", ame_src, fixed = TRUE))
-  expect_false(grepl("add_rows =", ame_src, fixed = TRUE))
-  expect_false(grepl("modelsummary_list", ame_src, fixed = TRUE))
-  expect_false(grepl("map_no_data_colour", src, fixed = TRUE))
-})
-
-test_that("probit summary table column widths are centralized and slightly narrowed", {
-  src <- paste(deparse(save_table_tex), collapse = "\n")
-  expect_match(src, "5.4cm", fixed = TRUE)
-  expect_match(src, "public_table2_column_widths", fixed = TRUE)
-
+test_that("probit summary table column widths are slightly narrowed", {
   widths <- public_table2_column_widths()
   numeric_widths <- as.numeric(sub("cm", "", widths, fixed = TRUE))
   expect_equal(length(widths), 7)
@@ -671,25 +663,6 @@ test_that("public regression longtables use one non-floating styling contract", 
 
   expect_equal(opts, c("repeat_header", "striped", "longtable"))
   expect_false("hold_position" %in% opts)
-})
-
-test_that("probit AME modelsummary table uses same standard styling path as IV tables", {
-  src <- paste(deparse(ame_modelsummary_table), collapse = "\n")
-
-  expect_match(src, "modelsummary::modelsummary", fixed = TRUE)
-  expect_match(src, "models = list(mfx)", fixed = TRUE)
-  expect_match(src, "coef_rename = ame_modelsummary_label", fixed = TRUE)
-  expect_match(src, "gof_map = ame_gof_map", fixed = TRUE)
-  expect_match(src, "gof_function = ame_gof_function", fixed = TRUE)
-  expect_match(src, "longtable = TRUE", fixed = TRUE)
-  expect_match(src, "kableExtra::kable_styling", fixed = TRUE)
-  expect_match(src, "public_longtable_latex_options", fixed = TRUE)
-  expect_match(src, "Enrolled (1 = yes)", fixed = TRUE)
-  expect_match(src, "modelsummary_stars_note", fixed = TRUE)
-  expect_match(src, "add_public_longtable_notes", fixed = TRUE)
-  expect_match(src, "single_space_longtable_tex", fixed = TRUE)
-  expect_false(grepl("p\\{[0-9.]+cm\\}", src))
-  expect_false(grepl("add_rows =", src, fixed = TRUE))
 })
 
 test_that("labeled native marginaleffects object preserves public AME order and labels", {

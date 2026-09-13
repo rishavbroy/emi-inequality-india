@@ -611,7 +611,9 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   df <- sanitize_table_for_kable(format_table_for_output(table, public = public))
   grouped <- summary_table_groups(df)
   df_render <- wrap_table_text_columns(grouped$data, name)
-  wide_summary_table <- name %in% c("sum_tbl_iv", "sum_tbl_probit_quant", "sum_tbl_probit_cat")
+  landscape_table <- name %in% c(
+    "paper_core_summary", "sum_tbl_iv", "sum_tbl_probit_quant", "sum_tbl_probit_cat"
+  )
   regression_table <- name %in% c("probit_mfx", "fs_cons", "cons_iv") && !is_formatted_status_table(df_render)
   compact_result_table <- name %in% c(
     "paper_economic_conversion", "paper_language_behavior",
@@ -655,7 +657,7 @@ save_table_tex <- function(table, path, name, public = TRUE) {
     df_render,
     format = "latex",
     booktabs = TRUE,
-    longtable = wide_summary_table || regression_table || appendix_long_table,
+    longtable = landscape_table || regression_table || appendix_long_table,
     label = table_label(name),
     caption = caption_for_latex(name),
     escape = FALSE,
@@ -670,11 +672,11 @@ save_table_tex <- function(table, path, name, public = TRUE) {
     # Keep compact paper-result tables visually neutral. Semantic panel grouping
     # and parenthesized standard errors already provide the needed row structure.
     latex_options <- c("repeat_header")
-  } else if (wide_summary_table) {
-    # Wide summary tables must be true longtables inside pdflscape. A floating
-    # table can escape the landscape environment when emitted as raw TeX from
-    # Quarto, leaving a clipped portrait page. Longtable keeps the table content
-    # inside the environment so pdflscape can rotate the page metadata.
+  } else if (landscape_table) {
+    # Tables designated for landscape pages must be true longtables inside
+    # pdflscape. A floating table can escape the landscape environment when
+    # emitted as raw TeX from Quarto, leaving a clipped portrait page. Longtable
+    # keeps the content inside the environment so pdflscape rotates the page.
     latex_options <- c("repeat_header", "striped")
   } else {
     latex_options <- c("striped", "repeat_header")
@@ -684,7 +686,7 @@ save_table_tex <- function(table, path, name, public = TRUE) {
     latex_options = latex_options,
     full_width = FALSE,
     position = "center",
-    font_size = if (wide_summary_table || regression_table || compact_result_table || schooling_market_table || appendix_compact_table) 9 else NULL
+    font_size = if (landscape_table || regression_table || compact_result_table || schooling_market_table || appendix_compact_table) 9 else NULL
   )
   if (nrow(grouped$groups)) {
     for (i in rev(seq_len(nrow(grouped$groups)))) {
@@ -786,7 +788,7 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   if (!is.null(note)) {
     tex <- kableExtra::footnote(tex, general = note, threeparttable = TRUE, footnote_as_chunk = TRUE, escape = FALSE)
   }
-  if (wide_summary_table) {
+  if (landscape_table) {
     tex <- kableExtra::landscape(tex)
     tex <- paste0("\\clearpage\n", as.character(tex), "\n\\clearpage")
   }
