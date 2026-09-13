@@ -295,13 +295,19 @@ test_that("Prompt 12 title and introduction frame the final working paper", {
   expect_match(paper_new, "Large language models", fixed = TRUE)
   expect_false(grepl("^abstract:", paper_new, perl = TRUE))
 
-  expect_match(intro, "three potential determinants of English-learning investment", fixed = TRUE)
-  expect_match(intro, "inherited linguistic conditions", fixed = TRUE)
-  expect_match(intro, "current access to English-learning opportunities", fixed = TRUE)
-  expect_match(intro, "anticipated economic returns to English learning", fixed = TRUE)
-  expect_match(intro, "@roweLanguageDevelopmentContext2020", fixed = TRUE)
-  expect_match(intro, "@topalovaTradeLiberalizationPoverty2005", fixed = TRUE)
-  expect_match(intro, "@ghoseTradeInternalMigration2026", fixed = TRUE)
+  # Test durable framing rather than manuscript sentences.  The final paper is
+  # being rewritten section by section, so wording is expected to change while
+  # the literature basis, authorial voice, and section ownership remain stable.
+  for (citation in c(
+    "@azam2013a",
+    "@shastry2012a",
+    "@roweLanguageDevelopmentContext2020",
+    "@topalovaTradeLiberalizationPoverty2005",
+    "@ghoseTradeInternalMigration2026"
+  )) {
+    expect_match(intro, citation, fixed = TRUE, info = citation)
+  }
+  expect_match(intro, "@sec-app-development", fixed = TRUE)
   expect_false(grepl("\\b(?:we|our|us)\\b", intro, ignore.case = TRUE, perl = TRUE))
 
   expect_match(references, "@article{roweLanguageDevelopmentContext2020,", fixed = TRUE)
@@ -1534,15 +1540,13 @@ test_that("working paper is rendered and checked by the strict publication graph
   working_paper <- repo_text("paper", "paper-new.qmd")
   expect_match(working_paper, "paper_language_schooling_maps.pdf", fixed = TRUE)
   expect_match(working_paper, "paper_core_summary.tex", fixed = TRUE)
-  expect_match(working_paper, "inherited linguistic opportunity gradient", fixed = TRUE)
-  expect_match(working_paper, "descriptive associations, not causal returns", fixed = TRUE)
   expect_false(grepl("affected growth in average household consumption between 2007 and 2018", working_paper, fixed = TRUE))
   expect_false(grepl("collage_main_maps.pdf", working_paper, fixed = TRUE))
 
-  # The manuscript follows the final claim architecture rather than the legacy
-  # dataset/estimator order.  Exhibit ordering is a paper-level behavioral
-  # contract: access precedes language behavior, and identification comes last.
-  ordered_markers <- c(
+  # Publication tests own dependency coverage, not editorial sequencing.  Prompt
+  # 12 now governs the manuscript order, and later section rewrites should not
+  # require changing a filename-order snapshot in testthat.
+  required_markers <- c(
     "paper_language_schooling_maps.pdf",
     "paper_core_summary.tex",
     "paper_schooling_market_geography.tex",
@@ -1554,13 +1558,11 @@ test_that("working paper is rendered and checked by the strict publication graph
     "paper_first_stage_absorption.pdf",
     "paper_identification_boundary.tex"
   )
-  marker_positions <- vapply(
-    ordered_markers,
-    function(marker) regexpr(marker, working_paper, fixed = TRUE)[[1]],
-    integer(1)
-  )
-  expect_true(all(marker_positions > 0L))
-  expect_true(all(diff(marker_positions) > 0L))
+  expect_true(all(vapply(
+    required_markers,
+    function(marker) grepl(marker, working_paper, fixed = TRUE),
+    logical(1)
+  )))
 
   appendix_boundary <- regexpr("\\appendix", working_paper, fixed = TRUE)[[1]]
   expect_gt(appendix_boundary, 0L)
@@ -1575,9 +1577,8 @@ test_that("working paper is rendered and checked by the strict publication graph
   expect_match(working_paper, "# Data Construction and Provenance {#sec-app-data}", fixed = TRUE)
   expect_match(main_text, "@sec-app-identification", fixed = TRUE)
   expect_match(main_text, "@sec-app-selection", fixed = TRUE)
-  expect_match(working_paper, "English can be economically valuable without functioning as a universal equalizer", fixed = TRUE)
-  expect_match(working_paper, "co-evolving development margins", fixed = TRUE)
-  expect_match(working_paper, "Only now do we ask whether the inherited linguistic gradient can isolate the causal effect of EMI", fixed = TRUE)
+  expect_match(main_text, "# Introduction {#sec-intro}", fixed = TRUE)
+  expect_match(main_text, "{#sec-identification}", fixed = TRUE)
 })
 
 
