@@ -35,6 +35,32 @@ test_that("rendered PDF text checks use the system extractor contract", {
   expect_match(pdf_text_failure_message(skipped), "pdftotext is available", fixed = TRUE)
 })
 
+
+test_that("rendered PDF layout checks recognize landscape pages", {
+  info <- c(
+    "Pages:           3",
+    "Page    1 size:  612 x 792 pts (letter)",
+    "Page    1 rot:   0",
+    "Page    2 size:  612 x 792 pts (letter)",
+    "Page    2 rot:   90",
+    "Page    3 size:  792 x 612 pts (letter)",
+    "Page    3 rot:   0"
+  )
+  layout <- parse_pdf_page_layout(info)
+
+  expect_equal(layout$page, 1:3)
+  expect_true(pdf_has_landscape_page(layout))
+  expect_false(pdf_has_landscape_page(layout[1, , drop = FALSE]))
+})
+
+test_that("landscape requests are detected structurally", {
+  path <- tempfile(fileext = ".qmd")
+  writeLines(c("portrait", "::: {.landscape}", "content", ":::"), path)
+  on.exit(unlink(path), add = TRUE)
+
+  expect_true(source_requests_landscape(path))
+})
+
 test_that("Moran diagnostics compute legacy asymptotic p-values from spatial weights", {
   testthat::skip_if_not_installed("spdep")
 

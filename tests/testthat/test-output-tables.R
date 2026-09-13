@@ -556,7 +556,7 @@ test_that("probit TeX stacks standard errors below AME estimates", {
   expect_false(grepl("\\multicolumn{2}{c}{Enrolled in School (1 = yes)}", tex, fixed = TRUE))
 })
 
-test_that("landscape tables use the page model appropriate to their length", {
+test_that("wide tables separate table pagination from document orientation", {
   skip_if_not_installed("kableExtra")
   old <- setwd(tempdir())
   on.exit(setwd(old), add = TRUE)
@@ -593,9 +593,9 @@ test_that("landscape tables use the page model appropriate to their length", {
   expect_match(iv_tex, "\\begin{longtable}", fixed = TRUE)
   expect_false(grepl("\\begin{table}", iv_tex, fixed = TRUE))
 
-  expect_match(core_tex, "\\begin{landscape}", fixed = TRUE)
   expect_match(core_tex, "\\begin{table}[H]", fixed = TRUE)
   expect_false(grepl("\\begin{longtable}", core_tex, fixed = TRUE))
+  expect_false(grepl("\\begin{landscape}", core_tex, fixed = TRUE))
 })
 
 

@@ -21,7 +21,6 @@ header-includes:
   - \usepackage{xcolor}
   - \definecolor{gray35}{gray}{0.35}
   - \usepackage{colortbl}
-  - \usepackage{pdflscape}
   - \usepackage{threeparttablex}
   - \usepackage{makecell}
   - \usepackage{tabularray}
@@ -145,12 +144,16 @@ The preferred district regressions compare districts within states and condition
 
 Table~\ref{tbl-paper-core-summary} reports the scale and dispersion of the principal variables. Enrollment averages about 74 percent of children ages 5--19, while English-medium exposure among all children averages about 15 percent. Private-school English-medium exposure averages about 9 percent and public-school English-medium exposure about 6 percent. The speaker-weighted distance from Hindi averages 3.05 Shastry degrees across districts, and the district mean of the share speaking languages at distance three or greater is 42 percent. Real consumption per person rises from an average of about Rs. 928 per month in 2004--05 to Rs. 2,152 in 2022--23 and Rs. 2,242 in 2023--24, all expressed in 2011--12 prices.
 
+::: {.landscape}
+
 ```{r}
 #| echo: false
 #| results: asis
 
 render_public_table("../outputs/tables/main/paper_core_summary.tex", "paper_core_summary")
 ```
+
+:::
 
 # Educational Access to English Opportunity {#sec-access}
 

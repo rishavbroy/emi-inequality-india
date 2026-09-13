@@ -109,9 +109,28 @@ for (path in pdf_paths) {
   hits <- c(hits, scan_text(path, text, FALSE))
 }
 
+landscape_sources <- source_paths[grepl("\\.qmd$", source_paths)]
+landscape_sources <- landscape_sources[vapply(landscape_sources, source_requests_landscape, logical(1))]
+for (source_path in landscape_sources) {
+  pdf_path <- sub("\\.qmd$", ".pdf", source_path)
+  if (!file.exists(pdf_path)) next
+  if (!pdf_info_available()) {
+    if (is_final_check) {
+      hits <- c(hits, paste0(source_path, " requests landscape content but pdfinfo is unavailable"))
+    }
+    next
+  }
+  layout <- extract_pdf_page_layout(pdf_path)
+  if (is.null(layout) || !nrow(layout)) {
+    hits <- c(hits, paste0(pdf_path, " page geometry could not be inspected"))
+  } else if (!pdf_has_landscape_page(layout)) {
+    hits <- c(hits, paste0(pdf_path, " has no landscape page although ", source_path, " requests one"))
+  }
+}
+
 if (length(hits)) {
   cat(paste0("- ", hits, collapse = "\n"), "\n")
-  stop("Rendered public text still contains placeholder values or visible cross-reference failures.", call. = FALSE)
+  stop("Rendered public output contains placeholder, cross-reference, or layout failures.", call. = FALSE)
 }
 
 if (length(pdf_skipped)) {
