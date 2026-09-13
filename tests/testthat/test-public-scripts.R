@@ -268,6 +268,46 @@ test_that("writing sample YAML includes LaTeX table packages for raw table excer
   expect_true(any(out == "  - \\usepackage{xcolor}"))
 })
 
+test_that("Prompt 12 title and introduction frame the final working paper", {
+  paper_new <- repo_text("paper", "paper-new.qmd")
+  references <- repo_text("paper", "references.bib")
+  intro <- sub(
+    "^[\\s\\S]*?# Introduction \\{#sec-intro\\}\\n",
+    "",
+    paper_new,
+    perl = TRUE
+  )
+  intro <- sub(
+    "\\n# English Opportunity in a Multilingual Economy \\{#sec-background\\}[\\s\\S]*$",
+    "",
+    intro,
+    perl = TRUE
+  )
+
+  expect_match(paper_new, 'title: "Unequal Access to Equalizing Opportunities"', fixed = TRUE)
+  expect_match(
+    paper_new,
+    'subtitle: "Variation in the Costs, Accessibility, and Benefits of English-Learning Opportunities in India"',
+    fixed = TRUE
+  )
+  expect_match(paper_new, 'thanks: "Acknowledgments:', fixed = TRUE)
+  expect_match(paper_new, "Internet Archive", fixed = TRUE)
+  expect_match(paper_new, "Large language models", fixed = TRUE)
+  expect_false(grepl("^abstract:", paper_new, perl = TRUE))
+
+  expect_match(intro, "three potential determinants of English-learning investment", fixed = TRUE)
+  expect_match(intro, "inherited linguistic conditions", fixed = TRUE)
+  expect_match(intro, "current access to English-learning opportunities", fixed = TRUE)
+  expect_match(intro, "anticipated economic returns to English learning", fixed = TRUE)
+  expect_match(intro, "@roweLanguageDevelopmentContext2020", fixed = TRUE)
+  expect_match(intro, "@topalovaTradeLiberalizationPoverty2005", fixed = TRUE)
+  expect_match(intro, "@ghoseTradeInternalMigration2026", fixed = TRUE)
+  expect_false(grepl("\\b(?:we|our|us)\\b", intro, ignore.case = TRUE, perl = TRUE))
+
+  expect_match(references, "@article{roweLanguageDevelopmentContext2020,", fixed = TRUE)
+  expect_match(references, "10.1146/annurev-devpsych-042220-121816", fixed = TRUE)
+})
+
 test_that("both paper QMDs own their appendices and load shared rendering helpers", {
   paper <- repo_text("paper", "paper.qmd")
   paper_new <- repo_text("paper", "paper-new.qmd")
