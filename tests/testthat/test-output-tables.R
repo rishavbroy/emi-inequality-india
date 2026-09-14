@@ -952,7 +952,7 @@ paper_schooling_market_fixture <- function() {
 
 test_that("paper schooling-market target depends on the DISE-enriched district panel", {
   command <- parse(text = repo_target_command("paper_schooling_market_geography"))[[1L]]
-  dependencies <- targets::tar_deps(command)
+  dependencies <- targets::tar_deps_raw(command)
 
   expect_true("district_panel_with_dise" %in% dependencies)
 })
