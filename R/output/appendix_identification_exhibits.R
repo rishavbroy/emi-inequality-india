@@ -738,11 +738,49 @@ appendix_c12_consumption_iv_dynamics_plot <- function(dynamics) {
   p
 }
 
+appendix_c7_historical_balance <- function(balance) {
+  if (!is.list(balance)) stop("Appendix C7 requires canonical 1991 baseline-balance output.", call. = FALSE)
+  x <- safe_df(balance$joint_balance)
+  predictors <- c("eventual_emie", "census_2001_ld", "helms_lim_ld_1991")
+  domains <- c("demography", "human_capital", "economic_structure", "rural_development", "urban_development")
+  x <- x[x$sample == "preferred_geography" & x$predictor_id %in% predictors & x$domain %in% domains, , drop = FALSE]
+  x <- x[match(as.vector(outer(predictors, domains, paste, sep = "__")), paste(x$predictor_id, x$domain, sep = "__")), , drop = FALSE]
+  if (nrow(x) != 15L || any(is.na(x$predictor_id)) || any(!x$status %in% "estimated")) stop("Appendix C7 requires three predictors by five historical balance domains.", call. = FALSE)
+  csv <- x[, c("predictor_id", "domain", "n_tested_covariates", "joint_f", "joint_p", "n", "n_states"), drop = FALSE]
+  out <- data.frame(
+    Predictor = csv$predictor_id, Domain = csv$domain, `Covariates tested` = csv$n_tested_covariates,
+    `Joint F` = sprintf("%.3f", csv$joint_f), `Joint p` = sprintf("%.3g", csv$joint_p), N = csv$n,
+    check.names = FALSE, stringsAsFactors = FALSE
+  )
+  attr(out, "csv_data") <- csv
+  out
+}
+
+appendix_c9_historical_first_stage <- function(first_stage) {
+  if (!is.list(first_stage)) stop("Appendix C9 requires canonical historical first-stage output.", call. = FALSE)
+  x <- safe_df(first_stage$comparison)
+  ids <- c("instrument_only", "region_fe_census_controls", "state_fe_census_controls", "region_fe_expanded_controls", "state_fe_expanded_controls")
+  x <- x[x$sample == "preferred_geography", , drop = FALSE]
+  x <- x[match(ids, x$specification_id), , drop = FALSE]
+  if (nrow(x) != 5L || any(is.na(x$specification_id)) || any(!x$status_1991 %in% "estimated") || any(!x$status_2001 %in% "estimated") || any(as.integer(x$n_1991) != as.integer(x$n_2001))) stop("Appendix C9 requires all five preferred historical first-stage specifications on common support.", call. = FALSE)
+  csv <- x[, c("specification_id", "specification", "excluded_instrument_f_1991", "partial_r_squared_1991", "n_1991", "excluded_instrument_f_2001", "partial_r_squared_2001", "n_2001"), drop = FALSE]
+  out <- data.frame(
+    Specification = csv$specification, `1991 F` = sprintf("%.3f", csv$excluded_instrument_f_1991),
+    `1991 partial R2` = sprintf("%.4f", csv$partial_r_squared_1991),
+    `2001 F` = sprintf("%.3f", csv$excluded_instrument_f_2001),
+    `2001 partial R2` = sprintf("%.4f", csv$partial_r_squared_2001), N = csv$n_1991,
+    check.names = FALSE, stringsAsFactors = FALSE
+  )
+  attr(out, "csv_data") <- csv
+  out
+}
+
 make_appendix_identification_exhibits <- function(
     first_stage_absorption, district_panel, hindi_belt_first_stage,
     child_population_first_stage, alternative_distance_first_stage,
     alternative_distance_measurement, alternative_distance_inference,
     consumption_iv_dynamics, historical_pretrend_validation,
+    historical_baseline_balance_1991, historical_linguistic_first_stage_robustness,
     consumption_robustness_evidence, consumption_exclusion_sensitivity,
     control_registry = NULL) {
   list(
@@ -754,7 +792,9 @@ make_appendix_identification_exhibits <- function(
     ),
     appendix_c5_alternative_scalar_distances = appendix_c5_alternative_scalar_distances(alternative_distance_first_stage),
     appendix_c6_mapping_composition_sensitivity = appendix_c6_mapping_composition_sensitivity(alternative_distance_measurement),
+    appendix_c7_historical_balance = appendix_c7_historical_balance(historical_baseline_balance_1991),
     appendix_c8_historical_pretrends = appendix_c8_historical_pretrend_plot(historical_pretrend_validation),
+    appendix_c9_historical_first_stage = appendix_c9_historical_first_stage(historical_linguistic_first_stage_robustness),
     appendix_c10_monotonicity = appendix_c10_monotonicity_plot(alternative_distance_inference),
     appendix_c11_multiple_instruments = appendix_c11_multiple_instruments(alternative_distance_inference),
     appendix_c12_consumption_iv_dynamics = appendix_c12_consumption_iv_dynamics_plot(consumption_iv_dynamics),
@@ -767,7 +807,8 @@ save_appendix_identification_exhibits <- function(exhibits, cfg) {
   table_names <- c(
     "appendix_c1_full_absorption_ladder", "appendix_c3_control_block_absorption",
     "appendix_c4_geographic_scale_sensitivity", "appendix_c5_alternative_scalar_distances",
-    "appendix_c6_mapping_composition_sensitivity", "appendix_c11_multiple_instruments",
+    "appendix_c6_mapping_composition_sensitivity", "appendix_c7_historical_balance",
+    "appendix_c9_historical_first_stage", "appendix_c11_multiple_instruments",
     "appendix_c13_robustness_family_census", "appendix_c14_exclusion_sensitivity"
   )
   figure_names <- c(

@@ -101,26 +101,15 @@ core_public_target_definitions <- function() {
     ),
     tar_target(
       appendix_data_construction_exhibits,
-      make_appendix_data_construction_exhibits(district_lineage, consumption_district_welfare)
+      make_appendix_data_construction_exhibits(
+        district_lineage, consumption_district_welfare,
+        historical_linguistic_persistence_validation, district_panel_with_dise,
+        dise_iv_nss_validation
+      )
     ),
     tar_target(
       appendix_data_construction_files,
       save_appendix_data_construction_exhibits(appendix_data_construction_exhibits, cfg),
-      format = "file"
-    ),
-    tar_target(
-      appendix_validation_identification_exhibits,
-      make_appendix_validation_identification_exhibits(
-        historical_linguistic_persistence_validation, district_panel_with_dise,
-        dise_iv_nss_validation, historical_baseline_balance_1991,
-        historical_linguistic_first_stage_robustness
-      )
-    ),
-    tar_target(
-      appendix_validation_identification_files,
-      save_appendix_validation_identification_exhibits(
-        appendix_validation_identification_exhibits, cfg
-      ),
       format = "file"
     ),
     tar_target(
@@ -135,6 +124,8 @@ core_public_target_definitions <- function() {
         alternative_distance_first_stages,
         consumption_iv_dynamics,
         historical_vanneman_pretrend_validation,
+        historical_baseline_balance_1991,
+        historical_linguistic_first_stage_robustness,
         consumption_robustness_evidence,
         consumption_exclusion_sensitivity,
         census_2001_control_registry
@@ -196,8 +187,7 @@ core_public_target_definitions <- function() {
         paper_new_qmd,
         dependencies = list(
           report_values, table_files, figure_files, dise_publication_validation,
-          appendix_data_construction_files, appendix_validation_identification_files,
-          appendix_identification_files, appendix_migration_files,
+          appendix_data_construction_files, appendix_identification_files, appendix_migration_files,
           appendix_selection_files
         )
       ),

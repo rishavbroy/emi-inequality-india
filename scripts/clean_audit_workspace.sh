@@ -19,6 +19,10 @@ rm -f \
   "${root%/}/outputs/tables/appendix/appendix_b2_lineage_sensitivity.tex" \
   "${root%/}/outputs/tables/appendix/appendix_b6_language_source_validation.csv" \
   "${root%/}/outputs/tables/appendix/appendix_b6_language_source_validation.tex" \
+  "${root%/}/outputs/figures/appendix/appendix_b5_historical_language_persistence.pdf" \
+  "${root%/}/outputs/figures/appendix/appendix_b5_historical_language_persistence.png" \
+  "${root%/}/outputs/figures/appendix/appendix_b7_nss_dise_agreement.pdf" \
+  "${root%/}/outputs/figures/appendix/appendix_b7_nss_dise_agreement.png" \
   "${root%/}/outputs/tables/appendix/appendix_b8_census_universe_reconciliation.csv" \
   "${root%/}/outputs/tables/appendix/appendix_b8_census_universe_reconciliation.tex" \
   "${root%/}/outputs/tables/appendix/appendix_d3_housing_assets.csv" \

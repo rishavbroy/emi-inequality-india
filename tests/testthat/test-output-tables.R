@@ -1401,7 +1401,7 @@ test_that("retained validation figures enforce registered common support", {
     comparison = "enrolled_total_denominator", n = 4L, status = "estimated",
     stringsAsFactors = FALSE
   )
-  agreement <- appendix_b7_nss_dise_data(panel, validation)
+  agreement <- appendix_nss_dise_agreement_data(panel, validation)
   expect_equal(nrow(agreement), as.integer(validation$n[[1L]]))
   state_dise_means <- tapply(agreement$dise_residual, agreement$state, mean)
   state_nss_means <- tapply(agreement$nss_residual, agreement$state, mean)

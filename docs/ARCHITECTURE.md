@@ -366,9 +366,9 @@ standalone appendix QMD/PDF and the duplicated district-matching/8.3-filename pu
 were removed once their material was owned by the manuscripts.
 
 
-### Final-paper validation and historical-identification exhibits
+### Final-paper measurement and identification exhibits
 
-Validation that supports a specific construction now stays with that construction rather than occupying a separate manuscript appendix. The final paper still renders the historical linguistic-persistence figure and NSS--DISE agreement figure where they are discussed, while source reconciliations, lineage readiness gates, and broader validation tables remain enforced by their analytical modules and persisted as diagnostics. The historical-balance and historical-first-stage summaries remain dependencies of the identification appendix.
+Validation that supports a specific construction stays with that construction rather than occupying a separate manuscript appendix. `appendix_data_construction_exhibits` owns the historical linguistic-persistence and NSS--DISE agreement figures used alongside the corresponding measurement discussion. Historical balance and historical first-stage summaries are owned by `appendix_identification_exhibits`. Source reconciliations, lineage readiness gates, and broader validation tables remain enforced by their analytical modules and persisted as diagnostics rather than being repackaged for the manuscript.
 
 ### Migration publication boundary
 

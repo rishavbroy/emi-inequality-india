@@ -209,7 +209,7 @@ def path_tests(path):
             "test-output-tables.R",
             "test-public-scripts.R",
         },
-        "R/output/appendix_validation_identification_exhibits.R": {
+        "R/output/appendix_data_construction_exhibits.R": {
             "test-output-tables.R",
             "test-public-scripts.R",
         },

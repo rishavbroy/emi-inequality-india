@@ -67,6 +67,61 @@ appendix_a3_lineage_source_hierarchy <- function(district_lineage) {
   out
 }
 
+appendix_historical_language_persistence_data <- function(persistence) {
+  if (!is.list(persistence)) stop("Appendix B5 requires canonical historical persistence output.", call. = FALSE)
+  p <- safe_df(persistence$panel)
+  required <- c("state_code_2001", "district_code_2001", "persistence_status", "ling_distance_nonzero_mean_1991", "ling_distance_nonzero_mean_2001")
+  if (length(setdiff(required, names(p)))) stop("Appendix B5 historical panel lacks required fields.", call. = FALSE)
+  p <- p[p$persistence_status == "eligible", required, drop = FALSE]
+  p <- p[stats::complete.cases(p[c("ling_distance_nonzero_mean_1991", "ling_distance_nonzero_mean_2001")]), , drop = FALSE]
+  if (nrow(p) < 2L) stop("Appendix B5 requires at least two eligible historical districts.", call. = FALSE)
+  if (anyDuplicated(p[c("state_code_2001", "district_code_2001")])) stop("Appendix B5 requires unique eligible historical districts.", call. = FALSE)
+  p
+}
+
+appendix_historical_language_persistence_plot <- function(persistence) {
+  need_pkg("ggplot2", "Appendix B historical persistence figure")
+  d <- appendix_historical_language_persistence_data(persistence)
+  ggplot2::ggplot(d, ggplot2::aes(x = ling_distance_nonzero_mean_1991, y = ling_distance_nonzero_mean_2001)) +
+    ggplot2::geom_abline(slope = 1, intercept = 0, linewidth = 0.35, linetype = 2) +
+    ggplot2::geom_point(alpha = 0.65, size = 1.4) +
+    ggplot2::labs(title = "Historical persistence of linguistic distance from Hindi", x = "1991 linguistic distance", y = "2001 linguistic distance") +
+    ggplot2::theme_minimal(base_size = 10)
+}
+
+appendix_nss_dise_agreement_data <- function(panel, validation) {
+  x <- if (inherits(panel, "sf")) sf::st_drop_geometry(panel) else safe_df(panel)
+  v <- safe_df(validation)
+  required <- c("state_code_2001", "dise_emi_enrollment_share_total_0708", "emi_share_enrolled_0708")
+  if (length(setdiff(required, names(x)))) stop("Appendix B7 requires DISE and NSS measures on the canonical panel.", call. = FALSE)
+  row <- v[v$comparison == "enrolled_total_denominator" & v$status == "estimated", , drop = FALSE]
+  if (nrow(row) != 1L) stop("Appendix B7 requires the registered enrolled-total DISE-NSS validation.", call. = FALSE)
+  d <- data.frame(state = plain_chr(x$state_code_2001), dise = num(x$dise_emi_enrollment_share_total_0708), nss = num(x$emi_share_enrolled_0708), stringsAsFactors = FALSE)
+  d <- d[stats::complete.cases(d) & nzchar(d$state), , drop = FALSE]
+  if (nrow(d) != as.integer(row$n[[1]])) stop("Appendix B7 panel support differs from registered DISE-NSS validation.", call. = FALSE)
+  d$dise_residual <- d$dise - ave(d$dise, d$state, FUN = mean)
+  d$nss_residual <- d$nss - ave(d$nss, d$state, FUN = mean)
+  d
+}
+
+appendix_nss_dise_agreement_plot <- function(panel, validation) {
+  need_pkg("ggplot2", "Appendix B NSS-DISE validation figure")
+  d <- appendix_nss_dise_agreement_data(panel, validation)
+  v <- safe_df(validation)
+  row <- v[v$comparison == "enrolled_total_denominator" & v$status == "estimated", , drop = FALSE]
+  raw_label <- sprintf("Raw district levels\nr = %.3f", num(row$pearson)[[1]])
+  residual_label <- sprintf("Residualized by state\nr = %.3f", num(row$state_residual_pearson)[[1]])
+  raw <- data.frame(panel = raw_label, x = d$nss, y = d$dise)
+  residual <- data.frame(panel = residual_label, x = d$nss_residual, y = d$dise_residual)
+  plot_data <- safe_bind_rows(list(raw, residual))
+  ggplot2::ggplot(plot_data, ggplot2::aes(x = x, y = y)) +
+    ggplot2::geom_abline(slope = 1, intercept = 0, linewidth = 0.35, linetype = 2) +
+    ggplot2::geom_point(alpha = 0.5, size = 1.2) +
+    ggplot2::facet_wrap(~ panel, scales = "free", nrow = 1) +
+    ggplot2::labs(x = "NSS EMI among enrolled", y = "DISE EMI enrollment share") +
+    ggplot2::theme_minimal(base_size = 10)
+}
+
 hces_cross_round_consistency_data <- function(welfare) {
   x <- safe_df(welfare)
   required <- c("district_2001", "round_id", "outcome_id", "estimate", "preferred_eligible")
@@ -120,25 +175,44 @@ appendix_consumption_hces_consistency_plot <- function(welfare) {
 }
 
 
-make_appendix_data_construction_exhibits <- function(district_lineage, consumption_district_welfare) {
+make_appendix_data_construction_exhibits <- function(
+    district_lineage, consumption_district_welfare,
+    historical_linguistic_persistence_validation, district_panel_with_dise,
+    dise_iv_nss_validation) {
   list(
     appendix_a3_lineage_source_hierarchy = appendix_a3_lineage_source_hierarchy(district_lineage),
-    appendix_consumption_hces_consistency = appendix_consumption_hces_consistency_plot(consumption_district_welfare)
+    appendix_consumption_hces_consistency = appendix_consumption_hces_consistency_plot(consumption_district_welfare),
+    appendix_historical_language_persistence = appendix_historical_language_persistence_plot(
+      historical_linguistic_persistence_validation
+    ),
+    appendix_nss_dise_agreement = appendix_nss_dise_agreement_plot(
+      district_panel_with_dise, dise_iv_nss_validation
+    )
   )
 }
 
 save_appendix_data_construction_exhibits <- function(exhibits, cfg) {
-  if (!is.list(exhibits) || !all(c("appendix_a3_lineage_source_hierarchy", "appendix_consumption_hces_consistency") %in% names(exhibits))) {
-    stop("Appendix A exhibit bundle is incomplete.", call. = FALSE)
+  required <- c(
+    "appendix_a3_lineage_source_hierarchy", "appendix_consumption_hces_consistency",
+    "appendix_historical_language_persistence", "appendix_nss_dise_agreement"
+  )
+  if (!is.list(exhibits) || !all(required %in% names(exhibits))) {
+    stop("Data-construction exhibit bundle is incomplete.", call. = FALSE)
   }
   written <- save_appendix_tables(exhibits, "appendix_a3_lineage_source_hierarchy", cfg)
-  written <- c(
-    written,
-    save_plot_formats(
-      exhibits$appendix_consumption_hces_consistency,
-      appendix_figure_path_base("appendix_consumption_hces_consistency"),
-      figure_formats(cfg), width = 8.2, height = 3.8
+  formats <- figure_formats(cfg)
+  for (name in c(
+    "appendix_consumption_hces_consistency",
+    "appendix_historical_language_persistence",
+    "appendix_nss_dise_agreement"
+  )) {
+    written <- c(
+      written,
+      save_plot_formats(
+        exhibits[[name]], appendix_figure_path_base(name), formats,
+        width = 8.2, height = 3.8
+      )
     )
-  )
+  }
   unique(normalizePath(written, mustWork = FALSE))
 }
