@@ -67,7 +67,7 @@ core_public_target_definitions <- function() {
       paper_schooling_market_geography,
       make_paper_schooling_market_geography_table(
         english_opportunity_district_mechanisms,
-        district_panel
+        district_panel_with_dise
       )
     ),
     tar_target(
