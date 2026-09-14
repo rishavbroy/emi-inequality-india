@@ -19,24 +19,24 @@ paper_schooling_market_measure_registry <- function() {
 }
 
 paper_schooling_market_state_registry <- function() {
-  data.frame(
-    measure_id = c(
-      "ling_distance_nonzero_mean", "nss_enrollment", "nss_emi_enrolled",
-      "nss_emie_all_children", "nss_emi_public", "nss_emi_private"
+  schooling <- paper_schooling_market_measure_registry()
+  schooling$variable <- unname(c(
+    nss_enrollment = "enrollment_rate_0708",
+    nss_emi_enrolled = "emi_share_enrolled_0708",
+    nss_emie_all_children = "emi_exposure_all_children_0708",
+    nss_emi_public = "emi_share_enrolled_public_0708",
+    nss_emi_private = "emi_share_enrolled_private_0708",
+    dise_emi_enrollment = "dise_emi_enrollment_share_total_0708"
+  )[schooling$measure_id])
+
+  rbind(
+    data.frame(
+      measure_id = "ling_distance_nonzero_mean",
+      variable = "ling_distance_nonzero_mean",
+      label = paper_linguistic_distance_display_labels()[["nonzero_mean"]],
+      stringsAsFactors = FALSE
     ),
-    variable = c(
-      "ling_distance_nonzero_mean", "enrollment_rate_0708",
-      "emi_share_enrolled_0708", "emi_exposure_all_children_0708",
-      "emi_share_enrolled_public_0708", "emi_share_enrolled_private_0708"
-    ),
-    label = c(
-      paper_linguistic_distance_display_labels()[["nonzero_mean"]],
-      unname(paper_schooling_display_labels()[c(
-        "enrollment", "emi_enrolled", "emi_all_children",
-        "public_emi", "private_emi"
-      )])
-    ),
-    stringsAsFactors = FALSE
+    schooling[c("measure_id", "variable", "label")]
   )
 }
 

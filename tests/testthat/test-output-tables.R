@@ -941,6 +941,7 @@ paper_schooling_market_fixture <- function() {
     emi_exposure_all_children_0708 = c(1:4, 5:8),
     emi_share_enrolled_public_0708 = c(3:6, 7:10),
     emi_share_enrolled_private_0708 = c(4:7, 8:11),
+    dise_emi_enrollment_share_total_0708 = c(5, 7, 6, 8, 20, 22, 21, 23),
     stringsAsFactors = FALSE
   )
   list(
@@ -956,11 +957,11 @@ test_that("paper schooling-market table preserves regression inference and state
   )
   csv <- table_csv_data(table)
 
-  expect_equal(nrow(csv), 24L)
+  expect_equal(nrow(csv), 25L)
   expect_equal(c(
     sum(csv$panel == "association"),
     sum(csv$panel == "state_organization")
-  ), c(18L, 6L))
+  ), c(18L, 7L))
   expect_false("source_agreement" %in% csv$panel)
   expect_true(all(vapply(
     csv[c("estimate", "std_error", "p_value")], is.numeric, logical(1)
@@ -972,6 +973,20 @@ test_that("paper schooling-market table preserves regression inference and state
     c("unadjusted", "region_main", "state_main")
   )
   expect_false(any(c("raw", "state_residual") %in% csv$specification_id))
+
+  schooling_ids <- paper_schooling_market_measure_registry()$measure_id
+  schooling_state <- csv[
+    csv$panel == "state_organization" & csv$measure_id %in% schooling_ids,
+    , drop = FALSE
+  ]
+  expect_setequal(schooling_state$measure_id, schooling_ids)
+  expect_true(all(is.finite(schooling_state$estimate)))
+  expect_equal(
+    schooling_state$estimate[schooling_state$measure_id == "dise_emi_enrollment"],
+    paper_state_membership_r_squared(
+      fixture$panel, "dise_emi_enrollment_share_total_0708"
+    )
+  )
 
   expect_identical(names(table), "Term")
   expect_identical(table$Term, "Linguistic distance from Hindi")
