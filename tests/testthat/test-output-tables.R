@@ -1498,12 +1498,40 @@ test_that("paper local-development table keeps a bounded signal-and-null constel
     fixture$economic_census, fixture$nss66, fixture$plfs
   )
   expect_identical(attr(table, "csv_data"), csv)
-  expect_identical(
-    names(table),
-    c("Domain", "Representative outcome", "Estimate", "Raw p", "Holm p", "Interpretation")
-  )
+  expect_identical(table$Term, "Linguistic distance from Hindi")
 })
 
+
+
+test_that("paper local-development renderer uses standard regression-table inference", {
+  skip_if_not_installed("modelsummary")
+  skip_if_not_installed("kableExtra")
+
+  fixture <- paper_local_development_fixture()
+  table <- make_paper_local_development_table(
+    fixture$household, fixture$migration, fixture$housing,
+    fixture$economic_census, fixture$nss66, fixture$plfs
+  )
+  tex <- paste(
+    as.character(paper_local_development_modelsummary_table(table, "paper_local_development")),
+    collapse = "\n"
+  )
+
+  expect_match(tex, "\\begin{longtable}", fixed = TRUE)
+  expect_match(tex, "(0.0100)", fixed = TRUE)
+  expect_match(tex, "***", fixed = TRUE)
+  # The migration fixture has raw p = .003 but Holm p = .03, so the
+  # printed coefficient must carry two stars rather than three.
+  expect_match(tex, "0.0130**", fixed = TRUE)
+  expect_false(grepl("0.0130***", tex, fixed = TRUE))
+  expect_match(tex, "Fixed effects", fixed = TRUE)
+  expect_match(tex, "Predetermined controls", fixed = TRUE)
+  expect_match(tex, "Observations", fixed = TRUE)
+  expect_false(grepl("Raw p", tex, fixed = TRUE))
+  expect_false(grepl("Holm p", tex, fixed = TRUE))
+  expect_false(grepl("Interpretation", tex, fixed = TRUE))
+  expect_false(grepl("Domain", tex, fixed = TRUE))
+})
 test_that("paper local-development table fails closed when registered evidence disappears", {
   fixture <- paper_local_development_fixture()
   fixture$migration$reduced_form <- fixture$migration$reduced_form[-1L, , drop = FALSE]

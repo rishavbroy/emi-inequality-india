@@ -901,6 +901,167 @@ paper_economic_conversion_modelsummary_table <- function(table, name) {
   single_space_longtable_tex(tex)
 }
 
+paper_local_development_modelsummary_table <- function(table, name) {
+  need_pkg("modelsummary", "local-development regression table rendering")
+  csv <- safe_df(attr(table, "csv_data", exact = TRUE))
+  if (!nrow(csv)) return(NULL)
+
+  required <- c(
+    "row_id", "outcome", "adjustment_id", "estimate", "std.error",
+    "p.value_holm", "n"
+  )
+  missing <- setdiff(required, names(csv))
+  if (length(missing)) {
+    stop(
+      "Paper local-development regression table is missing columns: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  panel_specs <- list(
+    "Panel A: Household capacity and assets" = data.frame(
+      row_id = c(
+        "household_literacy_depth", "household_graduate_access",
+        "finance_banking_access", "asset_television_ownership"
+      ),
+      outcome = c(
+        "2+ literates", "Graduate access", "Banking access", "Television ownership"
+      ),
+      period = rep("2001-11", 4L),
+      stringsAsFactors = FALSE
+    ),
+    "Panel B: Migration and sectoral composition" = data.frame(
+      row_id = c(
+        "migration_skilled_recent_work", "migration_interstate_composition",
+        "economic_services_share", "economic_manufacturing_share"
+      ),
+      outcome = c(
+        "Skilled recent-work migrant share", "Interstate migrant share",
+        "Services employment share", "Manufacturing employment share"
+      ),
+      period = c("2011", "2011", "2005-13", "2005-13"),
+      stringsAsFactors = FALSE
+    ),
+    "Panel C: Employment scale and labor outcomes" = data.frame(
+      row_id = c(
+        "economic_nonfarm_employment", "labor_lfpr", "labor_employment_rate"
+      ),
+      outcome = c(
+        "Log nonfarm employment", "Labor-force participation", "Employment rate"
+      ),
+      period = c("2005-13", "2017-18", "2017-18"),
+      stringsAsFactors = FALSE
+    )
+  )
+
+  make_model <- function(spec) {
+    row <- csv[csv$row_id == spec$row_id, , drop = FALSE]
+    if (nrow(row) != 1L) {
+      stop(
+        "Paper local-development regression table lost registered row ",
+        spec$row_id, ".", call. = FALSE
+      )
+    }
+    fixed_effects <- switch(
+      row$adjustment_id[[1L]],
+      state_main = "State",
+      region_main = "Region",
+      stop(
+        "Paper local-development regression table has unsupported adjustment ",
+        row$adjustment_id[[1L]], ".", call. = FALSE
+      )
+    )
+    structure(
+      list(
+        tidy = data.frame(
+          term = "linguistic_distance",
+          estimate = num(row$estimate[[1L]]),
+          std.error = num(row$std.error[[1L]]),
+          p.value = num(row$p.value_holm[[1L]]),
+          stringsAsFactors = FALSE
+        ),
+        glance = data.frame(
+          outcome = spec$outcome,
+          period = spec$period,
+          fixed_effects = fixed_effects,
+          controls = "Yes",
+          nobs = as.integer(row$n[[1L]]),
+          stringsAsFactors = FALSE
+        )
+      ),
+      class = "modelsummary_list"
+    )
+  }
+
+  panels <- lapply(panel_specs, function(specs) {
+    models <- lapply(seq_len(nrow(specs)), function(i) make_model(specs[i, , drop = FALSE]))
+    names(models) <- paste0("(", seq_along(models), ")")
+    models
+  })
+
+  as_text <- function(x) as.character(x)
+  gof_map <- list(
+    list(raw = "outcome", clean = "Dependent variable", fmt = as_text),
+    list(raw = "period", clean = "Period", fmt = as_text),
+    list(raw = "fixed_effects", clean = "Fixed effects", fmt = as_text),
+    list(raw = "controls", clean = "Predetermined controls", fmt = as_text),
+    list(raw = "nobs", clean = "Observations", fmt = 0)
+  )
+
+  old_knit_to <- knitr::opts_knit$get("rmarkdown.pandoc.to")
+  old_opt <- getOption("modelsummary_format_numeric_latex")
+  old_stars_note <- getOption("modelsummary_stars_note")
+  on.exit(knitr::opts_knit$set(rmarkdown.pandoc.to = old_knit_to), add = TRUE)
+  on.exit(options(
+    modelsummary_format_numeric_latex = old_opt,
+    modelsummary_stars_note = old_stars_note
+  ), add = TRUE)
+  knitr::opts_knit$set(rmarkdown.pandoc.to = "latex")
+  options(
+    modelsummary_format_numeric_latex = "plain",
+    modelsummary_stars_note = FALSE
+  )
+
+  tex <- suppress_modelsummary_latex_preamble_warning(modelsummary::modelsummary(
+    models = panels,
+    shape = "rbind",
+    coef_map = c("linguistic_distance" = "Linguistic distance from Hindi"),
+    estimate = "{estimate}{stars}",
+    statistic = "({std.error})",
+    stars = regression_star_levels(),
+    fmt = 4,
+    gof_map = gof_map,
+    title = table_caption(name),
+    output = "kableExtra",
+    longtable = TRUE,
+    escape = FALSE,
+    notes = NULL
+  ))
+  tex <- kableExtra::kable_styling(
+    tex,
+    latex_options = c("repeat_header", "striped"),
+    position = "center",
+    full_width = FALSE,
+    font_size = 9
+  )
+  tex <- tex |>
+    kableExtra::column_spec(1, width = "4.5cm") |>
+    kableExtra::column_spec(2:5, width = "2.7cm")
+  note <- public_table_note(name)
+  if (!is.null(note)) {
+    tex <- kableExtra::footnote(
+      tex,
+      general = note,
+      general_title = "",
+      threeparttable = TRUE,
+      footnote_as_chunk = TRUE,
+      escape = FALSE
+    )
+  }
+  single_space_longtable_tex(tex)
+}
+
 paper_language_behavior_modelsummary_table <- function(table, name) {
   need_pkg("modelsummary", "language-behavior regression table rendering")
   csv <- attr(table, "csv_data", exact = TRUE)
@@ -1038,6 +1199,10 @@ save_table_tex <- function(table, path, name, public = TRUE) {
     tex <- paper_language_behavior_modelsummary_table(table, name)
     if (!is.null(tex)) return(write_table_tex(tex, path, name))
   }
+  if (identical(name, "paper_local_development")) {
+    tex <- paper_local_development_modelsummary_table(table, name)
+    if (!is.null(tex)) return(write_table_tex(tex, path, name))
+  }
   if (name %in% c("fs_cons", "cons_iv") && !is.null(table_model) && !is_formatted_status_table(as.data.frame(table, check.names = FALSE))) {
     tex <- public_modelsummary_table(
       table_model,
@@ -1060,9 +1225,7 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   )
   landscape_table <- landscape_longtable
   regression_table <- name %in% c("probit_mfx", "fs_cons", "cons_iv") && !is_formatted_status_table(df_render)
-  compact_result_table <- name %in% c(
-    "paper_local_development", "paper_identification_boundary"
-  )
+  compact_result_table <- identical(name, "paper_identification_boundary")
   appendix_compact_table <- name %in% c(
     "appendix_a1_data_source_timing", "appendix_a3_lineage_source_hierarchy",
     "appendix_a4_nss_schooling_constructs", "appendix_a5_dise_construction",
@@ -1164,7 +1327,6 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   if (compact_result_table) {
     widths <- switch(
       name,
-      paper_local_development = c("2.1cm", "5.0cm", "1.35cm", "1.2cm", "1.2cm", "4.2cm"),
       paper_identification_boundary = c("3.5cm", "2.2cm", "1.1cm", "1.1cm", "1.3cm", "4.6cm")
     )
     tex <- apply_table_column_widths(tex, widths)

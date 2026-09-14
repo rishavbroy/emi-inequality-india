@@ -152,11 +152,11 @@ public_table_note <- function(name) {
       "These are descriptive conditional associations, not causal returns or treatment-effect heterogeneity. Sources are identified in the caption."
     ),
     paper_local_development = paste(
-      "Entries are reduced-form associations of one Shastry linguistic-distance degree with the representative outcome in its native unit; raw and Holm-adjusted p-values use state-clustered inference within the registered outcome/specification family.",
-      "Household-capacity, migration, finance, asset, and labor rows use state fixed effects plus predetermined controls; Economic Census rows use the registered region-plus-controls specification, which is the predeclared comparison carrying the sector-composition signal.",
-      "The 2001-11 Census and 2005-13 Economic Census windows overlap the 2007 schooling measurement, so these rows are co-evolving development margins rather than post-treatment EMI mechanisms.",
-      "PLFS 2017-18 supplies the displayed labor endpoint; the semantic CSV also retains matched NSS66 Holm p-values so the broad-labor null is auditable across survey waves.",
-      "Heterogeneous units are intentionally not standardized onto a common axis. Null rows are retained by design because the table asks whether the pattern reflects selective transformation or broad local expansion."
+      "Each column is a separate district regression. The coefficient reports the association of one Shastry linguistic-distance degree with the listed outcome in its native unit; state-clustered standard errors are in parentheses and stars use Holm-adjusted p-values within the registered outcome/specification family.",
+      "Household-capacity, migration, finance, asset, and labor regressions use state fixed effects plus predetermined controls; Economic Census regressions use region fixed effects plus the same controls, as reported in the table.",
+      regression_star_note(),
+      "The 2001-11 Census and 2005-13 Economic Census windows overlap the 2007 schooling measurement, so these are co-evolving development margins rather than post-treatment EMI mechanisms.",
+      "PLFS 2017-18 supplies the displayed labor endpoint; the semantic CSV retains the raw and Holm-adjusted p-values and matched NSS66 adjusted p-values. Heterogeneous outcomes remain in native units, and null outcomes are retained by design. Sources are identified in the caption."
     ),
     appendix_a1_data_source_timing = paste(
       "Final-paper source families are shown once at their primary analytical role.",

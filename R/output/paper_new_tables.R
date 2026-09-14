@@ -522,16 +522,6 @@ paper_local_development_csv_data <- function(
   out
 }
 
-paper_local_development_value <- function(x) {
-  if (!is.finite(x)) return("")
-  sprintf("%+.4f", x)
-}
-
-paper_local_development_p_value <- function(x) {
-  if (!is.finite(x)) return("")
-  if (x < 0.001) "<0.001" else sprintf("%.3f", x)
-}
-
 make_paper_local_development_table <- function(
     household_capacity, migration, housing, economic_census,
     nss66_labor, plfs_2017_18_labor) {
@@ -540,13 +530,9 @@ make_paper_local_development_table <- function(
     nss66_labor, plfs_2017_18_labor
   )
   out <- data.frame(
-    Domain = csv$domain,
-    `Representative outcome` = csv$outcome,
-    Estimate = vapply(csv$estimate, paper_local_development_value, character(1)),
-    `Raw p` = vapply(csv$p.value, paper_local_development_p_value, character(1)),
-    `Holm p` = vapply(csv$p.value_holm, paper_local_development_p_value, character(1)),
-    Interpretation = csv$interpretation,
-    check.names = FALSE, stringsAsFactors = FALSE
+    Term = "Linguistic distance from Hindi",
+    stringsAsFactors = FALSE,
+    check.names = FALSE
   )
   attr(out, "csv_data") <- csv
   out
