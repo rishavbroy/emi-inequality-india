@@ -592,6 +592,133 @@ write_table_tex <- function(tex, path, name) {
   path
 }
 
+paper_schooling_market_modelsummary_table <- function(table, name) {
+  need_pkg("modelsummary", "schooling-market regression table rendering")
+  csv <- safe_df(attr(table, "csv_data", exact = TRUE))
+  if (!nrow(csv)) return(NULL)
+
+  required <- c(
+    "panel", "measure_id", "measure", "specification_id", "estimate",
+    "std_error", "p_value", "n"
+  )
+  missing <- setdiff(required, names(csv))
+  if (length(missing)) {
+    stop(
+      "Paper schooling-market regression table is missing columns: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  measures <- paper_schooling_market_measure_registry()
+  specs <- c("unadjusted", "region_main", "state_main")
+  model_names <- c("(1)", "(2)", "(3)")
+  state_rows <- csv[csv$panel == "state_organization", , drop = FALSE]
+
+  models <- lapply(seq_len(nrow(measures)), function(i) {
+    id <- measures$measure_id[[i]]
+    rows <- csv[
+      csv$panel == "association" & csv$measure_id == id &
+        csv$specification_id %in% specs,
+      , drop = FALSE
+    ]
+    rows <- rows[match(specs, rows$specification_id), , drop = FALSE]
+    if (nrow(rows) != length(specs) || any(is.na(rows$specification_id))) {
+      stop("Paper schooling-market regression table lost a registered specification for ", id, ".", call. = FALSE)
+    }
+
+    state_row <- state_rows[state_rows$measure_id == id, , drop = FALSE]
+    state_r2 <- if (nrow(state_row) == 1L) num(state_row$estimate[[1L]]) else NA_real_
+
+    outcome_models <- lapply(seq_along(specs), function(j) {
+      structure(
+        list(
+          tidy = data.frame(
+            term = "linguistic_distance",
+            estimate = num(rows$estimate[[j]]),
+            std.error = num(rows$std_error[[j]]),
+            p.value = num(rows$p_value[[j]]),
+            stringsAsFactors = FALSE
+          ),
+          glance = data.frame(
+            region_fe = c("No", "Yes", "No")[[j]],
+            state_fe = c("No", "No", "Yes")[[j]],
+            controls = c("No", "Yes", "Yes")[[j]],
+            nobs = as.integer(rows$n[[j]]),
+            state_membership_r2 = state_r2,
+            stringsAsFactors = FALSE
+          )
+        ),
+        class = "modelsummary_list"
+      )
+    })
+    names(outcome_models) <- model_names
+    outcome_models
+  })
+  names(models) <- measures$label
+
+  yes_no <- function(x) as.character(x)
+  gof_map <- list(
+    list(raw = "region_fe", clean = "Region fixed effects", fmt = yes_no),
+    list(raw = "state_fe", clean = "State fixed effects", fmt = yes_no),
+    list(raw = "controls", clean = "Predetermined controls", fmt = yes_no),
+    list(raw = "nobs", clean = "Observations", fmt = 0),
+    list(raw = "state_membership_r2", clean = "State-membership $R^2$", fmt = 3)
+  )
+
+  old_knit_to <- knitr::opts_knit$get("rmarkdown.pandoc.to")
+  old_opt <- getOption("modelsummary_format_numeric_latex")
+  old_stars_note <- getOption("modelsummary_stars_note")
+  on.exit(knitr::opts_knit$set(rmarkdown.pandoc.to = old_knit_to), add = TRUE)
+  on.exit(options(
+    modelsummary_format_numeric_latex = old_opt,
+    modelsummary_stars_note = old_stars_note
+  ), add = TRUE)
+  knitr::opts_knit$set(rmarkdown.pandoc.to = "latex")
+  options(
+    modelsummary_format_numeric_latex = "plain",
+    modelsummary_stars_note = FALSE
+  )
+
+  tex <- suppress_modelsummary_latex_preamble_warning(modelsummary::modelsummary(
+    models = models,
+    shape = "rbind",
+    coef_map = c("linguistic_distance" = "Linguistic distance from Hindi"),
+    estimate = "{estimate}{stars}",
+    statistic = "({std.error})",
+    stars = regression_star_levels(),
+    fmt = 3,
+    gof_map = gof_map,
+    title = table_caption(name),
+    output = "kableExtra",
+    longtable = TRUE,
+    escape = FALSE,
+    notes = NULL
+  ))
+  tex <- kableExtra::kable_styling(
+    tex,
+    latex_options = c("repeat_header", "striped"),
+    position = "center",
+    full_width = FALSE,
+    font_size = 9
+  )
+  tex <- tex |>
+    kableExtra::column_spec(1, width = "6.0cm") |>
+    kableExtra::column_spec(2:4, width = "2.4cm")
+  note <- public_table_note(name)
+  if (!is.null(note)) {
+    tex <- kableExtra::footnote(
+      tex,
+      general = note,
+      general_title = "",
+      threeparttable = TRUE,
+      footnote_as_chunk = TRUE,
+      escape = FALSE
+    )
+  }
+  single_space_longtable_tex(tex)
+}
+
 paper_language_behavior_modelsummary_table <- function(table, name) {
   need_pkg("modelsummary", "language-behavior regression table rendering")
   csv <- attr(table, "csv_data", exact = TRUE)
@@ -717,6 +844,10 @@ paper_language_behavior_modelsummary_table <- function(table, name) {
 save_table_tex <- function(table, path, name, public = TRUE) {
   need_pkg("kableExtra", "LaTeX table output")
   table_model <- attr(table, "table_model")
+  if (identical(name, "paper_schooling_market_geography")) {
+    tex <- paper_schooling_market_modelsummary_table(table, name)
+    if (!is.null(tex)) return(write_table_tex(tex, path, name))
+  }
   if (identical(name, "paper_language_behavior")) {
     tex <- paper_language_behavior_modelsummary_table(table, name)
     if (!is.null(tex)) return(write_table_tex(tex, path, name))
@@ -747,7 +878,6 @@ save_table_tex <- function(table, path, name, public = TRUE) {
     "paper_economic_conversion",
     "paper_local_development", "paper_identification_boundary"
   )
-  schooling_market_table <- identical(name, "paper_schooling_market_geography")
   appendix_compact_table <- name %in% c(
     "appendix_a1_data_source_timing", "appendix_a3_lineage_source_hierarchy",
     "appendix_a4_nss_schooling_constructs", "appendix_a5_dise_construction",
@@ -800,7 +930,7 @@ save_table_tex <- function(table, path, name, public = TRUE) {
     # Keep compact paper-result tables visually neutral. Semantic panel grouping
     # and parenthesized standard errors already provide the needed row structure.
     latex_options <- c("repeat_header")
-  } else if (single_page_wide_table || schooling_market_table) {
+  } else if (single_page_wide_table) {
     # Short landscape tables stay non-breaking here; paper-new.qmd owns page
     # orientation through Quarto's native .landscape block.
     latex_options <- c("HOLD_position", "striped")
@@ -816,7 +946,7 @@ save_table_tex <- function(table, path, name, public = TRUE) {
     latex_options = latex_options,
     full_width = FALSE,
     position = "center",
-    font_size = if (single_page_wide_table || landscape_table || regression_table || compact_result_table || schooling_market_table || appendix_compact_table) 9 else NULL
+    font_size = if (single_page_wide_table || landscape_table || regression_table || compact_result_table || appendix_compact_table) 9 else NULL
   )
   if (nrow(grouped$groups)) {
     for (i in rev(seq_len(nrow(grouped$groups)))) {
@@ -894,11 +1024,6 @@ save_table_tex <- function(table, path, name, public = TRUE) {
       appendix_e4_missingness = c("4.5cm", "1.6cm", "1.6cm", "1.7cm", "2.6cm")
     )
     tex <- apply_table_column_widths(tex, widths)
-  }
-  if (schooling_market_table) {
-    tex <- tex |>
-      kableExtra::column_spec(1, width = "4.1cm") |>
-      kableExtra::column_spec(2:ncol(df_render), width = "2.65cm")
   }
   if (regression_table) {
     header <- switch(name,

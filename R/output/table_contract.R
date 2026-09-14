@@ -48,7 +48,7 @@ public_table_caption_text <- function(name) {
     sum_tbl_iv = "Summary Statistics for 2SLS Model",
     paper_core_summary = "Core Variables and Summary Statistics. Sources: NSS 64th Round; Census of India 2001; NSS 61st Round; HCES 2022-23 and 2023-24.",
     paper_schooling_market_geography = paste(
-      "Geographic Organization of English-Learning Opportunities.",
+      "Linguistic Distance and English-Learning Opportunities across Geographic Specifications.",
       "Sources: NSS 64th Round, 2007-08; DISE 2007-08; Census of India 2001."
     ),
     paper_language_behavior = paste(
@@ -123,9 +123,9 @@ public_table_note <- function(name) {
       "Sources: NSS 64th Round; Census of India 2001; NSS 61st Round; HCES 2022-23 and 2023-24. Construction details are documented in the data appendix."
     ),
     paper_schooling_market_geography = paste(
-      "Panels A-C report standardized coefficients from district regressions of each schooling measure on speaker-weighted linguistic distance from Hindi. State-clustered standard errors are in parentheses; region/state fixed effects and predetermined controls are included where indicated.",
-      "Panel D reports each schooling measure's R-squared from state indicators alone and the raw/state-residual Pearson correlations between DISE 2007-08 English-medium enrollment shares and the corresponding NSS measures.",
-      "Each regression outcome uses one fixed complete-case sample across specifications. The state-membership R-squared locates variation and does not identify effects of state institutions; DISE provides independent school-reported validation rather than a replacement treatment definition.",
+      "Each outcome block reports standardized coefficients from district regressions on speaker-weighted linguistic distance from Hindi. State-clustered standard errors are in parentheses.",
+      "Columns (1)-(3) are unadjusted, region fixed effects plus predetermined Census-2001 controls, and state fixed effects plus the same controls, respectively; the rows below each coefficient indicate these specification choices explicitly.",
+      "Each outcome uses one fixed complete-case sample across its three specifications. State-membership R-squared is from state indicators alone, is descriptive rather than causal, and is not reported for the DISE outcome because that summary is not part of the registered state-organization comparison.",
       regression_star_note(),
       "Sources: NSS 64th Round, 2007-08; DISE 2007-08; Census of India 2001."
     ),

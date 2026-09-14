@@ -933,12 +933,6 @@ paper_schooling_market_fixture <- function() {
       stringsAsFactors = FALSE
     )
   }))
-  validation <- data.frame(
-    comparison = c("enrolled_total_denominator", "all_child_context"),
-    n = c(520L, 520L), pearson = c(0.896, 0.882),
-    state_residual_pearson = c(0.607, 0.562), status = "estimated",
-    stringsAsFactors = FALSE
-  )
   panel <- data.frame(
     state_code_2001 = rep(c("01", "02"), each = 4L),
     ling_distance_nonzero_mean = c(1:4, 5:8),
@@ -951,53 +945,36 @@ paper_schooling_market_fixture <- function() {
   )
   list(
     district_mechanisms = list(estimates = estimates),
-    validation = validation,
     panel = panel
   )
 }
 
-test_that("paper schooling-market table preserves regression inference and summary statistics", {
+test_that("paper schooling-market table preserves regression inference and state organization", {
   fixture <- paper_schooling_market_fixture()
   table <- make_paper_schooling_market_geography_table(
-    fixture$district_mechanisms, fixture$validation, fixture$panel
+    fixture$district_mechanisms, fixture$panel
   )
   csv <- table_csv_data(table)
 
-  expect_equal(nrow(csv), 28L)
+  expect_equal(nrow(csv), 24L)
   expect_equal(c(
     sum(csv$panel == "association"),
-    sum(csv$panel == "state_organization"),
-    sum(csv$panel == "source_agreement")
-  ), c(18L, 6L, 4L))
+    sum(csv$panel == "state_organization")
+  ), c(18L, 6L))
+  expect_false("source_agreement" %in% csv$panel)
   expect_true(all(vapply(
     csv[c("estimate", "std_error", "p_value")], is.numeric, logical(1)
   )))
   expect_true(all(is.finite(csv$std_error[csv$panel == "association"])))
   expect_true(all(is.finite(csv$p_value[csv$panel == "association"])))
-  expect_equal(
-    csv$estimate[
-      csv$measure_id == "nss_emi_enrolled" &
-        csv$specification_id == "raw"
-    ],
-    0.896
+  expect_setequal(
+    unique(csv$specification_id[csv$panel == "association"]),
+    c("unadjusted", "region_main", "state_main")
   )
-  expect_equal(
-    csv$estimate[
-      csv$measure_id == "nss_emi_enrolled" &
-        csv$specification_id == "state_residual"
-    ],
-    0.607
-  )
-  expect_false(any(c("raw", "region_controls", "state_controls_or_residual") %in% names(csv)))
+  expect_false(any(c("raw", "state_residual") %in% csv$specification_id))
 
-  expect_identical(names(table)[[1L]], "Specification")
-  expect_equal(ncol(table), 1L + nrow(paper_schooling_market_measure_registry()))
-  expect_equal(sum(grepl("^Panel [A-D]\\.", table$Specification)), 4L)
-  expect_true(any(grepl("^\\(", unlist(table, use.names = FALSE))))
-  expect_true(any(grepl("\\*", unlist(table, use.names = FALSE))))
-  expect_true("State-membership R-squared" %in% table$Specification)
-  expect_true("Raw NSS-DISE correlation" %in% table$Specification)
-  expect_true("State-residual NSS-DISE correlation" %in% table$Specification)
+  expect_identical(names(table), "Term")
+  expect_identical(table$Term, "Linguistic distance from Hindi")
 })
 
 test_that("paper state-organization statistic is the state-indicator R-squared", {
@@ -1019,7 +996,7 @@ test_that("paper schooling-market table fails closed when regression inference i
   fixture$district_mechanisms$estimates <- fixture$district_mechanisms$estimates[-1L, ]
   expect_error(
     make_paper_schooling_market_geography_table(
-      fixture$district_mechanisms, fixture$validation, fixture$panel
+      fixture$district_mechanisms, fixture$panel
     ),
     "requires all three registered specifications",
     fixed = TRUE
@@ -1029,7 +1006,7 @@ test_that("paper schooling-market table fails closed when regression inference i
   fixture$district_mechanisms$estimates$standardized_std_error <- NULL
   expect_error(
     paper_schooling_market_geography_csv_data(
-      fixture$district_mechanisms, fixture$validation, fixture$panel
+      fixture$district_mechanisms, fixture$panel
     ),
     "missing regression fields",
     fixed = TRUE
@@ -1043,11 +1020,12 @@ test_that("public table captions fall back safely for unregistered names", {
   )
 })
 
-test_that("paper schooling-market renderer uses regression rows on a pinned table", {
+test_that("paper schooling-market renderer uses modelsummary regression blocks", {
+  skip_if_not_installed("modelsummary")
   skip_if_not_installed("kableExtra")
   fixture <- paper_schooling_market_fixture()
   table <- make_paper_schooling_market_geography_table(
-    fixture$district_mechanisms, fixture$validation, fixture$panel
+    fixture$district_mechanisms, fixture$panel
   )
   dir <- tempfile("schooling-market-")
   dir.create(dir)
@@ -1059,12 +1037,15 @@ test_that("paper schooling-market renderer uses regression rows on a pinned tabl
   )
   tex <- paste(readLines(path, warn = FALSE), collapse = "\n")
 
-  expect_match(tex, "\\begin{table}[H]", fixed = TRUE)
-  expect_false(grepl("\\begin{longtable}", tex, fixed = TRUE))
+  expect_match(tex, "\\begin{longtable}", fixed = TRUE)
+  expect_false(grepl("Panel A\\.", tex))
   expect_match(tex, "(0.040)", fixed = TRUE)
   expect_match(tex, "***", fixed = TRUE)
-  expect_match(tex, "State-membership R-squared", fixed = TRUE)
-  expect_match(tex, "Raw NSS-DISE correlation", fixed = TRUE)
+  expect_match(tex, "Region fixed effects", fixed = TRUE)
+  expect_match(tex, "State fixed effects", fixed = TRUE)
+  expect_match(tex, "Predetermined controls", fixed = TRUE)
+  expect_match(tex, "State-membership $R^2$", fixed = TRUE)
+  expect_false(grepl("NSS-DISE correlation", tex, fixed = TRUE))
   expect_match(tex, "cellcolor", fixed = TRUE)
 })
 

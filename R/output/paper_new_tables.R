@@ -58,7 +58,7 @@ paper_state_membership_r_squared <- function(data, variable, state = "state_code
 }
 
 paper_schooling_market_geography_csv_data <- function(
-    district_mechanisms, nss_validation, district_panel) {
+    district_mechanisms, district_panel) {
   estimates <- safe_df(district_mechanisms$estimates)
   measures <- paper_schooling_market_measure_registry()
   specs <- c("unadjusted", "region_main", "state_main")
@@ -125,121 +125,19 @@ paper_schooling_market_geography_csv_data <- function(
     )
   }))
 
-  validation <- safe_df(nss_validation)
-  expected <- c("enrolled_total_denominator", "all_child_context")
-  validation <- validation[match(expected, validation$comparison), , drop = FALSE]
-  if (nrow(validation) != 2L || any(is.na(validation$comparison)) ||
-      any(plain_chr(validation$status) != "estimated")) {
-    stop("Paper schooling-market table requires both estimated DISE-NSS validation comparisons.", call. = FALSE)
-  }
-  validation_measure_ids <- c(
-    enrolled_total_denominator = "nss_emi_enrolled",
-    all_child_context = "nss_emie_all_children"
-  )
-  validation_labels <- setNames(measures$label, measures$measure_id)
-  validation_rows <- safe_bind_rows(lapply(seq_len(nrow(validation)), function(i) {
-    comparison <- plain_chr(validation$comparison[[i]])
-    measure_id <- unname(validation_measure_ids[[comparison]])
-    data.frame(
-      panel = "source_agreement",
-      measure_id = measure_id,
-      measure = unname(validation_labels[[measure_id]]),
-      specification_id = c("raw", "state_residual"),
-      statistic = "pearson_correlation",
-      estimate = c(num(validation$pearson[[i]]), num(validation$state_residual_pearson[[i]])),
-      std_error = NA_real_, p_value = NA_real_, n = as.integer(validation$n[[i]]),
-      stringsAsFactors = FALSE
-    )
-  }))
-
-  safe_bind_rows(list(assoc, state_rows, validation_rows))
-}
-
-paper_schooling_market_group <- function(label, columns) {
-  row <- as.list(rep("", length(columns)))
-  names(row) <- columns
-  row[[1L]] <- paste0(label, ":")
-  as.data.frame(row, check.names = FALSE, stringsAsFactors = FALSE)
-}
-
-paper_schooling_market_value <- function(x) {
-  x <- num(x)
-  ifelse(is.finite(x), sprintf("%.3f", x), "")
-}
-
-paper_schooling_market_coefficient <- function(estimate, p_value) {
-  if (!is.finite(num(estimate))) return("")
-  paste0(sprintf("%.3f", num(estimate)), significance_stars(p_value))
-}
-
-paper_schooling_market_standard_error <- function(x) {
-  x <- num(x)
-  ifelse(is.finite(x), paste0("(", sprintf("%.3f", x), ")"), "")
+  safe_bind_rows(list(assoc, state_rows))
 }
 
 make_paper_schooling_market_geography_table <- function(
-    district_mechanisms, nss_validation, district_panel) {
+    district_mechanisms, district_panel) {
   csv <- paper_schooling_market_geography_csv_data(
-    district_mechanisms, nss_validation, district_panel
+    district_mechanisms, district_panel
   )
-  measures <- paper_schooling_market_measure_registry()
-  measure_ids <- measures$measure_id
-  columns <- c("Specification", measures$label)
-
-  values_by_measure <- function(rows, formatter) {
-    out <- rep("", length(measure_ids))
-    names(out) <- measure_ids
-    for (id in measure_ids) {
-      x <- rows[rows$measure_id == id, , drop = FALSE]
-      if (nrow(x) == 1L) out[[id]] <- formatter(x)
-    }
-    unname(out)
-  }
-  make_row <- function(label, values) {
-    row <- as.list(c(label, values))
-    names(row) <- columns
-    as.data.frame(row, check.names = FALSE, stringsAsFactors = FALSE)
-  }
-
-  spec_labels <- c(
-    unadjusted = "Panel A. Unadjusted",
-    region_main = "Panel B. Region FE + controls",
-    state_main = "Panel C. State FE + controls"
+  out <- data.frame(
+    Term = "Linguistic distance from Hindi",
+    stringsAsFactors = FALSE,
+    check.names = FALSE
   )
-  regression_rows <- lapply(names(spec_labels), function(spec) {
-    rows <- csv[csv$panel == "association" & csv$specification_id == spec, , drop = FALSE]
-    if (nrow(rows) != length(measure_ids)) {
-      stop("Paper schooling-market table lost a regression outcome for ", spec, ".", call. = FALSE)
-    }
-    estimates <- values_by_measure(rows, function(x) {
-      paper_schooling_market_coefficient(x$estimate[[1L]], x$p_value[[1L]])
-    })
-    ses <- values_by_measure(rows, function(x) paper_schooling_market_standard_error(x$std_error[[1L]]))
-    safe_bind_rows(list(
-      paper_schooling_market_group(unname(spec_labels[[spec]]), columns),
-      make_row("Linguistic distance from Hindi", estimates),
-      make_row("", ses)
-    ))
-  })
-
-  state_rows <- csv[csv$panel == "state_organization", , drop = FALSE]
-  state_r2 <- values_by_measure(state_rows, function(x) paper_schooling_market_value(x$estimate[[1L]]))
-  assoc_rows <- csv[csv$panel == "association" & csv$specification_id == "unadjusted", , drop = FALSE]
-  observations <- values_by_measure(assoc_rows, function(x) as.character(as.integer(x$n[[1L]])))
-  raw_validation <- csv[csv$panel == "source_agreement" & csv$specification_id == "raw", , drop = FALSE]
-  residual_validation <- csv[csv$panel == "source_agreement" & csv$specification_id == "state_residual", , drop = FALSE]
-  raw_corr <- values_by_measure(raw_validation, function(x) paper_schooling_market_value(x$estimate[[1L]]))
-  residual_corr <- values_by_measure(residual_validation, function(x) paper_schooling_market_value(x$estimate[[1L]]))
-
-  summary_rows <- safe_bind_rows(list(
-    paper_schooling_market_group("Panel D. Geographic organization and source agreement", columns),
-    make_row("Observations", observations),
-    make_row("State-membership R-squared", state_r2),
-    make_row("Raw NSS-DISE correlation", raw_corr),
-    make_row("State-residual NSS-DISE correlation", residual_corr)
-  ))
-
-  out <- safe_bind_rows(c(regression_rows, list(summary_rows)))
   attr(out, "csv_data") <- csv
   out
 }
