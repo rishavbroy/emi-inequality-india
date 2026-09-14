@@ -88,10 +88,7 @@ public_probit_ame_rows <- function(df) {
     stop("Canonical probit AME rows require finite estimates, standard errors, and p-values.", call. = FALSE)
   }
 
-  stars <- ifelse(
-    p_value < 0.001, "***",
-    ifelse(p_value < 0.01, "**", ifelse(p_value < 0.05, "*", ""))
-  )
+  stars <- significance_stars(p_value)
   out <- data.frame(
     Term = rep(as.character(df$Term), each = 2L),
     Estimate = as.vector(rbind(

@@ -28,7 +28,9 @@ paper_linguistic_distance_display_labels <- function() {
   )
 }
 
-regression_star_note <- function() "* p < 0.05, ** p < 0.01, *** p < 0.001"
+regression_star_levels <- function() c("*" = 0.10, "**" = 0.05, "***" = 0.01)
+
+regression_star_note <- function() "* p < 0.10, ** p < 0.05, *** p < 0.01"
 
 public_table_caption_text <- function(name) {
   captions <- c(
@@ -114,10 +116,12 @@ public_table_note <- function(name) {
       "Each Panel-A outcome uses one fixed complete-case sample across specifications; DISE is independent administrative validation rather than a replacement treatment definition."
     ),
     paper_language_behavior = paste(
-      "Census-2001 bilingualism and trilingualism regressions are weighted by native speakers and include state fixed effects, native-language state share, and an indicator for the state's most common native language.",
-      "Standard errors and p-values use HC1 heteroskedasticity-robust inference; partial R-squared is the one-degree-of-freedom model-based partial R-squared for the reported distance coefficient.",
-      "Continuous-distance coefficients are percentage-point changes per one Shastry distance degree; distant-language rows compare languages at least three degrees from Hindi with the remaining classified mother tongues.",
-      "Panel B applies the predeclared Hindi-belt sample restriction; the table is descriptive evidence on language-learning behavior rather than an instrumental-variable first stage.",
+      "Each column is a weighted state-by-language regression. Standard errors in parentheses use HC1 heteroskedasticity-robust inference.",
+      "All specifications include state fixed effects, native-language state share, an indicator for the state's most common native language, and a Hindi/Urdu reference indicator where required by the registered specification.",
+      "Continuous-distance coefficients are percentage-point changes per one Shastry distance degree; the distant-language indicator equals one for languages at least three degrees from Hindi.",
+      "Partial R-squared is the one-degree-of-freedom model-based partial R-squared for the reported linguistic-distance coefficient.",
+      "Columns (5)-(7) apply the predeclared Hindi-belt sample restriction. These are descriptive associations with language-learning behavior rather than instrumental-variable first stages.",
+      regression_star_note(),
       "Source: Census of India 2001 bilingualism and trilingualism tables."
     ),
     paper_economic_conversion = paste(

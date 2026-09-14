@@ -330,7 +330,7 @@ ame_modelsummary_table <- function(table, name) {
     coef_rename = ame_modelsummary_label,
     gof_map = ame_gof_map(),
     gof_function = ame_gof_function(table),
-    stars = c("*" = .05, "**" = .01, "***" = .001),
+    stars = regression_star_levels(),
     fmt = 3,
     title = table_caption(name),
     output = "kableExtra",
@@ -438,7 +438,7 @@ public_modelsummary_table <- function(model, name, vcov_matrix = NULL, add_rows 
     models = modelsummary_payload(model, vcov_matrix),
     coef_map = public_regression_coef_map(),
     gof_map = public_modelsummary_gof_map(name),
-    stars = c("*" = .05, "**" = .01, "***" = .001),
+    stars = regression_star_levels(),
     fmt = 3,
     title = table_caption(name),
     output = "kableExtra",
@@ -592,9 +592,135 @@ write_table_tex <- function(tex, path, name) {
   path
 }
 
+paper_language_behavior_modelsummary_table <- function(table, name) {
+  need_pkg("modelsummary", "language-behavior regression table rendering")
+  csv <- attr(table, "csv_data", exact = TRUE)
+  csv <- safe_df(csv)
+  if (!nrow(csv)) return(NULL)
+
+  required <- c(
+    "model_number", "term", "estimate", "std.error", "p.value",
+    "partial_r_squared", "n", "outcome", "population", "sample"
+  )
+  missing <- setdiff(required, names(csv))
+  if (length(missing)) {
+    stop(
+      "Paper language-behavior regression table is missing columns: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  csv <- csv[order(csv$model_number), , drop = FALSE]
+  if (!identical(csv$model_number, seq_len(nrow(csv)))) {
+    stop("Paper language-behavior model numbers must be consecutive.", call. = FALSE)
+  }
+
+  model_names <- paste0("(", csv$model_number, ")")
+  models <- lapply(seq_len(nrow(csv)), function(i) {
+    structure(
+      list(
+        tidy = data.frame(
+          term = csv$term[[i]],
+          estimate = csv$estimate[[i]],
+          std.error = csv$std.error[[i]],
+          p.value = csv$p.value[[i]],
+          stringsAsFactors = FALSE
+        ),
+        glance = data.frame(nobs = csv$n[[i]], stringsAsFactors = FALSE)
+      ),
+      class = "modelsummary_list"
+    )
+  })
+  names(models) <- model_names
+
+  add_rows <- data.frame(
+    term = c(
+      "Outcome", "Population", "Observations", "Partial $R^2$",
+      "State fixed effects", "Language-share controls"
+    ),
+    check.names = FALSE,
+    stringsAsFactors = FALSE
+  )
+  for (i in seq_len(nrow(csv))) {
+    add_rows[[model_names[[i]]]] <- c(
+      csv$outcome[[i]],
+      csv$population[[i]],
+      format(csv$n[[i]], big.mark = ",", scientific = FALSE),
+      sprintf("%.3f", csv$partial_r_squared[[i]]),
+      "Yes",
+      "Yes"
+    )
+  }
+
+  old_knit_to <- knitr::opts_knit$get("rmarkdown.pandoc.to")
+  old_opt <- getOption("modelsummary_format_numeric_latex")
+  old_stars_note <- getOption("modelsummary_stars_note")
+  on.exit(knitr::opts_knit$set(rmarkdown.pandoc.to = old_knit_to), add = TRUE)
+  on.exit(options(
+    modelsummary_format_numeric_latex = old_opt,
+    modelsummary_stars_note = old_stars_note
+  ), add = TRUE)
+  knitr::opts_knit$set(rmarkdown.pandoc.to = "latex")
+  options(
+    modelsummary_format_numeric_latex = "plain",
+    modelsummary_stars_note = FALSE
+  )
+
+  tex <- suppress_modelsummary_latex_preamble_warning(modelsummary::modelsummary(
+    models = models,
+    coef_map = c(
+      "shastry_degree" = "Linguistic distance from Hindi",
+      "distance_distant" = "Distant-language indicator"
+    ),
+    estimate = "{estimate}{stars}",
+    statistic = "({std.error})",
+    stars = regression_star_levels(),
+    fmt = 3,
+    gof_omit = ".*",
+    add_rows = add_rows,
+    title = table_caption(name),
+    output = "kableExtra",
+    longtable = FALSE,
+    escape = FALSE,
+    notes = NULL
+  ))
+  tex <- kableExtra::kable_styling(
+    tex,
+    latex_options = c("HOLD_position", "striped"),
+    position = "center",
+    full_width = FALSE,
+    font_size = 9
+  )
+  tex <- kableExtra::add_header_above(
+    tex,
+    c(" " = 1, "All states" = 4, "Hindi-belt states" = 3),
+    bold = TRUE,
+    escape = FALSE
+  )
+  tex <- tex |>
+    kableExtra::column_spec(1, width = "4.2cm") |>
+    kableExtra::column_spec(2:8, width = "2.35cm")
+  note <- public_table_note(name)
+  if (!is.null(note)) {
+    tex <- kableExtra::footnote(
+      tex,
+      general = note,
+      general_title = "",
+      threeparttable = TRUE,
+      footnote_as_chunk = TRUE,
+      escape = FALSE
+    )
+  }
+  tex
+}
+
 save_table_tex <- function(table, path, name, public = TRUE) {
   need_pkg("kableExtra", "LaTeX table output")
   table_model <- attr(table, "table_model")
+  if (identical(name, "paper_language_behavior")) {
+    tex <- paper_language_behavior_modelsummary_table(table, name)
+    if (!is.null(tex)) return(write_table_tex(tex, path, name))
+  }
   if (name %in% c("fs_cons", "cons_iv") && !is.null(table_model) && !is_formatted_status_table(as.data.frame(table, check.names = FALSE))) {
     tex <- public_modelsummary_table(
       table_model,
@@ -618,7 +744,7 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   landscape_table <- landscape_longtable
   regression_table <- name %in% c("probit_mfx", "fs_cons", "cons_iv") && !is_formatted_status_table(df_render)
   compact_result_table <- name %in% c(
-    "paper_economic_conversion", "paper_language_behavior",
+    "paper_economic_conversion",
     "paper_local_development", "paper_identification_boundary"
   )
   schooling_market_table <- identical(name, "paper_schooling_market_geography")
@@ -725,7 +851,6 @@ save_table_tex <- function(table, path, name, public = TRUE) {
     widths <- switch(
       name,
       paper_economic_conversion = c("5.2cm", rep("2.35cm", 4L)),
-      paper_language_behavior = c("4.1cm", rep("1.25cm", 4L), "1.0cm", "1.8cm", "3.0cm"),
       paper_local_development = c("2.1cm", "5.0cm", "1.35cm", "1.2cm", "1.2cm", "4.2cm"),
       paper_identification_boundary = c("3.5cm", "2.2cm", "1.1cm", "1.1cm", "1.3cm", "4.6cm")
     )

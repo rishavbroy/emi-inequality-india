@@ -182,6 +182,7 @@ make_paper_schooling_market_geography_table <- function(
 paper_language_behavior_registry <- function() {
   data.frame(
     panel = c(rep("national", 4L), rep("hindi_belt", 3L)),
+    model_number = seq_len(7L),
     specification_id = c(
       "english_linear", "english_distant", "hindi_linear", "multilingual_linear",
       "english_linear_hindi_belt", "english_distant_hindi_belt", "hindi_linear_hindi_belt"
@@ -190,23 +191,21 @@ paper_language_behavior_registry <- function() {
       "shastry_degree", "distance_distant", "shastry_degree", "shastry_degree",
       "shastry_degree", "distance_distant", "shastry_degree"
     ),
-    label = c(
-      "Continuous distance -> English acquisition",
-      "Distant-language contrast -> English acquisition",
-      "Continuous distance -> Hindi acquisition",
-      "Continuous distance -> multilingualism",
-      "Continuous distance -> English acquisition",
-      "Distant-language contrast -> English acquisition",
-      "Continuous distance -> Hindi acquisition"
+    regressor = c(
+      "Linguistic distance from Hindi", "Distant-language indicator",
+      "Linguistic distance from Hindi", "Linguistic distance from Hindi",
+      "Linguistic distance from Hindi", "Distant-language indicator",
+      "Linguistic distance from Hindi"
     ),
-    sample_label = c(rep("National", 4L), rep("Hindi-belt states", 3L)),
-    outcome_universe = c(
-      rep("English among multilingual speakers", 2L),
-      "Hindi among multilingual speakers",
-      "Multilingual speakers among native speakers",
-      rep("English among multilingual speakers", 2L),
-      "Hindi among multilingual speakers"
+    outcome = c(
+      "English acquisition", "English acquisition", "Hindi acquisition", "Multilingualism",
+      "English acquisition", "English acquisition", "Hindi acquisition"
     ),
+    population = c(
+      rep("Multilingual speakers", 3L), "Native speakers",
+      rep("Multilingual speakers", 3L)
+    ),
+    sample = c(rep("All states", 4L), rep("Hindi-belt states", 3L)),
     stringsAsFactors = FALSE
   )
 }
@@ -232,53 +231,34 @@ paper_language_behavior_csv_data <- function(c17_mechanism) {
     }
     data.frame(
       panel = registry$panel[[i]],
+      model_number = registry$model_number[[i]],
       specification_id = spec,
-      result = registry$label[[i]],
       term = term,
+      regressor = registry$regressor[[i]],
+      outcome = registry$outcome[[i]],
+      population = registry$population[[i]],
+      sample = registry$sample[[i]],
       estimate = num(coefficient$estimate)[[1L]],
       std.error = num(coefficient$std.error)[[1L]],
       p.value = num(coefficient$p.value)[[1L]],
       partial_r_squared = num(coefficient$partial_r_squared)[[1L]],
       n = as.integer(model$n[[1L]]),
-      sample = registry$sample_label[[i]],
-      outcome_universe = registry$outcome_universe[[i]],
       stringsAsFactors = FALSE
     )
   })
   safe_bind_rows(rows)
 }
 
-paper_language_behavior_group <- function(label) {
-  data.frame(
-    Result = paste0(label, ":"), Estimate = "", SE = "", `p-value` = "",
-    `Partial R2` = "", N = "", Sample = "", `Outcome / universe` = "",
-    check.names = FALSE, stringsAsFactors = FALSE
-  )
-}
-
 make_paper_language_behavior_table <- function(c17_mechanism) {
   csv <- paper_language_behavior_csv_data(c17_mechanism)
-  display_rows <- function(x) {
-    data.frame(
-      Result = x$result,
-      Estimate = sprintf("%.3f", x$estimate),
-      SE = sprintf("%.3f", x$std.error),
-      `p-value` = sprintf("%.3f", x$p.value),
-      `Partial R2` = sprintf("%.3f", x$partial_r_squared),
-      N = format(x$n, big.mark = ",", scientific = FALSE),
-      Sample = x$sample,
-      `Outcome / universe` = x$outcome_universe,
-      check.names = FALSE, stringsAsFactors = FALSE
-    )
-  }
-  national <- csv[csv$panel == "national", , drop = FALSE]
-  hindi_belt <- csv[csv$panel == "hindi_belt", , drop = FALSE]
-  out <- safe_bind_rows(list(
-    paper_language_behavior_group("Panel A. National"),
-    display_rows(national),
-    paper_language_behavior_group("Panel B. Contextual limits"),
-    display_rows(hindi_belt)
-  ))
+  # The machine-readable CSV remains long-form. The LaTeX writer reshapes these
+  # registered estimates into the standard economics layout with specifications
+  # in columns, coefficients over parenthesized standard errors, and GOF rows.
+  out <- data.frame(
+    Term = unique(csv$regressor),
+    stringsAsFactors = FALSE,
+    check.names = FALSE
+  )
   attr(out, "csv_data") <- csv
   out
 }

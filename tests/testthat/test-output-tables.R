@@ -361,7 +361,7 @@ test_that("regression captions remain plain text", {
     character(1)
   )
   expect_true(all(nzchar(captions)))
-  expect_false(any(grepl("\\* p < 0.05", captions)))
+  expect_false(any(grepl(regression_star_note(), captions, fixed = TRUE)))
   expect_false(any(grepl("\\n", captions, fixed = TRUE)))
   expect_false(any(grepl("parbox|tabular|shortstack|linebreak", captions)))
 })
@@ -1065,7 +1065,7 @@ paper_language_behavior_fixture <- function() {
     term = registry$term,
     estimate = seq_len(nrow(registry)),
     std.error = rep(0.5, nrow(registry)),
-    p.value = seq(0.01, 0.07, length.out = nrow(registry)),
+    p.value = c(0.005, 0.02, 0.04, 0.06, 0.08, 0.20, 0.70),
     partial_r_squared = seq(0.01, 0.07, length.out = nrow(registry)),
     status = "estimated",
     reason = NA_character_,
@@ -1080,12 +1080,13 @@ paper_language_behavior_fixture <- function() {
   list(coefficients = coefficients, model_summary = model_summary)
 }
 
-test_that("paper language-behavior table is the bounded national and Hindi-belt evidence set", {
+test_that("paper language-behavior table preserves the registered estimands and regression metadata", {
   csv <- paper_language_behavior_csv_data(paper_language_behavior_fixture())
 
   expect_equal(nrow(csv), 7L)
   expect_equal(sum(csv$panel == "national"), 4L)
   expect_equal(sum(csv$panel == "hindi_belt"), 3L)
+  expect_identical(csv$model_number, seq_len(7L))
   expect_setequal(
     csv$specification_id,
     paper_language_behavior_registry()$specification_id
@@ -1094,21 +1095,55 @@ test_that("paper language-behavior table is the bounded national and Hindi-belt 
     csv$term[csv$specification_id %in% c("english_distant", "english_distant_hindi_belt")],
     rep("distance_distant", 2L)
   )
+  expect_setequal(csv$outcome, c("English acquisition", "Hindi acquisition", "Multilingualism"))
+  expect_setequal(csv$population, c("Multilingual speakers", "Native speakers"))
+  expect_setequal(csv$sample, c("All states", "Hindi-belt states"))
   expect_true(all(vapply(
     csv[c("estimate", "std.error", "p.value", "partial_r_squared")],
     is.numeric, logical(1)
   )))
-  expect_false(any(c("status", "reason") %in% names(csv)))
+  expect_false(any(c("status", "reason", "result", "outcome_universe") %in% names(csv)))
 
   table <- make_paper_language_behavior_table(paper_language_behavior_fixture())
   expect_identical(attr(table, "csv_data"), csv)
-  expect_equal(sum(grepl("^Panel [AB]\\.", table$Result)), 2L)
+  expect_setequal(
+    table$Term,
+    c("Linguistic distance from Hindi", "Distant-language indicator")
+  )
+})
 
-  formatted <- format_table_for_output(table, public = TRUE)
-  expect_identical(names(formatted), names(table))
-  grouped <- summary_table_groups(formatted)
-  expect_equal(nrow(grouped$groups), 2L)
-  expect_equal(nrow(grouped$data), 7L)
+test_that("paper language-behavior renderer uses standard economics regression layout", {
+  skip_if_not_installed("modelsummary")
+  skip_if_not_installed("kableExtra")
+
+  table <- make_paper_language_behavior_table(paper_language_behavior_fixture())
+  tex <- paste(
+    as.character(paper_language_behavior_modelsummary_table(table, "paper_language_behavior")),
+    collapse = "\n"
+  )
+
+  expect_match(tex, "\\begin{table}[H]", fixed = TRUE)
+  expect_false(grepl("\\begin{longtable}", tex, fixed = TRUE))
+  expect_match(tex, "All states", fixed = TRUE)
+  expect_match(tex, "Hindi-belt states", fixed = TRUE)
+  expect_match(tex, "(0.500)", fixed = TRUE)
+  expect_match(tex, "***", fixed = TRUE)
+  expect_match(tex, "**", fixed = TRUE)
+  expect_match(tex, "Outcome", fixed = TRUE)
+  expect_match(tex, "Population", fixed = TRUE)
+  expect_match(tex, "Partial $R^2$", fixed = TRUE)
+  expect_match(tex, "cellcolor", fixed = TRUE)
+})
+
+test_that("regression stars use the manuscript-wide economics convention", {
+  expect_equal(
+    significance_stars(c(0.20, 0.08, 0.04, 0.009)),
+    c("", "*", "**", "***")
+  )
+  expect_equal(
+    regression_star_levels(),
+    c("*" = 0.10, "**" = 0.05, "***" = 0.01)
+  )
 })
 
 test_that("paper language-behavior table fails closed when a registered result disappears", {

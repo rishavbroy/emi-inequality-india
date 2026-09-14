@@ -171,15 +171,18 @@ Persistence does not mean that a district's language environment is fully summar
 
 ## Language-Learning Behavior as a Function of Linguistic Conditions {#sec-language-behavior}
 
-A relative-cost measure is economically useful only if it corresponds to differences in language-learning behavior. The Census-2001 bilingualism and trilingualism tables record native-language populations and their reported subsidiary languages, allowing me to compare English acquisition, Hindi acquisition, and multilingualism across language groups [@officeoftheregistrargeneralandcensuscommissionerofindiaCensusIndia20012001]. The regressions in @tbl-language-behavior are weighted by native-language population and compare language groups within states while conditioning on their state population share and whether they are the state's modal language.
+A relative-cost measure is economically useful only if it corresponds to differences in language-learning behavior. The Census-2001 bilingualism and trilingualism tables record native-language populations and their reported subsidiary languages, allowing me to compare English acquisition, Hindi acquisition, and multilingualism across language groups [@officeoftheregistrargeneralandcensuscommissionerofindiaCensusIndia20012001]. The regressions in Table~\ref{tbl-paper-language-behavior} are weighted by native-language population and compare language groups within states while conditioning on their state population share and whether they are the state's modal language.
+
+::: {.landscape}
 
 ```{r}
-#| label: tbl-language-behavior
 #| echo: false
 #| results: asis
 
 render_public_table("../outputs/tables/main/paper_language_behavior.tex", "paper_language_behavior")
 ```
+
+:::
 
 The continuous English relationship is positive but imprecise. One additional Shastry distance degree is associated with about 2.23 percentage points more English acquisition among multilingual speakers, with $p=0.123$. The nonlinear comparison is much stronger: speakers of languages at least three degrees from Hindi have an English-acquisition rate about 16.73 percentage points higher than speakers of the remaining classified mother tongues. This contrast is consistent with Shastry's emphasis on nonlinear differences in the relative cost of learning English [@shastry2012a].
 

@@ -104,9 +104,10 @@ insert_summary_group <- function(df, label, before_var) {
 }
 
 significance_stars <- function(p) {
-  ifelse(is.finite(p) & p < 0.001, "***",
-    ifelse(is.finite(p) & p < 0.01, "**",
-      ifelse(is.finite(p) & p < 0.05, "*", "")))
+  cutoffs <- regression_star_levels()
+  ifelse(is.finite(p) & p < cutoffs[["***"]], "***",
+    ifelse(is.finite(p) & p < cutoffs[["**"]], "**",
+      ifelse(is.finite(p) & p < cutoffs[["*"]], "*", "")))
 }
 
 format_estimate <- function(estimate, p.value = NA_real_) {
