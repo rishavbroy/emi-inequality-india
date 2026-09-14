@@ -22,7 +22,12 @@ save_appendix_tables <- function(exhibits, names, cfg) {
     }
     if ("tex" %in% formats) {
       dir.create(dirname(paths[["tex"]]), recursive = TRUE, showWarnings = FALSE)
-      written <- c(written, save_table_tex(exhibits[[name]], paths[["tex"]], name, public = TRUE))
+      written <- c(written, save_table_tex(
+        table = exhibits[[name]],
+        path = paths[["tex"]],
+        name = name,
+        public = TRUE
+      ))
     }
   }
   written

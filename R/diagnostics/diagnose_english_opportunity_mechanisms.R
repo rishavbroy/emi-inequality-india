@@ -569,7 +569,10 @@ save_english_opportunity_mechanism_table <- function(
       table, file.path(dir, paste0(name, ".csv")), public = TRUE
     ),
     tex = save_table_tex(
-      table, file.path(dir, paste0(name, ".tex")), name, public = TRUE
+      table = table,
+      path = file.path(dir, paste0(name, ".tex")),
+      name = name,
+      public = TRUE
     )
   )
 }

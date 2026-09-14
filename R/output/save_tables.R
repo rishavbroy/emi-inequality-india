@@ -951,7 +951,12 @@ save_tables <- function(tables, cfg) {
     }
     if ("tex" %in% formats) {
       append_path(suppress_atomic_vector_coercion_warning(
-        save_table_tex(tables[[n]], file.path(dir, paste0(n, ".tex")), n, public = public)
+        save_table_tex(
+          table = tables[[n]],
+          path = file.path(dir, paste0(n, ".tex")),
+          name = n,
+          public = public
+        )
       ))
     }
   }

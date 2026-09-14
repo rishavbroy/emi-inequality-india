@@ -1051,7 +1051,12 @@ test_that("paper schooling-market renderer uses regression rows on a pinned tabl
   )
   dir <- tempfile("schooling-market-")
   dir.create(dir)
-  path <- save_table_tex(table, "paper_schooling_market_geography", dir, public = TRUE)
+  path <- save_table_tex(
+    table = table,
+    path = file.path(dir, "paper_schooling_market_geography.tex"),
+    name = "paper_schooling_market_geography",
+    public = TRUE
+  )
   tex <- paste(readLines(path, warn = FALSE), collapse = "\n")
 
   expect_match(tex, "\\begin{table}[H]", fixed = TRUE)
