@@ -101,7 +101,10 @@ public_table_caption_text <- function(name) {
     first_stage = "First-Stage Diagnostic Results",
     english_opportunity_mechanism = "Linguistic-Distance Association Across Mechanism Stages"
   )
-  captions[[name]] %||% name
+  if (name %in% names(captions)) {
+    return(unname(captions[[name]]))
+  }
+  name
 }
 
 regression_caption <- function(cap) cap

@@ -1036,6 +1036,13 @@ test_that("paper schooling-market table fails closed when regression inference i
   )
 })
 
+test_that("public table captions fall back safely for unregistered names", {
+  expect_identical(
+    public_table_caption_text("temporary_table"),
+    "temporary_table"
+  )
+})
+
 test_that("paper schooling-market renderer uses regression rows on a pinned table", {
   skip_if_not_installed("kableExtra")
   fixture <- paper_schooling_market_fixture()
