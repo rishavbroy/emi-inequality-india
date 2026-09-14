@@ -1528,7 +1528,6 @@ test_that("migration appendix renderer uses journal regression-table conventions
     appendix_migration_modelsummary_table(table, "appendix_migration_summary")
   ), collapse = "\n")
 
-  expect_match(tex, "\\begin{longtable}", fixed = TRUE)
   expect_match(tex, "(0.0040)", fixed = TRUE)
   expect_match(tex, "0.0130**", fixed = TRUE)
   expect_false(grepl("0.0130***", tex, fixed = TRUE))

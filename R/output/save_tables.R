@@ -986,13 +986,15 @@ appendix_migration_modelsummary_table <- function(table, name) {
     gof_map = gof_map,
     title = table_caption(name),
     output = "kableExtra",
-    longtable = TRUE,
+    # This six-regression table fits on one page. Keep it as a regular float so
+    # Quarto can bind the chunk's tbl-* label to the rendered table.
+    longtable = FALSE,
     escape = FALSE,
     notes = NULL
   ))
   tex <- kableExtra::kable_styling(
     tex,
-    latex_options = c("repeat_header", "striped"),
+    latex_options = c("HOLD_position", "striped"),
     position = "center",
     full_width = FALSE,
     font_size = 9
@@ -1011,7 +1013,7 @@ appendix_migration_modelsummary_table <- function(table, name) {
       escape = FALSE
     )
   }
-  single_space_longtable_tex(tex)
+  tex
 }
 
 paper_local_development_modelsummary_table <- function(table, name) {
