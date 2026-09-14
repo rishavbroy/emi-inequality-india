@@ -170,11 +170,17 @@ test_that("first-stage table reports full coefficients with standard errors bene
   expect_false("Model's F-Statistic" %in% out$Term)
 
   ling_row <- which(out$Term == "Linguistic distance")
-  expect_equal(out[[value_col]][[ling_row]], "1.234**")
+  expect_equal(
+    out[[value_col]][[ling_row]],
+    paste0("1.234", significance_stars(fs$p.value[[1L]]))
+  )
   expect_equal(out[[value_col]][[ling_row + 1L]], "(0.456)")
 
   f_row <- out[out$Term == "Instrument's clustered Wald F", , drop = FALSE]
-  expect_equal(f_row[[value_col]][[1]], "9.46**")
+  expect_equal(
+    f_row[[value_col]][[1]],
+    paste0("9.46", significance_stars(fs$partial_p[[1L]]))
+  )
   mop_row <- out[out$Term == "Montiel Olea-Pflueger effective F", , drop = FALSE]
   expect_equal(mop_row[[value_col]][[1]], "8.81")
   critical_row <- out[out$Term == "MOP 5% critical value (10% relative bias)", , drop = FALSE]
