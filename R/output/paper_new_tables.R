@@ -274,7 +274,7 @@ make_paper_language_behavior_table <- function(c17_mechanism) {
   national <- csv[csv$panel == "national", , drop = FALSE]
   hindi_belt <- csv[csv$panel == "hindi_belt", , drop = FALSE]
   out <- safe_bind_rows(list(
-    paper_language_behavior_group("Panel A. National C-17"),
+    paper_language_behavior_group("Panel A. National"),
     display_rows(national),
     paper_language_behavior_group("Panel B. Contextual limits"),
     display_rows(hindi_belt)

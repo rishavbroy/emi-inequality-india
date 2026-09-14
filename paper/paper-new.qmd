@@ -155,6 +155,48 @@ render_public_table("../outputs/tables/main/paper_core_summary.tex", "paper_core
 
 :::
 
+# Inherited Linguistic Conditions {#sec-language}
+
+## Proxies and Persistence of Linguistic Conditions {#sec-language-persistence}
+
+Why measure distance from Hindi rather than distance from English? India's linguistic diversity gives languages of wider communication an important role, and both Hindi and English have served that role across groups [@clingingsmithIndustrializationBilingualismIndia2014; @shastry2012a]. Shastry's argument is comparative: linguistic diversity often compels people to learn either English or Hindi, so a mother tongue that is more distant from Hindi raises the relative cost of learning Hindi and thereby lowers the opportunity cost of learning English [@shastry2012a]. In the original paper's terms, as the distance between one's mother tongue and Hindi increases, I expect the opportunity cost of learning English over Hindi to decrease. The speaker-weighted measure defined in @sec-data therefore summarizes a historically rooted difference in the relative cost of acquiring Hindi rather than a direct measure of English proficiency.
+
+I call these conditions *inherited* because the measured district pattern changes little across the decade for which I can reconstruct it independently. Among the 91 Census-2001 districts meeting the historical reconstruction requirements in both years, the correlation between the 1991 and 2001 speaker-weighted distance measures is 0.898; weighting districts by their 1991 populations raises the correlation to 0.928. The share of speakers whose mother tongues are at least three Shastry degrees from Hindi is similarly persistent, with a population-weighted correlation of 0.919. @fig-linguistic-persistence shows the district-level comparison. This persistence is consistent with Shastry's finding that district linguistic distance is highly correlated across earlier Census years [@shastry2012a].
+
+![Persistence of speaker-weighted linguistic distance from Hindi from 1991 to 2001. Each point is a Census-2001 district meeting the historical language-reconstruction requirements in both years; the dashed line is the 45-degree line. Sources: Census of India 1991 Language Atlas [@officeRegistrarLanguageAtlasIndia2004] and Census of India 2001 language tables [@officeoftheregistrargeneralandcensuscommissionerofindiaCensusIndia20012001].](../outputs/figures/appendix/appendix_b5_historical_language_persistence.pdf){#fig-linguistic-persistence fig-pos="H" width="82%"}
+
+The historical reconstruction is also checked against an external source. Helms and Lim's replication data include a Shastry-derived 1991 district linguistic-distance measure [@helmsReplicationDataGlobalization2025]. On the 148 districts where their extract and my 1991 reconstruction overlap, the two measures have a correlation of 0.989. I use this comparison as a source-reconstruction check: it verifies that two independently assembled 1991 series recover nearly the same district ranking, rather than introducing another definition of linguistic distance. The detailed source checks are reported in @tbl-app-b6.
+
+Persistence does not mean that a district's language environment is fully summarized by these measures. Children encounter language through family members, peers, schools, media, and other social contexts; those contexts can affect both the amount and kind of language input they receive [@roweLanguageDevelopmentContext2020]. Linguistic distance from Hindi therefore captures one persistent component of the relative cost of acquiring a bridge language, not the complete language environment a child inherits.
+
+## Language-Learning Behavior as a Function of Linguistic Conditions {#sec-language-behavior}
+
+A relative-cost measure is economically useful only if it corresponds to differences in language-learning behavior. The Census-2001 bilingualism and trilingualism tables record native-language populations and their reported subsidiary languages, allowing me to compare English acquisition, Hindi acquisition, and multilingualism across language groups [@officeoftheregistrargeneralandcensuscommissionerofindiaCensusIndia20012001]. The regressions in @tbl-language-behavior are weighted by native-language population and compare language groups within states while conditioning on their state population share and whether they are the state's modal language.
+
+```{r}
+#| label: tbl-language-behavior
+#| echo: false
+#| results: asis
+
+render_public_table("../outputs/tables/main/paper_language_behavior.tex", "paper_language_behavior")
+```
+
+The continuous English relationship is positive but imprecise. One additional Shastry distance degree is associated with about 2.23 percentage points more English acquisition among multilingual speakers, with $p=0.123$. The nonlinear comparison is much stronger: speakers of languages at least three degrees from Hindi have an English-acquisition rate about 16.73 percentage points higher than speakers of the remaining classified mother tongues. This contrast is consistent with Shastry's emphasis on nonlinear differences in the relative cost of learning English [@shastry2012a].
+
+Hindi acquisition changes in the opposite direction. A one-degree increase in Shastry distance is associated with about 9.69 percentage points less Hindi acquisition among multilingual speakers. Yet the evidence is not a simple reallocation of a fixed group of bilingual speakers from Hindi toward English. Greater distance is also associated with a 3.58 percentage-point decline in the share of native speakers reported as multilingual. Linguistic distance is therefore associated both with which bridge language multilingual people acquire and with whether people report an additional language at all.
+
+The relationship also depends on how linguistic difference is measured. The English-acquisition association is much weaker for the genealogical-distance and lexical-noncognacy alternatives defined in @sec-data [@hammarstromGlottologGlottologGlottolog2026; @dyenIndoeuropeanClassification1992; @dyenComparativeIndoeuropeanDatabase1997]: neither produces a comparably precise continuous English relationship in the corresponding specifications. I therefore treat the strong distant-language contrast as evidence about the Shastry relative-cost construction, not as a general claim that every measure of linguistic difference predicts English acquisition.
+
+## Language-Learning Behavior as a Function of Social and Institutional Factors {#sec-language-context}
+
+The national relationship weakens considerably when I restrict attention to the Hindi-belt states. In that sample, the continuous English coefficient is essentially zero ($-0.04$ percentage points, $p=0.990$), while the distant-language English contrast is about 10.16 percentage points but imprecisely estimated ($p=0.347$). The Hindi coefficient remains negative, at about 9.02 percentage points per distance degree, but is also less precise ($p=0.091$). Thus the national English-acquisition pattern is not reproduced within one broadly Hindi-oriented group of states.
+
+Historical evidence for Scheduled Tribe language groups points in the same direction. In the 1991 language data [@officeRegistrarLanguageAtlasIndia2004], greater distance is associated with more Hindi acquisition rather than more English acquisition; this pattern is stronger in the Hindi-belt restriction, although that historical comparison contains only four state clusters. I therefore use it as descriptive evidence that the destination language depends on the surrounding institutional and economic context, not as a separate causal result. This interpretation is consistent with evidence that economic incentives can induce second-language acquisition in India [@clingingsmithIndustrializationBilingualismIndia2014].
+
+There is little indication that the national pattern is specific to one sex. In the Census-2001 language data [@officeoftheregistrargeneralandcensuscommissionerofindiaCensusIndia20012001], the English coefficients estimated separately for men and women are similar in magnitude, about 2.33 and 2.01 percentage points per Shastry distance degree. The more consequential variation is geographic: the same distance measure corresponds to different English-versus-Hindi behavior across institutional settings.
+
+Taken together, the results support a narrower interpretation than a mechanical English/Hindi substitution story. Linguistic distance from Hindi captures a persistent difference in the relative cost of acquiring a widely used bridge language. It does not determine which bridge language people actually acquire. Local institutions and economic conditions help determine whether that relative-cost difference is expressed as English learning, Hindi learning, or no additional reported language. The next section asks how those local conditions appear in formal schooling.
+
 # Educational Access to English Opportunity {#sec-access}
 
 The geographic distribution of the schooling measures is shown in @fig-schooling-geography. The figure is descriptive; the next section quantifies how much of the variation is between states and how much remains within states.
@@ -184,24 +226,6 @@ The same district school market does not imply the same opportunity set for ever
 ![Unequal access to English-oriented schooling. Points report mean within-district percentage-point gaps for OBC, SC, and ST children relative to the Other social-group category. Panel A shows overall gaps in enrollment, EMI among enrolled children, private enrollment, and all-child private EMI exposure. Panel B shows rural and urban gaps for EMI among enrolled children and private EMI exposure.](../outputs/figures/main/paper_unequal_schooling_access.pdf){#fig-unequal-schooling-access fig-pos="H" width="100%"}
 
 The rural/urban cross-cut sharpens the result without turning it into a high-dimensional heterogeneity exercise. English-oriented social-group gaps are generally more severe in urban school markets: for example, the SC--Other gap in EMI among enrolled children is about 24.6 percentage points in urban districts versus 8.4 points in rural districts. This pattern is consistent with the idea that the existence of a locally valuable private/English option does not make access to it equal. It also echoes the household-level selection evidence retained in @sec-app-selection, where social group, religion, and parental education remain strong descriptive predictors of enrollment.
-
-# Inherited Language Environment and Language Behavior {#sec-language}
-
-If linguistic distance is to represent an economically meaningful opportunity gradient, it should correspond to actual language-learning behavior rather than merely to a genealogical classification. The Census-2001 C-17 evidence in @tbl-language-behavior provides a useful but deliberately nuanced answer.
-
-```{r}
-#| label: tbl-language-behavior
-#| echo: false
-#| results: asis
-
-render_public_table("../outputs/tables/main/paper_language_behavior.tex", "paper_language_behavior")
-```
-
-Nationally, the simple continuous English-acquisition slope is positive but imprecise: one additional Shastry distance degree is associated with about 2.2 percentage points more English acquisition among multilingual speakers, with $p\approx0.12$. The nonlinear contrast is much stronger. Languages at least three degrees from Hindi have about 16.7 percentage points more English acquisition than the remaining mapped languages. Hindi acquisition moves in the opposite direction, falling by about 9.7 percentage points per distance degree.
-
-More unexpectedly, greater distance is associated with *lower multilingualism itself*: the share of native speakers reported as multilingual falls by about 3.6 percentage points per distance degree. The relevant object therefore does not appear to be a simple English/Hindi substitution coefficient. Linguistic structure is related to the whole language opportunity set---both which bridge language people acquire and whether they become multilingual at all.
-
-The Hindi-belt restriction is an important boundary. Within broadly Hindi-oriented states, neither the continuous nor distant-language English specification reproduces the national relationship cleanly. The destination language therefore depends on the institutional opportunity set. Linguistic distance may raise the relative value of acquiring a bridge language, but the accessible bridge language need not always be English. This is mechanism evidence for the inherited opportunity gradient, not an instrumental-variable first stage.
 
 # Schooling and Economic Conversion {#sec-conversion}
 
@@ -398,8 +422,6 @@ render_public_table("../outputs/tables/appendix/appendix_b3_consumption_reconstr
 #| results: asis
 render_public_table("../outputs/tables/appendix/appendix_b4_hces_consistency_summary.tex", "appendix_b4_hces_consistency_summary")
 ```
-
-![Historical persistence of the linguistic-distance construction.](../outputs/figures/appendix/appendix_b5_historical_language_persistence.pdf){#fig-app-b5 fig-pos="H" width="90%"}
 
 ```{r}
 #| label: tbl-app-b6

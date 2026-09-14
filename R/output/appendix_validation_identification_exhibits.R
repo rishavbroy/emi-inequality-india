@@ -200,7 +200,7 @@ appendix_b5_historical_persistence_plot <- function(persistence) {
   ggplot2::ggplot(d, ggplot2::aes(x = ling_distance_nonzero_mean_1991, y = ling_distance_nonzero_mean_2001)) +
     ggplot2::geom_abline(slope = 1, intercept = 0, linewidth = 0.35, linetype = 2) +
     ggplot2::geom_point(alpha = 0.65, size = 1.4) +
-    ggplot2::labs(title = "Appendix B5. Historical linguistic-distance persistence", x = "1991 linguistic distance", y = "2001 linguistic distance") +
+    ggplot2::labs(title = "Historical persistence of linguistic distance from Hindi", x = "1991 linguistic distance", y = "2001 linguistic distance") +
     ggplot2::theme_minimal(base_size = 10)
 }
 

@@ -39,7 +39,10 @@ public_table_caption_text <- function(name) {
     sum_tbl_iv = "Summary Statistics for 2SLS Model",
     paper_core_summary = "Core Variables and Summary Statistics. Sources: NSS 64th Round; Census of India 2001; NSS 61st Round; HCES 2022-23 and 2023-24.",
     paper_schooling_market_geography = "How the Schooling Market Is Geographically Organized",
-    paper_language_behavior = "Linguistic Distance and Language Behavior",
+    paper_language_behavior = paste(
+      "Linguistic Distance and Language-Learning Behavior.",
+      "Source: Census of India 2001 bilingualism and trilingualism tables."
+    ),
     paper_economic_conversion = "Economic Conversion: Schooling, Welfare, and Predetermined Complements",
     paper_local_development = "Broader Local-Development Constellation",
     paper_identification_boundary = "Identification Boundary: Linguistic Distance Does Not Isolate EMI",
@@ -54,7 +57,10 @@ public_table_caption_text <- function(name) {
     appendix_b2_lineage_sensitivity = "Appendix B2. District-Lineage Sensitivity",
     appendix_b3_consumption_reconstruction = "Appendix B3. Consumption Reconstruction Benchmarks",
     appendix_b4_hces_consistency_summary = "Appendix B4. HCES Cross-Round Consistency Summary",
-    appendix_b6_language_source_validation = "Appendix B6. Historical Language-Source Validation",
+    appendix_b6_language_source_validation = paste(
+      "Appendix B6. Historical Language-Source Validation.",
+      "Sources: Census of India 1991 Language Atlas; Census of India 2001 language tables; Helms and Lim replication data."
+    ),
     appendix_b8_census_universe_reconciliation = "Appendix B8. Census Universe Reconciliation",
     appendix_b9_dise_publication_validation = "Appendix B9. DISE Publication Validation",
     appendix_c1_full_absorption_ladder = "Appendix C1. Full First-Stage Absorption Ladder",
@@ -108,10 +114,11 @@ public_table_note <- function(name) {
       "Each Panel-A outcome uses one fixed complete-case sample across specifications; DISE is independent administrative validation rather than a replacement treatment definition."
     ),
     paper_language_behavior = paste(
-      "Census-2001 C-17 state-by-native-language regressions are weighted by native speakers and include state fixed effects, native-language state share, and a modal-language indicator.",
+      "Census-2001 bilingualism and trilingualism regressions are weighted by native speakers and include state fixed effects, native-language state share, and an indicator for the state's most common native language.",
       "Standard errors and p-values use HC1 heteroskedasticity-robust inference; partial R-squared is the one-degree-of-freedom model-based partial R-squared for the reported distance coefficient.",
-      "Continuous-distance coefficients are percentage-point changes per one Shastry distance degree; distant-language rows compare languages at least three degrees from Hindi with the remaining mapped languages.",
-      "Panel B applies the predeclared Hindi-belt sample restriction; the table is descriptive mechanism evidence rather than an instrumental-variable first stage."
+      "Continuous-distance coefficients are percentage-point changes per one Shastry distance degree; distant-language rows compare languages at least three degrees from Hindi with the remaining classified mother tongues.",
+      "Panel B applies the predeclared Hindi-belt sample restriction; the table is descriptive evidence on language-learning behavior rather than an instrumental-variable first stage.",
+      "Source: Census of India 2001 bilingualism and trilingualism tables."
     ),
     paper_economic_conversion = paste(
       "Panel A reports percent changes in real mean MPCE associated with a 10 percentage-point increase in each schooling margin; state-clustered standard errors are in parentheses.",
