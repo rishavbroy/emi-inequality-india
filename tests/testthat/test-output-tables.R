@@ -1581,13 +1581,16 @@ test_that("paper local-development table fails closed when registered evidence d
 })
 
 test_that("selection tables report the fitted estimation sample rather than the child roster", {
+  # Balanced outcomes at every observed x value avoid separation while the NA
+  # row still verifies that nobs() reflects the fitted complete-case sample.
   dat <- data.frame(
-    y = c(0, 1, 0, 1, 1),
-    x = c(0, 1, NA, 2, 3)
+    y = c(0, 1, 0, 1, 0, 1, 1, 0, 1),
+    x = c(0, 0, 1, 1, 2, 2, NA, 3, 3)
   )
   fit <- stats::glm(y ~ x, data = dat, family = stats::binomial())
 
   expect_equal(selection_model_observations(fit, fallback = nrow(dat)), stats::nobs(fit))
+  expect_lt(stats::nobs(fit), nrow(dat))
   expect_equal(selection_model_observations(NULL, fallback = nrow(dat)), nrow(dat))
 })
 
@@ -1611,7 +1614,14 @@ test_that("Education Selection appendix filters presentation without changing th
     stringsAsFactors = FALSE
   )
   original <- ame
-  fit <- stats::glm(c(0, 1, 1, 0, 1) ~ c(1, 2, 3, 4, 5), family = stats::binomial())
+  fit <- stats::glm(
+    y ~ x,
+    data = data.frame(
+      y = c(0, 1, 0, 1, 0, 1, 0, 1),
+      x = c(0, 0, 1, 1, 2, 2, 3, 3)
+    ),
+    family = stats::binomial()
+  )
 
   table <- appendix_selection_ame_table(ame, fit)
   csv <- attr(table, "csv_data", exact = TRUE)
