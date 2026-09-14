@@ -120,10 +120,10 @@ public_table_note <- function(name) {
       "Sources: NSS 64th Round; Census of India 2001; NSS 61st Round; HCES 2022-23 and 2023-24. Construction details are documented in the data appendix."
     ),
     paper_schooling_market_geography = paste(
-      "Panel A reports standardized linguistic-distance coefficients in the registered unadjusted, region-fixed-effect, and state-fixed-effect specifications with predetermined controls where indicated.",
-      "Panel B reports R-squared from regressions of each district measure on state indicators alone; these statistics describe where variation lies and do not identify effects of state institutions.",
-      "Panel C reports raw and state-residual Pearson correlations between DISE 2007-08 English-medium enrollment shares and corresponding NSS measures.",
-      "Each Panel-A outcome uses one fixed complete-case sample across specifications. DISE provides independent school-reported validation rather than a replacement treatment definition.",
+      "Panels A-C report standardized coefficients from district regressions of each schooling measure on speaker-weighted linguistic distance from Hindi. State-clustered standard errors are in parentheses; region/state fixed effects and predetermined controls are included where indicated.",
+      "Panel D reports each schooling measure's R-squared from state indicators alone and the raw/state-residual Pearson correlations between DISE 2007-08 English-medium enrollment shares and the corresponding NSS measures.",
+      "Each regression outcome uses one fixed complete-case sample across specifications. The state-membership R-squared locates variation and does not identify effects of state institutions; DISE provides independent school-reported validation rather than a replacement treatment definition.",
+      regression_star_note(),
       "Sources: NSS 64th Round, 2007-08; DISE 2007-08; Census of India 2001."
     ),
     paper_language_behavior = paste(

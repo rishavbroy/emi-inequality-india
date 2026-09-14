@@ -800,10 +800,9 @@ save_table_tex <- function(table, path, name, public = TRUE) {
     # Keep compact paper-result tables visually neutral. Semantic panel grouping
     # and parenthesized standard errors already provide the needed row structure.
     latex_options <- c("repeat_header")
-  } else if (single_page_wide_table) {
-    # Table 1 is short enough to stay on one page. Keep it non-breaking here;
-    # paper-new.qmd owns page orientation through Quarto's native .landscape
-    # block so document layout is not split between Quarto and kableExtra.
+  } else if (single_page_wide_table || schooling_market_table) {
+    # Short landscape tables stay non-breaking here; paper-new.qmd owns page
+    # orientation through Quarto's native .landscape block.
     latex_options <- c("HOLD_position", "striped")
   } else if (landscape_longtable) {
     # Genuinely long landscape tables remain non-floating longtables so they
@@ -898,9 +897,8 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   }
   if (schooling_market_table) {
     tex <- tex |>
-      kableExtra::column_spec(1, width = "3.8cm") |>
-      kableExtra::column_spec(2, width = "3.0cm") |>
-      kableExtra::column_spec(3:ncol(df_render), width = "2.15cm")
+      kableExtra::column_spec(1, width = "4.1cm") |>
+      kableExtra::column_spec(2:ncol(df_render), width = "2.65cm")
   }
   if (regression_table) {
     header <- switch(name,
