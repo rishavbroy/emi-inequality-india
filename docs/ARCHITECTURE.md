@@ -353,9 +353,8 @@ registered district-welfare estimates, while benchmark, price, geography, and su
 checks remain enforced upstream rather than being printed as registry tables. The former
 lineage process diagram and generic timing/NSS/outcome inventories were removed from the
 final-paper bundle: the manuscript explains the construction decisions directly, while detailed
-source ledgers remain in the machine-readable outputs. Shared `appendix_*`
-output helpers continue to own appendix paths and writing so later Appendix B--D
-bundles reuse one save path rather than duplicating save loops.
+source ledgers remain in the machine-readable outputs. Shared `appendix_*` output helpers continue to own the remaining appendix paths and writing,
+so manuscript-facing exhibits reuse one save path rather than duplicating save loops.
 
 Appendix artifacts are listed in `required_final_artifacts()` as soon as their
 builders exist. The exact TeX and figure inputs consumed by the in-document appendices
@@ -369,12 +368,8 @@ were removed once their material was owned by the manuscripts.
 
 ### Final-paper validation and historical-identification exhibits
 
-Appendix B and the historical subset of Appendix C share one bounded historical-validation chain. `core_historical_validation_target_definitions()` owns the official Census-1991 reconciliation, preferred 1991 linguistic construction, Helms-Lim agreement, 1991-to-2001 persistence, common-support historical first-stage comparison, 1991 baseline balance, and strict Vanneman 1961--91 pretrend objects because final-paper exhibits consume them directly. `extended_historical_target_definitions()` reuses those objects for persisted diagnostics and retains the parent-bridge, alternative-geography, consensus, and other forensic variants.
+Validation that supports a specific construction now stays with that construction rather than occupying a separate manuscript appendix. The final paper still renders the historical linguistic-persistence figure and NSS--DISE agreement figure where they are discussed, while source reconciliations, lineage readiness gates, and broader validation tables remain enforced by their analytical modules and persisted as diagnostics. The historical-balance and historical-first-stage summaries remain dependencies of the identification appendix.
 
-The same ownership rule applies to DISE publication checks: the registered source cells and their reconstructed values are core because Appendix B reports them; archive-wide DISE robustness remains extended. Appendix exhibit builders only reshape these canonical objects and never refit the underlying historical or schooling analyses.
+### Migration publication boundary
 
-Appendix B2 and B8 follow the same publication boundary. The three registered lineage-panel variants and their matched first-stage summaries are core because B2 reports geography sensitivity directly; extended mode only persists the larger lineage review and legacy-comparison diagnostics. Census worker and household source-validation objects are likewise core because B8 reports their denominator reconciliations alongside the already-core migration and housing checks. The extended Census factory persists the full worker/household diagnostic bundles without redefining those analytical objects.
-
-### Migration and local-development publication boundary
-
-The final paper gives migration its own prose-led appendix section because migration changes the interpretation of later district outcomes. `R/output/appendix_local_development_exhibits.R` reduces the registered 48-model migration family to one bounded regression table containing preferred within-state mobility margins, the family-adjusted skilled recent-work-migrant association, and the predeclared Hindi-belt restriction. The complete migration model family remains in the extended CSV outputs rather than being printed in the paper. The same output module continues to reshape the already-registered housing/assets, Economic Census, household-capacity, social-group schooling, labor, and spatial analyses without refitting them. The conservative PLFS lineage analysis and ST-concentration heterogeneity are core-owned because the final paper consumes them, while extended mode continues to persist the larger CSV bundles. The raw-spatial panel reuses the three rendered district maps and the same rook-contiguity Moran calculations used elsewhere; it does not rebuild geometry or spatial weights. This avoids parallel appendix-only estimation and keeps timing language descriptive for 2001-11 and 2005-13 windows that overlap 2007-08 schooling measurement.
+The final paper gives migration its own prose-led appendix because migration changes the interpretation of later district outcomes. `R/output/appendix_migration_exhibits.R` now contains only the bounded migration summary used by the manuscript. Housing/assets, Economic Census, labor, household-capacity, heterogeneity, and spatial analyses remain available as analytical and extended-diagnostic outputs; they are no longer reshaped into a second local-development appendix. This keeps the manuscript aligned with Prompt 10 without deleting the underlying evidence.

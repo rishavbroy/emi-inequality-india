@@ -1352,16 +1352,11 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   compact_result_table <- identical(name, "paper_identification_boundary")
   appendix_compact_table <- name %in% c(
     "appendix_a3_lineage_source_hierarchy",
-    "appendix_b1_lineage_readiness", "appendix_b2_lineage_sensitivity", "appendix_b6_language_source_validation",
-    "appendix_b8_census_universe_reconciliation",
     "appendix_c1_full_absorption_ladder", "appendix_c3_control_block_absorption",
     "appendix_c4_geographic_scale_sensitivity", "appendix_c5_alternative_scalar_distances",
     "appendix_c6_mapping_composition_sensitivity", "appendix_c7_historical_balance",
     "appendix_c9_historical_first_stage", "appendix_c11_multiple_instruments",
     "appendix_c13_robustness_family_census", "appendix_c14_exclusion_sensitivity",
-    "appendix_d3_housing_assets", "appendix_d4_economic_census",
-    "appendix_d5_labor", "appendix_d6_household_capacity",
-    "appendix_d7_social_heterogeneity", "appendix_d9_residual_spatial_diagnostics",
     "appendix_selection_missingness"
   )
   appendix_long_table <- identical(name, "appendix_c1_full_absorption_ladder")
@@ -1455,10 +1450,6 @@ save_table_tex <- function(table, path, name, public = TRUE) {
     widths <- switch(
       name,
       appendix_a3_lineage_source_hierarchy = c("4.1cm", "3.5cm", "7.0cm"),
-      appendix_b1_lineage_readiness = c("3.6cm", "6.8cm", "2.0cm"),
-      appendix_b2_lineage_sensitivity = c("3.2cm", "1.8cm", "2.2cm", "2.8cm", "2.5cm"),
-      appendix_b6_language_source_validation = c("4.0cm", "1.2cm", "2.7cm", "1.4cm", "3.3cm", "1.6cm"),
-      appendix_b8_census_universe_reconciliation = c("1.8cm", "1.2cm", "4.4cm", "2.6cm", "3.6cm", "1.2cm"),
       appendix_c1_full_absorption_ladder = c("3.7cm", "1.0cm", "3.8cm", "1.1cm", "1.1cm", "1.0cm", "1.4cm", "0.9cm"),
       appendix_c3_control_block_absorption = c("1.7cm", "3.7cm", "2.1cm", "2.6cm", "2.2cm"),
       appendix_c4_geographic_scale_sensitivity = c("2.2cm", "3.0cm", "2.8cm", "1.6cm", "2.1cm", "2.2cm"),
@@ -1469,12 +1460,6 @@ save_table_tex <- function(table, path, name, public = TRUE) {
       appendix_c11_multiple_instruments = c("3.7cm", "1.3cm", "1.5cm", "1.5cm", "1.3cm", "1.8cm", "1.7cm", "1.0cm"),
       appendix_c13_robustness_family_census = c("3.5cm", "1.0cm", "1.5cm", "1.6cm", "1.5cm", "1.5cm", "1.5cm", "1.4cm"),
       appendix_c14_exclusion_sensitivity = c("1.4cm", "1.5cm", "2.4cm", "1.7cm", "1.8cm", "2.2cm", "2.3cm"),
-      appendix_d3_housing_assets = c("3.5cm", "2.0cm", "2.0cm", "1.3cm", "1.2cm", "1.2cm", "1.2cm", "1.0cm"),
-      appendix_d4_economic_census = c("3.5cm", "2.0cm", "2.0cm", "1.3cm", "1.2cm", "1.2cm", "1.2cm", "1.0cm"),
-      appendix_d5_labor = c("2.7cm", "3.2cm", "1.8cm", "1.8cm", "1.1cm", "1.1cm", "1.1cm", "1.1cm", "0.9cm"),
-      appendix_d6_household_capacity = c("2.5cm", "2.3cm", "1.9cm", "1.2cm", "1.1cm", "1.1cm", "1.1cm", "0.9cm"),
-      appendix_d7_social_heterogeneity = c("2.4cm", "1.5cm", "2.6cm", "2.2cm", "1.8cm", "1.1cm", "1.0cm", "1.1cm", "0.9cm"),
-      appendix_d9_residual_spatial_diagnostics = c("4.2cm", "1.4cm", "1.4cm", "1.0cm", "1.7cm", "1.7cm"),
       appendix_selection_missingness = c("5.4cm", "1.8cm", "1.8cm", "2.5cm")
     )
     tex <- apply_table_column_widths(tex, widths)

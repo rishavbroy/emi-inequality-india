@@ -68,13 +68,6 @@ public_table_caption_text <- function(name) {
       "District-Lineage Sources and Roles.",
       "Sources: Census of India; Ministry of Panchayati Raj Local Government Directory; Kumar and Somanathan (2016); India State and District Evolution Database; India District Changes Tracker; Development Data Lab SHRUG; Deshpande, Khanna, and Walia concordances."
     ),
-    appendix_b1_lineage_readiness = "District-Lineage Readiness and Coverage",
-    appendix_b2_lineage_sensitivity = "District-Lineage Sensitivity",
-    appendix_b6_language_source_validation = paste(
-      "Historical Language-Source Validation.",
-      "Sources: Census of India 1991 Language Atlas; Census of India 2001 language tables; Helms and Lim replication data."
-    ),
-    appendix_b8_census_universe_reconciliation = "Census Universe Reconciliation",
     appendix_c1_full_absorption_ladder = "Full First-Stage Absorption Ladder",
     appendix_c3_control_block_absorption = "Control-Block Absorption",
     appendix_c4_geographic_scale_sensitivity = "Geographic and Scale Sensitivity",
@@ -89,12 +82,6 @@ public_table_caption_text <- function(name) {
       "Linguistic Distance and Migration Composition.",
       "Source: Census of India 2011 D-02, D-03, and D-07 migration tables."
     ),
-    appendix_d3_housing_assets = "Housing, Finance, and Durable-Asset Outcomes",
-    appendix_d4_economic_census = "Economic Census Outcomes",
-    appendix_d5_labor = "NSS and PLFS Labor Outcomes",
-    appendix_d6_household_capacity = "Household-Capacity Trajectories",
-    appendix_d7_social_heterogeneity = "Social-Group and ST-Concentration Heterogeneity",
-    appendix_d9_residual_spatial_diagnostics = "Residual Spatial Diagnostics",
     appendix_selection_ame = paste(
       "Correlates of School Enrollment: Average Marginal Effects from a Survey-Weighted Probit.",
       "Source: NSS 64th Round, 2007-08, Participation and Expenditure in Education."
@@ -163,24 +150,6 @@ public_table_note <- function(name) {
     appendix_a3_lineage_source_hierarchy = paste(
       "Rows summarize source families rather than individual files. Detailed source IDs and adjudication ledgers remain available in the lineage CSV outputs."
     ),
-    appendix_b1_lineage_readiness = paste(
-      "All lineage readiness gates must pass before this table is produced.",
-      "Panel-variant counts show common two-wave Census-2001 districts under increasingly permissive but still reviewed mapping rules."
-    ),
-    appendix_b2_lineage_sensitivity = paste(
-      "The three registered lineage variants are evaluated with the same preferred consumption first-stage specification.",
-      "District counts and complete-IV rows are reported alongside the state-clustered excluded-instrument F and Montiel Olea-Pflueger effective F.",
-      "This is a geography-sensitivity check: the full-reviewed allocation rule is not substituted for the primary analysis panel."
-    ),
-    appendix_b6_language_source_validation = paste(
-      "The table combines source coverage, exact official-Census reconciliation, Helms-Lim agreement with the project 1991 construction, and persistence from 1991 to 2001.",
-      "The rows use their native validation metric rather than forcing unlike checks onto one statistical scale."
-    ),
-    appendix_b8_census_universe_reconciliation = paste(
-      "Rows summarize the registered migration, housing, household, and worker denominator reconciliations before longitudinal pooling or rate construction.",
-      "Exact cross-table count checks must have zero discrepancy; the migration-stock check separately verifies that migrant stock never exceeds the Census population denominator.",
-      "Support reports the native published district universe or the overlap range when source tables have structurally different coverage."
-    ),
     appendix_c1_full_absorption_ladder = paste(
       "Every declared semantic first-stage absorption specification is shown on the same complete-case district support.",
       "Excluded-instrument F and partial R-squared are conventional first-stage diagnostics; this table does not substitute them for the separately reported MOP effective-F diagnostic."
@@ -231,12 +200,6 @@ public_table_note <- function(name) {
       regression_star_note(),
       "The dependent variables are shares, so coefficients are changes in shares associated with a one-degree increase in linguistic distance. These are conditional associations, not causal migration effects."
     ),
-    appendix_d3_housing_assets = "All 48 registered 2001-11 housing, finance, and durable-asset reduced forms are shown with canonical state-clustered inference and within-family Holm adjustment. Because the outcome window overlaps the 2007-08 schooling measure, these are co-evolving local-development margins rather than post-treatment EMI mediators.",
-    appendix_d4_economic_census = "All 36 registered 2005-13 Economic Census reduced forms are shown with canonical state-clustered inference and within-family Holm adjustment. The window straddles schooling measurement; sectoral changes therefore describe the broader local opportunity environment rather than a causal schooling mechanism.",
-    appendix_d5_labor = "The full 36-model labor family combines NSS 2009-10, PLFS 2017-18 primary lineage, and the predeclared conservative-lineage PLFS sensitivity. Each wave contains two outcomes, two geographic adjustments, and three linguistic-distance constructions; standard errors and p-values use the canonical state-clustered inference.",
-    appendix_d6_household_capacity = "The eight bounded 2001-11 household-capacity models compare linguistic opportunity with observed all-child EMI across four capacity outcomes. State-clustered inference and predictor-family Holm adjustment are preserved from the canonical diagnostic object; the schooling rows are descriptive associations.",
-    appendix_d7_social_heterogeneity = "The table combines the registered social-group-gap-by-distance family with the predeclared ST-concentration heterogeneity family. Holm-adjusted p-values are preserved; null interactions are retained because this appendix is intended to document bounded negative as well as positive heterogeneity evidence.",
-    appendix_d9_residual_spatial_diagnostics = "Moran's I uses the preferred rook-contiguity, row-standardized Census-2001 district weights on the active IV sample. The first- and second-stage residual diagnostics test whether strong raw spatial concentration remains after the preferred specification; they do not constitute a spatial-IV estimator.",
     appendix_selection_ame = paste(
       "Entries are average changes in predicted enrollment probability.",
       "Continuous covariates are reported as average slopes; categorical covariates are average discrete comparisons against the stated reference category, evaluated over the observed covariate distribution.",

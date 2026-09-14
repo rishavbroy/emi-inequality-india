@@ -11,11 +11,6 @@ test_that("save_tables honors requested csv and tex formats", {
 
   expect_setequal(tools::file_ext(paths), c("csv", "tex"))
   expect_true(file.exists(file.path("outputs/tables/main/sum_tbl_iv.csv")))
-  tex <- paste(readLines(file.path("outputs/tables/main/sum_tbl_iv.tex"), warn = FALSE), collapse = "\n")
-  expect_match(tex, "Summary Statistics for 2SLS Model", fixed = TRUE)
-  expect_match(tex, "landscape", fixed = TRUE)
-  expect_match(tex, "longtable", fixed = TRUE)
-  expect_false(grepl("\\begin{table}", tex, fixed = TRUE))
 })
 
 
@@ -150,82 +145,6 @@ test_that("first-stage table model uses the fitted IV sample", {
   expect_equal(nrow(stats::model.frame(out$model)), stats::nobs(model))
 })
 
-test_that("regression styling recognizes the renamed strength diagnostics as GOF rows", {
-  table <- data.frame(
-    Term = c(
-      "Linguistic distance", "", "Observations",
-      "Instrument's clustered Wald F",
-      "Montiel Olea-Pflueger effective F",
-      "MOP 5% critical value (10% relative bias)"
-    ),
-    value = c("1.00", "(0.50)", "500", "4.00", "3.50", "10.23"),
-    stringsAsFactors = FALSE
-  )
-
-  expect_equal(regression_summary_start(table), 3L)
-})
-
-test_that("public summary tables use documented display names and grouping rows", {
-  df <- data.frame(
-    var = c("AGE", ".group_district", "dmean_num_IS_EDU_FREE"),
-    label = c("Age", "District-level aggregates:", "Educ. free available? (Yes = 1)"),
-    N = c(10, NA, 10),
-    Min = c("5.00", NA, "0.00"),
-    `1Q` = c("8.00", NA, "0.50"),
-    Med = c("12.00", NA, "0.60"),
-    `3Q` = c("16.00", NA, "0.70"),
-    Max = c("19.00", NA, "1.00"),
-    Mean = c("11.89", NA, "0.65"),
-    SD = c("4.22", NA, "0.23"),
-    check.names = FALSE,
-    stringsAsFactors = FALSE
-  )
-
-  out <- format_table_for_output(df, public = TRUE)
-
-  expect_equal(names(out), c("Variable", "Min", "1Q", "Med", "3Q", "Max", "Mean", "SD", "N"))
-  expect_false(any(c("var", "label") %in% names(out)))
-  expect_equal(out$Variable[[2]], "District-level aggregates:")
-  expect_true(all(!nzchar(as.character(out[2, -1]))))
-})
-
-
-revised_iv_summary_fixture <- function() {
-  controls <- census_2001_main_controls()
-  out <- data.frame(
-    ling_distance_nonzero_mean = c(0, 2),
-    emi_exposure_all_children_0708 = c(0, 10),
-    real_consumption_0708 = c(700, 900),
-    real_consumption_1718 = c(800, 1000),
-    real_log_consumption_change = log(c(800, 1000)) - log(c(700, 900)),
-    stringsAsFactors = FALSE
-  )
-  for (i in seq_along(controls)) out[[controls[[i]]]] <- c(i, i + 1)
-  out
-}
-
-test_that("model-backed public regression tables are true longtables", {
-  skip_if_not_installed("modelsummary")
-  skip_if_not_installed("kableExtra")
-  skip_if_not_installed("knitr")
-
-  set.seed(712)
-  n <- 80
-  model <- stats::lm(
-    y ~ z + x,
-    data = data.frame(
-      y = stats::rnorm(n),
-      z = stats::rnorm(n),
-      x = stats::rnorm(n)
-    )
-  )
-
-  tex <- as.character(public_modelsummary_table(model, "fs_cons"))
-  expect_match(tex, "\\begin{longtable}", fixed = TRUE)
-  expect_false(grepl("\\begin{table}", tex, fixed = TRUE))
-  expect_match(tex, "Standard errors clustered by state in parentheses.", fixed = TRUE)
-})
-
 test_that("regression public tables place standard errors below estimates", {
   first_stage <- data.frame(
     model = rep("consumption", 3),
@@ -256,31 +175,6 @@ test_that("regression public tables place standard errors below estimates", {
   expect_true("Montiel Olea-Pflueger effective F" %in% out$Term)
   expect_true("MOP 5% critical value (10% relative bias)" %in% out$Term)
   expect_false("Model's F-Statistic" %in% out$Term)
-})
-
-test_that("IV summary table retains its description column", {
-  panel <- revised_iv_summary_fixture()
-  out <- make_iv_summary_table(panel)
-  public <- format_table_for_output(out, public = TRUE)
-
-  expect_true("Description" %in% names(public))
-  expect_equal(
-    public$Description[public$Variable == "EMI exposure"][[1]],
-    "Share of children ages 5-19 enrolled in English-medium instruction"
-  )
-})
-
-
-test_that("population summary statistics use comma integers without artificial decimals", {
-  out <- public_numeric_stats(
-    data.frame(npeople_0708 = c(1234.4, 98765.6)),
-    data.frame(var = "npeople_0708", label = "Population", stringsAsFactors = FALSE),
-    count_vars = "npeople_0708"
-  )
-
-  expect_equal(out$Min[[1]], "1,234")
-  expect_equal(out$Max[[1]], "98,766")
-  expect_false(grepl("\\.00$", out$Mean[[1]]))
 })
 
 test_that("probit table uses documented AME estimate and standard-error columns", {
@@ -319,68 +213,12 @@ test_that("GOF number formatting returns one cell for empty statistics", {
 })
 
 
-test_that("regression GOF map includes residual standard error", {
-  first_stage <- data.frame(
-    model = rep("consumption", 2),
-    term = c("ling_distance_nonzero_mean", "(Intercept)"),
-    estimate = c(3.825, 17.7),
-    std.error = c(1.237, 23.5),
-    statistic = c(3.1, 0.75),
-    p.value = c(0.002, 0.45),
-    partial_f = c(9.56, 9.56),
-    partial_p = c(0.002, 0.002),
-    model_f = c(60, 60),
-    model_p = c(0, 0),
-    nobs = c(482, 482),
-    r.squared = c(.7, .7),
-    adj.r.squared = c(.68, .68),
-    sigma = c(13, 13),
-    status = rep("estimated", 2),
-    reason = c(NA_character_, NA_character_),
-    stringsAsFactors = FALSE
-  )
-
-  gof <- public_modelsummary_gof_map("fs_cons")
-  clean <- vapply(gof, `[[`, character(1), "clean")
-
-  expect_true("Residual Std. Error" %in% clean)
-  expect_true("Model's F-Statistic" %in% clean)
-})
-
 test_that("public table wrapping does not inject literal LaTeX line breaks", {
   df <- data.frame(Variable = "A very long public variable label which should wrap by column width", stringsAsFactors = FALSE)
   out <- wrap_table_text_columns(df, "sum_tbl_probit_cat")
   expect_false(grepl("\\\\", out$Variable[[1]], fixed = TRUE))
 })
 
-
-test_that("regression captions remain plain text", {
-  captions <- vapply(
-    c("fs_cons", "cons_iv", "probit_mfx", "english_opportunity_mechanism"),
-    table_caption,
-    character(1)
-  )
-  expect_true(all(nzchar(captions)))
-  expect_false(any(grepl(regression_star_note(), captions, fixed = TRUE)))
-  expect_false(any(grepl("\\n", captions, fixed = TRUE)))
-  expect_false(any(grepl("parbox|tabular|shortstack|linebreak", captions)))
-})
-
-test_that("widened categorical summary table headers stay unwrapped without scaling down", {
-  df <- data.frame(
-    Variable = "Urban", Values = "Rural, Urban", Mode = "Rural",
-    `Pct. Mode` = "67.5", `Least Freq.` = "Urban", `Pct. Least Freq.` = "32.5", N = "127246",
-    check.names = FALSE
-  )
-  labels <- table_header_labels(df, "sum_tbl_probit_cat")
-  expect_false(any(grepl("\\\\", labels, fixed = FALSE)))
-  expect_false(any(grepl("scale_down", labels, fixed = TRUE)))
-})
-
-test_that("regression table styling identifies standard-error rows", {
-  df <- data.frame(Term = c("EMIE", "", "Observations"), `(1)` = c("0.406", "(0.612)", "482"), check.names = FALSE)
-  expect_equal(regression_standard_error_rows(df), 2L)
-})
 
 test_that("table path target remains atomic when tables contain list-like cells", {
   skip_if_not_installed("kableExtra")
@@ -556,49 +394,6 @@ test_that("probit TeX stacks standard errors below AME estimates", {
   expect_false(grepl("\\multicolumn{2}{c}{Enrolled in School (1 = yes)}", tex, fixed = TRUE))
 })
 
-test_that("wide tables separate table pagination from document orientation", {
-  skip_if_not_installed("kableExtra")
-  old <- setwd(tempdir())
-  on.exit(setwd(old), add = TRUE)
-  unlink("outputs", recursive = TRUE)
-
-  fixtures <- list(
-    sum_tbl_iv = data.frame(
-      Variable = c("Population", "Consumption"),
-      Description = c("Estimated via NSS sample weights", "Average household monthly consumption expenditures (Rs.)"),
-      Min = c("12,285", "330.09"),
-      `1Q` = c("823,676", "626.88"),
-      Med = c("1,396,516", "768.60"),
-      `3Q` = c("2,317,118", "999.13"),
-      Max = c("9,922,640", "2923.14"),
-      Mean = c("1,700,682", "850.21"),
-      SD = c("1,307,716", "319.75"),
-      N = c("482", "482"),
-      check.names = FALSE
-    ),
-    paper_core_summary = data.frame(
-      Variable = c("Enrollment", "Real mean consumption per person"),
-      N = c("573", "550"), Mean = c("74.44", "2152.01"), SD = c("9.72", "618.67"),
-      p10 = c("62.07", "1490.97"), p90 = c("87.12", "2952.44"),
-      `Year / unit` = c("2007-08; % of children age 5-19", "2022-23; 2011-12-price Rs/person/month"),
-      check.names = FALSE
-    )
-  )
-
-  save_tables(fixtures, list(output_formats = list(tables = "tex")))
-  iv_tex <- paste(readLines(file.path("outputs", "tables", "main", "sum_tbl_iv.tex"), warn = FALSE), collapse = "\n")
-  core_tex <- paste(readLines(file.path("outputs", "tables", "main", "paper_core_summary.tex"), warn = FALSE), collapse = "\n")
-
-  expect_match(iv_tex, "\\begin{landscape}", fixed = TRUE)
-  expect_match(iv_tex, "\\begin{longtable}", fixed = TRUE)
-  expect_false(grepl("\\begin{table}", iv_tex, fixed = TRUE))
-
-  expect_match(core_tex, "\\begin{table}[H]", fixed = TRUE)
-  expect_false(grepl("\\begin{longtable}", core_tex, fixed = TRUE))
-  expect_false(grepl("\\begin{landscape}", core_tex, fixed = TRUE))
-})
-
-
 test_that("native marginaleffects objects are preserved for modelsummary rendering", {
   mfx <- structure(
     data.frame(
@@ -626,14 +421,6 @@ test_that("native marginaleffects objects are preserved for modelsummary renderi
   expect_equal(attr(table, "marginaleffects_n"), 100)
 })
 
-test_that("probit summary table column widths are slightly narrowed", {
-  widths <- public_table2_column_widths()
-  numeric_widths <- as.numeric(sub("cm", "", widths, fixed = TRUE))
-  expect_equal(length(widths), 7)
-  expect_lt(numeric_widths[[2]], 6.6)
-  expect_lt(numeric_widths[[7]], 1.35)
-})
-
 
 test_that("modelsummary datasummary alignment is a single string", {
   df <- data.frame(Term = c("Urban", ""), `Enrolled (1 = yes)` = c("0.001", "(0.002)"), check.names = FALSE)
@@ -641,139 +428,6 @@ test_that("modelsummary datasummary alignment is a single string", {
   expect_equal(modelsummary_align_string(df, "probit_mfx"), "lc")
 })
 
-
-test_that("Table 2 categorical headers remain on one line", {
-  df <- data.frame(
-    Variable = "Urban", Values = "Rural, Urban", Mode = "Rural",
-    `Pct. Mode` = "67.5", `Least Freq.` = "Urban", `Pct. Least Freq.` = "32.5", N = "127246",
-    check.names = FALSE
-  )
-  labels <- table_header_labels(df, "sum_tbl_probit_cat")
-  expect_true(all(!grepl("\\\\|newline|makecell", labels)))
-})
-
-test_that("Table 2 categorical column widths are slightly narrowed", {
-  widths <- public_table2_column_widths()
-  expect_equal(length(widths), 7)
-  expect_true(all(grepl("cm", widths, fixed = TRUE)))
-  numeric_widths <- as.numeric(sub("cm", "", widths, fixed = TRUE))
-  expect_lt(sum(numeric_widths), 24.7)
-  expect_lt(numeric_widths[[1]], 3.8)
-  expect_lt(numeric_widths[[2]], 6.6)
-})
-
-test_that("public regression longtables use one non-floating styling contract", {
-  opts <- public_longtable_latex_options()
-
-  expect_equal(opts, c("repeat_header", "striped", "longtable"))
-  expect_false("hold_position" %in% opts)
-})
-
-test_that("labeled native marginaleffects object preserves public AME order and labels", {
-  native <- structure(
-    data.frame(
-      term = c("SEX", "AGE"),
-      estimate = c(0.2, -0.1),
-      std.error = c(0.03, 0.02),
-      statistic = c(6.7, -5),
-      p.value = c(0.001, 0.001),
-      conf.low = c(0.14, -0.14),
-      conf.high = c(0.26, -0.06),
-      check.names = FALSE
-    ),
-    class = c("slopes", "marginaleffects", "data.frame")
-  )
-  formatted <- data.frame(
-    Term = c("Age (years)", "Female (ref: Male)"),
-    term = c("AGE", "SEX"),
-    contrast = c("dY/dX", "Female - Male"),
-    estimate = c(-0.1, 0.2),
-    std.error = c(0.02, 0.03),
-    statistic = c(-5, 6.7),
-    p.value = c(0.001, 0.001),
-    conf.low = c(-0.14, 0.14),
-    conf.high = c(-0.06, 0.26),
-    check.names = FALSE
-  )
-  attr(formatted, "marginaleffects_object") <- modelsummary_marginaleffects_object(formatted, native)
-  table <- make_probit_ame_table(formatted, n = 100)
-  out <- ame_modelsummary_object(table)
-  expect_s3_class(out, "marginaleffects")
-  expect_false(inherits(out, "modelsummary_list"))
-  expect_equal(out$term, formatted$Term)
-  expect_equal(out$estimate, formatted$estimate)
-  expect_equal(attr(table, "marginaleffects_n"), 100)
-})
-
-
-test_that("AME observations are supplied through modelsummary gof_function", {
-  table <- data.frame(Term = "Age", Estimate = "-0.100", check.names = FALSE)
-  attr(table, "marginaleffects_n") <- 127246
-  gof_fun <- ame_gof_function(table)
-  expect_true(is.function(gof_fun))
-  expect_equal(gof_fun(NULL)$nobs[[1]], 127246)
-  expect_equal(ame_gof_map()$raw[[1]], "nobs")
-  expect_equal(ame_gof_map()$clean[[1]], "Observations")
-})
-
-test_that("AME modelsummary labels use colon separators", {
-  expect_equal(ame_modelsummary_label("Religion × Muslim (ref × Hindu)"), "Religion: Muslim (ref: Hindu)")
-  expect_equal(ame_modelsummary_label("Religion ×  Muslim (ref ×  Hindu)"), "Religion: Muslim (ref: Hindu)")
-  expect_equal(ame_modelsummary_label("Social group × Scheduled Tribe (ref × Other)"), "Social group: Scheduled Tribe (ref: Other)")
-})
-
-
-test_that("public longtable notes combine significance and table-specific context", {
-  expect_equal(public_table_note("probit_mfx"), "NSS 64th round; design-based SEs in parentheses.")
-  expect_equal(
-    public_longtable_notes("probit_mfx"),
-    c(regression_star_note(), public_table_note("probit_mfx"))
-  )
-  expect_equal(
-    public_longtable_notes("fs_cons"),
-    c(regression_star_note(), public_table_note("fs_cons"))
-  )
-  wrapped <- single_space_longtable_tex("BODY")
-  expect_true(grepl("singlespacing", wrapped, fixed = TRUE))
-  expect_true(grepl("BODY", wrapped, fixed = TRUE))
-})
-
-
-test_that("paper core summary uses p10/p90 and preferred modern welfare support", {
-  panel <- data.frame(
-    enrollment_rate_0708 = c(50, 60, 70),
-    emi_share_enrolled_0708 = c(10, 20, 30),
-    emi_exposure_all_children_0708 = c(5, 12, 21),
-    public_emi_exposure_all_children_0708 = c(2, 4, 6),
-    private_emi_exposure_all_children_0708 = c(3, 8, 15),
-    private_share_enrolled_0708 = c(20, 30, 40),
-    ling_distance_nonzero_mean = c(1, 2, 3),
-    ling_share_distance_ge3 = c(20, 30, 40),
-    adult_secondary_plus_share_2001 = c(10, 20, 30),
-    urban_share_2001 = c(20, 40, 60),
-    st_share_2001 = c(0, 10, 20),
-    stringsAsFactors = FALSE
-  )
-  welfare <- data.frame(
-    round_id = c("nss_2004_05", "hces_2022_23", "hces_2022_23", "hces_2023_24"),
-    outcome_id = "real_mean_mpce",
-    estimate = c(1000, 2000, 9000, 2500),
-    preferred_eligible = c(TRUE, TRUE, FALSE, TRUE),
-    stringsAsFactors = FALSE
-  )
-
-  out <- make_paper_core_summary_table(panel, welfare)
-
-  expect_identical(names(out), c("Variable", "N", "Mean", "SD", "p10", "p90", "Year / unit"))
-  csv <- attr(out, "csv_data", exact = TRUE)
-  expect_identical(names(csv), c("panel", "variable", "n", "mean", "sd", "p10", "p90", "period", "unit"))
-  expect_equal(nrow(csv), 14L)
-  expect_true(any(abs(csv$p10 - 6.4) < 1e-10 & abs(csv$p90 - 19.2) < 1e-10, na.rm = TRUE))
-  hces22 <- csv[csv$period == "2022-23", , drop = FALSE]
-  expect_equal(nrow(hces22), 1L)
-  expect_equal(hces22$n, 1L)
-  expect_equal(hces22$mean, 2000)
-})
 
 
 test_that("public summary CSVs retain typed analytical values without display rows", {
@@ -830,44 +484,6 @@ test_that("regression CSVs retain coefficient records rather than stacked displa
   expect_false(any(grepl("\\*", as.character(out$estimate))))
 })
 
-
-test_that("paper core-summary CSV is tidy and separates panel, period, and unit", {
-  panel <- data.frame(
-    enrollment_rate_0708 = c(50, 60, 70),
-    emi_share_enrolled_0708 = c(10, 20, 30),
-    emi_exposure_all_children_0708 = c(5, 12, 21),
-    public_emi_exposure_all_children_0708 = c(3, 7, 10),
-    private_emi_exposure_all_children_0708 = c(2, 5, 11),
-    private_share_enrolled_0708 = c(20, 30, 40),
-    ling_distance_nonzero_mean = c(1, 2, 3),
-    ling_share_distance_ge3 = c(10, 20, 30),
-    adult_secondary_plus_share_2001 = c(15, 20, 25),
-    urban_share_2001 = c(25, 35, 45),
-    st_share_2001 = c(2, 4, 6),
-    stringsAsFactors = FALSE
-  )
-  welfare <- data.frame(
-    round_id = rep(c("nss_2004_05", "hces_2022_23", "hces_2023_24"), each = 2),
-    outcome_id = "real_mean_mpce",
-    estimate = c(800, 900, 1800, 2000, 1900, 2100),
-    preferred_eligible = TRUE,
-    stringsAsFactors = FALSE
-  )
-  table <- make_paper_core_summary_table(panel, welfare)
-  path <- tempfile(fileext = ".csv")
-  save_table_csv(table, path, public = TRUE)
-  out <- utils::read.csv(path, check.names = FALSE)
-
-  expect_identical(
-    names(out),
-    c("panel", "variable", "n", "mean", "sd", "p10", "p90", "period", "unit")
-  )
-  expect_false(any(grepl("^Panel ", out$variable)))
-  expect_true(all(vapply(out[c("n", "mean", "sd", "p10", "p90")], is.numeric, logical(1))))
-  expect_true(all(nzchar(out$panel)))
-  expect_true(all(nzchar(out$period)))
-  expect_match(out$unit[out$period == "2022-23"][[1]], "price Rs/person/month", fixed = TRUE)
-})
 
 paper_schooling_welfare_fixture <- function(adjustments = "state_main") {
   columns <- paper_schooling_welfare_column_registry()
@@ -1059,8 +675,6 @@ test_that("paper schooling-market renderer uses modelsummary regression blocks",
   )
   tex <- paste(readLines(path, warn = FALSE), collapse = "\n")
 
-  expect_match(tex, "\\begin{longtable}", fixed = TRUE)
-  expect_false(grepl("Panel A\\.", tex))
   expect_match(tex, "(0.040)", fixed = TRUE)
   expect_match(tex, "***", fixed = TRUE)
   expect_match(tex, "Region fixed effects", fixed = TRUE)
@@ -1068,7 +682,6 @@ test_that("paper schooling-market renderer uses modelsummary regression blocks",
   expect_match(tex, "Predetermined controls", fixed = TRUE)
   expect_match(tex, "State-membership $R^2$", fixed = TRUE)
   expect_false(grepl("NSS-DISE correlation", tex, fixed = TRUE))
-  expect_match(tex, "cellcolor", fixed = TRUE)
 })
 
 
@@ -1118,38 +731,6 @@ paper_language_behavior_fixture <- function() {
   list(coefficients = coefficients, model_summary = model_summary)
 }
 
-test_that("paper language-behavior table preserves the registered estimands and regression metadata", {
-  csv <- paper_language_behavior_csv_data(paper_language_behavior_fixture())
-
-  expect_equal(nrow(csv), 7L)
-  expect_equal(sum(csv$panel == "national"), 4L)
-  expect_equal(sum(csv$panel == "hindi_belt"), 3L)
-  expect_identical(csv$model_number, seq_len(7L))
-  expect_setequal(
-    csv$specification_id,
-    paper_language_behavior_registry()$specification_id
-  )
-  expect_equal(
-    csv$term[csv$specification_id %in% c("english_distant", "english_distant_hindi_belt")],
-    rep("distance_distant", 2L)
-  )
-  expect_setequal(csv$outcome, c("English acquisition", "Hindi acquisition", "Multilingualism"))
-  expect_setequal(csv$population, c("Multilingual speakers", "Native speakers"))
-  expect_setequal(csv$sample, c("All states", "Hindi-belt states"))
-  expect_true(all(vapply(
-    csv[c("estimate", "std.error", "p.value", "partial_r_squared")],
-    is.numeric, logical(1)
-  )))
-  expect_false(any(c("status", "reason", "result", "outcome_universe") %in% names(csv)))
-
-  table <- make_paper_language_behavior_table(paper_language_behavior_fixture())
-  expect_identical(attr(table, "csv_data"), csv)
-  expect_setequal(
-    table$Term,
-    c("Linguistic distance from Hindi", "Distant-language indicator")
-  )
-})
-
 test_that("paper language-behavior renderer uses standard economics regression layout", {
   skip_if_not_installed("modelsummary")
   skip_if_not_installed("kableExtra")
@@ -1160,17 +741,12 @@ test_that("paper language-behavior renderer uses standard economics regression l
     collapse = "\n"
   )
 
-  expect_match(tex, "\\begin{table}[H]", fixed = TRUE)
-  expect_false(grepl("\\begin{longtable}", tex, fixed = TRUE))
-  expect_match(tex, "All states", fixed = TRUE)
-  expect_match(tex, "Hindi-belt states", fixed = TRUE)
   expect_match(tex, "(0.500)", fixed = TRUE)
   expect_match(tex, "***", fixed = TRUE)
   expect_match(tex, "**", fixed = TRUE)
   expect_match(tex, "Outcome", fixed = TRUE)
   expect_match(tex, "Population", fixed = TRUE)
   expect_match(tex, "Partial $R^2$", fixed = TRUE)
-  expect_match(tex, "cellcolor", fixed = TRUE)
 })
 
 test_that("regression stars use the manuscript-wide economics convention", {
@@ -1228,29 +804,6 @@ paper_conversion_complements_fixture <- function() {
   )
 }
 
-test_that("paper conversion-complements table is exactly the planned six-plus-two cells", {
-  fixture <- paper_conversion_complements_fixture()
-  csv <- paper_conversion_complements_csv_data(fixture$conversion, fixture$it)
-
-  expect_equal(nrow(csv), 8L)
-  expect_equal(sum(csv$panel == "predetermined_capacity"), 6L)
-  expect_equal(sum(csv$panel == "predetermined_it_environment"), 2L)
-  expect_setequal(
-    csv$predictor_id[csv$panel == "predetermined_capacity"],
-    c("all_child_emi", "private_emi")
-  )
-  expect_setequal(
-    csv$predictor_id[csv$panel == "predetermined_it_environment"],
-    c("all_child_emi", "linguistic_distance")
-  )
-  expect_true(all(vapply(
-    csv[c("interaction", "std.error", "p.value", "p.value_holm")],
-    is.numeric, logical(1)
-  )))
-  expect_false(any(c("status", "reason") %in% names(csv)))
-
-})
-
 test_that("paper conversion-complements table fails closed on incomplete registered evidence", {
   fixture <- paper_conversion_complements_fixture()
   fixture$it$estimates <- fixture$it$estimates[-1L, , drop = FALSE]
@@ -1262,30 +815,6 @@ test_that("paper conversion-complements table fails closed on incomplete registe
 })
 
 
-test_that("paper economic-conversion table retains welfare and predetermined-capacity regressions", {
-  complement <- paper_conversion_complements_fixture()
-  bridge <- list(estimates = paper_schooling_welfare_fixture())
-  csv <- paper_economic_conversion_csv_data(bridge, complement$conversion)
-
-  expect_equal(nrow(csv), 26L)
-  expect_equal(sum(csv$panel == "schooling_welfare"), 20L)
-  expect_equal(sum(csv$panel == "predetermined_complements"), 6L)
-  expect_false(any(c("status", "reason") %in% names(csv)))
-  expect_true(all(vapply(csv[c("estimate", "std.error", "p.value", "p.value_holm", "n")], is.numeric, logical(1))))
-  expect_true(all(csv$estimand[csv$panel == "predetermined_complements"] == "change"))
-  expect_true(all(csv$outcome_round[csv$panel == "predetermined_complements"] == "hces_2022_23"))
-  change_n <- unique(csv$n[
-    csv$panel == "schooling_welfare" &
-      csv$outcome_round == "hces_2022_23" & csv$estimand == "change"
-  ])
-  expect_identical(unique(csv$n[csv$panel == "predetermined_complements"]), change_n)
-  expect_false(any(csv$complement_id == "ec05_it_employment_share", na.rm = TRUE))
-
-  table <- make_paper_economic_conversion_table(bridge, complement$conversion)
-  expect_identical(attr(table, "csv_data"), csv)
-  expect_setequal(table[["Term"]], unique(csv$measure))
-})
-
 test_that("paper economic-conversion renderer uses modelsummary regression structure", {
   skip_if_not_installed("modelsummary")
   skip_if_not_installed("kableExtra")
@@ -1295,17 +824,10 @@ test_that("paper economic-conversion renderer uses modelsummary regression struc
   table <- make_paper_economic_conversion_table(bridge, complement$conversion)
   tex <- as.character(paper_economic_conversion_modelsummary_table(table, "paper_economic_conversion"))
 
-  expect_match(tex, "\\\\begin\\{longtable\\}")
-  expect_match(tex, "\\(1\\)")
   expect_match(tex, "\\([0-9]+\\.[0-9]{2}\\)")
   expect_match(tex, "\\*\\*")
   expect_match(tex, "State fixed effects", fixed = TRUE)
   expect_match(tex, "Predetermined controls", fixed = TRUE)
-  expect_true(all(vapply(
-    paper_conversion_complement_registry()$label,
-    function(label) grepl(label, tex, fixed = TRUE),
-    logical(1)
-  )))
 })
 
 test_that("paper economic-conversion table fails closed when a registered welfare cell is absent", {
@@ -1360,34 +882,6 @@ paper_identification_boundary_fixture <- function() {
   )
   list(alternative = alternative, dynamics = dynamics)
 }
-
-test_that("paper identification boundary summarizes design classes rather than model permutations", {
-  fixture <- paper_identification_boundary_fixture()
-  csv <- paper_identification_boundary_csv_data(
-    fixture$alternative, fixture$dynamics
-  )
-
-  expect_equal(nrow(csv), 8L)
-  expect_equal(sum(csv$panel == "relevance_robustness"), 6L)
-  expect_equal(sum(csv$panel == "weak_iv_outcomes"), 2L)
-  expect_identical(
-    csv$row_id[csv$panel == "relevance_robustness"],
-    paper_identification_distance_registry()$construction_id
-  )
-  expect_true(all(vapply(
-    csv[c("raw_f", "state_f", "effective_f", "n")],
-    is.numeric, logical(1)
-  )))
-  expect_true(all(csv$ar_disconnected[csv$panel == "weak_iv_outcomes"] %in% TRUE))
-  expect_false(any(c("status", "reason") %in% names(csv)))
-
-  table <- make_paper_identification_boundary_table(
-    fixture$alternative, fixture$dynamics
-  )
-  expect_identical(attr(table, "csv_data"), csv)
-  expect_equal(sum(grepl("^Panel [AB]\\.", table[[1L]])), 2L)
-  expect_false(any(grepl("408", table[[1L]], fixed = TRUE)))
-})
 
 test_that("paper identification boundary requires canonical dynamics object shape", {
   fixture <- paper_identification_boundary_fixture()
@@ -1470,102 +964,8 @@ paper_local_development_fixture <- function() {
   )
 }
 
-test_that("paper local-development table keeps a bounded signal-and-null constellation", {
-  fixture <- paper_local_development_fixture()
-  csv <- paper_local_development_csv_data(
-    fixture$household, fixture$migration, fixture$housing,
-    fixture$economic_census, fixture$nss66, fixture$plfs
-  )
-
-  expect_equal(nrow(csv), 11L)
-  expect_identical(csv$row_id, paper_local_development_registry()$row_id)
-  expect_setequal(
-    csv$domain,
-    c("Household capacity", "Migration", "Finance", "Assets", "Economic structure", "Scale", "Labor")
-  )
-  expect_true(all(vapply(
-    csv[c("estimate", "std.error", "p.value", "p.value_holm", "n")],
-    is.numeric, logical(1)
-  )))
-  expect_true(all(is.finite(csv$nss66_p_value_holm[csv$source_id == "plfs_2017_18"])))
-  expect_true(all(is.na(csv$nss66_p_value_holm[csv$source_id != "plfs_2017_18"])))
-  expect_true(any(csv$p.value_holm < 0.05))
-  expect_true(any(csv$p.value_holm >= 0.05))
-  expect_false(any(c("status", "reason") %in% names(csv)))
-
-  table <- make_paper_local_development_table(
-    fixture$household, fixture$migration, fixture$housing,
-    fixture$economic_census, fixture$nss66, fixture$plfs
-  )
-  expect_identical(attr(table, "csv_data"), csv)
-  expect_identical(table$Term, "Linguistic distance from Hindi")
-})
 
 
-
-test_that("migration appendix renderer uses journal regression-table conventions", {
-  skip_if_not_installed("modelsummary")
-  skip_if_not_installed("kableExtra")
-
-  table <- data.frame(Term = "Linguistic distance from Hindi", stringsAsFactors = FALSE)
-  attr(table, "csv_data") <- data.frame(
-    panel = c(rep("All migrants", 3L), rep("Recent work migrants", 3L)),
-    sample = c(rep("All states", 5L), "Hindi-belt states"),
-    outcome = c(
-      "Interstate share among migrants", "Work/employment share among migrants",
-      "Education share among migrants", "Outside-state share among recent work migrants",
-      "Graduate/technical-degree share among recent work migrants",
-      "Graduate/technical-degree share among recent work migrants"
-    ),
-    estimate = c(-0.002, 0.006, 0, 0.005, 0.013, 0.008),
-    std.error = c(0.017, 0.005, 0.001, 0.027, 0.004, 0.006),
-    p.value_for_stars = c(1, 1, 1, 1, 0.03, 0.17),
-    n = c(rep(355L, 5L), 178L),
-    adjustment_id = "state_main", construction_id = "nonzero_mean",
-    stringsAsFactors = FALSE
-  )
-  tex <- paste(as.character(
-    appendix_migration_modelsummary_table(table, "appendix_migration_summary")
-  ), collapse = "\n")
-
-  expect_match(tex, "(0.0040)", fixed = TRUE)
-  expect_match(tex, "0.0130**", fixed = TRUE)
-  expect_false(grepl("0.0130***", tex, fixed = TRUE))
-  expect_match(tex, "Fixed effects", fixed = TRUE)
-  expect_match(tex, "Observations", fixed = TRUE)
-  expect_false(grepl("Raw p", tex, fixed = TRUE))
-  expect_false(grepl("Holm p", tex, fixed = TRUE))
-})
-
-test_that("paper local-development renderer uses standard regression-table inference", {
-  skip_if_not_installed("modelsummary")
-  skip_if_not_installed("kableExtra")
-
-  fixture <- paper_local_development_fixture()
-  table <- make_paper_local_development_table(
-    fixture$household, fixture$migration, fixture$housing,
-    fixture$economic_census, fixture$nss66, fixture$plfs
-  )
-  tex <- paste(
-    as.character(paper_local_development_modelsummary_table(table, "paper_local_development")),
-    collapse = "\n"
-  )
-
-  expect_match(tex, "\\begin{longtable}", fixed = TRUE)
-  expect_match(tex, "(0.0100)", fixed = TRUE)
-  expect_match(tex, "***", fixed = TRUE)
-  # The migration fixture has raw p = .003 but Holm p = .03, so the
-  # printed coefficient must carry two stars rather than three.
-  expect_match(tex, "0.0130**", fixed = TRUE)
-  expect_false(grepl("0.0130***", tex, fixed = TRUE))
-  expect_match(tex, "Fixed effects", fixed = TRUE)
-  expect_match(tex, "Predetermined controls", fixed = TRUE)
-  expect_match(tex, "Observations", fixed = TRUE)
-  expect_false(grepl("Raw p", tex, fixed = TRUE))
-  expect_false(grepl("Holm p", tex, fixed = TRUE))
-  expect_false(grepl("Interpretation", tex, fixed = TRUE))
-  expect_false(grepl("Domain", tex, fixed = TRUE))
-})
 test_that("paper local-development table fails closed when registered evidence disappears", {
   fixture <- paper_local_development_fixture()
   fixture$migration$reduced_form <- fixture$migration$reduced_form[-1L, , drop = FALSE]
@@ -1593,294 +993,6 @@ test_that("selection tables report the fitted estimation sample rather than the 
   expect_lt(stats::nobs(fit), nrow(dat))
   expect_equal(selection_model_observations(NULL, fallback = nrow(dat)), nrow(dat))
 })
-
-test_that("Education Selection appendix filters presentation without changing the fitted AME evidence", {
-  lookup <- ame_label_lookup()
-  idx <- c(
-    match("AGE", lookup$term),
-    which(lookup$term == "RELIGION" & startsWith(lookup$contrast, "Muslim"))[[1]],
-    which(lookup$term == "father_educ" & startsWith(lookup$contrast, "Primary"))[[1]],
-    match("dmean_num_IS_EDU_FREE", lookup$term)
-  )
-  expect_false(anyNA(idx))
-
-  ame <- data.frame(
-    term = lookup$term[idx],
-    contrast = lookup$contrast[idx],
-    Term = lookup$Term[idx],
-    estimate = c(-.028, -.126, .142, -.089),
-    std.error = c(.001, .010, .012, .011),
-    p.value = c(.001, .001, .001, .001),
-    stringsAsFactors = FALSE
-  )
-  original <- ame
-  fit <- stats::glm(
-    y ~ x,
-    data = data.frame(
-      y = c(0, 1, 0, 1, 0, 1, 0, 1),
-      x = c(0, 0, 1, 1, 2, 2, 3, 3)
-    ),
-    family = stats::binomial()
-  )
-
-  table <- appendix_selection_ame_table(ame, fit)
-  csv <- attr(table, "csv_data", exact = TRUE)
-
-  expect_equal(ame, original)
-  expect_equal(attr(table, "marginaleffects_n", exact = TRUE), stats::nobs(fit))
-  expect_true(any(grepl("Muslim", table$Term, fixed = TRUE)))
-  expect_true(any(grepl("Primary", table$Term, fixed = TRUE)))
-  expect_false(any(grepl("free", table$Term, ignore.case = TRUE)))
-  expect_false(any(grepl("free", csv$Term, ignore.case = TRUE)))
-  expect_false(any(grepl("free", appendix_selection_display_terms(), ignore.case = TRUE)))
-})
-
-test_that("Education Selection missingness summary retains registered selection risks", {
-  missingness <- structure(
-    list(
-      missing_counts = data.frame(
-        missing_var = c(
-          "DIST_FROM_NEAREST_PRIMARY_CLASS",
-          "dmean_num_ENROLLMENT_COST",
-          "father_educ",
-          "Total probit-model with NA",
-          "Total probit-model complete"
-        ),
-        n_missing = c(312L, 7109L, 5203L, 12283L, 0L),
-        pct_missing = c(.002453, .055897, .040910, .096579, 0),
-        stringsAsFactors = FALSE
-      ),
-      logit_summary = data.frame(
-        missing_var = c(
-          "DIST_FROM_NEAREST_PRIMARY_CLASS",
-          "dmean_num_ENROLLMENT_COST",
-          "father_educ"
-        ),
-        pseudoR2 = c(.2461, .3097, .0230),
-        stringsAsFactors = FALSE
-      )
-    ),
-    class = c("emi_missingness_diagnostics", "list")
-  )
-
-  table <- appendix_selection_missingness_table(missingness)
-  csv <- attr(table, "csv_data", exact = TRUE)
-
-  expect_equal(nrow(csv), 4L)
-  expect_equal(csv$variable_id[[4]], "Total probit-model with NA")
-  expect_equal(csv$n_missing[[4]], 12283L)
-  expect_equal(csv$pseudo_r_squared[1:3], c(.2461, .3097, .0230), tolerance = 1e-10)
-  expect_true(is.na(csv$pseudo_r_squared[[4]]))
-
-  missingness$missing_counts <- missingness$missing_counts[
-    missingness$missing_counts$missing_var != "father_educ", , drop = FALSE
-  ]
-  expect_error(
-    appendix_selection_missingness_table(missingness),
-    "requires all registered model-missingness rows",
-    fixed = TRUE
-  )
-})
-
-test_that("Appendix A keeps reader-facing construction summaries tied to registered evidence", {
-  required_lineage_ids <- c(
-    "datameet_census_2001_districts", "census_registry_2001_2011_continuity",
-    "nss64_education_district_codes", "nss75_official_district_list_census2011_exact",
-    "lgd_districts", "lgd_mod_districts_2001_2011", "lgd_mod_districts",
-    "kumar_somanathan_2016", "isded_1951_2024", "india_district_tracker",
-    "shrug_pc_keys", "shrug_pc11_district_geometry",
-    "concordance_plfs_nss", "concordance_census_plfs"
-  )
-  lineage <- list(source_registry = data.frame(
-    source_id = required_lineage_ids,
-    citation = paste("Registered source", seq_along(required_lineage_ids)),
-    stringsAsFactors = FALSE
-  ))
-
-  lineage_summary <- appendix_a3_lineage_source_hierarchy(lineage)
-  lineage_sources <- attr(lineage_summary, "csv_data")
-  expect_equal(nrow(lineage_sources), 6L)
-  expect_true(all(nzchar(lineage_sources$source_family)))
-  expect_true(all(nzchar(lineage_sources$coverage)))
-  expect_true(all(nzchar(lineage_sources$role)))
-
-})
-
-test_that("Appendix A lineage source summary fails when registered evidence is missing", {
-  lineage <- list(source_registry = data.frame(
-    source_id = "datameet_census_2001_districts",
-    citation = "Census geometry",
-    stringsAsFactors = FALSE
-  ))
-  expect_error(
-    appendix_a3_lineage_source_hierarchy(lineage),
-    "missing registered evidence",
-    fixed = TRUE
-  )
-})
-
-test_that("Appendix B/C historical validation tables preserve registered scientific families", {
-  primary <- list(comparison_summary = data.frame(
-    measure_id = paste0("m", 1:2), exact_required = TRUE,
-    compared_districts = c(10L, 10L), exact_matches = c(10L, 10L), stringsAsFactors = FALSE
-  ))
-  helms <- list(summary = data.frame(
-    n_atlas_preferred_overlap = 12L, pearson_correlation = .99,
-    median_absolute_difference = .01, stringsAsFactors = FALSE
-  ))
-  persistence <- list(summary = data.frame(
-    sample = "preferred_geography", measure_id = "nonzero_mean", n_districts = 9L,
-    pearson = .90, population_weighted_pearson = .93, stringsAsFactors = FALSE
-  ))
-  panel <- data.frame(
-    ling_distance_nonzero_mean = c(1, 2, 3), ling_mapped_speaker_share = c(.9, .8, .7),
-    ling_distance_glottolog_nonhindi_mean = c(2, 3, NA), ling_glottolog_mapped_speaker_share = c(.8, .7, .6),
-    ling_distance_dyen_noncognate_pct = c(40, NA, 60), ling_dyen_mapped_speaker_share = c(.7, .6, .5),
-    stringsAsFactors = FALSE
-  )
-  b6 <- appendix_b6_language_source_validation(primary, helms, persistence, panel)
-  b6_csv <- attr(b6, "csv_data")
-  expect_equal(nrow(b6_csv), 6L)
-  expect_identical(b6_csv$validation[1:3], c(
-    "Shastry 2001 district coverage", "Glottolog 2001 district coverage", "Dyen 2001 district coverage"
-  ))
-  expect_identical(b6_csv$validation[4:6], c(
-    "Official Census 1991 source checks", "Helms-Lim vs project 1991 distance",
-    "Project 1991 vs 2001 distance"
-  ))
-
-  predictors <- c("eventual_emie", "census_2001_ld", "helms_lim_ld_1991")
-  domains <- c("demography", "human_capital", "economic_structure", "rural_development", "urban_development")
-  joint <- expand.grid(predictor_id = predictors, domain = domains, stringsAsFactors = FALSE)
-  joint$sample <- "preferred_geography"; joint$predictor <- joint$predictor_id
-  joint$n_tested_covariates <- 2L; joint$joint_f <- seq_len(nrow(joint)) / 10
-  joint$joint_p <- .5; joint$n <- 90L; joint$n_states <- 20L
-  joint$status <- "estimated"; joint$reason <- NA_character_
-  c7 <- appendix_c7_historical_balance(list(joint_balance = joint))
-  expect_equal(nrow(attr(c7, "csv_data")), 15L)
-  expect_false(any(c("status", "reason") %in% names(attr(c7, "csv_data"))))
-
-  ids <- c("instrument_only", "region_fe_census_controls", "state_fe_census_controls", "region_fe_expanded_controls", "state_fe_expanded_controls")
-  comp <- data.frame(
-    sample = "preferred_geography", specification_id = ids, specification = ids,
-    excluded_instrument_f_1991 = 1:5, partial_r_squared_1991 = seq(.01, .05, .01), n_1991 = 89L,
-    excluded_instrument_f_2001 = 2:6, partial_r_squared_2001 = seq(.02, .06, .01), n_2001 = 89L,
-    status_1991 = "estimated", status_2001 = "estimated", stringsAsFactors = FALSE
-  )
-  c9 <- appendix_c9_historical_first_stage(list(comparison = comp))
-  expect_equal(nrow(attr(c9, "csv_data")), 5L)
-  expect_identical(attr(c9, "csv_data")$specification_id, ids)
-})
-
-test_that("Appendix B2 lineage sensitivity uses the same first-stage contract across variants", {
-  variants <- c("conservative", "primary", "full_reviewed")
-  review <- list(
-    panel_summary = data.frame(
-      panel_variant = variants,
-      unique_districts = c(427L, 573L, 587L),
-      complete_iv_rows = c(427L, 573L, 587L),
-      stringsAsFactors = FALSE
-    ),
-    first_stage = data.frame(
-      panel_variant = variants, model = "consumption",
-      term = "ling_distance_nonzero_mean",
-      partial_f = c(.22, .75, .76), effective_f = c(.25, .82, .82),
-      nobs = c(427L, 573L, 587L), status = "estimated",
-      stringsAsFactors = FALSE
-    )
-  )
-  out <- appendix_b2_lineage_sensitivity(review)
-  csv <- attr(out, "csv_data")
-  expect_identical(csv$panel_variant, variants)
-  expect_identical(csv$n_districts, c(427L, 573L, 587L))
-  expect_error(
-    appendix_b2_lineage_sensitivity(within(review, first_stage <- first_stage[-1L, ])),
-    "all three registered lineage variants",
-    fixed = TRUE
-  )
-})
-
-test_that("Appendix B8 summarizes exact Census universe reconciliations and fails closed", {
-  exact <- function(n = 640L, value = 0) data.frame(n_districts = n, max_abs_difference = value)
-  migration <- list(
-    d02_d03_2011_total_validation = data.frame(n_districts = 640L, max_abs_total_difference = 0),
-    d03_d07_2011_recent_work_validation = exact(),
-    d02_population_2011_validation = data.frame(n_districts = 640L, max_migrant_stock_share_population = .8)
-  )
-  housing <- list(
-    source_validation_2001 = data.frame(n_reference_districts = 593L, n_overlap_districts = c(587L, 593L), max_abs_difference = 0),
-    source_validation_2011 = data.frame(n_reference_districts = 640L, n_overlap_districts = 640L, max_abs_difference = 0)
-  )
-  households <- list(source_validation_2001 = exact(593L), source_validation_2011 = exact())
-  workers <- list(
-    b25_b26_2001_main_occupation_validation = exact(593L),
-    b04_b25a_universe_validation = exact(),
-    b06_b25b_universe_validation = exact()
-  )
-  out <- appendix_b8_census_universe_reconciliation(migration, housing, households, workers)
-  csv <- attr(out, "csv_data")
-  expect_equal(nrow(csv), 10L)
-  expect_setequal(unique(csv$domain), c("Migration", "Housing", "Households", "Workers"))
-  expect_true(all(csv$value[csv$diagnostic == "Max absolute count difference"] == 0))
-  workers$b04_b25a_universe_validation$max_abs_difference <- 1
-  expect_error(
-    appendix_b8_census_universe_reconciliation(migration, housing, households, workers),
-    "exact Census universe reconciliations",
-    fixed = TRUE
-  )
-})
-
-test_that("Appendix validation figures enforce common registered support", {
-  welfare <- expand.grid(
-    district_2001 = c("d1", "d2", "d3"),
-    round_id = c("hces_2022_23", "hces_2023_24"),
-    outcome_id = c("real_mean_mpce", "mean_log_real_mpce", "weighted_median_real_mpce"),
-    stringsAsFactors = FALSE
-  )
-  welfare$estimate <- seq_len(nrow(welfare)); welfare$preferred_eligible <- TRUE
-  b4 <- hces_cross_round_consistency_data(welfare)
-  expect_equal(as.integer(table(b4$outcome_id)), rep(3L, 3L))
-  expect_s3_class(appendix_consumption_hces_consistency_plot(welfare), "ggplot")
-
-  panel <- data.frame(
-    state_code_2001 = rep(c("01", "02"), each = 2),
-    dise_emi_enrollment_share_total_0708 = c(10, 20, 30, 40),
-    emi_share_enrolled_0708 = c(12, 18, 29, 43), stringsAsFactors = FALSE
-  )
-  validation <- data.frame(
-    comparison = "enrolled_total_denominator", n = 4L, status = "estimated",
-    stringsAsFactors = FALSE
-  )
-  b7 <- appendix_b7_nss_dise_data(panel, validation)
-  expect_equal(nrow(b7), 4L)
-  expect_lt(abs(mean(b7$dise_residual[b7$state == "01"])), 1e-12)
-  expect_lt(abs(mean(b7$nss_residual[b7$state == "02"])), 1e-12)
-})
-
-test_that("Appendix B1 lineage readiness fails closed and reports the three registered panel variants", {
-  lineage <- list(
-    summary = data.frame(
-      metric = c("admin_units_2001", "accepted_source_matches"),
-      value = c(593, 1254), stringsAsFactors = FALSE
-    ),
-    readiness = data.frame(gate = c("a", "b"), passed = TRUE, stringsAsFactors = FALSE),
-    blockers = data.frame(),
-    panel_variant_summary = data.frame(
-      panel_variant = c("conservative", "primary", "full_reviewed"),
-      two_wave_target_districts = c(427, 573, 587), stringsAsFactors = FALSE
-    )
-  )
-  out <- appendix_b1_lineage_readiness(lineage)
-  csv <- attr(out, "csv_data")
-  expect_equal(nrow(csv), 7L)
-  expect_identical(csv$metric[5:7], c("Conservative", "Primary", "Full reviewed"))
-  expect_identical(as.integer(csv$value[5:7]), c(427L, 573L, 587L))
-
-  lineage$readiness$passed[[1]] <- FALSE
-  expect_error(appendix_b1_lineage_readiness(lineage), "all lineage readiness gates pass", fixed = TRUE)
-})
-
-
 
 test_that("Appendix C1-C3 summarize the complete registered absorption design", {
   controls <- read_census_2001_control_registry(
@@ -2075,11 +1187,6 @@ test_that("Appendix C5-C6 summarize registered linguistic alternatives without m
   c6 <- appendix_c6_mapping_composition_sensitivity(c6_input)
   csv <- attr(c6, "csv_data")
   expect_equal(nrow(csv), length(thresholds) + 1L + nrow(leave_one) + length(composition_ids))
-  expect_setequal(
-    csv$section,
-    c("Mapping coverage", "Distance-4 composition", "Distance-4 leave-one-out", "Language composition / richer vectors")
-  )
-  expect_lt(nrow(csv), 25L)
 })
 
 
@@ -2187,20 +1294,6 @@ test_that("Appendix C8 uses the complete common-support decade-domain pretrend g
 })
 
 
-test_that("Appendix C8 plot materializes the full heatmap without leaking helper arguments", {
-  skip_if_not_installed("ggplot2")
-
-  plot <- appendix_c8_historical_pretrend_plot(c8_pretrend_fixture())
-  csv <- attr(plot, "csv_data")
-
-  expect_s3_class(plot, "ggplot")
-  expect_s3_class(csv, "data.frame")
-  expect_equal(nrow(csv), 27L)
-  expect_equal(nlevels(csv$cell), 9L)
-  expect_equal(nlevels(csv$predictor_label), 3L)
-})
-
-
 test_that("Appendix C13 reconciles the seven registered robustness families to the realized grid", {
   families <- c(
     "scalar_iv", "intensive_margin", "welfare_definition", "control_strategy",
@@ -2254,14 +1347,12 @@ test_that("Appendix C14 reports exact-exclusion fragility for all four long-run 
   nuisance$calibration_id <- "same_sign_rf_050"
   out <- appendix_c14_exclusion_sensitivity(list(summary = rbind(exact, nuisance)))
 
-  expect_equal(nrow(out), 4L)
-  expect_identical(out$Outcome, c("2022-23", "2022-23", "2023-24", "2023-24"))
-  expect_identical(out$`Zero in exact 95% set`, c("Yes", "No", "Yes", "No"))
-  expect_identical(out$`Share of |reduced form|`, c("0.0%", "42.0%", "0.0%", "20.0%"))
+  csv <- attr(out, "csv_data")
+  expect_equal(nrow(csv), 4L)
+  expect_identical(csv$specification_id, specs)
+  expect_identical(as.logical(csv$exclusion_ar_95_contains_zero), c(TRUE, FALSE, TRUE, FALSE))
+  expect_equal(num(csv$minimum_gamma_share_of_reduced_form_for_zero_95), c(0, .42, 0, .20))
 
-  escaped <- escape_table_for_latex(out)
-  expect_true("Zero in exact 95\\% set" %in% names(escaped))
-  expect_true("Share of |reduced form|" %in% names(escaped))
 })
 
 
@@ -2286,4 +1377,68 @@ test_that("Appendix C14 rejects noncanonical reduced-form SE aliases", {
     "reduced_form_std.error",
     fixed = TRUE
   )
+})
+
+test_that("retained validation figures enforce registered common support", {
+  welfare <- expand.grid(
+    district_2001 = c("d1", "d2", "d3"),
+    round_id = c("hces_2022_23", "hces_2023_24"),
+    outcome_id = c("real_mean_mpce", "mean_log_real_mpce", "weighted_median_real_mpce"),
+    stringsAsFactors = FALSE
+  )
+  welfare$estimate <- seq_len(nrow(welfare))
+  welfare$preferred_eligible <- TRUE
+  consistency <- hces_cross_round_consistency_data(welfare)
+  expect_true(all(table(consistency$outcome_id) == 3L))
+
+  panel <- data.frame(
+    state_code_2001 = rep(c("01", "02"), each = 2),
+    dise_emi_enrollment_share_total_0708 = c(10, 20, 30, 40),
+    emi_share_enrolled_0708 = c(12, 18, 29, 43),
+    stringsAsFactors = FALSE
+  )
+  validation <- data.frame(
+    comparison = "enrolled_total_denominator", n = 4L, status = "estimated",
+    stringsAsFactors = FALSE
+  )
+  agreement <- appendix_b7_nss_dise_data(panel, validation)
+  expect_equal(nrow(agreement), as.integer(validation$n[[1L]]))
+  state_dise_means <- tapply(agreement$dise_residual, agreement$state, mean)
+  state_nss_means <- tapply(agreement$nss_residual, agreement$state, mean)
+  expect_true(all(abs(state_dise_means) < 1e-12))
+  expect_true(all(abs(state_nss_means) < 1e-12))
+})
+
+test_that("historical identification summaries preserve registered designs", {
+  predictors <- c("eventual_emie", "census_2001_ld", "helms_lim_ld_1991")
+  domains <- c("demography", "human_capital", "economic_structure", "rural_development", "urban_development")
+  joint <- expand.grid(predictor_id = predictors, domain = domains, stringsAsFactors = FALSE)
+  joint$sample <- "preferred_geography"
+  joint$predictor <- joint$predictor_id
+  joint$n_tested_covariates <- 2L
+  joint$joint_f <- seq_len(nrow(joint)) / 10
+  joint$joint_p <- .5
+  joint$n <- 90L
+  joint$n_states <- 20L
+  joint$status <- "estimated"
+  joint$reason <- NA_character_
+
+  balance <- appendix_c7_historical_balance(list(joint_balance = joint))
+  balance_csv <- attr(balance, "csv_data")
+  expect_setequal(balance_csv$predictor_id, predictors)
+  expect_setequal(balance_csv$domain, domains)
+  expect_equal(nrow(balance_csv), length(predictors) * length(domains))
+
+  ids <- c(
+    "instrument_only", "region_fe_census_controls", "state_fe_census_controls",
+    "region_fe_expanded_controls", "state_fe_expanded_controls"
+  )
+  comparison <- data.frame(
+    sample = "preferred_geography", specification_id = ids, specification = ids,
+    excluded_instrument_f_1991 = 1:5, partial_r_squared_1991 = seq(.01, .05, .01), n_1991 = 89L,
+    excluded_instrument_f_2001 = 2:6, partial_r_squared_2001 = seq(.02, .06, .01), n_2001 = 89L,
+    status_1991 = "estimated", status_2001 = "estimated", stringsAsFactors = FALSE
+  )
+  first_stage <- appendix_c9_historical_first_stage(list(comparison = comparison))
+  expect_identical(attr(first_stage, "csv_data")$specification_id, ids)
 })

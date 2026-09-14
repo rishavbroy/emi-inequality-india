@@ -2,7 +2,7 @@
 
 extended_labor_target_definitions <- function() {
   list(
-    # Conservative-lineage PLFS analysis is core-owned for Appendix D5.
+    # Conservative-lineage PLFS analysis is core-owned analytical output.
     # Extended mode persists the shared analytical object below.
     tar_target(
       diag_ext_plfs_2017_18_labor_mechanism_files,

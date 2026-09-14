@@ -111,11 +111,9 @@ core_public_target_definitions <- function() {
     tar_target(
       appendix_validation_identification_exhibits,
       make_appendix_validation_identification_exhibits(
-        district_lineage, census_1991_primary_validation, historical_linguistic_persistence_validation,
-        helms_lim_linguistic_distance_benchmark, district_panel, district_panel_with_dise,
-        dise_iv_nss_validation, lineage_panel_variant_review,
-        census_migration_diagnostics, census_housing_diagnostics, census_household_diagnostics,
-        census_worker_diagnostics, historical_baseline_balance_1991, historical_linguistic_first_stage_robustness
+        historical_linguistic_persistence_validation, district_panel_with_dise,
+        dise_iv_nss_validation, historical_baseline_balance_1991,
+        historical_linguistic_first_stage_robustness
       )
     ),
     tar_target(
@@ -148,18 +146,12 @@ core_public_target_definitions <- function() {
       format = "file"
     ),
     tar_target(
-      appendix_local_development_exhibits,
-      make_appendix_local_development_exhibits(
-        census_migration_diagnostics, census_housing_diagnostics, economic_census_diagnostics,
-        nss66_labor_mechanism, plfs_2017_18_labor_mechanism,
-        plfs_2017_18_conservative_labor_mechanism, census_household_capacity,
-        nss64_schooling_social_group_diagnostic, english_opportunity_st_heterogeneity,
-        diag_public_spatial_autocorrelation
-      )
+      appendix_migration_exhibits,
+      make_appendix_migration_exhibits(census_migration_diagnostics)
     ),
     tar_target(
-      appendix_local_development_files,
-      save_appendix_local_development_exhibits(appendix_local_development_exhibits, figure_files, cfg),
+      appendix_migration_files,
+      save_appendix_migration_exhibits(appendix_migration_exhibits, cfg),
       format = "file"
     ),
     tar_target(
@@ -205,7 +197,7 @@ core_public_target_definitions <- function() {
         dependencies = list(
           report_values, table_files, figure_files, dise_publication_validation,
           appendix_data_construction_files, appendix_validation_identification_files,
-          appendix_identification_files, appendix_local_development_files,
+          appendix_identification_files, appendix_migration_files,
           appendix_selection_files
         )
       ),

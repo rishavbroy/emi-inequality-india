@@ -13,6 +13,29 @@ rm -f \
   "${root%/}/docs/long-paths-and-8-3-filenames.html" "${root%/}/docs/long-paths-and-8-3-filenames.pdf" "${root%/}/docs/long-paths-and-8-3-filenames.tex" \
   2>/dev/null || true
 rm -f \
+  "${root%/}/outputs/tables/appendix/appendix_b1_lineage_readiness.csv" \
+  "${root%/}/outputs/tables/appendix/appendix_b1_lineage_readiness.tex" \
+  "${root%/}/outputs/tables/appendix/appendix_b2_lineage_sensitivity.csv" \
+  "${root%/}/outputs/tables/appendix/appendix_b2_lineage_sensitivity.tex" \
+  "${root%/}/outputs/tables/appendix/appendix_b6_language_source_validation.csv" \
+  "${root%/}/outputs/tables/appendix/appendix_b6_language_source_validation.tex" \
+  "${root%/}/outputs/tables/appendix/appendix_b8_census_universe_reconciliation.csv" \
+  "${root%/}/outputs/tables/appendix/appendix_b8_census_universe_reconciliation.tex" \
+  "${root%/}/outputs/tables/appendix/appendix_d3_housing_assets.csv" \
+  "${root%/}/outputs/tables/appendix/appendix_d3_housing_assets.tex" \
+  "${root%/}/outputs/tables/appendix/appendix_d4_economic_census.csv" \
+  "${root%/}/outputs/tables/appendix/appendix_d4_economic_census.tex" \
+  "${root%/}/outputs/tables/appendix/appendix_d5_labor.csv" \
+  "${root%/}/outputs/tables/appendix/appendix_d5_labor.tex" \
+  "${root%/}/outputs/tables/appendix/appendix_d6_household_capacity.csv" \
+  "${root%/}/outputs/tables/appendix/appendix_d6_household_capacity.tex" \
+  "${root%/}/outputs/tables/appendix/appendix_d7_social_heterogeneity.csv" \
+  "${root%/}/outputs/tables/appendix/appendix_d7_social_heterogeneity.tex" \
+  "${root%/}/outputs/figures/appendix/appendix_d8_raw_spatial_geography.pdf" \
+  "${root%/}/outputs/figures/appendix/appendix_d8_raw_spatial_geography.png" \
+  "${root%/}/outputs/figures/appendix/appendix_d8_raw_spatial_geography.csv" \
+  "${root%/}/outputs/tables/appendix/appendix_d9_residual_spatial_diagnostics.csv" \
+  "${root%/}/outputs/tables/appendix/appendix_d9_residual_spatial_diagnostics.tex" \
   "${root%/}/outputs/tables/appendix/appendix_a7_consumption_construction.csv" \
   "${root%/}/outputs/tables/appendix/appendix_a7_consumption_construction.tex" \
   "${root%/}/outputs/tables/appendix/appendix_b3_consumption_reconstruction.csv" \

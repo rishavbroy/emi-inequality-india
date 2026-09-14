@@ -101,7 +101,7 @@ The empirical analysis therefore keeps the two dimensions separate. Public versu
 
 # Data and Variables {#sec-data}
 
-The data work is a substantial part of this paper. I place survey, Census, school-report, and economic data observed under changing district boundaries onto a common Census-2001 geography; recover district-level DISE schooling reports from archived spreadsheets and PDFs; construct several district measures of linguistic distance from the Census language tables; and make consumption comparable across older NSS rounds and the newer Household Consumption Expenditure Surveys (HCES) by reconciling survey definitions, district identities, and price indices. The construction details and validation exercises are in @sec-app-data and @sec-app-validation.
+The data work is a substantial part of this paper. I place survey, Census, school-report, and economic data observed under changing district boundaries onto a common Census-2001 geography; recover district-level DISE schooling reports from archived spreadsheets and PDFs; construct several district measures of linguistic distance from the Census language tables; and make consumption comparable across older NSS rounds and the newer Household Consumption Expenditure Surveys (HCES) by reconciling survey definitions, district identities, and price indices. The construction details and source checks used by the final paper are integrated into @sec-app-data; identification checks are reported in @sec-app-identification.
 
 **Geography and source coverage.** District boundaries change often enough that a district name cannot be treated as a stable longitudinal identifier. I use Census-2001 districts as the reference geography and reconcile later and earlier source units using reviewed district-lineage evidence. The lineage system is informed by Census materials and independent district-harmonization resources, including the India State and District Evolution Database, the Indian Census Data Collection, the India District Changes Tracker, and SHRUG [@joladIndiaStateDistrict2026; @joladIndianCensusData2026; @jaacksIndiaDistrictChanges2020; @asherDevelopmentResearch2021]. It supports 593 Census-2001 reference districts; the principal schooling panel contains 573 because the 2007--08 education survey does not yield the required measures for every reference district. The main analysis therefore uses district aggregates rather than treating survey respondents as a longitudinal panel of individuals.
 
@@ -349,7 +349,7 @@ English skills are economically valuable, and households have reason to invest i
 
 # Technical Note for Replication {#sec-replication}
 
-All reported exhibits are generated from the registered public target graph. The analysis is harmonized to Census-2001 districts; the main manuscript reports only bounded paper-facing summaries, while full construction (@sec-app-data), migration (@sec-app-migration), validation (@sec-app-validation), weak-identification (@sec-app-identification), local-development and spatial (@sec-app-development), and selection (@sec-app-selection) material is retained in the appendices and their machine-readable CSV companions. Reproduction instructions, data-availability constraints, and source provenance are documented in `REPLICATION.md`, `DATA_AVAILABILITY.md`, and the repository documentation.
+All reported tables and figures are generated from registered build targets. The analysis is harmonized to Census-2001 districts; the main manuscript reports bounded summaries, while construction (@sec-app-data), migration (@sec-app-migration), weak-identification (@sec-app-identification), and selection (@sec-app-selection) material is retained in the appendices. More extensive validation and local-development results remain available in machine-readable analysis outputs rather than as separate manuscript appendices. Reproduction instructions, data-availability constraints, and source documentation are provided in `REPLICATION.md`, `DATA_AVAILABILITY.md`, and the repository documentation.
 
 \newpage
 
@@ -461,39 +461,6 @@ The final step is geographic and statistical. I attach each household's survey d
 The two modern HCES rounds provide a useful internal check because they use the same three-visit design in adjacent years. @fig-app-consumption-hces compares district estimates on common preferred support. The correlation is 0.853 for real mean MPCE, 0.852 for mean log real MPCE, and 0.855 for weighted median real MPCE. These correlations do not make the modern HCES directly interchangeable with the older NSS designs; they show that the reconstruction produces similar district rankings when the survey design is held nearly fixed across adjacent rounds. Together with the national MPCE benchmark checks, this is why the paper treats consumption as a harmonized multi-survey measurement system rather than as one nominal outcome carried unchanged across time.
 
 ![District-level consistency of reconstructed consumption across the 2022--23 and 2023--24 HCES rounds. Each panel uses districts satisfying the preferred support rule in both rounds; the dashed line is the 45-degree line. Sources: National Sample Survey Office, HCES 2022--23 and HCES 2023--24 [@nsoHCES2022; @nsoHCES2023].](../outputs/figures/appendix/appendix_consumption_hces_consistency.pdf){#fig-app-consumption-hces fig-pos="H" width="90%"}
-
-# Measurement and Source Validation {#sec-app-validation}
-
-The remaining checks ask whether the paper's geographic and measurement choices survive independent validation. They summarize lineage readiness and sensitivity, historical language validation, and Census-universe reconciliation. Consumption reconstruction and HCES cross-round consistency are discussed in @sec-app-consumption-construction; the DISE source reconstruction and its independent NSS comparison are discussed in @sec-app-dise.
-
-```{r}
-#| label: tbl-app-b1
-#| echo: false
-#| results: asis
-render_public_table("../outputs/tables/appendix/appendix_b1_lineage_readiness.tex", "appendix_b1_lineage_readiness")
-```
-
-```{r}
-#| label: tbl-app-b2
-#| echo: false
-#| results: asis
-render_public_table("../outputs/tables/appendix/appendix_b2_lineage_sensitivity.tex", "appendix_b2_lineage_sensitivity")
-```
-
-
-```{r}
-#| label: tbl-app-b6
-#| echo: false
-#| results: asis
-render_public_table("../outputs/tables/appendix/appendix_b6_language_source_validation.tex", "appendix_b6_language_source_validation")
-```
-
-```{r}
-#| label: tbl-app-b8
-#| echo: false
-#| results: asis
-render_public_table("../outputs/tables/appendix/appendix_b8_census_universe_reconciliation.tex", "appendix_b8_census_universe_reconciliation")
-```
 
 # Identification Diagnostics {#sec-app-identification}
 
@@ -609,54 +576,6 @@ The skilled composition result is different. A one-degree increase in speaker-we
 The predeclared Hindi-belt restriction is weaker. Within the Hindi-belt states, the corresponding estimate is 0.0079 with a standard error of 0.0057 ($p=0.171$). The national within-state association therefore is not clearly reproduced inside that more linguistically similar institutional setting. This boundary is one reason I do not reduce the migration evidence to a universal behavioral response to linguistic distance.
 
 Taken together, the migration results sharpen the interpretation of the later district outcomes. Linguistic conditions are associated with **who arrives for work** more clearly than with broad migration composition or interstate movement. Migration can therefore change the skill composition of places even when aggregate mobility margins show little association. Later district consumption should consequently be read as local development for a changing population, not as the individual economic return to the children observed in the earlier schooling data.
-
-# Extended Local-Development Outcomes {#sec-app-development}
-
-The main paper reports a deliberately bounded synthesis of the remaining local-development evidence. The full registered housing, Economic Census, labor, household-capacity, heterogeneity, and spatial families appear here; the migration evidence is discussed separately in @sec-app-migration. Census and Economic Census windows that overlap the 2007--08 schooling measure are interpreted as co-evolving development margins, not as identified post-treatment mediators of EMI.
-
-```{r}
-#| label: tbl-app-d3
-#| echo: false
-#| results: asis
-render_public_table("../outputs/tables/appendix/appendix_d3_housing_assets.tex", "appendix_d3_housing_assets")
-```
-
-```{r}
-#| label: tbl-app-d4
-#| echo: false
-#| results: asis
-render_public_table("../outputs/tables/appendix/appendix_d4_economic_census.tex", "appendix_d4_economic_census")
-```
-
-```{r}
-#| label: tbl-app-d5
-#| echo: false
-#| results: asis
-render_public_table("../outputs/tables/appendix/appendix_d5_labor.tex", "appendix_d5_labor")
-```
-
-```{r}
-#| label: tbl-app-d6
-#| echo: false
-#| results: asis
-render_public_table("../outputs/tables/appendix/appendix_d6_household_capacity.tex", "appendix_d6_household_capacity")
-```
-
-```{r}
-#| label: tbl-app-d7
-#| echo: false
-#| results: asis
-render_public_table("../outputs/tables/appendix/appendix_d7_social_heterogeneity.tex", "appendix_d7_social_heterogeneity")
-```
-
-![Raw spatial geography of linguistic distance, EMI, and long-run consumption change, with Moran's I reported for each panel.](../outputs/figures/appendix/appendix_d8_raw_spatial_geography.pdf){#fig-app-d8 fig-pos="H" width="100%"}
-
-```{r}
-#| label: tbl-app-d9
-#| echo: false
-#| results: asis
-render_public_table("../outputs/tables/appendix/appendix_d9_residual_spatial_diagnostics.tex", "appendix_d9_residual_spatial_diagnostics")
-```
 
 # Education Selection {#sec-app-selection}
 

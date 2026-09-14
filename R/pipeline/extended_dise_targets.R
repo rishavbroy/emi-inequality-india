@@ -56,7 +56,7 @@ extended_dise_target_definitions <- function() {
         dise_lineage_bridge
       )
     ),
-    # ST-concentration heterogeneity is core-owned for Appendix D7.
+    # ST-concentration heterogeneity is core-owned analytical output.
     # Extended mode persists the shared object below.
     tar_target(
       diag_ext_english_opportunity_st_heterogeneity_files,
