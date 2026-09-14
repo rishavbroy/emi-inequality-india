@@ -67,21 +67,6 @@ appendix_a3_lineage_source_hierarchy <- function(district_lineage) {
   out
 }
 
-appendix_a5_dise_construction <- function() {
-  x <- dise_construct_registry()
-  required <- c("construct_id", "variable", "margin", "source_side", "paper_role", "label")
-  if (length(setdiff(required, names(x))) || nrow(x) != 8L) {
-    stop("Appendix A5 requires the canonical eight-row DISE construct registry.", call. = FALSE)
-  }
-  csv <- x[required]
-  out <- data.frame(
-    Construct = csv$label, Margin = csv$margin, `Source side` = csv$source_side,
-    `Paper role` = csv$paper_role, check.names = FALSE, stringsAsFactors = FALSE
-  )
-  attr(out, "csv_data") <- csv
-  out
-}
-
 appendix_a6_linguistic_measures <- function() {
   csv <- data.frame(
     measure_id = c("shastry_2001", "historical_1991", "glottolog", "dyen", "distant_share"),
@@ -139,7 +124,6 @@ appendix_a7_consumption_construction <- function(consumption_survey_registry) {
 make_appendix_data_construction_exhibits <- function(district_lineage, consumption_survey_registry) {
   list(
     appendix_a3_lineage_source_hierarchy = appendix_a3_lineage_source_hierarchy(district_lineage),
-    appendix_a5_dise_construction = appendix_a5_dise_construction(),
     appendix_a6_linguistic_measures = appendix_a6_linguistic_measures(),
     appendix_a7_consumption_construction = appendix_a7_consumption_construction(consumption_survey_registry)
   )
@@ -150,7 +134,6 @@ save_appendix_data_construction_exhibits <- function(exhibits, cfg) {
     exhibits,
     c(
       "appendix_a3_lineage_source_hierarchy",
-      "appendix_a5_dise_construction",
       "appendix_a6_linguistic_measures",
       "appendix_a7_consumption_construction"
     ),

@@ -136,6 +136,19 @@ dise_publication_check_values <- function(district_year, checks) {
   }))
 }
 
+validate_dise_publication_checks <- function(validation) {
+  x <- safe_df(validation)
+  required <- c("matches", "difference", "source_pdf", "source_page")
+  differences <- if ("difference" %in% names(x)) num(x$difference) else numeric()
+  valid <- !length(setdiff(required, names(x))) && nrow(x) > 0L &&
+    all(x$matches %in% TRUE) && length(differences) == nrow(x) &&
+    all(is.finite(differences)) && all(differences == 0)
+  if (!valid) {
+    stop("DISE publication checks must reproduce every registered report-card cell exactly.", call. = FALSE)
+  }
+  x
+}
+
 diagnose_dise_archive <- function(district_year, treatments, publication_checks = data.frame()) {
   year_summary <- safe_bind_rows(lapply(split(district_year, district_year$academic_year), function(x) {
     data.frame(

@@ -360,6 +360,15 @@ test_that("DISE publication checks compare parsed raw counts rather than replaci
   expect_true(out$matches)
   expect_equal(out$difference, 0)
   expect_equal(district_year$dise_medium_slot_1_enrollment, 92642)
+  expect_identical(validate_dise_publication_checks(out), out)
+
+  invalid <- out
+  invalid$difference[[1]] <- 1
+  expect_error(
+    validate_dise_publication_checks(invalid),
+    "must reproduce every registered report-card cell exactly",
+    fixed = TRUE
+  )
 })
 
 test_that("DISE diagnostic saver returns the repository-standard output manifest", {

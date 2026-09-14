@@ -390,12 +390,23 @@ The purpose of these rules is not to maximize the number of matched districts. I
 
 ## DISE Data Reconstruction {#sec-app-dise}
 
-```{r}
-#| label: tbl-app-a5
-#| echo: false
-#| results: asis
-render_public_table("../outputs/tables/appendix/appendix_a5_dise_construction.tex", "appendix_a5_dise_construction")
-```
+The District Information System for Education (DISE) is valuable here because it records schools rather than household reports of schooling. The historical files are also difficult to use directly. The original publication site is no longer maintained, file formats change across years, and the raw enrollment workbooks encode medium of instruction in numbered slots whose language meaning can differ across districts. The surviving publication index maintained by Arun Mehta identifies the district report cards and raw files released by NIEPA/NUEPA and notes that 2005--06 was the first year in which DISE covered the entire country using a common data-capture format [@mehtaUDISEPublications2005062022]. I used that index to locate an Internet Archive snapshot of the former DISE district-report-card site and recovered the corresponding workbooks and published report cards [@diseDistrictReportCardsArchive2017]. The local archive spans 2002--03 through 2015--16; the 2005--06 through 2007--08 files provide the baseline measures used in the paper, while later years are retained for longitudinal checks.
+
+I record each academic year in a source registry that specifies the archived raw file, any file contained inside a ZIP archive, the enrollment, school, and teacher sheets to read, the corresponding report-card volumes, and any known source problem. This is necessary because neither the workbook layout nor the file extension reliably identifies where each measure is stored. Each year is therefore read using its registered sheet structure rather than a single layout assumed across all vintages. Earlier 2002--05 files are retained as inventory; the baseline construction begins in 2005--06, when nationwide coverage becomes comparable [@mehtaUDISEPublications2005062022].
+
+The most consequential reconstruction concerns medium of instruction. In the 2005--08 raw enrollment sheets, up to five medium slots contain grade-specific pupil counts, but the slot number is not itself a language code. I sum the grade cells within each slot and identify the slot's language from the corresponding published district report card. The resulting crosswalk contains 7,211 district-year-slot identities, each tied to a report-card PDF and page. English enrollment is the sum of the slots identified as English; Hindi enrollment is constructed in the same way. I do not turn an unidentified positive slot into zero English enrollment. If the English slot itself can be identified, its observed pupils remain usable; if a positive unidentified slot means that the absence of English cannot be established, the English count is left missing. This rule prevents uncertainty about a report label from being converted mechanically into zero exposure.
+
+The denominator is reconstructed separately from the medium slots. For the baseline years, I use total enrollment in Classes I--VIII obtained from the grade counts when available, followed by the workbook's direct enrollment total and then the sum of government and private enrollment when the earlier measures are unavailable. Medium-classified enrollment is used only as a consistency check; it is never substituted for total elementary enrollment. English-medium enrollment share is therefore English-medium pupils divided by total elementary enrollment, not the share of pupils whose medium happened to be classified in the source file. I also sum government and private management categories separately to construct private enrollment and private-school shares. School and teacher files supply the corresponding school counts, teacher counts, single-teacher-school counts, and girls'-toilet counts; ratios are computed only after these underlying counts have been assembled.
+
+For measures scaled by the school-age population rather than by observed enrollment, I use Census counts of children ages 6--13. I first place the 2011 age counts on the Census-2001 district geography using only deterministic district links, then combine the 2001 and 2011 anchors to estimate each district's annual log population growth. Population in an intervening academic year is obtained by log-linear interpolation between those anchors. The English-medium gross enrollment ratio divides English-medium pupils by this interpolated age-6--13 population. Post-2011 values used only in longitudinal checks extend the same growth rate beyond 2011; the paper's 2005--08 baseline measures rely on interpolation rather than extrapolation.
+
+District harmonization follows the lineage rules described in @sec-app-lineage, but DISE school counts impose a stricter restriction. A DISE district is carried to the Census-2001 geography only when it has an exact identity or a reviewed one-to-one lineage link with weight one. Fractional allocations across several predecessors are excluded because splitting reported school or pupil counts by population weights would create fractional source counts that were never observed. When several source districts correspond deterministically to one Census-2001 district, I sum the pupil, school, and teacher counts first and recompute shares and ratios from the pooled numerators and denominators.
+
+Published report cards are used both to decode the raw files and to check selected reconstructed cells. As a direct parser check, three registered 2005--06 medium-of-instruction cells for Kupwara reproduce the published report exactly, and the build fails if those cells cease to match. For later years, published report-card pages provide English and Hindi pupil counts when the workbook no longer supplies stable slot identities. The 2009--10 archive is a special case: the second report-card volume was not preserved, so I use the archived complete *District Elementary Education Report Card: 2009--10* where the missing volume is needed [@nuepaDistrictElementaryEducation2009]. In 2010--11 the raw enrollment workbook contains a documented header/data alignment problem; I therefore use the published current-year district total when it can be matched and leave the denominator unavailable otherwise rather than fall back to the corrupted raw total. These source-specific rules are registered by year instead of being inferred after looking at regression results.
+
+The independent NSS comparison provides a useful check on the resulting baseline measure. @fig-app-b7 plots 2007--08 DISE English-medium enrollment against NSS English-medium instruction among enrolled children. The raw district correlation is 0.896. After subtracting state means from both series, the correlation remains 0.607. The decline is expected because both schooling measures have a strong state component, while the remaining association shows that the two independent sources agree materially even within states.
+
+![Independent agreement between NSS and DISE English-medium measures. The left panel compares district levels; the right panel subtracts each source's state mean before comparison. Sources: NSS 64th Round, 2007--08 [@nationalsamplesurveyoffice2008] and DISE District Report Cards, 2007--08 [@diseDistrictReportCardsArchive2017].](../outputs/figures/appendix/appendix_b7_nss_dise_agreement.pdf){#fig-app-b7 fig-pos="H" width="90%"}
 
 ## Linguistic Measures {#sec-app-linguistic-measures}
 
@@ -417,7 +428,7 @@ render_public_table("../outputs/tables/appendix/appendix_a7_consumption_construc
 
 # Measurement and Source Validation {#sec-app-validation}
 
-The next exhibits ask whether the paper's central geography and measurement choices survive independent validation. They summarize lineage readiness and sensitivity, consumption reconstruction, HCES internal consistency, historical language persistence, independent language-source checks, NSS--DISE agreement, Census-universe reconciliation, and DISE publication validation.
+The next exhibits ask whether the paper's central geography and measurement choices survive independent validation. They summarize lineage readiness and sensitivity, consumption reconstruction, HCES internal consistency, historical language persistence, independent language-source checks, and Census-universe reconciliation. The DISE source reconstruction and its independent NSS comparison are discussed in @sec-app-dise.
 
 ```{r}
 #| label: tbl-app-b1
@@ -456,20 +467,11 @@ render_public_table("../outputs/tables/appendix/appendix_b4_hces_consistency_sum
 render_public_table("../outputs/tables/appendix/appendix_b6_language_source_validation.tex", "appendix_b6_language_source_validation")
 ```
 
-![Independent agreement between NSS and DISE English-medium measures.](../outputs/figures/appendix/appendix_b7_nss_dise_agreement.pdf){#fig-app-b7 fig-pos="H" width="90%"}
-
 ```{r}
 #| label: tbl-app-b8
 #| echo: false
 #| results: asis
 render_public_table("../outputs/tables/appendix/appendix_b8_census_universe_reconciliation.tex", "appendix_b8_census_universe_reconciliation")
-```
-
-```{r}
-#| label: tbl-app-b9
-#| echo: false
-#| results: asis
-render_public_table("../outputs/tables/appendix/appendix_b9_dise_publication_validation.tex", "appendix_b9_dise_publication_validation")
 ```
 
 # Identification Diagnostics {#sec-app-identification}

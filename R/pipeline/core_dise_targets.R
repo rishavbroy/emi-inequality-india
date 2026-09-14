@@ -99,7 +99,9 @@ core_dise_target_definitions <- function() {
     ),
     tar_target(
       dise_publication_validation,
-      dise_publication_check_values(dise_baseline_district_year, dise_publication_checks)
+      validate_dise_publication_checks(
+        dise_publication_check_values(dise_baseline_district_year, dise_publication_checks)
+      )
     ),
     tar_target(
       dise_all_district_year,

@@ -1227,10 +1227,10 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   regression_table <- name %in% c("probit_mfx", "fs_cons", "cons_iv") && !is_formatted_status_table(df_render)
   compact_result_table <- identical(name, "paper_identification_boundary")
   appendix_compact_table <- name %in% c(
-    "appendix_a3_lineage_source_hierarchy", "appendix_a5_dise_construction",
+    "appendix_a3_lineage_source_hierarchy",
     "appendix_a6_linguistic_measures", "appendix_a7_consumption_construction",
     "appendix_b1_lineage_readiness", "appendix_b2_lineage_sensitivity", "appendix_b3_consumption_reconstruction", "appendix_b4_hces_consistency_summary", "appendix_b6_language_source_validation",
-    "appendix_b8_census_universe_reconciliation", "appendix_b9_dise_publication_validation",
+    "appendix_b8_census_universe_reconciliation",
     "appendix_c1_full_absorption_ladder", "appendix_c3_control_block_absorption",
     "appendix_c4_geographic_scale_sensitivity", "appendix_c5_alternative_scalar_distances",
     "appendix_c6_mapping_composition_sensitivity", "appendix_c7_historical_balance",
@@ -1333,7 +1333,6 @@ save_table_tex <- function(table, path, name, public = TRUE) {
     widths <- switch(
       name,
       appendix_a3_lineage_source_hierarchy = c("4.1cm", "3.5cm", "7.0cm"),
-      appendix_a5_dise_construction = c("5.2cm", "2.8cm", "2.8cm", "3.2cm"),
       appendix_a6_linguistic_measures = c("3.2cm", "3.6cm", "4.6cm", "2.5cm"),
       appendix_a7_consumption_construction = c("3.4cm", "1.9cm", "2.2cm", "2.2cm", "3.0cm", "2.0cm"),
       appendix_b1_lineage_readiness = c("3.6cm", "6.8cm", "2.0cm"),
@@ -1342,7 +1341,6 @@ save_table_tex <- function(table, path, name, public = TRUE) {
       appendix_b4_hces_consistency_summary = c("6.0cm", "1.8cm", "3.0cm"),
       appendix_b6_language_source_validation = c("4.0cm", "1.2cm", "2.7cm", "1.4cm", "3.3cm", "1.6cm"),
       appendix_b8_census_universe_reconciliation = c("1.8cm", "1.2cm", "4.4cm", "2.6cm", "3.6cm", "1.2cm"),
-      appendix_b9_dise_publication_validation = c("1.2cm", "2.8cm", "3.0cm", "1.5cm", "1.5cm", "1.3cm", "3.5cm"),
       appendix_c1_full_absorption_ladder = c("3.7cm", "1.0cm", "3.8cm", "1.1cm", "1.1cm", "1.0cm", "1.4cm", "0.9cm"),
       appendix_c3_control_block_absorption = c("1.7cm", "3.7cm", "2.1cm", "2.6cm", "2.2cm"),
       appendix_c4_geographic_scale_sensitivity = c("2.2cm", "3.0cm", "2.8cm", "1.6cm", "2.1cm", "2.2cm"),

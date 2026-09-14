@@ -283,7 +283,7 @@ appendix_b7_nss_dise_plot <- function(panel, validation) {
     ggplot2::geom_abline(slope = 1, intercept = 0, linewidth = 0.35, linetype = 2) +
     ggplot2::geom_point(alpha = 0.5, size = 1.2) +
     ggplot2::facet_wrap(~ panel, scales = "free", nrow = 1) +
-    ggplot2::labs(title = "Appendix B7. NSS-DISE EMI agreement", x = "NSS EMI among enrolled", y = "DISE EMI enrollment share") +
+    ggplot2::labs(x = "NSS EMI among enrolled", y = "DISE EMI enrollment share") +
     ggplot2::theme_minimal(base_size = 10)
 }
 
@@ -399,22 +399,6 @@ appendix_b8_census_universe_reconciliation <- function(
   out
 }
 
-appendix_b9_dise_publication_validation <- function(validation) {
-  x <- safe_df(validation)
-  required <- c("academic_year", "state", "district", "metric", "expected_value", "actual_value", "difference", "matches", "source_pdf", "source_page")
-  if (length(setdiff(required, names(x))) || !nrow(x) || any(!x$matches %in% TRUE)) stop("Appendix B9 requires passing DISE publication checks.", call. = FALSE)
-  csv <- x[, required, drop = FALSE]
-  out <- data.frame(
-    Year = csv$academic_year, District = paste(csv$district, csv$state, sep = ", "), Metric = csv$metric,
-    Published = format(csv$expected_value, scientific = FALSE, trim = TRUE),
-    Reconstructed = format(csv$actual_value, scientific = FALSE, trim = TRUE),
-    Difference = format(csv$difference, scientific = FALSE, trim = TRUE),
-    `Source page` = paste0(csv$source_pdf, ", p. ", csv$source_page), check.names = FALSE, stringsAsFactors = FALSE
-  )
-  attr(out, "csv_data") <- csv
-  out
-}
-
 appendix_c7_historical_balance <- function(balance) {
   if (!is.list(balance)) stop("Appendix C7 requires canonical 1991 baseline-balance output.", call. = FALSE)
   x <- safe_df(balance$joint_balance)
@@ -456,7 +440,7 @@ make_appendix_validation_identification_exhibits <- function(
     district_lineage, consumption_mpce_validation, consumption_district_welfare,
     census_1991_primary_validation, historical_linguistic_persistence_validation,
     helms_lim_linguistic_distance_benchmark, district_panel, district_panel_with_dise,
-    dise_iv_nss_validation, dise_publication_validation, lineage_panel_variant_review,
+    dise_iv_nss_validation, lineage_panel_variant_review,
     census_migration_diagnostics, census_housing_diagnostics, census_household_diagnostics,
     census_worker_diagnostics, historical_baseline_balance_1991, historical_linguistic_first_stage_robustness) {
   list(
@@ -471,14 +455,13 @@ make_appendix_validation_identification_exhibits <- function(
     appendix_b8_census_universe_reconciliation = appendix_b8_census_universe_reconciliation(
       census_migration_diagnostics, census_housing_diagnostics, census_household_diagnostics, census_worker_diagnostics
     ),
-    appendix_b9_dise_publication_validation = appendix_b9_dise_publication_validation(dise_publication_validation),
     appendix_c7_historical_balance = appendix_c7_historical_balance(historical_baseline_balance_1991),
     appendix_c9_historical_first_stage = appendix_c9_historical_first_stage(historical_linguistic_first_stage_robustness)
   )
 }
 
 save_appendix_validation_identification_exhibits <- function(exhibits, cfg) {
-  table_names <- c("appendix_b1_lineage_readiness", "appendix_b2_lineage_sensitivity", "appendix_b3_consumption_reconstruction", "appendix_b4_hces_consistency_summary", "appendix_b6_language_source_validation", "appendix_b8_census_universe_reconciliation", "appendix_b9_dise_publication_validation", "appendix_c7_historical_balance", "appendix_c9_historical_first_stage")
+  table_names <- c("appendix_b1_lineage_readiness", "appendix_b2_lineage_sensitivity", "appendix_b3_consumption_reconstruction", "appendix_b4_hces_consistency_summary", "appendix_b6_language_source_validation", "appendix_b8_census_universe_reconciliation", "appendix_c7_historical_balance", "appendix_c9_historical_first_stage")
   figure_names <- c("appendix_b4_hces_consistency", "appendix_b5_historical_language_persistence", "appendix_b7_nss_dise_agreement")
   if (!is.list(exhibits) || !all(c(table_names, figure_names) %in% names(exhibits))) stop("Appendix B/C validation exhibit bundle is incomplete.", call. = FALSE)
   written <- save_appendix_tables(exhibits, table_names, cfg)

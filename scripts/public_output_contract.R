@@ -16,7 +16,6 @@ public_report_value_sources <- function() {
 paper_new_appendix_render_inputs <- function() {
   c(
     "outputs/tables/appendix/appendix_a3_lineage_source_hierarchy.tex",
-    "outputs/tables/appendix/appendix_a5_dise_construction.tex",
     "outputs/tables/appendix/appendix_a6_linguistic_measures.tex",
     "outputs/tables/appendix/appendix_a7_consumption_construction.tex",
     "outputs/tables/appendix/appendix_b1_lineage_readiness.tex",
@@ -28,7 +27,6 @@ paper_new_appendix_render_inputs <- function() {
     "outputs/tables/appendix/appendix_b6_language_source_validation.tex",
     "outputs/figures/appendix/appendix_b7_nss_dise_agreement.pdf",
     "outputs/tables/appendix/appendix_b8_census_universe_reconciliation.tex",
-    "outputs/tables/appendix/appendix_b9_dise_publication_validation.tex",
     "outputs/tables/appendix/appendix_c1_full_absorption_ladder.tex",
     "outputs/figures/appendix/appendix_c2_residual_geography.pdf",
     "outputs/tables/appendix/appendix_c3_control_block_absorption.tex",
@@ -166,8 +164,6 @@ required_final_artifacts <- function() {
     "outputs/tables/main/paper_identification_boundary.tex",
     "outputs/tables/appendix/appendix_a3_lineage_source_hierarchy.csv",
     "outputs/tables/appendix/appendix_a3_lineage_source_hierarchy.tex",
-    "outputs/tables/appendix/appendix_a5_dise_construction.csv",
-    "outputs/tables/appendix/appendix_a5_dise_construction.tex",
     "outputs/tables/appendix/appendix_a6_linguistic_measures.csv",
     "outputs/tables/appendix/appendix_a6_linguistic_measures.tex",
     "outputs/tables/appendix/appendix_a7_consumption_construction.csv",
@@ -187,8 +183,6 @@ required_final_artifacts <- function() {
     "outputs/figures/appendix/appendix_b7_nss_dise_agreement.pdf",
     "outputs/tables/appendix/appendix_b8_census_universe_reconciliation.csv",
     "outputs/tables/appendix/appendix_b8_census_universe_reconciliation.tex",
-    "outputs/tables/appendix/appendix_b9_dise_publication_validation.csv",
-    "outputs/tables/appendix/appendix_b9_dise_publication_validation.tex",
     "outputs/tables/appendix/appendix_c1_full_absorption_ladder.csv",
     "outputs/tables/appendix/appendix_c1_full_absorption_ladder.tex",
     "outputs/figures/appendix/appendix_c2_residual_geography.pdf",

@@ -1626,7 +1626,7 @@ test_that("Appendix A keeps reader-facing construction summaries tied to registe
     lineage, read_consumption_survey_registry()
   )
   expect_true(all(c(
-    "appendix_a3_lineage_source_hierarchy", "appendix_a5_dise_construction",
+    "appendix_a3_lineage_source_hierarchy",
     "appendix_a6_linguistic_measures", "appendix_a7_consumption_construction"
   ) %in% names(exhibits)))
 
@@ -1635,10 +1635,6 @@ test_that("Appendix A keeps reader-facing construction summaries tied to registe
   expect_true(all(nzchar(lineage_sources$source_family)))
   expect_true(all(nzchar(lineage_sources$coverage)))
   expect_true(all(nzchar(lineage_sources$role)))
-
-  a5 <- attr(exhibits$appendix_a5_dise_construction, "csv_data")
-  expect_equal(nrow(a5), 8L)
-  expect_true("emi_total_0708" %in% a5$construct_id)
 
   a7 <- attr(exhibits$appendix_a7_consumption_construction, "csv_data")
   expect_true(all(c("nss_2004_05", "hces_2022_23", "hces_2023_24") %in% a7$survey_id))
@@ -1822,7 +1818,7 @@ test_that("Appendix B1 lineage readiness fails closed and reports the three regi
 })
 
 
-test_that("Appendix B benchmark and DISE publication tables fail closed on validation failures", {
+test_that("Appendix B consumption benchmark table fails closed on validation failures", {
   mpce <- data.frame(
     survey_id = rep(paste0("survey_", 1:9), each = 2L),
     sector = rep(c("rural", "urban"), 9L),
@@ -1843,15 +1839,6 @@ test_that("Appendix B benchmark and DISE publication tables fail closed on valid
   mpce$passed[[2]] <- FALSE
   expect_error(appendix_b3_consumption_reconstruction(mpce), "may only publish passed consumption benchmarks", fixed = TRUE)
 
-  dise <- data.frame(
-    academic_year = "2005-06", state = "Jammu and Kashmir", district = "Kupwara",
-    metric = "medium_slot_1", expected_value = 10, actual_value = 10, difference = 0,
-    matches = TRUE, source_pdf = "report.pdf", source_page = 1L, stringsAsFactors = FALSE
-  )
-  b9 <- appendix_b9_dise_publication_validation(dise)
-  expect_equal(nrow(attr(b9, "csv_data")), 1L)
-  dise$matches[[1]] <- FALSE
-  expect_error(appendix_b9_dise_publication_validation(dise), "requires passing DISE publication checks", fixed = TRUE)
 })
 
 

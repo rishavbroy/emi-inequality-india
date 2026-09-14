@@ -68,7 +68,6 @@ public_table_caption_text <- function(name) {
       "District-Lineage Sources and Roles.",
       "Sources: Census of India; Ministry of Panchayati Raj Local Government Directory; Kumar and Somanathan (2016); India State and District Evolution Database; India District Changes Tracker; Development Data Lab SHRUG; Deshpande, Khanna, and Walia concordances."
     ),
-    appendix_a5_dise_construction = "DISE Schooling Constructs. Source: District Information System for Education district report cards, 2005-06 to 2007-08.",
     appendix_a6_linguistic_measures = "Linguistic-Measure Construction. Sources: Census of India 1991 and 2001 language tables; Shastry (2012); Glottolog 5.3; Dyen lexicostatistical data.",
     appendix_a7_consumption_construction = "Consumption Survey Construction. Sources: NSS consumer-expenditure rounds 2004-05, 2009-10, and 2011-12; HCES 2022-23 and 2023-24; official price series.",
     appendix_b1_lineage_readiness = "Appendix B1. District-Lineage Readiness and Coverage",
@@ -80,7 +79,6 @@ public_table_caption_text <- function(name) {
       "Sources: Census of India 1991 Language Atlas; Census of India 2001 language tables; Helms and Lim replication data."
     ),
     appendix_b8_census_universe_reconciliation = "Appendix B8. Census Universe Reconciliation",
-    appendix_b9_dise_publication_validation = "Appendix B9. DISE Publication Validation",
     appendix_c1_full_absorption_ladder = "Appendix C1. Full First-Stage Absorption Ladder",
     appendix_c3_control_block_absorption = "Appendix C3. Control-Block Absorption",
     appendix_c4_geographic_scale_sensitivity = "Appendix C4. Geographic and Scale Sensitivity",
@@ -161,10 +159,6 @@ public_table_note <- function(name) {
     appendix_a3_lineage_source_hierarchy = paste(
       "Rows summarize source families rather than individual files. Detailed source IDs and adjudication ledgers remain available in the lineage CSV outputs."
     ),
-    appendix_a5_dise_construction = paste(
-      "DISE constructs are derived from the canonical construct registry.",
-      "The main paper uses total-enrollment EMI as independent administrative validation; age-scaled and pooled alternatives remain diagnostic robustness constructs."
-    ),
     appendix_a6_linguistic_measures = paste(
       "The preferred measure is the speaker-weighted Shastry distance from Hindi on Census-2001 geography.",
       "Historical, genealogical, lexicostatistical, and nonlinear measures are validation or sensitivity constructions rather than interchangeable instruments."
@@ -198,10 +192,6 @@ public_table_note <- function(name) {
       "Rows summarize the registered migration, housing, household, and worker denominator reconciliations before longitudinal pooling or rate construction.",
       "Exact cross-table count checks must have zero discrepancy; the migration-stock check separately verifies that migrant stock never exceeds the Census population denominator.",
       "Support reports the native published district universe or the overlap range when source tables have structurally different coverage."
-    ),
-    appendix_b9_dise_publication_validation = paste(
-      "Published DISE report cells are compared with values reconstructed from the archived machine-readable source.",
-      "All registered publication checks must match exactly before this exhibit can be produced."
     ),
     appendix_c1_full_absorption_ladder = paste(
       "Every declared semantic first-stage absorption specification is shown on the same complete-case district support.",

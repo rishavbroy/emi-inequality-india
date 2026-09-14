@@ -116,7 +116,7 @@ core_public_target_definitions <- function() {
         district_lineage, consumption_mpce_validation, consumption_district_welfare,
         census_1991_primary_validation, historical_linguistic_persistence_validation,
         helms_lim_linguistic_distance_benchmark, district_panel, district_panel_with_dise,
-        dise_iv_nss_validation, dise_publication_validation, lineage_panel_variant_review,
+        dise_iv_nss_validation, lineage_panel_variant_review,
         census_migration_diagnostics, census_housing_diagnostics, census_household_diagnostics,
         census_worker_diagnostics, historical_baseline_balance_1991, historical_linguistic_first_stage_robustness
       )
@@ -206,7 +206,7 @@ core_public_target_definitions <- function() {
       render_public_pdf(
         paper_new_qmd,
         dependencies = list(
-          report_values, table_files, figure_files,
+          report_values, table_files, figure_files, dise_publication_validation,
           appendix_data_construction_files, appendix_validation_identification_files,
           appendix_identification_files, appendix_local_development_files,
           appendix_selection_files
