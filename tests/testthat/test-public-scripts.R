@@ -60,6 +60,24 @@ test_that("current public build helper scripts parse", {
   expect_silent(parse(repo_file("R", "application_samples", "extract_qmd_excerpts.R")))
 })
 
+test_that("public QMD helper loads its table-formatting dependencies", {
+  env <- new.env(parent = baseenv())
+  sys.source(repo_file("R", "output", "public_qmd_helpers.R"), envir = env)
+
+  rows <- env$public_probit_ame_rows(data.frame(
+    Term = "Fixture",
+    estimate = 0.1,
+    std.error = 0.05,
+    p.value = 0.08,
+    check.names = FALSE
+  ))
+
+  expect_equal(
+    rows$Estimate,
+    c(paste0("0.100", env$significance_stars(0.08)), "(0.050)")
+  )
+})
+
 test_that("audit workspace cleanup removes transient state and preserves optional outputs", {
   root <- tempfile("audit-clean-")
   on.exit(unlink(root, recursive = TRUE, force = TRUE), add = TRUE)

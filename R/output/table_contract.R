@@ -30,6 +30,13 @@ paper_linguistic_distance_display_labels <- function() {
 
 regression_star_levels <- function() c("*" = 0.10, "**" = 0.05, "***" = 0.01)
 
+significance_stars <- function(p) {
+  cutoffs <- regression_star_levels()
+  ifelse(is.finite(p) & p < cutoffs[["***"]], "***",
+    ifelse(is.finite(p) & p < cutoffs[["**"]], "**",
+      ifelse(is.finite(p) & p < cutoffs[["*"]], "*", "")))
+}
+
 regression_star_note <- function() "* p < 0.10, ** p < 0.05, *** p < 0.01"
 
 public_table_caption_text <- function(name) {
