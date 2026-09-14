@@ -1154,6 +1154,27 @@ test_that("IV appendix weak-inference summary fails closed on identification cla
 })
 
 
+test_that("weak-IV appendix table renders through modelsummary", {
+  skip_if_not_installed("modelsummary")
+  skip_if_not_installed("kableExtra")
+
+  fixture <- iv_weak_fixture()
+  table <- appendix_iv_weak_inference(
+    fixture$dynamics, fixture$exclusion, fixture$robustness, fixture$alternative
+  )
+
+  tex <- paste(
+    as.character(appendix_iv_weak_inference_modelsummary_table(
+      table, "appendix_iv_weak_inference"
+    )),
+    collapse = "\n"
+  )
+
+  expect_match(tex, "EMI exposure", fixed = TRUE)
+  expect_match(tex, "MOP effective F", fixed = TRUE)
+})
+
+
 test_that("retained validation figures enforce registered common support", {
   welfare <- expand.grid(
     district_2001 = c("d1", "d2", "d3"),

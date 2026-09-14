@@ -1087,7 +1087,7 @@ appendix_iv_weak_inference_modelsummary_table <- function(table, name) {
     coef_map = c("emi_exposure" = "EMI exposure"),
     estimate = "{estimate}",
     statistic = "({std.error})",
-    stars = NULL,
+    stars = FALSE,
     fmt = 3,
     gof_map = gof_map,
     title = table_caption(name),
