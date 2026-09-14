@@ -1622,23 +1622,13 @@ test_that("Appendix A keeps reader-facing construction summaries tied to registe
     stringsAsFactors = FALSE
   ))
 
-  exhibits <- make_appendix_data_construction_exhibits(
-    lineage, read_consumption_survey_registry()
-  )
-  expect_true(all(c(
-    "appendix_a3_lineage_source_hierarchy",
-    "appendix_a7_consumption_construction"
-  ) %in% names(exhibits)))
-
-  lineage_sources <- attr(exhibits$appendix_a3_lineage_source_hierarchy, "csv_data")
+  lineage_summary <- appendix_a3_lineage_source_hierarchy(lineage)
+  lineage_sources <- attr(lineage_summary, "csv_data")
   expect_equal(nrow(lineage_sources), 6L)
   expect_true(all(nzchar(lineage_sources$source_family)))
   expect_true(all(nzchar(lineage_sources$coverage)))
   expect_true(all(nzchar(lineage_sources$role)))
 
-  a7 <- attr(exhibits$appendix_a7_consumption_construction, "csv_data")
-  expect_true(all(c("nss_2004_05", "hces_2022_23", "hces_2023_24") %in% a7$survey_id))
-  expect_false(any(c("status", "reason") %in% names(a7)))
 })
 
 test_that("Appendix A lineage source summary fails when registered evidence is missing", {
@@ -1765,7 +1755,7 @@ test_that("Appendix B8 summarizes exact Census universe reconciliations and fail
   )
 })
 
-test_that("Appendix B validation plots enforce common registered support", {
+test_that("Appendix validation figures enforce common registered support", {
   welfare <- expand.grid(
     district_2001 = c("d1", "d2", "d3"),
     round_id = c("hces_2022_23", "hces_2023_24"),
@@ -1773,11 +1763,9 @@ test_that("Appendix B validation plots enforce common registered support", {
     stringsAsFactors = FALSE
   )
   welfare$estimate <- seq_len(nrow(welfare)); welfare$preferred_eligible <- TRUE
-  b4 <- appendix_b4_hces_consistency_data(welfare)
+  b4 <- hces_cross_round_consistency_data(welfare)
   expect_equal(as.integer(table(b4$outcome_id)), rep(3L, 3L))
-  b4_summary <- appendix_b4_hces_consistency_summary(welfare)
-  expect_equal(nrow(attr(b4_summary, "csv_data")), 3L)
-  expect_true(all(attr(b4_summary, "csv_data")$n == 3L))
+  expect_s3_class(appendix_consumption_hces_consistency_plot(welfare), "ggplot")
 
   panel <- data.frame(
     state_code_2001 = rep(c("01", "02"), each = 2),
@@ -1817,29 +1805,6 @@ test_that("Appendix B1 lineage readiness fails closed and reports the three regi
   expect_error(appendix_b1_lineage_readiness(lineage), "all lineage readiness gates pass", fixed = TRUE)
 })
 
-
-test_that("Appendix B consumption benchmark table fails closed on validation failures", {
-  mpce <- data.frame(
-    survey_id = rep(paste0("survey_", 1:9), each = 2L),
-    sector = rep(c("rural", "urban"), 9L),
-    mpce_definition = "registered detailed MPCE",
-    expected_mpce = seq_len(18L) * 100,
-    estimate_mpce = seq_len(18L) * 100,
-    abs_difference = 0,
-    passed = TRUE,
-    stringsAsFactors = FALSE
-  )
-  b3 <- appendix_b3_consumption_reconstruction(mpce)
-  expect_equal(nrow(attr(b3, "csv_data")), 18L)
-  expect_error(
-    appendix_b3_consumption_reconstruction(mpce[-1L, , drop = FALSE]),
-    "all 18 registered national consumption benchmark cells",
-    fixed = TRUE
-  )
-  mpce$passed[[2]] <- FALSE
-  expect_error(appendix_b3_consumption_reconstruction(mpce), "may only publish passed consumption benchmarks", fixed = TRUE)
-
-})
 
 
 test_that("Appendix C1-C3 summarize the complete registered absorption design", {

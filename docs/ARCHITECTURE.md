@@ -347,13 +347,14 @@ plus missingness-predictability figure under
 missingness matrices, regional screens, and case-study diagnostics from that same object;
 it does not rerun the analysis.
 
-Appendix A is prose-led and reserves generated tables for compact source or
-measurement summaries. `appendix_data_construction_exhibits` now reshapes only the
-district-lineage source families and consumption survey registry. The linguistic-measure
-taxonomy is explanatory manuscript text rather than a generated data product. The former lineage process diagram and
-generic timing/NSS/outcome inventories were removed from the final-paper bundle:
-the manuscript explains the lineage decision rules directly, while detailed
-source ledgers remain in the machine-readable lineage outputs. Shared `appendix_*`
+Appendix A is prose-led. `appendix_data_construction_exhibits` now generates only the
+compact district-lineage source summary. DISE, linguistic measures, and consumption
+harmonization are explained in manuscript prose. The HCES cross-round figure reuses the
+registered district-welfare estimates, while benchmark, price, geography, and survey-design
+checks remain enforced upstream rather than being printed as registry tables. The former
+lineage process diagram and generic timing/NSS/outcome inventories were removed from the
+final-paper bundle: the manuscript explains the construction decisions directly, while detailed
+source ledgers remain in the machine-readable outputs. Shared `appendix_*`
 output helpers continue to own appendix paths and writing so later Appendix B--D
 bundles reuse one save path rather than duplicating save loops.
 

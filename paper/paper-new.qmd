@@ -438,18 +438,33 @@ Two independent alternatives deliberately change what linguistic distance means.
 
 : Linguistic-measure constructions and their roles. Sources: Census of India 2001 language tables [@officeoftheregistrargeneralandcensuscommissionerofindiaCensusIndia20012001]; *Language Atlas of India 1991* [@officeRegistrarLanguageAtlasIndia2004]; @shastry2012a; Glottolog 5.3 [@hammarstromGlottologGlottologGlottolog2026]; and Dyen, Kruskal, and Black [@dyenIndoeuropeanClassification1992; @dyenComparativeIndoeuropeanDatabase1997]. {#tbl-app-a6}
 
-## Consumption Harmonization {#sec-app-consumption-construction}
+## Price Series and Consumption Harmonization {#sec-app-consumption-construction}
 
-```{r}
-#| label: tbl-app-a7
-#| echo: false
-#| results: asis
-render_public_table("../outputs/tables/appendix/appendix_a7_consumption_construction.tex", "appendix_a7_consumption_construction")
-```
+Comparing district consumption across two decades requires more than placing several survey rounds in one file. The historical NSS rounds and the Household Consumption Expenditure Surveys (HCES) of 2022--23 and 2023--24 differ in questionnaire design, recall periods, district codes, and price environments [@nssHouseholdConsumerExpenditure2004; @nationalstatisticalofficeIndiaHouseholdConsumer2011; @nssHouseholdConsumerExpenditure2009Type1; @nssHouseholdConsumerExpenditure2009Type2; @nssHouseholdConsumerExpenditure2011Type2; @nsoHCES2022; @nsoHCES2023]. I therefore reconstruct household monthly per-capita consumption expenditure (MPCE) within each survey first, validate that nominal measure against the published survey totals, and only then harmonize prices and geography. The outcome used in the paper is real consumption per person, not a nominal rupee comparison across survey years.
+
+For the NSS Schedule 1.0 rounds, I retain the consumption concept reported for that design rather than forcing every round into a nominally identical recall rule. The source metadata identify the household MPCE field, its scale, and the survey-design variables required for weighting; the benchmark metadata separately record whether the published comparison is based on the mixed reference period (MRP) or modified mixed reference period (MMRP). Under MRP, less frequently purchased categories use a 365-day recall while most other spending uses 30 days; MMRP additionally uses a 7-day recall for selected food and related items [@nsoHCESReport2023]. Some releases report MPCE directly; others require reconstruction from the split household files. I check the resulting household series against the official rural and urban MPCE for every registered round before any price adjustment. Across the nine surveys used here, the 18 reconstructed rural/urban means differ from their published counterparts by less than ₹0.50 in every case. A mismatch stops construction of that round rather than being carried into the district estimates.
+
+The modern HCES releases require an additional reconstruction because they replace the single long consumption interview used by earlier NSS rounds with three questionnaires administered in separate visits: the Food Questionnaire (FDQ), Consumables and Services Questionnaire (CSQ), and Durable Goods Questionnaire (DGQ) [@nsoHCES2022; @nsoHCESReport2023]. The questionnaires use reference periods of 7, 30, or 365 days depending on the item. I identify the registered expenditure items in each questionnaire, convert each reported amount to a monthly equivalent using its stated reference period, and then sum the three questionnaire components. Imputed house and garage rent is explicitly excluded from this MPCE reconstruction, consistent with the official published MPCE concept used for the benchmark comparison. The 2023--24 release identifies visit order, so I use the multiplier from the third visit, as prescribed in the official estimation procedure [@nsoHCESReport2023]. The 2022--23 release does not preserve visit order in the same way; its three questionnaire records are therefore required to carry the same multiplier before I use their common value. Households missing one of the three questionnaire components are not treated as complete HCES consumption observations.
+
+Nominal MPCE must then be made comparable across places and dates. I separate this adjustment into a **temporal price relative**, which measures price change through time within a state and rural or urban sector, and a **spatial price relative**, which measures price-level differences across state-sector cells in the reference year. Before 2013, rural temporal prices use the Labour Bureau's Consumer Price Index for Rural Labourers (CPI-RL), whose 1986--87-base series covers 20 states and all-India [@labourBureauCPIRL]. Urban prices use the Labour Bureau's 2001-base Consumer Price Index for Industrial Workers (CPI-IW), aggregated from its centre series to the state level [@labourBureauCPIIW]. From 2013 onward, I use the state rural and urban CPI series with base 2012=100 from the national CPI system [@reserveBankIndiaDBIE]. I link the pre-2013 series to the 2012-base state CPI using their common state-sector months in 2013--14; state-sector cells without sufficient overlap fail rather than receiving an assumed link. A separate overlap between the 2010- and 2012-base rural/urban CPI series places the July 2011--June 2012 reference-year index on that same scale.
+
+I preserve cross-state and rural/urban price-level differences using the state-specific 2011--12 Tendulkar poverty lines [@planningCommissionPovertyEstimates2013]. Each state-sector poverty line is divided by the all-India rural reference of ₹816 to obtain the spatial relative; using a common denominator retains the national rural-urban price difference rather than normalizing it away. Direct state observations are preferred throughout. When a historical index is unavailable for a small state or union territory, the price crosswalk permits only documented donor or all-India substitutions; the source and reason remain attached to the resulting household deflator. The household price deflator is therefore
+
+$$
+P_{srt}=P^{\text{spatial}}_{sr}\times P^{\text{temporal}}_{srt},
+$$
+
+where $s$ denotes state, $r$ rural or urban sector, and $t$ survey time. Real MPCE is nominal MPCE divided by this deflator. For NSS rounds, I average the monthly state-sector indices over the three months represented by the household's survey sub-round. For HCES, the price assignment follows the household's three-month panel. This timing avoids using an annual price index when the fieldwork itself identifies a narrower interview period.
+
+The final step is geographic and statistical. I attach each household's survey district to the Census-2001 geography using the lineage system described in @sec-app-lineage. Unresolved or ineligible source geography is recorded rather than silently assigned. Person-weight coverage ranges from about 92.6% in 2000--01 to complete coverage in 2007--08, is about 97--98% in 2009--12, and is about 91.6% in each modern HCES round. District means are person-weighted: a household's survey weight is multiplied by household size so that the district mean represents consumption per person rather than the mean of equally weighted households. The district welfare system also records the number of sampled households and primary sampling units and a Kish effective sample size, which declines as survey weights become more unequal, and it applies predeclared support thresholds before an estimate enters the preferred analysis. Comparisons that require the same districts use explicit common-support samples rather than allowing the set of districts to change unnoticed across outcomes or rounds.
+
+The two modern HCES rounds provide a useful internal check because they use the same three-visit design in adjacent years. @fig-app-consumption-hces compares district estimates on common preferred support. The correlation is 0.853 for real mean MPCE, 0.852 for mean log real MPCE, and 0.855 for weighted median real MPCE. These correlations do not make the modern HCES directly interchangeable with the older NSS designs; they show that the reconstruction produces similar district rankings when the survey design is held nearly fixed across adjacent rounds. Together with the national MPCE benchmark checks, this is why the paper treats consumption as a harmonized multi-survey measurement system rather than as one nominal outcome carried unchanged across time.
+
+![District-level consistency of reconstructed consumption across the 2022--23 and 2023--24 HCES rounds. Each panel uses districts satisfying the preferred support rule in both rounds; the dashed line is the 45-degree line. Sources: National Sample Survey Office, HCES 2022--23 and HCES 2023--24 [@nsoHCES2022; @nsoHCES2023].](../outputs/figures/appendix/appendix_consumption_hces_consistency.pdf){#fig-app-consumption-hces fig-pos="H" width="90%"}
 
 # Measurement and Source Validation {#sec-app-validation}
 
-The next exhibits ask whether the paper's central geography and measurement choices survive independent validation. They summarize lineage readiness and sensitivity, consumption reconstruction, HCES internal consistency, historical language persistence, independent language-source checks, and Census-universe reconciliation. The DISE source reconstruction and its independent NSS comparison are discussed in @sec-app-dise.
+The remaining checks ask whether the paper's geographic and measurement choices survive independent validation. They summarize lineage readiness and sensitivity, historical language validation, and Census-universe reconciliation. Consumption reconstruction and HCES cross-round consistency are discussed in @sec-app-consumption-construction; the DISE source reconstruction and its independent NSS comparison are discussed in @sec-app-dise.
 
 ```{r}
 #| label: tbl-app-b1
@@ -465,21 +480,6 @@ render_public_table("../outputs/tables/appendix/appendix_b1_lineage_readiness.te
 render_public_table("../outputs/tables/appendix/appendix_b2_lineage_sensitivity.tex", "appendix_b2_lineage_sensitivity")
 ```
 
-```{r}
-#| label: tbl-app-b3
-#| echo: false
-#| results: asis
-render_public_table("../outputs/tables/appendix/appendix_b3_consumption_reconstruction.tex", "appendix_b3_consumption_reconstruction")
-```
-
-![HCES reconstruction and internal-consistency validation.](../outputs/figures/appendix/appendix_b4_hces_consistency.pdf){#fig-app-b4 fig-pos="H" width="90%"}
-
-```{r}
-#| label: tbl-app-b4
-#| echo: false
-#| results: asis
-render_public_table("../outputs/tables/appendix/appendix_b4_hces_consistency_summary.tex", "appendix_b4_hces_consistency_summary")
-```
 
 ```{r}
 #| label: tbl-app-b6

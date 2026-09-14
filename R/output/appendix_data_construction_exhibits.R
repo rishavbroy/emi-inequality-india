@@ -1,8 +1,8 @@
 # Final-paper Appendix A exhibit builders.
 #
-# Appendix A is prose-led. These helpers retain only the compact tables that
-# summarize source families or measurement registries used by the manuscript;
-# detailed lineage ledgers and validation files remain available as CSVs.
+# Appendix A is prose-led. These helpers retain only the compact lineage-source
+# table and the adjacent-HCES consistency figure used by the manuscript; detailed
+# measurement and validation files remain available as machine-readable outputs.
 
 appendix_a3_lineage_source_hierarchy <- function(district_lineage) {
   if (!is.list(district_lineage)) {
@@ -67,45 +67,78 @@ appendix_a3_lineage_source_hierarchy <- function(district_lineage) {
   out
 }
 
-appendix_a7_consumption_construction <- function(consumption_survey_registry) {
-  x <- validate_consumption_survey_registry(safe_df(consumption_survey_registry))
-  keep <- plain_chr(x$survey_family) == "nss_schedule_1_0" |
-    grepl("hces", plain_chr(x$survey_id), fixed = TRUE)
-  x <- x[keep, , drop = FALSE]
-  if (!nrow(x)) stop("Appendix A7 requires registered consumption surveys.", call. = FALSE)
-  csv <- data.frame(
-    survey_id = plain_chr(x$survey_id),
-    round = plain_chr(x$survey_label),
-    period = paste(plain_chr(x$survey_start), plain_chr(x$survey_end), sep = " to "),
-    recall_design = plain_chr(x$schedule_variant),
-    price_treatment = plain_chr(x$price_timing),
-    district_identity = plain_chr(x$district_identity_source),
-    analysis_role = plain_chr(x$analysis_role),
-    stringsAsFactors = FALSE
-  )
-  out <- data.frame(
-    Round = csv$round, Period = csv$period, `Recall / schedule` = csv$recall_design,
-    `Price treatment` = csv$price_treatment, `District identity` = csv$district_identity,
-    Role = csv$analysis_role, check.names = FALSE, stringsAsFactors = FALSE
-  )
-  attr(out, "csv_data") <- csv
-  out
+hces_cross_round_consistency_data <- function(welfare) {
+  x <- safe_df(welfare)
+  required <- c("district_2001", "round_id", "outcome_id", "estimate", "preferred_eligible")
+  if (length(setdiff(required, names(x)))) stop("HCES cross-round consistency requires district welfare outputs.", call. = FALSE)
+  outcomes <- c("real_mean_mpce", "mean_log_real_mpce", "weighted_median_real_mpce")
+  x <- x[x$round_id %in% c("hces_2022_23", "hces_2023_24") & x$outcome_id %in% outcomes & x$preferred_eligible %in% TRUE, required, drop = FALSE]
+  if (anyDuplicated(x[c("district_2001", "round_id", "outcome_id")])) {
+    stop("HCES cross-round consistency requires unique district-round-outcome welfare estimates.", call. = FALSE)
+  }
+  rows <- lapply(outcomes, function(outcome) {
+    z <- x[x$outcome_id == outcome, , drop = FALSE]
+    a <- z[z$round_id == "hces_2022_23", c("district_2001", "estimate"), drop = FALSE]
+    b <- z[z$round_id == "hces_2023_24", c("district_2001", "estimate"), drop = FALSE]
+    names(a)[2] <- "estimate_2022_23"; names(b)[2] <- "estimate_2023_24"
+    m <- merge(a, b, by = "district_2001", all = FALSE, sort = FALSE)
+    if (nrow(m) < 2L) stop("HCES cross-round consistency requires common eligible districts in both HCES rounds.", call. = FALSE)
+    m$outcome_id <- outcome
+    m$pearson <- stats::cor(num(m$estimate_2022_23), num(m$estimate_2023_24))
+    m
+  })
+  safe_bind_rows(rows)
 }
 
-make_appendix_data_construction_exhibits <- function(district_lineage, consumption_survey_registry) {
+appendix_consumption_hces_consistency_plot <- function(welfare) {
+  need_pkg("ggplot2", "HCES cross-round consistency figure")
+  d <- hces_cross_round_consistency_data(welfare)
+  labels <- c(
+    real_mean_mpce = "Real mean MPCE",
+    mean_log_real_mpce = "Mean log real MPCE",
+    weighted_median_real_mpce = "Weighted median real MPCE"
+  )
+  summary <- safe_bind_rows(lapply(names(labels), function(id) {
+    x <- d[d$outcome_id == id, , drop = FALSE]
+    data.frame(
+      outcome_id = id, outcome = unname(labels[[id]]), n = nrow(x),
+      pearson = stats::cor(num(x$estimate_2022_23), num(x$estimate_2023_24)),
+      stringsAsFactors = FALSE
+    )
+  }))
+  facet_labels <- setNames(
+    sprintf("%s\nN = %d; r = %.3f", summary$outcome, summary$n, summary$pearson),
+    summary$outcome_id
+  )
+  d$outcome <- unname(facet_labels[d$outcome_id])
+  ggplot2::ggplot(d, ggplot2::aes(x = estimate_2022_23, y = estimate_2023_24)) +
+    ggplot2::geom_abline(slope = 1, intercept = 0, linewidth = 0.35, linetype = 2) +
+    ggplot2::geom_point(alpha = 0.5, size = 1.2) +
+    ggplot2::facet_wrap(~ outcome, scales = "free", nrow = 1) +
+    ggplot2::labs(x = "2022-23 estimate", y = "2023-24 estimate") +
+    ggplot2::theme_minimal(base_size = 10)
+}
+
+
+make_appendix_data_construction_exhibits <- function(district_lineage, consumption_district_welfare) {
   list(
     appendix_a3_lineage_source_hierarchy = appendix_a3_lineage_source_hierarchy(district_lineage),
-    appendix_a7_consumption_construction = appendix_a7_consumption_construction(consumption_survey_registry)
+    appendix_consumption_hces_consistency = appendix_consumption_hces_consistency_plot(consumption_district_welfare)
   )
 }
 
 save_appendix_data_construction_exhibits <- function(exhibits, cfg) {
-  save_appendix_tables(
-    exhibits,
-    c(
-      "appendix_a3_lineage_source_hierarchy",
-      "appendix_a7_consumption_construction"
-    ),
-    cfg
+  if (!is.list(exhibits) || !all(c("appendix_a3_lineage_source_hierarchy", "appendix_consumption_hces_consistency") %in% names(exhibits))) {
+    stop("Appendix A exhibit bundle is incomplete.", call. = FALSE)
+  }
+  written <- save_appendix_tables(exhibits, "appendix_a3_lineage_source_hierarchy", cfg)
+  written <- c(
+    written,
+    save_plot_formats(
+      exhibits$appendix_consumption_hces_consistency,
+      appendix_figure_path_base("appendix_consumption_hces_consistency"),
+      figure_formats(cfg), width = 8.2, height = 3.8
+    )
   )
+  unique(normalizePath(written, mustWork = FALSE))
 }

@@ -95,93 +95,6 @@ appendix_b2_lineage_sensitivity <- function(review) {
   out
 }
 
-appendix_b3_consumption_reconstruction <- function(validation) {
-  x <- safe_df(validation)
-  required <- c("survey_id", "sector", "mpce_definition", "expected_mpce", "estimate_mpce", "abs_difference", "passed")
-  missing <- setdiff(required, names(x))
-  if (length(missing) || nrow(x) != 18L) {
-    stop("Appendix B3 requires all 18 registered national consumption benchmark cells.", call. = FALSE)
-  }
-  if (any(!x$passed %in% TRUE)) stop("Appendix B3 may only publish passed consumption benchmarks.", call. = FALSE)
-  csv <- x[, required, drop = FALSE]
-  out <- data.frame(
-    Survey = plain_chr(csv$survey_id), Sector = plain_chr(csv$sector),
-    Recall = plain_chr(csv$mpce_definition),
-    Official = sprintf("%.2f", num(csv$expected_mpce)),
-    Reconstructed = sprintf("%.2f", num(csv$estimate_mpce)),
-    `Absolute error` = sprintf("%.2f", num(csv$abs_difference)),
-    check.names = FALSE, stringsAsFactors = FALSE
-  )
-  attr(out, "csv_data") <- csv
-  out
-}
-
-appendix_b4_hces_consistency_data <- function(welfare) {
-  x <- safe_df(welfare)
-  required <- c("district_2001", "round_id", "outcome_id", "estimate", "preferred_eligible")
-  if (length(setdiff(required, names(x)))) stop("Appendix B4 requires canonical district welfare outputs.", call. = FALSE)
-  outcomes <- c("real_mean_mpce", "mean_log_real_mpce", "weighted_median_real_mpce")
-  x <- x[x$round_id %in% c("hces_2022_23", "hces_2023_24") & x$outcome_id %in% outcomes & x$preferred_eligible %in% TRUE, required, drop = FALSE]
-  if (anyDuplicated(x[c("district_2001", "round_id", "outcome_id")])) {
-    stop("Appendix B4 requires unique district-round-outcome welfare estimates.", call. = FALSE)
-  }
-  rows <- lapply(outcomes, function(outcome) {
-    z <- x[x$outcome_id == outcome, , drop = FALSE]
-    a <- z[z$round_id == "hces_2022_23", c("district_2001", "estimate"), drop = FALSE]
-    b <- z[z$round_id == "hces_2023_24", c("district_2001", "estimate"), drop = FALSE]
-    names(a)[2] <- "estimate_2022_23"; names(b)[2] <- "estimate_2023_24"
-    m <- merge(a, b, by = "district_2001", all = FALSE, sort = FALSE)
-    if (nrow(m) < 2L) stop("Appendix B4 requires common eligible districts in both HCES rounds.", call. = FALSE)
-    m$outcome_id <- outcome
-    m$pearson <- stats::cor(num(m$estimate_2022_23), num(m$estimate_2023_24))
-    m
-  })
-  safe_bind_rows(rows)
-}
-
-appendix_b4_hces_consistency_summary <- function(welfare) {
-  d <- appendix_b4_hces_consistency_data(welfare)
-  labels <- c(
-    real_mean_mpce = "Real mean MPCE",
-    mean_log_real_mpce = "Mean log real MPCE",
-    weighted_median_real_mpce = "Weighted median real MPCE"
-  )
-  rows <- safe_bind_rows(lapply(names(labels), function(id) {
-    x <- d[d$outcome_id == id, , drop = FALSE]
-    data.frame(
-      outcome_id = id,
-      outcome = unname(labels[[id]]),
-      n = nrow(x),
-      pearson = stats::cor(num(x$estimate_2022_23), num(x$estimate_2023_24)),
-      stringsAsFactors = FALSE
-    )
-  }))
-  out <- data.frame(
-    Outcome = rows$outcome, N = formatC(rows$n, format = "d", big.mark = ","),
-    `Pearson correlation` = sprintf("%.3f", rows$pearson),
-    check.names = FALSE, stringsAsFactors = FALSE
-  )
-  attr(out, "csv_data") <- rows
-  out
-}
-
-appendix_b4_hces_consistency_plot <- function(welfare) {
-  need_pkg("ggplot2", "Appendix B HCES consistency figure")
-  d <- appendix_b4_hces_consistency_data(welfare)
-  summary <- attr(appendix_b4_hces_consistency_summary(welfare), "csv_data")
-  facet_labels <- setNames(
-    sprintf("%s\nN = %d; r = %.3f", summary$outcome, summary$n, summary$pearson),
-    summary$outcome_id
-  )
-  d$outcome <- unname(facet_labels[d$outcome_id])
-  ggplot2::ggplot(d, ggplot2::aes(x = estimate_2022_23, y = estimate_2023_24)) +
-    ggplot2::geom_abline(slope = 1, intercept = 0, linewidth = 0.35, linetype = 2) +
-    ggplot2::geom_point(alpha = 0.5, size = 1.2) +
-    ggplot2::facet_wrap(~ outcome, scales = "free", nrow = 1) +
-    ggplot2::labs(title = "Appendix B4. HCES cross-round district consistency", x = "2022-23 estimate", y = "2023-24 estimate") +
-    ggplot2::theme_minimal(base_size = 10)
-}
-
 appendix_b5_historical_persistence_data <- function(persistence) {
   if (!is.list(persistence)) stop("Appendix B5 requires canonical historical persistence output.", call. = FALSE)
   p <- safe_df(persistence$panel)
@@ -437,7 +350,7 @@ appendix_c9_historical_first_stage <- function(first_stage) {
 }
 
 make_appendix_validation_identification_exhibits <- function(
-    district_lineage, consumption_mpce_validation, consumption_district_welfare,
+    district_lineage,
     census_1991_primary_validation, historical_linguistic_persistence_validation,
     helms_lim_linguistic_distance_benchmark, district_panel, district_panel_with_dise,
     dise_iv_nss_validation, lineage_panel_variant_review,
@@ -446,9 +359,6 @@ make_appendix_validation_identification_exhibits <- function(
   list(
     appendix_b1_lineage_readiness = appendix_b1_lineage_readiness(district_lineage),
     appendix_b2_lineage_sensitivity = appendix_b2_lineage_sensitivity(lineage_panel_variant_review),
-    appendix_b3_consumption_reconstruction = appendix_b3_consumption_reconstruction(consumption_mpce_validation),
-    appendix_b4_hces_consistency_summary = appendix_b4_hces_consistency_summary(consumption_district_welfare),
-    appendix_b4_hces_consistency = appendix_b4_hces_consistency_plot(consumption_district_welfare),
     appendix_b5_historical_language_persistence = appendix_b5_historical_persistence_plot(historical_linguistic_persistence_validation),
     appendix_b6_language_source_validation = appendix_b6_language_source_validation(census_1991_primary_validation, helms_lim_linguistic_distance_benchmark, historical_linguistic_persistence_validation, district_panel),
     appendix_b7_nss_dise_agreement = appendix_b7_nss_dise_plot(district_panel_with_dise, dise_iv_nss_validation),
@@ -461,8 +371,8 @@ make_appendix_validation_identification_exhibits <- function(
 }
 
 save_appendix_validation_identification_exhibits <- function(exhibits, cfg) {
-  table_names <- c("appendix_b1_lineage_readiness", "appendix_b2_lineage_sensitivity", "appendix_b3_consumption_reconstruction", "appendix_b4_hces_consistency_summary", "appendix_b6_language_source_validation", "appendix_b8_census_universe_reconciliation", "appendix_c7_historical_balance", "appendix_c9_historical_first_stage")
-  figure_names <- c("appendix_b4_hces_consistency", "appendix_b5_historical_language_persistence", "appendix_b7_nss_dise_agreement")
+  table_names <- c("appendix_b1_lineage_readiness", "appendix_b2_lineage_sensitivity", "appendix_b6_language_source_validation", "appendix_b8_census_universe_reconciliation", "appendix_c7_historical_balance", "appendix_c9_historical_first_stage")
+  figure_names <- c("appendix_b5_historical_language_persistence", "appendix_b7_nss_dise_agreement")
   if (!is.list(exhibits) || !all(c(table_names, figure_names) %in% names(exhibits))) stop("Appendix B/C validation exhibit bundle is incomplete.", call. = FALSE)
   written <- save_appendix_tables(exhibits, table_names, cfg)
   formats <- figure_formats(cfg)

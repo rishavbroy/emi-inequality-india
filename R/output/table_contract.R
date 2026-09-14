@@ -68,11 +68,8 @@ public_table_caption_text <- function(name) {
       "District-Lineage Sources and Roles.",
       "Sources: Census of India; Ministry of Panchayati Raj Local Government Directory; Kumar and Somanathan (2016); India State and District Evolution Database; India District Changes Tracker; Development Data Lab SHRUG; Deshpande, Khanna, and Walia concordances."
     ),
-    appendix_a7_consumption_construction = "Consumption Survey Construction. Sources: NSS consumer-expenditure rounds 2004-05, 2009-10, and 2011-12; HCES 2022-23 and 2023-24; official price series.",
     appendix_b1_lineage_readiness = "Appendix B1. District-Lineage Readiness and Coverage",
     appendix_b2_lineage_sensitivity = "Appendix B2. District-Lineage Sensitivity",
-    appendix_b3_consumption_reconstruction = "Appendix B3. Consumption Reconstruction Benchmarks",
-    appendix_b4_hces_consistency_summary = "Appendix B4. HCES Cross-Round Consistency Summary",
     appendix_b6_language_source_validation = paste(
       "Appendix B6. Historical Language-Source Validation.",
       "Sources: Census of India 1991 Language Atlas; Census of India 2001 language tables; Helms and Lim replication data."
@@ -158,10 +155,6 @@ public_table_note <- function(name) {
     appendix_a3_lineage_source_hierarchy = paste(
       "Rows summarize source families rather than individual files. Detailed source IDs and adjudication ledgers remain available in the lineage CSV outputs."
     ),
-    appendix_a7_consumption_construction = paste(
-      "Rows come directly from the registered household-consumption survey contract.",
-      "Historical NSS and modern HCES rounds retain their actual schedule/recall and district-identity rules before harmonization to Census-2001 districts."
-    ),
     appendix_b1_lineage_readiness = paste(
       "All lineage readiness gates must pass before this table is produced.",
       "Panel-variant counts show common two-wave Census-2001 districts under increasingly permissive but still reviewed mapping rules."
@@ -170,14 +163,6 @@ public_table_note <- function(name) {
       "The three registered lineage variants are evaluated with the same preferred consumption first-stage specification.",
       "District counts and complete-IV rows are reported alongside the state-clustered excluded-instrument F and Montiel Olea-Pflueger effective F.",
       "This is a geography-sensitivity check: the full-reviewed allocation rule is not substituted for the primary analysis panel."
-    ),
-    appendix_b3_consumption_reconstruction = paste(
-      "Reconstructed national MPCE is compared with the registered official benchmark for every supported survey-sector cell.",
-      "Only benchmarks that satisfy the survey-specific absolute-rupee tolerance enter this final validation exhibit."
-    ),
-    appendix_b4_hces_consistency_summary = paste(
-      "Correlations use the common set of preferred-eligible Census-2001 districts observed in both HCES 2022-23 and 2023-24 for each registered outcome.",
-      "The companion scatterplots show the same district pairs and a 45-degree reference line."
     ),
     appendix_b6_language_source_validation = paste(
       "The table combines source coverage, exact official-Census reconciliation, Helms-Lim agreement with the project 1991 construction, and persistence from 1991 to 2001.",
