@@ -1455,7 +1455,7 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   )
   landscape_table <- landscape_longtable
   regression_table <- name %in% c("probit_mfx", "fs_cons", "cons_iv") && !is_formatted_status_table(df_render)
-  appendix_compact_table <- name %in% c(
+  compact_table <- name %in% c(
     "appendix_a3_lineage_source_hierarchy",
     "appendix_iv_relevance_summary",
     "appendix_selection_missingness"
@@ -1490,7 +1490,7 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   )
   if (regression_table) {
     latex_options <- c("hold_position", "repeat_header", "striped")
-  } else if (compact_result_table || appendix_compact_table) {
+  } else if (compact_table) {
     # Keep compact paper-result tables visually neutral. Semantic panel grouping
     # and parenthesized standard errors already provide the needed row structure.
     latex_options <- c("repeat_header")
@@ -1510,7 +1510,7 @@ save_table_tex <- function(table, path, name, public = TRUE) {
     latex_options = latex_options,
     full_width = FALSE,
     position = "center",
-    font_size = if (single_page_wide_table || landscape_table || regression_table || compact_result_table || appendix_compact_table) 9 else NULL
+    font_size = if (single_page_wide_table || landscape_table || regression_table || compact_table) 9 else NULL
   )
   if (nrow(grouped$groups)) {
     for (i in rev(seq_len(nrow(grouped$groups)))) {
@@ -1540,7 +1540,7 @@ save_table_tex <- function(table, path, name, public = TRUE) {
       kableExtra::column_spec(1, width = "5.4cm") |>
       kableExtra::column_spec(2:ncol(df_render), width = "2.0cm")
   }
-  if (appendix_compact_table) {
+  if (compact_table) {
     widths <- switch(
       name,
       appendix_a3_lineage_source_hierarchy = c("4.1cm", "3.5cm", "7.0cm"),
