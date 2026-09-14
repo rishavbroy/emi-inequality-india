@@ -76,16 +76,8 @@ clean_writing_sample_qmd <- function(path, replace_external_refs = TRUE) {
   lines <- readLines(path, warn = FALSE)
   lines <- inject_cover_note_values(lines)
 
-  # Quarto resolves @fig-*/@tbl-*/@sec-* with its own prefixes; legacy prose
-  # already wrote Figure/Table/Sec. before bookdown \@ref(). Remove those
-  # prefixes in every sample. Only excerpt samples replace live references with
-  # plain prose; the full writing sample keeps internal cross-references live.
-  lines <- gsub("Figure @fig-", "@fig-", lines, fixed = TRUE)
-  lines <- gsub("Figures @fig-", "@fig-", lines, fixed = TRUE)
-  lines <- gsub("Table @tbl-", "@tbl-", lines, fixed = TRUE)
-  lines <- gsub("Tables @tbl-", "@tbl-", lines, fixed = TRUE)
-  lines <- gsub("Sec. @sec-", "@sec-", lines, fixed = TRUE)
-  lines <- gsub("Section @sec-", "@sec-", lines, fixed = TRUE)
+  # Excerpt samples replace references whose targets are omitted. Full samples
+  # preserve the source document's live Quarto cross-references unchanged.
   if (isTRUE(replace_external_refs)) {
     lines <- gsub("@fig-[A-Za-z0-9_-]+", "the corresponding figure in the full report", lines, perl = TRUE)
     lines <- gsub("@tbl-[A-Za-z0-9_-]+", "the corresponding table in the full report", lines, perl = TRUE)
