@@ -63,10 +63,6 @@ public_table_caption_text <- function(name) {
       "Linguistic Conditions and Selective Local Development.",
       "Sources: Census of India 2001 and 2011; Economic Census 2005 and 2013; NSS 66th Round; PLFS 2017-18."
     ),
-    paper_identification_boundary = paste(
-      "Identification Boundary: Linguistic Distance Does Not Isolate EMI.",
-      "Sources: Census of India 1991 and 2001; NSS 61st Round, 2004-05; NSS 64th Round, 2007-08; HCES 2022-23 and 2023-24."
-    ),
     appendix_a3_lineage_source_hierarchy = paste(
       "District-Lineage Sources and Roles.",
       "Sources: Census of India; Ministry of Panchayati Raj Local Government Directory; Kumar and Somanathan (2016); India State and District Evolution Database; India District Changes Tracker; Development Data Lab SHRUG; Deshpande, Khanna, and Walia concordances."
@@ -177,12 +173,6 @@ public_table_note <- function(name) {
       "The final row reports children missing at least one covariate required by the probit.",
       "Pseudo-R2 values come from the registered missingness-logit screen; the blank aggregate cell has no corresponding missingness regression.",
       "No missing-value imputation is used."
-    ),
-    paper_identification_boundary = paste(
-      "Panel A compares excluded-instrument F statistics on one common district support for the unadjusted and state-fixed-effects plus predetermined-controls specifications; partial R-squared refers to the within-state specification.",
-      "The language-distance composition is a joint test, while the other rows contain one excluded scalar instrument. Historical 1991 reconstructions use a much smaller validated geography and are kept in the appendix rather than mixing noncomparable first-stage support into this panel.",
-      "Panel B reports conventional 2SLS coefficients for the registered 2004-05 to 2022-23 and 2023-24 long changes, alongside Montiel Olea-Pflueger effective F and Anderson-Rubin confidence-set topology.",
-      "Disconnected AR sets that span both signs do not identify the sign of an EMI effect even when beta=0 is rejected on the finite grid. These diagnostics define an identification boundary, not preferred causal estimates."
     ),
     sum_tbl_probit_cat = "Values = all possible values; Mode = most frequent value; Pct. Mode = percent of observations taking the modal value; Least Freq. = least frequent value; Pct. Least Freq. = percent of observations taking the least frequent value; N = number of observations.",
     probit_mfx = "NSS 64th round; design-based SEs in parentheses.",

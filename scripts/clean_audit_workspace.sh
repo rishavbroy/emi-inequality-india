@@ -80,6 +80,10 @@ rm -f \
   "${root%/}/outputs/figures/appendix/appendix_c10_monotonicity.png" \
   "${root%/}/outputs/figures/appendix/appendix_c12_consumption_iv_dynamics.pdf" \
   "${root%/}/outputs/figures/appendix/appendix_c12_consumption_iv_dynamics.png" \
+  "${root%/}/outputs/tables/main/paper_identification_boundary.csv" \
+  "${root%/}/outputs/tables/main/paper_identification_boundary.tex" \
+  "${root%/}/outputs/figures/main/paper_first_stage_absorption.pdf" \
+  "${root%/}/outputs/figures/main/paper_first_stage_absorption.png" \
   "${root%/}/outputs/tables/appendix/appendix_e1_selection_sample.csv" \
   "${root%/}/outputs/tables/appendix/appendix_e1_selection_sample.tex" \
   "${root%/}/outputs/tables/appendix/appendix_e4_missingness.csv" \

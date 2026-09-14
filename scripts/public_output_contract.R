@@ -19,11 +19,11 @@ paper_new_appendix_render_inputs <- function() {
     "outputs/figures/appendix/appendix_consumption_hces_consistency.pdf",
     "outputs/figures/appendix/appendix_historical_language_persistence.pdf",
     "outputs/figures/appendix/appendix_nss_dise_agreement.pdf",
-    "outputs/tables/appendix/appendix_iv_relevance_summary.tex",
-    "outputs/tables/appendix/appendix_iv_weak_inference.tex",
     "outputs/tables/appendix/appendix_migration_summary.tex",
     "outputs/tables/appendix/appendix_selection_ame.tex",
-    "outputs/tables/appendix/appendix_selection_missingness.tex"
+    "outputs/tables/appendix/appendix_selection_missingness.tex",
+    "outputs/tables/appendix/appendix_iv_relevance_summary.tex",
+    "outputs/tables/appendix/appendix_iv_weak_inference.tex"
   )
 }
 
@@ -41,10 +41,8 @@ required_public_render_inputs <- function() {
     "outputs/tables/main/paper_language_behavior.tex",
     "outputs/tables/main/paper_economic_conversion.tex",
     "outputs/tables/main/paper_local_development.tex",
-    "outputs/tables/main/paper_identification_boundary.tex",
     "outputs/figures/main/paper_language_schooling_maps.pdf",
     "outputs/figures/main/paper_unequal_schooling_access.pdf",
-    "outputs/figures/main/paper_first_stage_absorption.pdf",
     "outputs/figures/main/consumption_iv_dynamics.pdf",
     "outputs/figures/main/fig_ilo_trends.png",
     "outputs/figures/main/district_carveouts_shifts.png",
@@ -130,8 +128,6 @@ required_final_artifacts <- function() {
     "outputs/tables/main/paper_economic_conversion.tex",
     "outputs/tables/main/paper_local_development.csv",
     "outputs/tables/main/paper_local_development.tex",
-    "outputs/tables/main/paper_identification_boundary.csv",
-    "outputs/tables/main/paper_identification_boundary.tex",
     "outputs/tables/appendix/appendix_a3_lineage_source_hierarchy.csv",
     "outputs/tables/appendix/appendix_a3_lineage_source_hierarchy.tex",
     "outputs/figures/appendix/appendix_consumption_hces_consistency.pdf",
@@ -150,7 +146,6 @@ required_final_artifacts <- function() {
     "outputs/tables/appendix/appendix_selection_missingness.tex",
     "outputs/figures/main/paper_language_schooling_maps.pdf",
     "outputs/figures/main/paper_unequal_schooling_access.pdf",
-    "outputs/figures/main/paper_first_stage_absorption.pdf",
     "outputs/figures/main/consumption_iv_dynamics.pdf",
     "outputs/figures/main/fig_ilo_trends.png",
     "outputs/figures/main/district_carveouts_shifts.png",

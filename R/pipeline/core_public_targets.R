@@ -58,8 +58,7 @@ core_public_target_definitions <- function() {
         iv_models = revised_iv_models,
         map_geometry = lineage_geometry_2001,
         consumption_iv_dynamics = consumption_iv_dynamics,
-        schooling_access = nss64_schooling_social_group_diagnostic,
-        first_stage_absorption = first_stage_absorption_diagnostics
+        schooling_access = nss64_schooling_social_group_diagnostic
       )
     ),
     tar_target(figure_files, save_figures(figures, cfg), format = "file"),
@@ -93,13 +92,6 @@ core_public_target_definitions <- function() {
       )
     ),
     tar_target(
-      paper_identification_boundary,
-      make_paper_identification_boundary_table(
-        alternative_distance_first_stage_base,
-        consumption_iv_dynamics
-      )
-    ),
-    tar_target(
       appendix_data_construction_exhibits,
       make_appendix_data_construction_exhibits(
         district_lineage, consumption_district_welfare,
@@ -110,22 +102,6 @@ core_public_target_definitions <- function() {
     tar_target(
       appendix_data_construction_files,
       save_appendix_data_construction_exhibits(appendix_data_construction_exhibits, cfg),
-      format = "file"
-    ),
-    tar_target(
-      appendix_identification_exhibits,
-      make_appendix_identification_exhibits(
-        alternative_distance_first_stage_base,
-        historical_linguistic_first_stage_robustness,
-        alternative_distance_first_stages,
-        consumption_iv_dynamics,
-        consumption_robustness_evidence,
-        consumption_exclusion_sensitivity
-      )
-    ),
-    tar_target(
-      appendix_identification_files,
-      save_appendix_identification_exhibits(appendix_identification_exhibits, cfg),
       format = "file"
     ),
     tar_target(
@@ -149,6 +125,22 @@ core_public_target_definitions <- function() {
       format = "file"
     ),
     tar_target(
+      appendix_identification_exhibits,
+      make_appendix_identification_exhibits(
+        alternative_distance_first_stage_base,
+        historical_linguistic_first_stage_robustness,
+        alternative_distance_first_stages,
+        consumption_iv_dynamics,
+        consumption_robustness_evidence,
+        consumption_exclusion_sensitivity
+      )
+    ),
+    tar_target(
+      appendix_identification_files,
+      save_appendix_identification_exhibits(appendix_identification_exhibits, cfg),
+      format = "file"
+    ),
+    tar_target(
       tables,
       {
         out <- make_tables(
@@ -160,7 +152,6 @@ core_public_target_definitions <- function() {
         out$paper_language_behavior <- paper_language_behavior
         out$paper_economic_conversion <- paper_economic_conversion
         out$paper_local_development <- paper_local_development
-        out$paper_identification_boundary <- paper_identification_boundary
         out
       }
     ),
@@ -179,8 +170,8 @@ core_public_target_definitions <- function() {
         paper_new_qmd,
         dependencies = list(
           report_values, table_files, figure_files, dise_publication_validation,
-          appendix_data_construction_files, appendix_identification_files, appendix_migration_files,
-          appendix_selection_files
+          appendix_data_construction_files, appendix_migration_files, appendix_selection_files,
+          appendix_identification_files
         )
       ),
       format = "file"

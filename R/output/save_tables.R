@@ -1455,7 +1455,6 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   )
   landscape_table <- landscape_longtable
   regression_table <- name %in% c("probit_mfx", "fs_cons", "cons_iv") && !is_formatted_status_table(df_render)
-  compact_result_table <- identical(name, "paper_identification_boundary")
   appendix_compact_table <- name %in% c(
     "appendix_a3_lineage_source_hierarchy",
     "appendix_iv_relevance_summary",
@@ -1540,13 +1539,6 @@ save_table_tex <- function(table, path, name, public = TRUE) {
     tex <- tex |>
       kableExtra::column_spec(1, width = "5.4cm") |>
       kableExtra::column_spec(2:ncol(df_render), width = "2.0cm")
-  }
-  if (compact_result_table) {
-    widths <- switch(
-      name,
-      paper_identification_boundary = c("3.5cm", "2.2cm", "1.1cm", "1.1cm", "1.3cm", "4.6cm")
-    )
-    tex <- apply_table_column_widths(tex, widths)
   }
   if (appendix_compact_table) {
     widths <- switch(

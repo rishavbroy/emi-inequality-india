@@ -275,47 +275,9 @@ diagnostic, not a weak-IV-robust confidence interval. Durable outputs are
 `iv_falsification_adaptive_set_components.csv`, and both are required by the
 extended audit.
 
-### Paper-facing first-stage absorption ladder
-
-The main-paper first-stage figure is generated from the same
-`first_stage_absorption_diagnostics` object that feeds the extended forensic
-CSVs. The paper view is deliberately restricted to nine predeclared semantic
-specifications: instrument only; Census and expanded controls; region fixed
-effects alone and with each control set; and state fixed effects alone and with
-each control set. It plots the state-clustered excluded-instrument Wald F and
-reports partial $R^2$ as an annotation. Effective-F diagnostics remain separate
-because they are not the same statistic and are not available as a comparable
-ladder across every displayed adjustment. Extended mode continues to persist the
-full semantic registry, common-support audit, deletion diagnostics, influence
-measures, and VIF outputs.
-
-### Main-paper identification boundary
-
-The main paper summarizes alternative linguistic-distance constructions with the
-common-support first-stage object `alternative_distance_first_stage_base` rather
-than the fully augmented reviewer diagnostic. Its rows compare the unadjusted
-state-clustered excluded-instrument F with the registered `state_main` F and
-partial $R^2$. The five-share construction is a joint excluded-instrument test;
-the other displayed constructions are scalar instruments. This common pair of
-specifications makes the cross-construction comparison interpretable without
-mixing statistics from different adjustment ladders.
-
-Table 7 then adds only the two registered long-change 2SLS rows (2022--23 and
-2023--24) from the already-core consumption-IV dynamics object. Conventional
-2SLS coefficients are displayed as diagnostics, beside Montiel Olea--Pflueger
-effective F and Anderson--Rubin confidence-set topology. A disconnected AR set
-that spans both signs is reported as failure to identify the sign even when the
-point null is rejected on the finite inversion grid. The table is therefore an
-identification-boundary exhibit, not a preferred causal-results table.
-
-The extended IV pipeline reuses this base and adds the much larger robustness
-record (alternative-basis decompositions, weak-IV outcome grids,
-monotonicity/leave-one-out exercises, falsification-adaptive sets, and related
-forensics). This prevents the main paper from duplicating or silently selecting
-from the full diagnostic search space.
-
-
 ### Final IV appendix publication summaries
+
+The final manuscript does not maintain a separate main-text identification table or first-stage figure. The scientific first-stage absorption ladder remains part of the diagnostic layer and is saved in extended mode, while the Prompt-10 IV appendix owns the reader-facing identification summaries. This avoids maintaining two publication representations of the same evidence.
 
 The final IV appendix no longer mirrors the full analytical inventory. It consumes two compact summaries. `appendix_iv_relevance_summary` compares the registered modern linguistic constructions under no geographic fixed effects, region fixed effects, and state fixed effects, and appends the validated 1991 historical comparison on its own common support. `appendix_iv_weak_inference` reports the two long-change 2SLS estimates together with Montiel Olea--Pflueger effective F, Anderson--Rubin confidence-set topology, and the registered exclusion-sensitivity threshold.
 

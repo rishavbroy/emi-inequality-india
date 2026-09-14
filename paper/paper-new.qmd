@@ -81,15 +81,11 @@ Taken together, the evidence limits the equalizing promise of a high-return educ
 
 # Background {#sec-background}
 
-## Language skills and medium of instruction
-
 It is by combining education and English that the demand for *English-medium instruction (EMI)* becomes intelligible. Language skills are human capital [@chiswick1995a; @azam2013a], and households may reasonably value schooling that they expect to build a skill rewarded in education and the labor market. Yet learning English and learning *through* English are different investments. EMI uses English to teach school subjects; Hindi-medium and mother-tongue-medium schools use other languages to teach those subjects. The economic value of English proficiency therefore does not, by itself, establish the educational value of using English as the medium of instruction.
 
 The original paper emphasized this distinction because instruction in a familiar language can improve learning. In India, Telugu-medium primary-school students performed better in mathematics than otherwise comparable English-medium students in longitudinal data from Andhra Pradesh and Telangana [@nair2015a], while work on multilingual education documents the difficulties created when children enter school through a language they do not use at home [@mohanty2022a]. Historical evidence reaches a similar conclusion from a different setting. Before India's linguistic state reorganization, districts whose local language differed from the official language had substantially lower literacy and college graduation; those differences narrowed after state borders and official languages were reorganized [@jain2017a]. These results do not imply that English instruction is uniformly harmful. They establish the narrower point needed here: a valuable language skill and the language used to teach non-language subjects are not the same educational input.
 
 Reported school medium is also an imperfect measure of the language children hear in class. @lahoti2019a find that more than half of children described as attending English-medium schools in their rural sample were actually being taught in the dominant regional language; some other schools used English books while teachers explained them in the regional language. Similar concerns appear in qualitative accounts of English-medium schooling [@mathew2011a; @bhattacharyaMediatingInequalitiesExploring2013]. I therefore interpret reported EMI as exposure to an English-medium schooling category, not as a direct measure of how much English a child hears, speaks, or learns.
-
-## Public and private school choice
 
 A second distinction concerns who manages the school. The demand for both higher-quality education in general and EMI in particular has, since at least the 2000s, increasingly been met by private schools [@jamesChoosingChangingSchools2014; @srivastavaLowFeePrivateSchooling2013; @ramanathan2016a; @chattopadhayLowFeePrivateSchools2017]. But demand for private schooling should not be equated with demand for EMI. In the 2014 survey summarized by @joshiUnderstandingConsumerDemographics2017, households choosing private schools much more often cited a better learning environment or better education than government schools than English as the medium of instruction. The two choices can coincide without representing the same household preference.
 
@@ -296,43 +292,6 @@ This combination resembles a broader feature of India's development path. @kochh
 
 Timing constrains the interpretation further. The Census household and housing outcomes cover 2001--11, while the Economic Census changes cover 2005--13; both windows overlap the 2007--08 schooling measurement. I therefore treat these as co-evolving local conditions, not as downstream mediators of measured EMI. Taken together, the evidence suggests that anticipated returns to English learning depend not only on the value of English skills themselves, but also on the local capacity through which those skills can be converted into economic opportunities.
 
-# Identification Boundary: Can Linguistic Distance Isolate EMI? {#sec-identification}
-
-Only now do I ask whether the inherited linguistic gradient can isolate the causal effect of EMI. It cannot.
-
-For that question, the candidate 2SLS system is
-
-$$
-\begin{aligned}
-\mathrm{EMIE}_d
-&= \gamma_0 + \gamma_1\,\mathrm{LingDistance}_d + X_d'\gamma + \alpha_s + v_d,\\
-\Delta\log C^{real}_d
-&= \beta_0 + \beta_1\,\widehat{\mathrm{EMIE}}_d + X_d'\beta + \alpha_s + u_d,
-\end{aligned}
-$$ {#eq-iv-eq}
-
-where $X_d$ contains predetermined Census-2001 controls and $\alpha_s$ denotes Census-2001 state fixed effects. State absorption is not an arbitrary way to weaken the first stage: the schooling-market evidence above shows that state institutions organize both the inherited language environment and formal EMI strongly.
-
-Nationally, linguistic distance predicts EMI. Within states, the relationship nearly disappears. @fig-first-stage-absorption holds district support fixed while progressively adding geographic absorption and predetermined controls. The excluded-instrument F statistic is in the low-to-mid teens without fixed effects and falls to approximately one or below under the preferred state specification. Richer predetermined controls do not restore the signal.
-
-![First-stage absorption across the predeclared specification ladder. Points report the state-clustered excluded-instrument F statistic for linguistic distance in the EMI-exposure first stage; labels report the corresponding partial R-squared. All specifications use the same complete district support. Sources: Census of India 2001; NSS 64th Round, 2007-08.](../outputs/figures/main/paper_first_stage_absorption.pdf){#fig-first-stage-absorption fig-pos="H" width="100%"}
-
-The conclusion does not depend on one unfortunate linguistic-distance construction. @tbl-identification-boundary shows that the speaker-weighted distance, the top-three-language distance, genealogical distance, lexical noncognacy, the distant-language share, and a richer language-distance composition all lose most of their broad predictive content under state absorption. The richer vector is strongly jointly predictive in levels, but that fact does not supply persuasive within-state excluded variation. Historical 1991 constructions, mapping sensitivities, control permutations, monotonicity checks, and the full robustness-family census are reported in @sec-app-identification rather than promoted into the main paper.
-
-```{r}
-#| label: tbl-identification-boundary
-#| echo: false
-#| results: asis
-
-render_public_table("../outputs/tables/main/paper_identification_boundary.tex", "paper_identification_boundary")
-```
-
-The long-run weak-IV inference in Panel B makes the consequence explicit. Conventional 2022 and 2023 long-change 2SLS coefficients are imprecise, Montiel Olea--Pflueger effective F statistics are below one, and Anderson--Rubin 95% confidence sets are disconnected across positive and negative values. A finite-grid rejection of $\beta=0$ therefore does not identify the sign of the EMI effect. Exclusion-sensitivity calculations in @sec-app-identification further show how much direct reduced-form effect would be required to admit zero in the specifications that exclude it.
-
-Measurement validation does not rescue the design either. As discussed in @sec-schooling-market and shown in @fig-nss-dise-agreement, DISE and NSS EMI measures agree strongly in levels and remain correlated after state residualization. The problem is therefore not simply that the NSS treatment was measured badly. More substantively, inherited linguistic incentives and formal English-medium schooling are related but non-interchangeable objects: their correspondence is largely organized at higher geographic levels.
-
-I consequently do **not** interpret the schooling-welfare associations in Table~\ref{tbl-paper-economic-conversion} as causal effects of EMI. The broader robustness record shows that this conclusion is not the product of one arbitrarily chosen distance measure, treatment definition, control set, or estimator. Those checks define a boundary around the causal claim; they are not the paper's substantive center.
-
 # Conclusion {#sec-discussion}
 
 English learning is often presented as a way for households to loosen the connection between children's prospects and the circumstances into which they are born [@itaniMeaningLanguageSkills2015; @bediEnglishLanguageIndia2019]. The premise is economically plausible: English proficiency carries substantial labor-market rewards in India [@azam2013a; @refeque2022a], and English schooling has been associated with access to occupations outside traditional caste-linked networks [@munshi2006a]. I began from a narrower question. If English learning is to expand opportunity, what conditions surround a household's decision to invest in it, and are those conditions themselves related to inherited and social inequality?
@@ -349,7 +308,7 @@ English skills are economically valuable, and households have reason to invest i
 
 # Technical Note for Replication {#sec-replication}
 
-All reported tables and figures are generated from registered build targets. The analysis is harmonized to Census-2001 districts; the main manuscript reports bounded summaries, while construction (@sec-app-data), migration (@sec-app-migration), weak-identification (@sec-app-identification), and selection (@sec-app-selection) material is retained in the appendices. More extensive validation and local-development results remain available in machine-readable analysis outputs rather than as separate manuscript appendices. Reproduction instructions, data-availability constraints, and source documentation are provided in `REPLICATION.md`, `DATA_AVAILABILITY.md`, and the repository documentation.
+All reported tables and figures are generated from registered build targets. The analysis is harmonized to Census-2001 districts; the main manuscript reports bounded summaries, while construction (@sec-app-data), migration (@sec-app-migration), selection (@sec-app-selection), and weak-identification (@sec-app-identification) material is retained in the appendices. More extensive validation and local-development results remain available in machine-readable analysis outputs rather than as separate manuscript appendices. Reproduction instructions, data-availability constraints, and source documentation are provided in `REPLICATION.md`, `DATA_AVAILABILITY.md`, and the repository documentation.
 
 \newpage
 
@@ -462,13 +421,84 @@ The two modern HCES rounds provide a useful internal check because they use the 
 
 ![District-level consistency of reconstructed consumption across the 2022--23 and 2023--24 HCES rounds. Each panel uses districts satisfying the preferred support rule in both rounds; the dashed line is the 45-degree line. Sources: National Sample Survey Office, HCES 2022--23 and HCES 2023--24 [@nsoHCES2022; @nsoHCES2023].](../outputs/figures/appendix/appendix_consumption_hces_consistency.pdf){#fig-app-consumption-hces fig-pos="H" width="90%"}
 
+# Migration {#sec-app-migration}
+
+## Literature Review
+
+Migration changes the interpretation of district outcomes. The schooling measures in this paper describe children living in a district in 2007--08, while later consumption describes the population living there many years afterward. If people relocate, the economic trajectory of a place need not equal the later economic trajectory of the children originally observed there. I therefore interpret the long-run district outcomes as place-based outcomes for changing populations, not as individual returns to the children exposed to a particular schooling environment.
+
+Earlier work suggested that this distinction might be quantitatively modest in India. @chakraborty2016a report low interdistrict mobility in West Bengal, Haryana, and Punjab and approximate an individual's district of residence or employment with the district of schooling. Using earlier NSS rounds, @topalovaTradeLiberalizationPoverty2005 similarly documents low decadal interdistrict mobility, especially in rural areas and for employment-related moves. These measures describe recent-duration migration rather than the accumulated stock of everyone who has ever migrated; the distinction matters because lifetime-migrant measures accumulate moves over a longer exposure window as respondents age and can be dominated by moves made long before the economic period under study [@mahapatroInternalMigrationEmerging2020].
+
+I do not assume that mobility remained negligible. Evidence using Census cohorts and railway passenger flows points to substantially more interdistrict movement after 2001 than the late-twentieth-century evidence implied [@divison2015a]. More recent work also shows why movement can respond to skill-intensive opportunity. @ghoseTradeInternalMigration2026 studies India's information-technology expansion in a setting where education and internal migration respond endogenously, so regional welfare gains depend in part on who acquires skills and where workers relocate. At the same time, migration remains structured by institutions. Caste-based rural insurance networks can discourage migration when leaving weakens access to informal insurance [@munshiNetworksMisallocationInsurance2016], while state borders themselves sharply reduce migration between otherwise neighboring districts [@koneInternalBordersMigration2018]. These findings make migration neither negligible nor frictionless.
+
+My migration measures come from the 2011 Census D-series tables [@censusIndia2011]. D-02 describes migrants by place of last residence and provides the interstate share among migrants. D-03 records reason for migration. For work-related sorting I use D-07, which identifies migrants who have lived at the destination for at most nine years, report work or employment as the reason for migration, and previously lived elsewhere in India. I refer to this group as **recent work migrants**. The D-07 total is required to agree exactly with the corresponding D-03 work-migrant subtotal before the measures are used. Counts from the 2011 district geography are then pooled to the Census-2001 geography only where the district lineage is complete and deterministic, as described in @sec-app-lineage.
+
+The distinction between all migrants and recent work migrants is important for the paper's economic question. Overall migrant composition combines moves for marriage, education, household relocation, and work. Restricting attention to recent work migrants instead asks whether destinations differ in the kinds of workers they recently attracted for employment. The result therefore concerns the composition of in-migration observed at the destination; it does not measure the skills of people who left the district.
+
+## Empirical Results
+
+@tbl-app-migration summarizes the preferred within-state reduced forms. Each coefficient compares districts within states and conditions on the predetermined Census controls used elsewhere in the paper. The first panel retains broad migration margins even when their estimates are null. The second focuses on recent work migrants and includes both their geographic origin and skill composition, together with the predeclared Hindi-belt restriction.
+
+```{r}
+#| label: tbl-app-migration
+#| echo: false
+#| results: asis
+render_public_table("../outputs/tables/appendix/appendix_migration_summary.tex", "appendix_migration_summary")
+```
+
+The broad mobility measures provide little evidence that linguistic distance is associated with simply receiving more geographically distant migrants. The separate 2001--11 changes in population-denominated migrant rates remain descriptive and are not part of this predeclared regression family, so I do not use them to make an inferential claim about total migration incidence here. The interstate share among all migrants is close to zero in the preferred specification. The work- and education-reason shares provide no family-adjusted evidence of an association. Among recent work migrants, the share arriving from outside the state is also near zero. These null results are useful because they distinguish a change in migrant composition from a general increase in longer-distance mobility.
+
+The skilled composition result is different. A one-degree increase in speaker-weighted linguistic distance from Hindi is associated with a 0.0129 increase in the graduate-or-technical-degree share among recent work migrants; the state-clustered standard error is 0.0044 and the Holm-adjusted p-value is 0.027. I interpret this as evidence of skill sorting across destinations, not as evidence that linguistic distance causes migration or that migrants mediate an EMI effect. The dependent variable is the skill composition of recent work in-migrants conditional on being observed at the destination.
+
+The predeclared Hindi-belt restriction is weaker. Within the Hindi-belt states, the corresponding estimate is 0.0079 with a standard error of 0.0057 ($p=0.171$). The national within-state association therefore is not clearly reproduced inside that more linguistically similar institutional setting. This boundary is one reason I do not reduce the migration evidence to a universal behavioral response to linguistic distance.
+
+Taken together, the migration results sharpen the interpretation of the later district outcomes. Linguistic conditions are associated with **who arrives for work** more clearly than with broad migration composition or interstate movement. Migration can therefore change the skill composition of places even when aggregate mobility margins show little association. Later district consumption should consequently be read as local development for a changing population, not as the individual economic return to the children observed in the earlier schooling data.
+
+# Education Selection {#sec-app-selection}
+
+The district comparisons in the main text show that schooling access differs sharply by social group even within the same local market. I retain the original child-level enrollment model here as a complementary description of *who is enrolled at all*. The model does not identify a causal effect of any household characteristic or schooling program, and I do not use it as a control function or selection correction in the district analysis.
+
+I use the NSS 64th Round *Participation and Expenditure in Education* survey, restricting the child roster to ages 5--19 [@nationalsamplesurveyoffice2008]. The outcome equals one when the child appears in the survey's enrolled-child education record and zero otherwise. The fitted probit includes age, sex, household size, religion, social group, rural or urban residence, distance to the nearest primary class, and the education of the child's father or the registered male household proxy. It also includes district averages of selected schooling-cost and benefit variables among enrolled children. Those district averages are useful adjustment variables for reproducing the original model, but they are partly determined by school provision and the composition of enrolled children. I therefore keep them in the fitted specification while omitting them from the reader-facing coefficient table.
+
+The final specification uses the NSS survey design: household weights, first-stage sampling units corresponding to sampled villages or urban blocks, and the survey's strata and substrata. Because a probit coefficient is expressed on a latent index, I report quantities on the probability scale. For continuous variables, the table reports the average slope of the predicted enrollment probability. For categorical variables, it reports the average discrete change in predicted enrollment probability when each observed child is assigned the comparison category rather than the stated reference category, with the remaining covariates left at their observed values. These are average marginal quantities over the estimation sample rather than effects evaluated at a synthetic "average child" [@hansenEconometrics2022; @arel-bundockHowInterpretStatistical2024].
+
+```{r}
+#| label: tbl-appendix-selection-ame
+#| echo: false
+#| results: asis
+render_public_table("../outputs/tables/appendix/appendix_selection_ame.tex", "appendix_selection_ame")
+```
+
+The social-identity results reinforce the main-text evidence that access to education is not evenly distributed. Relative to Hindu children with the same modeled covariates, Muslim children have an average predicted enrollment probability about 12.6 percentage points lower; the corresponding Christian comparison is about 4.3 points lower. The Muslim difference is consistent with evidence of persistent educational disadvantage among Indian Muslims [@borooah2021a]. Relative to children in the residual "Other" social-group category, the predicted enrollment probability is about 10.2 points lower for Scheduled Tribe children, 7.5 points lower for Scheduled Caste children, and 2.9 points lower for Other Backward Class children. I interpret these as conditional associations, not as effects of religion or caste. That caution is especially important in a setting where social institutions and caste networks can alter schooling choices and the occupational opportunities attached to them [@munshi2006a].
+
+Parental education displays the largest systematic gradient. Relative to an illiterate father or male household proxy, the average comparison rises from roughly 9.7 percentage points for a literate adult with no formal schooling to about 14.2 points for primary education, 21.2 points for secondary education, and 24.5 points for postsecondary education. Father's education can proxy for several household characteristics at once, including permanent income, information about schooling and labor markets, and preferences or expectations transmitted across generations. The model cannot separate those channels. What it establishes is that enrollment is strongly stratified by intergenerational human capital even after conditioning on the other observed covariates.
+
+Several other estimates are useful mainly as descriptive boundaries. Enrollment probability declines by about 2.8 percentage points per year of age across the 5--19 range. Girls have a roughly 4.4-point higher predicted probability than boys conditional on the other modeled characteristics; I do not attribute that difference to any particular program, although Sarva Shiksha Abhiyan and girls-focused schooling initiatives were already operating before the survey [@pressinformationbureauInitiativesHumanResource2008]. Each additional household member is associated with a small decline in predicted enrollment probability. That sign is consistent with the resource-dilution logic of quantity--quality models, but Indian evidence on whether family size causally reduces child investment is mixed [@beckerEconomicAnalysisFertility1969; @kumarTestingChildrenQuantityQuality2011; @onurBirthOrderSibling2021].
+
+School access is also unevenly related to enrollment. Children whose nearest primary class is reported one to two kilometers away have a predicted enrollment probability about 7.7 percentage points lower than children with a primary class within one kilometer. The more distant categories are estimated much less precisely and do not form a monotone distance gradient. I therefore treat the one-to-two-kilometer comparison as evidence that local access conditions can matter, not as an estimate of a stable distance-response function.
+
+The original model also includes district averages of free schooling, fee waivers, scholarships, textbooks, stationery, mid-day meals, and enrollment cost. I do not display or interpret those coefficients here. These variables are measured among enrolled children and are jointly determined by program targeting, school type, local provision, and household selection. In particular, the negative coefficient on the district share receiving free education cannot establish that free schooling reduces enrollment. Retaining those variables as controls preserves the original specification without turning selected program receipt into a policy effect.
+
+The child roster contains 127,181 observations, but the probit is estimated on complete cases. Missingness is concentrated in three required covariates: father's education, district-average enrollment cost, and distance to the nearest primary class. The registered missingness checks show that approximately 9.7 percent of children are missing at least one required model covariate. Missingness is also predictable from observed characteristics, especially for district-average enrollment cost and school distance, so the estimation sample should not be treated as a random subsample of all children.
+
+```{r}
+#| label: tbl-appendix-selection-missingness
+#| echo: false
+#| results: asis
+render_public_table("../outputs/tables/appendix/appendix_selection_missingness.tex", "appendix_selection_missingness")
+```
+
+This limitation is another reason I use the model only as corroborating descriptive evidence. Its central message agrees with the within-district schooling-access analysis in the main text: educational participation is strongly associated with social identity and family background. The district decomposition is more directly suited to the paper's question about access to English-oriented schooling; the probit shows that unequal selection begins one step earlier, at entry into schooling itself.
+
+\newpage
+
 # Linguistic Distance as an Instrumental Variable {#sec-app-identification}
 
 The main text uses linguistic distance principally as a measure of inherited linguistic conditions. I separately ask whether it can serve as an instrumental variable for English-medium schooling: that is, whether variation in linguistic distance can isolate variation in English-medium exposure that is sufficiently strong and otherwise excluded from the later consumption equation. The answer is no. The purpose of this appendix is to show where the design fails and why changing the linguistic measure does not repair it. This distinction is important because weak instruments can make conventional two-stage least squares (2SLS) estimates and their standard errors unreliable even when a familiar first-stage threshold appears to be met [@keanePracticalGuideWeak2024].
 
-## First-Stage Collapse
+## First Stage Collapses
 
-The broad national relationship between linguistic distance and English-medium schooling is not itself in doubt. With the preferred speaker-weighted distance and the predetermined Census controls, but without geographic fixed effects, the excluded-instrument F statistic is 14.29. Adding region fixed effects reduces it to 3.24; adding state fixed effects instead reduces it to 0.75. This is the collapse shown in @fig-first-stage-absorption. The corresponding state-fixed-effects partial $R^2$ is 0.0039: after comparing districts within the same state and conditioning on predetermined characteristics, linguistic distance explains very little of the remaining variation in all-child English-medium exposure.
+The broad national relationship between linguistic distance and English-medium schooling is not itself in doubt. With the preferred speaker-weighted distance and the predetermined Census controls, but without geographic fixed effects, the excluded-instrument F statistic is 14.29. Adding region fixed effects reduces it to 3.24; adding state fixed effects instead reduces it to 0.75. The same attenuation is summarized alongside the alternative linguistic measures in @tbl-app-iv-relevance. The corresponding state-fixed-effects partial $R^2$ is 0.0039: after comparing districts within the same state and conditioning on predetermined characteristics, linguistic distance explains very little of the remaining variation in all-child English-medium exposure.
 
 The distinction between the conventional first-stage F statistic and the Montiel Olea--Pflueger effective F statistic matters here. The conventional statistic is useful for comparing the same first-stage specification as geographic controls are added. The effective F is designed for assessing weak-instrument relevance when errors may be heteroskedastic or clustered [@montieloleaRobustTestWeak2013]. I therefore use the conventional F statistics to describe geographic absorption and the effective F statistic when evaluating the preferred IV specification. I do not treat a value of 10 as a universal pass/fail rule; contemporary weak-IV guidance shows that important distortions in 2SLS inference can persist well above that threshold [@keanePracticalGuideWeak2024].
 
@@ -513,80 +543,5 @@ The result is not a peculiarity of these two specifications. Across every regist
 Finally, I relax exact exclusion rather than treating it as guaranteed. Following the logic of plausibly exogenous instruments, I allow linguistic distance to have a bounded direct effect on the outcome and ask how large that direct effect must be before $\beta=0$ enters the AR confidence set [@conleyPlausiblyExogenous2012]. For the 2022 long change, the minimum bound is about 0.0267 log points, or 41.7% of the observed reduced form. For 2023, the corresponding threshold is about 0.0112 log points, or 19.9% of the reduced form. These are sensitivity thresholds, not estimates of a direct effect. They show that the 2023 result is especially fragile to modest departures from exact exclusion, while even the more persistent 2022 reduced form does not overcome the weak first stage.
 
 I therefore do not use linguistic distance to estimate a causal effect of English-medium schooling. The appendix supports a more limited conclusion: linguistic distance is a persistent and economically meaningful feature of India's language environment, but it is too weakly related to within-state English-medium schooling, and too plausibly related to broader local conditions, to isolate that schooling channel. The descriptive schooling--welfare relationships in the main paper remain descriptive.
-
-# Migration {#sec-app-migration}
-
-## Migration and Place-Based Outcomes
-
-Migration changes the interpretation of district outcomes. The schooling measures in this paper describe children living in a district in 2007--08, while later consumption describes the population living there many years afterward. If people relocate, the economic trajectory of a place need not equal the later economic trajectory of the children originally observed there. I therefore interpret the long-run district outcomes as place-based outcomes for changing populations, not as individual returns to the children exposed to a particular schooling environment.
-
-Earlier work suggested that this distinction might be quantitatively modest in India. @chakraborty2016a report low interdistrict mobility in West Bengal, Haryana, and Punjab and approximate an individual's district of residence or employment with the district of schooling. Using earlier NSS rounds, @topalovaTradeLiberalizationPoverty2005 similarly documents low decadal interdistrict mobility, especially in rural areas and for employment-related moves. These measures describe recent-duration migration rather than the accumulated stock of everyone who has ever migrated; the distinction matters because lifetime-migrant measures accumulate moves over a longer exposure window as respondents age and can be dominated by moves made long before the economic period under study [@mahapatroInternalMigrationEmerging2020].
-
-I do not assume that mobility remained negligible. Evidence using Census cohorts and railway passenger flows points to substantially more interdistrict movement after 2001 than the late-twentieth-century evidence implied [@divison2015a]. More recent work also shows why movement can respond to skill-intensive opportunity. @ghoseTradeInternalMigration2026 studies India's information-technology expansion in a setting where education and internal migration respond endogenously, so regional welfare gains depend in part on who acquires skills and where workers relocate. At the same time, migration remains structured by institutions. Caste-based rural insurance networks can discourage migration when leaving weakens access to informal insurance [@munshiNetworksMisallocationInsurance2016], while state borders themselves sharply reduce migration between otherwise neighboring districts [@koneInternalBordersMigration2018]. These findings make migration neither negligible nor frictionless.
-
-My migration measures come from the 2011 Census D-series tables [@censusIndia2011]. D-02 describes migrants by place of last residence and provides the interstate share among migrants. D-03 records reason for migration. For work-related sorting I use D-07, which identifies migrants who have lived at the destination for at most nine years, report work or employment as the reason for migration, and previously lived elsewhere in India. I refer to this group as **recent work migrants**. The D-07 total is required to agree exactly with the corresponding D-03 work-migrant subtotal before the measures are used. Counts from the 2011 district geography are then pooled to the Census-2001 geography only where the district lineage is complete and deterministic, as described in @sec-app-lineage.
-
-The distinction between all migrants and recent work migrants is important for the paper's economic question. Overall migrant composition combines moves for marriage, education, household relocation, and work. Restricting attention to recent work migrants instead asks whether destinations differ in the kinds of workers they recently attracted for employment. The result therefore concerns the composition of in-migration observed at the destination; it does not measure the skills of people who left the district.
-
-## Linguistic Conditions and Migration Composition
-
-@tbl-app-migration summarizes the preferred within-state reduced forms. Each coefficient compares districts within states and conditions on the predetermined Census controls used elsewhere in the paper. The first panel retains broad migration margins even when their estimates are null. The second focuses on recent work migrants and includes both their geographic origin and skill composition, together with the predeclared Hindi-belt restriction.
-
-```{r}
-#| label: tbl-app-migration
-#| echo: false
-#| results: asis
-render_public_table("../outputs/tables/appendix/appendix_migration_summary.tex", "appendix_migration_summary")
-```
-
-The broad mobility measures provide little evidence that linguistic distance is associated with simply receiving more geographically distant migrants. The separate 2001--11 changes in population-denominated migrant rates remain descriptive and are not part of this predeclared regression family, so I do not use them to make an inferential claim about total migration incidence here. The interstate share among all migrants is close to zero in the preferred specification. The work- and education-reason shares provide no family-adjusted evidence of an association. Among recent work migrants, the share arriving from outside the state is also near zero. These null results are useful because they distinguish a change in migrant composition from a general increase in longer-distance mobility.
-
-The skilled composition result is different. A one-degree increase in speaker-weighted linguistic distance from Hindi is associated with a 0.0129 increase in the graduate-or-technical-degree share among recent work migrants; the state-clustered standard error is 0.0044 and the Holm-adjusted p-value is 0.027. I interpret this as evidence of skill sorting across destinations, not as evidence that linguistic distance causes migration or that migrants mediate an EMI effect. The dependent variable is the skill composition of recent work in-migrants conditional on being observed at the destination.
-
-The predeclared Hindi-belt restriction is weaker. Within the Hindi-belt states, the corresponding estimate is 0.0079 with a standard error of 0.0057 ($p=0.171$). The national within-state association therefore is not clearly reproduced inside that more linguistically similar institutional setting. This boundary is one reason I do not reduce the migration evidence to a universal behavioral response to linguistic distance.
-
-Taken together, the migration results sharpen the interpretation of the later district outcomes. Linguistic conditions are associated with **who arrives for work** more clearly than with broad migration composition or interstate movement. Migration can therefore change the skill composition of places even when aggregate mobility margins show little association. Later district consumption should consequently be read as local development for a changing population, not as the individual economic return to the children observed in the earlier schooling data.
-
-# Education Selection {#sec-app-selection}
-
-The district comparisons in the main text show that schooling access differs sharply by social group even within the same local market. I retain the original child-level enrollment model here as a complementary description of *who is enrolled at all*. The model does not identify a causal effect of any household characteristic or schooling program, and I do not use it as a control function or selection correction in the district analysis.
-
-## Child-Level Enrollment Model
-
-I use the NSS 64th Round *Participation and Expenditure in Education* survey, restricting the child roster to ages 5--19 [@nationalsamplesurveyoffice2008]. The outcome equals one when the child appears in the survey's enrolled-child education record and zero otherwise. The fitted probit includes age, sex, household size, religion, social group, rural or urban residence, distance to the nearest primary class, and the education of the child's father or the registered male household proxy. It also includes district averages of selected schooling-cost and benefit variables among enrolled children. Those district averages are useful adjustment variables for reproducing the original model, but they are partly determined by school provision and the composition of enrolled children. I therefore keep them in the fitted specification while omitting them from the reader-facing coefficient table.
-
-The final specification uses the NSS survey design: household weights, first-stage sampling units corresponding to sampled villages or urban blocks, and the survey's strata and substrata. Because a probit coefficient is expressed on a latent index, I report quantities on the probability scale. For continuous variables, the table reports the average slope of the predicted enrollment probability. For categorical variables, it reports the average discrete change in predicted enrollment probability when each observed child is assigned the comparison category rather than the stated reference category, with the remaining covariates left at their observed values. These are average marginal quantities over the estimation sample rather than effects evaluated at a synthetic "average child" [@hansenEconometrics2022; @arel-bundockHowInterpretStatistical2024].
-
-```{r}
-#| label: tbl-appendix-selection-ame
-#| echo: false
-#| results: asis
-render_public_table("../outputs/tables/appendix/appendix_selection_ame.tex", "appendix_selection_ame")
-```
-
-The social-identity results reinforce the main-text evidence that access to education is not evenly distributed. Relative to Hindu children with the same modeled covariates, Muslim children have an average predicted enrollment probability about 12.6 percentage points lower; the corresponding Christian comparison is about 4.3 points lower. The Muslim difference is consistent with evidence of persistent educational disadvantage among Indian Muslims [@borooah2021a]. Relative to children in the residual "Other" social-group category, the predicted enrollment probability is about 10.2 points lower for Scheduled Tribe children, 7.5 points lower for Scheduled Caste children, and 2.9 points lower for Other Backward Class children. I interpret these as conditional associations, not as effects of religion or caste. That caution is especially important in a setting where social institutions and caste networks can alter schooling choices and the occupational opportunities attached to them [@munshi2006a].
-
-Parental education displays the largest systematic gradient. Relative to an illiterate father or male household proxy, the average comparison rises from roughly 9.7 percentage points for a literate adult with no formal schooling to about 14.2 points for primary education, 21.2 points for secondary education, and 24.5 points for postsecondary education. Father's education can proxy for several household characteristics at once, including permanent income, information about schooling and labor markets, and preferences or expectations transmitted across generations. The model cannot separate those channels. What it establishes is that enrollment is strongly stratified by intergenerational human capital even after conditioning on the other observed covariates.
-
-Several other estimates are useful mainly as descriptive boundaries. Enrollment probability declines by about 2.8 percentage points per year of age across the 5--19 range. Girls have a roughly 4.4-point higher predicted probability than boys conditional on the other modeled characteristics; I do not attribute that difference to any particular program, although Sarva Shiksha Abhiyan and girls-focused schooling initiatives were already operating before the survey [@pressinformationbureauInitiativesHumanResource2008]. Each additional household member is associated with a small decline in predicted enrollment probability. That sign is consistent with the resource-dilution logic of quantity--quality models, but Indian evidence on whether family size causally reduces child investment is mixed [@beckerEconomicAnalysisFertility1969; @kumarTestingChildrenQuantityQuality2011; @onurBirthOrderSibling2021].
-
-School access is also unevenly related to enrollment. Children whose nearest primary class is reported one to two kilometers away have a predicted enrollment probability about 7.7 percentage points lower than children with a primary class within one kilometer. The more distant categories are estimated much less precisely and do not form a monotone distance gradient. I therefore treat the one-to-two-kilometer comparison as evidence that local access conditions can matter, not as an estimate of a stable distance-response function.
-
-The original model also includes district averages of free schooling, fee waivers, scholarships, textbooks, stationery, mid-day meals, and enrollment cost. I do not display or interpret those coefficients here. These variables are measured among enrolled children and are jointly determined by program targeting, school type, local provision, and household selection. In particular, the negative coefficient on the district share receiving free education cannot establish that free schooling reduces enrollment. Retaining those variables as controls preserves the original specification without turning selected program receipt into a policy effect.
-
-## Missingness and Interpretation
-
-The child roster contains 127,181 observations, but the probit is estimated on complete cases. Missingness is concentrated in three required covariates: father's education, district-average enrollment cost, and distance to the nearest primary class. The registered missingness checks show that approximately 9.7 percent of children are missing at least one required model covariate. Missingness is also predictable from observed characteristics, especially for district-average enrollment cost and school distance, so the estimation sample should not be treated as a random subsample of all children.
-
-```{r}
-#| label: tbl-appendix-selection-missingness
-#| echo: false
-#| results: asis
-render_public_table("../outputs/tables/appendix/appendix_selection_missingness.tex", "appendix_selection_missingness")
-```
-
-This limitation is another reason I use the model only as corroborating descriptive evidence. Its central message agrees with the within-district schooling-access analysis in the main text: educational participation is strongly associated with social identity and family background. The district decomposition is more directly suited to the paper's question about access to English-oriented schooling; the probit shows that unequal selection begins one step earlier, at entry into schooling itself.
-
-\newpage
 
 # References {-}
