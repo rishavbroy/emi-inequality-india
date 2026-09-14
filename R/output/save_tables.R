@@ -1228,7 +1228,7 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   compact_result_table <- identical(name, "paper_identification_boundary")
   appendix_compact_table <- name %in% c(
     "appendix_a3_lineage_source_hierarchy",
-    "appendix_a6_linguistic_measures", "appendix_a7_consumption_construction",
+    "appendix_a7_consumption_construction",
     "appendix_b1_lineage_readiness", "appendix_b2_lineage_sensitivity", "appendix_b3_consumption_reconstruction", "appendix_b4_hces_consistency_summary", "appendix_b6_language_source_validation",
     "appendix_b8_census_universe_reconciliation",
     "appendix_c1_full_absorption_ladder", "appendix_c3_control_block_absorption",
@@ -1333,7 +1333,6 @@ save_table_tex <- function(table, path, name, public = TRUE) {
     widths <- switch(
       name,
       appendix_a3_lineage_source_hierarchy = c("4.1cm", "3.5cm", "7.0cm"),
-      appendix_a6_linguistic_measures = c("3.2cm", "3.6cm", "4.6cm", "2.5cm"),
       appendix_a7_consumption_construction = c("3.4cm", "1.9cm", "2.2cm", "2.2cm", "3.0cm", "2.0cm"),
       appendix_b1_lineage_readiness = c("3.6cm", "6.8cm", "2.0cm"),
       appendix_b2_lineage_sensitivity = c("3.2cm", "1.8cm", "2.2cm", "2.8cm", "2.5cm"),

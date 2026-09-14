@@ -349,8 +349,8 @@ it does not rerun the analysis.
 
 Appendix A is prose-led and reserves generated tables for compact source or
 measurement summaries. `appendix_data_construction_exhibits` now reshapes only the
-district-lineage source families, DISE construct registry, linguistic-measure
-taxonomy, and consumption survey registry. The former lineage process diagram and
+district-lineage source families and consumption survey registry. The linguistic-measure
+taxonomy is explanatory manuscript text rather than a generated data product. The former lineage process diagram and
 generic timing/NSS/outcome inventories were removed from the final-paper bundle:
 the manuscript explains the lineage decision rules directly, while detailed
 source ledgers remain in the machine-readable lineage outputs. Shared `appendix_*`

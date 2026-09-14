@@ -16,7 +16,6 @@ public_report_value_sources <- function() {
 paper_new_appendix_render_inputs <- function() {
   c(
     "outputs/tables/appendix/appendix_a3_lineage_source_hierarchy.tex",
-    "outputs/tables/appendix/appendix_a6_linguistic_measures.tex",
     "outputs/tables/appendix/appendix_a7_consumption_construction.tex",
     "outputs/tables/appendix/appendix_b1_lineage_readiness.tex",
     "outputs/tables/appendix/appendix_b2_lineage_sensitivity.tex",
@@ -164,8 +163,6 @@ required_final_artifacts <- function() {
     "outputs/tables/main/paper_identification_boundary.tex",
     "outputs/tables/appendix/appendix_a3_lineage_source_hierarchy.csv",
     "outputs/tables/appendix/appendix_a3_lineage_source_hierarchy.tex",
-    "outputs/tables/appendix/appendix_a6_linguistic_measures.csv",
-    "outputs/tables/appendix/appendix_a6_linguistic_measures.tex",
     "outputs/tables/appendix/appendix_a7_consumption_construction.csv",
     "outputs/tables/appendix/appendix_a7_consumption_construction.tex",
     "outputs/tables/appendix/appendix_b1_lineage_readiness.csv",

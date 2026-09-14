@@ -68,7 +68,6 @@ public_table_caption_text <- function(name) {
       "District-Lineage Sources and Roles.",
       "Sources: Census of India; Ministry of Panchayati Raj Local Government Directory; Kumar and Somanathan (2016); India State and District Evolution Database; India District Changes Tracker; Development Data Lab SHRUG; Deshpande, Khanna, and Walia concordances."
     ),
-    appendix_a6_linguistic_measures = "Linguistic-Measure Construction. Sources: Census of India 1991 and 2001 language tables; Shastry (2012); Glottolog 5.3; Dyen lexicostatistical data.",
     appendix_a7_consumption_construction = "Consumption Survey Construction. Sources: NSS consumer-expenditure rounds 2004-05, 2009-10, and 2011-12; HCES 2022-23 and 2023-24; official price series.",
     appendix_b1_lineage_readiness = "Appendix B1. District-Lineage Readiness and Coverage",
     appendix_b2_lineage_sensitivity = "Appendix B2. District-Lineage Sensitivity",
@@ -158,10 +157,6 @@ public_table_note <- function(name) {
     ),
     appendix_a3_lineage_source_hierarchy = paste(
       "Rows summarize source families rather than individual files. Detailed source IDs and adjudication ledgers remain available in the lineage CSV outputs."
-    ),
-    appendix_a6_linguistic_measures = paste(
-      "The preferred measure is the speaker-weighted Shastry distance from Hindi on Census-2001 geography.",
-      "Historical, genealogical, lexicostatistical, and nonlinear measures are validation or sensitivity constructions rather than interchangeable instruments."
     ),
     appendix_a7_consumption_construction = paste(
       "Rows come directly from the registered household-consumption survey contract.",

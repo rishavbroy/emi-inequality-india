@@ -67,35 +67,6 @@ appendix_a3_lineage_source_hierarchy <- function(district_lineage) {
   out
 }
 
-appendix_a6_linguistic_measures <- function() {
-  csv <- data.frame(
-    measure_id = c("shastry_2001", "historical_1991", "glottolog", "dyen", "distant_share"),
-    measure = c(
-      paper_linguistic_distance_display_labels()[["nonzero_mean"]],
-      paper_linguistic_distance_display_labels()[["historical_1991"]],
-      paper_linguistic_distance_display_labels()[["glottolog_mean"]],
-      paper_linguistic_distance_display_labels()[["dyen_noncognate"]],
-      paper_linguistic_distance_display_labels()[["distant_share"]]
-    ),
-    source = c(
-      "Shastry concordance + Census 2001 C-16", "1991 Census language reconstruction",
-      "Glottolog 5.3", "Dyen lexicostatistical source", "Census 2001 C-16 + Shastry distance bins"
-    ),
-    concept = c(
-      "Speaker-weighted mean distance from Hindi among non-Hindi languages", "Predetermined analogue of preferred distance",
-      "Genealogical path distance from Hindi", "Lexical noncognacy relative to Hindi", "Population share at distance >= 3"
-    ),
-    role = c("Preferred", "Historical validation", "Alternative", "Alternative", "Nonlinear alternative"),
-    stringsAsFactors = FALSE
-  )
-  out <- data.frame(
-    Measure = csv$measure, Source = csv$source, Concept = csv$concept, Role = csv$role,
-    check.names = FALSE, stringsAsFactors = FALSE
-  )
-  attr(out, "csv_data") <- csv
-  out
-}
-
 appendix_a7_consumption_construction <- function(consumption_survey_registry) {
   x <- validate_consumption_survey_registry(safe_df(consumption_survey_registry))
   keep <- plain_chr(x$survey_family) == "nss_schedule_1_0" |
@@ -124,7 +95,6 @@ appendix_a7_consumption_construction <- function(consumption_survey_registry) {
 make_appendix_data_construction_exhibits <- function(district_lineage, consumption_survey_registry) {
   list(
     appendix_a3_lineage_source_hierarchy = appendix_a3_lineage_source_hierarchy(district_lineage),
-    appendix_a6_linguistic_measures = appendix_a6_linguistic_measures(),
     appendix_a7_consumption_construction = appendix_a7_consumption_construction(consumption_survey_registry)
   )
 }
@@ -134,7 +104,6 @@ save_appendix_data_construction_exhibits <- function(exhibits, cfg) {
     exhibits,
     c(
       "appendix_a3_lineage_source_hierarchy",
-      "appendix_a6_linguistic_measures",
       "appendix_a7_consumption_construction"
     ),
     cfg

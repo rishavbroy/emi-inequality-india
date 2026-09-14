@@ -1627,7 +1627,7 @@ test_that("Appendix A keeps reader-facing construction summaries tied to registe
   )
   expect_true(all(c(
     "appendix_a3_lineage_source_hierarchy",
-    "appendix_a6_linguistic_measures", "appendix_a7_consumption_construction"
+    "appendix_a7_consumption_construction"
   ) %in% names(exhibits)))
 
   lineage_sources <- attr(exhibits$appendix_a3_lineage_source_hierarchy, "csv_data")
