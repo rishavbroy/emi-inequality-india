@@ -78,8 +78,7 @@ core_public_target_definitions <- function() {
       paper_economic_conversion,
       make_paper_economic_conversion_table(
         schooling_consumption_bridge,
-        schooling_consumption_conversion,
-        economic_census_it_opportunity
+        schooling_consumption_conversion
       )
     ),
     tar_target(

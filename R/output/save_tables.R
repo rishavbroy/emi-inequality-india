@@ -719,6 +719,188 @@ paper_schooling_market_modelsummary_table <- function(table, name) {
   single_space_longtable_tex(tex)
 }
 
+paper_economic_conversion_modelsummary_table <- function(table, name) {
+  need_pkg("modelsummary", "economic-conversion regression table rendering")
+  csv <- safe_df(attr(table, "csv_data", exact = TRUE))
+  if (!nrow(csv)) return(NULL)
+
+  required <- c(
+    "panel", "measure", "predictor_id", "complement_id", "outcome_round",
+    "estimand", "estimate", "std.error", "p.value_holm", "n"
+  )
+  missing <- setdiff(required, names(csv))
+  if (length(missing)) {
+    stop(
+      "Paper economic-conversion regression table is missing columns: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  columns <- paper_schooling_welfare_column_registry()
+  treatments <- paper_schooling_welfare_treatment_labels()
+  complement_registry <- paper_conversion_complement_registry()
+  model_names <- paste0("(", seq_len(nrow(columns)), ")")
+
+  schooling_terms <- setNames(
+    paste0("schooling__", names(treatments)),
+    names(treatments)
+  )
+  complement_labels <- c()
+  for (predictor in c("all_child_emi", "private_emi")) {
+    prefix <- if (predictor == "all_child_emi") "All-child EMI" else "Private EMI"
+    for (i in seq_len(nrow(complement_registry))) {
+      modifier <- complement_registry$modifier_id[[i]]
+      term <- paste("interaction", predictor, modifier, sep = "__")
+      complement_labels <- c(
+        complement_labels,
+        setNames(paste0(prefix, " $\\times$ ", complement_registry$label[[i]]), term)
+      )
+    }
+  }
+
+  coef_map <- c(
+    setNames(unname(treatments), unname(schooling_terms)),
+    complement_labels
+  )
+
+  models <- lapply(seq_len(nrow(columns)), function(j) {
+    welfare <- csv[
+      csv$panel == "schooling_welfare" &
+        csv$outcome_round == columns$outcome_round[[j]] &
+        csv$estimand == columns$estimand[[j]],
+      , drop = FALSE
+    ]
+    welfare <- welfare[match(names(treatments), welfare$predictor_id), , drop = FALSE]
+    if (nrow(welfare) != length(treatments) || any(is.na(welfare$predictor_id))) {
+      stop("Paper economic-conversion table lost a registered schooling-welfare coefficient.", call. = FALSE)
+    }
+
+    tidy <- data.frame(
+      term = unname(schooling_terms[welfare$predictor_id]),
+      estimate = num(welfare$estimate),
+      std.error = num(welfare$std.error),
+      p.value = num(welfare$p.value_holm),
+      stringsAsFactors = FALSE
+    )
+
+    if (columns$outcome_round[[j]] == "hces_2022_23" && columns$estimand[[j]] == "change") {
+      complements <- csv[csv$panel == "predetermined_complements", , drop = FALSE]
+      expected <- expand.grid(
+        predictor_id = c("all_child_emi", "private_emi"),
+        complement_id = complement_registry$modifier_id,
+        KEEP.OUT.ATTRS = FALSE,
+        stringsAsFactors = FALSE
+      )
+      key <- paste(complements$predictor_id, complements$complement_id)
+      expected_key <- paste(expected$predictor_id, expected$complement_id)
+      complements <- complements[match(expected_key, key), , drop = FALSE]
+      if (nrow(complements) != nrow(expected) || any(is.na(complements$predictor_id))) {
+        stop("Paper economic-conversion table lost a registered complement coefficient.", call. = FALSE)
+      }
+      tidy <- rbind(
+        tidy,
+        data.frame(
+          term = paste("interaction", complements$predictor_id, complements$complement_id, sep = "__"),
+          estimate = num(complements$estimate),
+          std.error = num(complements$std.error),
+          p.value = num(complements$p.value_holm),
+          stringsAsFactors = FALSE
+        )
+      )
+    }
+
+    nvals <- unique(welfare$n)
+    if (length(nvals) != 1L) {
+      stop("Paper economic-conversion table lost common support within a welfare column.", call. = FALSE)
+    }
+    structure(
+      list(
+        tidy = tidy,
+        glance = data.frame(
+          endpoint = c(
+            hces_2022_23 = "HCES 2022-23",
+            hces_2023_24 = "HCES 2023-24"
+          )[[columns$outcome_round[[j]]]],
+          estimand = if (columns$estimand[[j]] == "ancova") {
+            "ANCOVA"
+          } else if (columns$outcome_round[[j]] == "hces_2022_23") {
+            "2004-05 to 2022-23 change"
+          } else {
+            "2004-05 to 2023-24 change"
+          },
+          state_fe = "Yes",
+          controls = "Yes",
+          nobs = as.integer(nvals[[1L]]),
+          stringsAsFactors = FALSE
+        )
+      ),
+      class = "modelsummary_list"
+    )
+  })
+  names(models) <- model_names
+
+  as_text <- function(x) as.character(x)
+  gof_map <- list(
+    list(raw = "endpoint", clean = "Endpoint", fmt = as_text),
+    list(raw = "estimand", clean = "Estimand", fmt = as_text),
+    list(raw = "state_fe", clean = "State fixed effects", fmt = as_text),
+    list(raw = "controls", clean = "Predetermined controls", fmt = as_text),
+    list(raw = "nobs", clean = "Observations", fmt = 0)
+  )
+
+  old_knit_to <- knitr::opts_knit$get("rmarkdown.pandoc.to")
+  old_opt <- getOption("modelsummary_format_numeric_latex")
+  old_stars_note <- getOption("modelsummary_stars_note")
+  on.exit(knitr::opts_knit$set(rmarkdown.pandoc.to = old_knit_to), add = TRUE)
+  on.exit(options(
+    modelsummary_format_numeric_latex = old_opt,
+    modelsummary_stars_note = old_stars_note
+  ), add = TRUE)
+  knitr::opts_knit$set(rmarkdown.pandoc.to = "latex")
+  options(
+    modelsummary_format_numeric_latex = "plain",
+    modelsummary_stars_note = FALSE
+  )
+
+  tex <- suppress_modelsummary_latex_preamble_warning(modelsummary::modelsummary(
+    models = models,
+    coef_map = coef_map,
+    estimate = "{estimate}{stars}",
+    statistic = "({std.error})",
+    stars = regression_star_levels(),
+    fmt = 2,
+    gof_map = gof_map,
+    title = table_caption(name),
+    output = "kableExtra",
+    longtable = TRUE,
+    escape = FALSE,
+    notes = NULL
+  ))
+  tex <- kableExtra::kable_styling(
+    tex,
+    latex_options = c("repeat_header", "striped"),
+    position = "center",
+    full_width = FALSE,
+    font_size = 9
+  )
+  tex <- tex |>
+    kableExtra::column_spec(1, width = "5.6cm") |>
+    kableExtra::column_spec(2:5, width = "2.25cm")
+  note <- public_table_note(name)
+  if (!is.null(note)) {
+    tex <- kableExtra::footnote(
+      tex,
+      general = note,
+      general_title = "",
+      threeparttable = TRUE,
+      footnote_as_chunk = TRUE,
+      escape = FALSE
+    )
+  }
+  single_space_longtable_tex(tex)
+}
+
 paper_language_behavior_modelsummary_table <- function(table, name) {
   need_pkg("modelsummary", "language-behavior regression table rendering")
   csv <- attr(table, "csv_data", exact = TRUE)
@@ -848,6 +1030,10 @@ save_table_tex <- function(table, path, name, public = TRUE) {
     tex <- paper_schooling_market_modelsummary_table(table, name)
     if (!is.null(tex)) return(write_table_tex(tex, path, name))
   }
+  if (identical(name, "paper_economic_conversion")) {
+    tex <- paper_economic_conversion_modelsummary_table(table, name)
+    if (!is.null(tex)) return(write_table_tex(tex, path, name))
+  }
   if (identical(name, "paper_language_behavior")) {
     tex <- paper_language_behavior_modelsummary_table(table, name)
     if (!is.null(tex)) return(write_table_tex(tex, path, name))
@@ -875,7 +1061,6 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   landscape_table <- landscape_longtable
   regression_table <- name %in% c("probit_mfx", "fs_cons", "cons_iv") && !is_formatted_status_table(df_render)
   compact_result_table <- name %in% c(
-    "paper_economic_conversion",
     "paper_local_development", "paper_identification_boundary"
   )
   appendix_compact_table <- name %in% c(
@@ -979,7 +1164,6 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   if (compact_result_table) {
     widths <- switch(
       name,
-      paper_economic_conversion = c("5.2cm", rep("2.35cm", 4L)),
       paper_local_development = c("2.1cm", "5.0cm", "1.35cm", "1.2cm", "1.2cm", "4.2cm"),
       paper_identification_boundary = c("3.5cm", "2.2cm", "1.1cm", "1.1cm", "1.3cm", "4.6cm")
     )

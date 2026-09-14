@@ -1262,25 +1262,50 @@ test_that("paper conversion-complements table fails closed on incomplete registe
 })
 
 
-test_that("paper economic-conversion table consolidates welfare and complement evidence", {
+test_that("paper economic-conversion table retains welfare and predetermined-capacity regressions", {
   complement <- paper_conversion_complements_fixture()
   bridge <- list(estimates = paper_schooling_welfare_fixture())
-  csv <- paper_economic_conversion_csv_data(bridge, complement$conversion, complement$it)
+  csv <- paper_economic_conversion_csv_data(bridge, complement$conversion)
 
-  expect_equal(nrow(csv), 28L)
+  expect_equal(nrow(csv), 26L)
   expect_equal(sum(csv$panel == "schooling_welfare"), 20L)
-  expect_equal(sum(csv$panel == "predetermined_complements"), 8L)
+  expect_equal(sum(csv$panel == "predetermined_complements"), 6L)
   expect_false(any(c("status", "reason") %in% names(csv)))
   expect_true(all(vapply(csv[c("estimate", "std.error", "p.value", "p.value_holm", "n")], is.numeric, logical(1))))
   expect_true(all(csv$estimand[csv$panel == "predetermined_complements"] == "change"))
   expect_true(all(csv$outcome_round[csv$panel == "predetermined_complements"] == "hces_2022_23"))
+  change_n <- unique(csv$n[
+    csv$panel == "schooling_welfare" &
+      csv$outcome_round == "hces_2022_23" & csv$estimand == "change"
+  ])
+  expect_identical(unique(csv$n[csv$panel == "predetermined_complements"]), change_n)
+  expect_false(any(csv$complement_id == "ec05_it_employment_share", na.rm = TRUE))
 
-  table <- make_paper_economic_conversion_table(bridge, complement$conversion, complement$it)
+  table <- make_paper_economic_conversion_table(bridge, complement$conversion)
   expect_identical(attr(table, "csv_data"), csv)
-  expect_equal(sum(grepl("^Panel [AB]\\.", table[[1L]])), 2L)
-  expect_equal(nrow(table), 16L)
-  expect_true(all(table[["2022 ANCOVA"]][9:16] == ""))
-  expect_true(all(nzchar(table[["2004-2022 change"]][9:16])))
+  expect_setequal(table[["Term"]], unique(csv$measure))
+})
+
+test_that("paper economic-conversion renderer uses modelsummary regression structure", {
+  skip_if_not_installed("modelsummary")
+  skip_if_not_installed("kableExtra")
+
+  complement <- paper_conversion_complements_fixture()
+  bridge <- list(estimates = paper_schooling_welfare_fixture())
+  table <- make_paper_economic_conversion_table(bridge, complement$conversion)
+  tex <- as.character(paper_economic_conversion_modelsummary_table(table, "paper_economic_conversion"))
+
+  expect_match(tex, "\\\\begin\\{longtable\\}")
+  expect_match(tex, "\\(1\\)")
+  expect_match(tex, "\\([0-9]+\\.[0-9]{2}\\)")
+  expect_match(tex, "\\*\\*")
+  expect_match(tex, "State fixed effects", fixed = TRUE)
+  expect_match(tex, "Predetermined controls", fixed = TRUE)
+  expect_true(all(vapply(
+    paper_conversion_complement_registry()$label,
+    function(label) grepl(label, tex, fixed = TRUE),
+    logical(1)
+  )))
 })
 
 test_that("paper economic-conversion table fails closed when a registered welfare cell is absent", {
@@ -1288,7 +1313,7 @@ test_that("paper economic-conversion table fails closed when a registered welfar
   estimates <- paper_schooling_welfare_fixture()
   estimates <- estimates[-1L, , drop = FALSE]
   expect_error(
-    paper_economic_conversion_csv_data(list(estimates = estimates), complement$conversion, complement$it),
+    paper_economic_conversion_csv_data(list(estimates = estimates), complement$conversion),
     "registered 4-by-5 state-main design",
     fixed = TRUE
   )

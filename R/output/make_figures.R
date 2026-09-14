@@ -151,8 +151,8 @@ make_figures <- function(
     consumption_iv_dynamics = figure_spec(
       "consumption_iv_dynamics",
       "consumption_iv_dynamics.png",
-      "When does linguistic distance predict welfare?",
-      "Reduced-form association across post-treatment horizons and estimands.",
+      "When does linguistic distance predict consumption?",
+      "Association across later consumption horizons and estimands.",
       kind = if (!is.null(consumption_iv_dynamics) &&
         nrow(safe_df(consumption_iv_dynamics$summary %||% data.frame()))) {
         "consumption_iv_dynamics"

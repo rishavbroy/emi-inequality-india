@@ -55,8 +55,14 @@ public_table_caption_text <- function(name) {
       "Linguistic Distance and Language-Learning Behavior.",
       "Source: Census of India 2001 bilingualism and trilingualism tables."
     ),
-    paper_economic_conversion = "Economic Conversion: Schooling, Welfare, and Predetermined Complements",
-    paper_local_development = "Broader Local-Development Constellation",
+    paper_economic_conversion = paste(
+      "English-Intensive Schooling, Later Consumption, and Predetermined Complements.",
+      "Sources: NSS 64th Round, 2007-08; Census of India 2001; NSS 61st Round, 2004-05; HCES 2022-23 and 2023-24."
+    ),
+    paper_local_development = paste(
+      "Linguistic Conditions and Selective Local Development.",
+      "Sources: Census of India 2001 and 2011; Economic Census 2005 and 2013; NSS 66th Round; PLFS 2017-18."
+    ),
     paper_identification_boundary = "Identification Boundary: Linguistic Distance Does Not Isolate EMI",
     appendix_a1_data_source_timing = "Appendix A1. Data Sources, Timing, and Analytical Roles",
     appendix_a3_lineage_source_hierarchy = "Appendix A3. District-Lineage Evidence Hierarchy",
@@ -125,7 +131,7 @@ public_table_note <- function(name) {
     paper_schooling_market_geography = paste(
       "Each outcome block reports standardized coefficients from district regressions on speaker-weighted linguistic distance from Hindi. State-clustered standard errors are in parentheses.",
       "Columns (1)-(3) are unadjusted, region fixed effects plus predetermined Census-2001 controls, and state fixed effects plus the same controls, respectively; the rows below each coefficient indicate these specification choices explicitly.",
-      "Each outcome uses one fixed complete-case sample across its three specifications. State-membership R-squared is from state indicators alone, is descriptive rather than causal, and is not reported for the DISE outcome because that summary is not part of the registered state-organization comparison.",
+      "Each outcome uses one fixed complete-case sample across its three specifications. State-membership R-squared is calculated from state indicators alone on the available state-coded support for each schooling measure, including DISE, and is descriptive rather than causal.",
       regression_star_note(),
       "Sources: NSS 64th Round, 2007-08; DISE 2007-08; Census of India 2001."
     ),
@@ -139,12 +145,11 @@ public_table_note <- function(name) {
       "Source: Census of India 2001 bilingualism and trilingualism tables."
     ),
     paper_economic_conversion = paste(
-      "Panel A reports percent changes in real mean MPCE associated with a 10 percentage-point increase in each schooling margin; state-clustered standard errors are in parentheses.",
-      "Panel-A columns use the registered state fixed-effects specification with predetermined Census-2001 controls and common treatment support within each endpoint/estimand; stars use Holm-adjusted p-values within the predeclared schooling-welfare family.",
-      "Panel B reports how the registered 2004-05 to 2022-23 long-change association varies with one-standard-deviation increases in predetermined complements. All-child/private EMI interactions are scaled per 10 percentage points of schooling exposure; the linguistic-distance interaction is per one Shastry degree.",
-      "Panel-B standard errors are state-clustered and stars use Holm-adjusted p-values within each predeclared complement family.",
+      "Each schooling-margin coefficient comes from a separate district regression and reports the percent difference in real mean MPCE associated with a 10 percentage-point increase in that schooling margin; coefficients shown in the same column are assembled for comparison rather than jointly estimated.",
+      "Columns use state fixed effects, predetermined Census-2001 controls, and common schooling support within each endpoint/estimand. State-clustered standard errors are in parentheses; stars use Holm-adjusted p-values within the predeclared schooling-welfare family.",
+      "The six interaction rows appear only for the 2004-05 to 2022-23 long change and report how the all-child or private-EMI association differs with a one-standard-deviation increase in predetermined human capital, urbanization, or ST concentration. Those rows also come from separate registered regressions and use state-clustered standard errors and Holm-adjusted p-values within the predeclared complement family.",
       regression_star_note(),
-      "These are descriptive conditional and heterogeneous associations, not causal returns or treatment-effect heterogeneity."
+      "These are descriptive conditional associations, not causal returns or treatment-effect heterogeneity. Sources are identified in the caption."
     ),
     paper_local_development = paste(
       "Entries are reduced-form associations of one Shastry linguistic-distance degree with the representative outcome in its native unit; raw and Holm-adjusted p-values use state-clustered inference within the registered outcome/specification family.",

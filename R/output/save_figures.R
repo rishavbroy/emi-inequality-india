@@ -897,23 +897,15 @@ save_consumption_iv_dynamic_figure <- function(
       title = spec$title,
       subtitle = spec$subtitle,
       x = "Outcome horizon",
-      y = "Reduced-form coefficient",
+      y = "Coefficient on linguistic distance",
       shape = NULL,
-      linetype = NULL,
-      caption = paste(
-        "95% state-clustered Wald intervals.",
-        "Each point is the coefficient on preferred linguistic distance.",
-        "ANCOVA conditions on log real 2004-05 mean MPCE; long change uses",
-        "endpoint minus 2004-05 log real mean MPCE. Both specifications include",
-        "state fixed effects and the predetermined Census-2001 controls."
-      )
+      linetype = NULL
     ) +
     ggplot2::theme_minimal(base_size = 12) +
     ggplot2::theme(
       panel.grid.minor = ggplot2::element_blank(),
       axis.title = ggplot2::element_text(face = "bold"),
-      legend.position = "top",
-      plot.caption = ggplot2::element_text(size = 9, hjust = 0)
+      legend.position = "top"
     )
 
   save_plot_formats(
