@@ -1172,6 +1172,8 @@ test_that("weak-IV appendix table renders through modelsummary", {
 
   expect_match(tex, "EMI exposure", fixed = TRUE)
   expect_match(tex, "MOP effective F", fixed = TRUE)
+  expect_match(tex, "41.7\\%", fixed = TRUE)
+  expect_false(grepl("41.7%", tex, fixed = TRUE))
 })
 
 

@@ -1093,7 +1093,9 @@ appendix_iv_weak_inference_modelsummary_table <- function(table, name) {
     title = table_caption(name),
     output = "kableExtra",
     longtable = FALSE,
-    escape = FALSE,
+    # This table body is ordinary text. Let modelsummary/kableExtra escape LaTeX
+    # metacharacters in labels and GOF values, including percentage signs.
+    escape = TRUE,
     notes = NULL
   ))
   tex <- kableExtra::kable_styling(
