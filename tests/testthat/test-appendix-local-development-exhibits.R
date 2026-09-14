@@ -22,28 +22,53 @@ mechanism_fixture <- function(n_outcomes) {
   )
 }
 
-test_that("Appendix D registered mechanism tables reconcile complete model families", {
+test_that("migration appendix keeps preferred mobility nulls and skilled sorting evidence", {
   migration <- mechanism_fixture(8L)
+  ids <- c(
+    "interstate_migrant_composition", "work_migration_reason",
+    "education_migration_reason", "skilled_migrant_composition",
+    "technical_migrant_composition", "outside_state_recent_work_migration",
+    "skilled_recent_work_migration", "technical_recent_work_migration"
+  )
+  migration$reduced_form$outcome_id <- ids[match(
+    migration$reduced_form$outcome_id, paste0("outcome_", seq_along(ids))
+  )]
+  migration$reduced_form$p.value <- 0.20
+  migration$reduced_form$p_holm_within_spec <- 0.40
+  skilled <- migration$reduced_form$outcome_id == "skilled_recent_work_migration" &
+    migration$reduced_form$adjustment_id == "state_main" &
+    migration$reduced_form$construction_id == "nonzero_mean"
+  migration$reduced_form$p.value[skilled] <- 0.003
+  migration$reduced_form$p_holm_within_spec[skilled] <- 0.03
   migration$hindi_belt_skilled_migration <- data.frame(
-    outcome_id = "skilled_recent_work_migration", estimate = 0.1, std.error = 0.05,
-    p.value = 0.1, n = 250L, n_states = 12L, status = "estimated",
+    outcome_id = "skilled_recent_work_migration", estimate = 0.008, std.error = 0.006,
+    p.value = 0.17, n = 178L, n_states = 11L, adjustment_id = "state_main",
+    construction_id = "nonzero_mean", fixed_effect = "state", status = "estimated",
     stringsAsFactors = FALSE
   )
-  # Rename two fixture outcomes to the semantic D2 outcomes.
-  migration$reduced_form$outcome_id[migration$reduced_form$outcome_id == "outcome_1"] <- "skilled_recent_work_migration"
-  migration$reduced_form$outcome_id[migration$reduced_form$outcome_id == "outcome_2"] <- "outside_state_recent_work_migration"
 
-  d1 <- appendix_d1_migration(migration)
-  expect_equal(nrow(attr(d1, "csv_data")), 48L)
+  migration_table <- appendix_migration_summary(migration)
+  csv <- attr(migration_table, "csv_data")
+  national <- csv[csv$sample == "All states", , drop = FALSE]
+  hindi <- csv[csv$sample == "Hindi-belt states", , drop = FALSE]
+
+  expect_true(all(national$adjustment_id == "state_main"))
+  expect_true(all(national$construction_id == "nonzero_mean"))
+  expect_true(all(national$p.value_for_stars == 0.40 | national$outcome_id == "skilled_recent_work_migration"))
+  expect_equal(
+    national$p.value_for_stars[national$outcome_id == "skilled_recent_work_migration"],
+    0.03
+  )
+  expect_true(all(c(
+    "outside_state_recent_work_migration", "skilled_recent_work_migration"
+  ) %in% national$outcome_id))
+  expect_equal(nrow(hindi), 1L)
+  expect_equal(hindi$p.value_for_stars, hindi$p.value)
+
   expect_equal(nrow(appendix_d3_housing_assets(mechanism_fixture(8L))), 48L)
   expect_equal(nrow(appendix_d4_economic_census(mechanism_fixture(6L))), 36L)
   d5 <- appendix_d5_labor(mechanism_fixture(2L), mechanism_fixture(2L), mechanism_fixture(2L))
   expect_equal(nrow(attr(d5, "csv_data")), 36L)
-  expect_equal(sort(unique(attr(d5, "csv_data")$source)), sort(c(
-    "NSS 2009-10", "PLFS 2017-18 primary", "PLFS 2017-18 conservative lineage"
-  )))
-  d2 <- appendix_d2_migration_context(migration)
-  expect_equal(nrow(attr(d2, "csv_data")), 3L)
 })
 
 test_that("Appendix D household and heterogeneity tables preserve bounded registered families", {

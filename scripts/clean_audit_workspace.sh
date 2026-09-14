@@ -21,6 +21,10 @@ rm -f \
   "${root%/}/outputs/tables/appendix/appendix_b4_hces_consistency_summary.tex" \
   "${root%/}/outputs/figures/appendix/appendix_b4_hces_consistency.pdf" \
   "${root%/}/outputs/figures/appendix/appendix_b4_hces_consistency.png" \
+  "${root%/}/outputs/tables/appendix/appendix_d1_migration.csv" \
+  "${root%/}/outputs/tables/appendix/appendix_d1_migration.tex" \
+  "${root%/}/outputs/tables/appendix/appendix_d2_migration_context.csv" \
+  "${root%/}/outputs/tables/appendix/appendix_d2_migration_context.tex" \
   2>/dev/null || true
 
 rm -rf \

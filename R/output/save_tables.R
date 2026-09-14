@@ -901,6 +901,119 @@ paper_economic_conversion_modelsummary_table <- function(table, name) {
   single_space_longtable_tex(tex)
 }
 
+appendix_migration_modelsummary_table <- function(table, name) {
+  need_pkg("modelsummary", "migration appendix regression table rendering")
+  csv <- safe_df(attr(table, "csv_data", exact = TRUE))
+  if (!nrow(csv)) return(NULL)
+  required <- c(
+    "panel", "sample", "outcome", "estimate", "std.error",
+    "p.value_for_stars", "n", "adjustment_id", "construction_id"
+  )
+  missing <- setdiff(required, names(csv))
+  if (length(missing)) {
+    stop("Migration appendix regression table is missing columns: ",
+         paste(missing, collapse = ", "), ".", call. = FALSE)
+  }
+
+  make_model <- function(row) {
+    fixed_effects <- switch(
+      plain_chr(row$adjustment_id)[[1L]],
+      state_main = "State",
+      stop("Migration appendix requires the state-plus-controls specification.", call. = FALSE)
+    )
+    if (plain_chr(row$construction_id)[[1L]] != "nonzero_mean") {
+      stop("Migration appendix requires speaker-weighted Shastry distance.", call. = FALSE)
+    }
+    structure(
+      list(
+        tidy = data.frame(
+          term = "linguistic_distance",
+          estimate = num(row$estimate[[1L]]),
+          std.error = num(row$std.error[[1L]]),
+          p.value = num(row$p.value_for_stars[[1L]]),
+          stringsAsFactors = FALSE
+        ),
+        glance = data.frame(
+          outcome = plain_chr(row$outcome)[[1L]],
+          sample = plain_chr(row$sample)[[1L]],
+          fixed_effects = fixed_effects,
+          controls = "Yes",
+          nobs = as.integer(row$n[[1L]]),
+          stringsAsFactors = FALSE
+        )
+      ),
+      class = "modelsummary_list"
+    )
+  }
+
+  panel_order <- c("All migrants", "Recent work migrants")
+  panels <- lapply(panel_order, function(panel) {
+    rows <- csv[plain_chr(csv$panel) == panel, , drop = FALSE]
+    models <- lapply(seq_len(nrow(rows)), function(i) make_model(rows[i, , drop = FALSE]))
+    names(models) <- paste0("(", seq_along(models), ")")
+    models
+  })
+  names(panels) <- paste0("Panel ", LETTERS[seq_along(panels)], ": ", panel_order)
+
+  as_text <- function(x) as.character(x)
+  gof_map <- list(
+    list(raw = "outcome", clean = "Dependent variable", fmt = as_text),
+    list(raw = "sample", clean = "Sample", fmt = as_text),
+    list(raw = "fixed_effects", clean = "Fixed effects", fmt = as_text),
+    list(raw = "controls", clean = "Predetermined controls", fmt = as_text),
+    list(raw = "nobs", clean = "Observations", fmt = 0)
+  )
+
+  old_knit_to <- knitr::opts_knit$get("rmarkdown.pandoc.to")
+  old_opt <- getOption("modelsummary_format_numeric_latex")
+  old_stars_note <- getOption("modelsummary_stars_note")
+  on.exit(knitr::opts_knit$set(rmarkdown.pandoc.to = old_knit_to), add = TRUE)
+  on.exit(options(
+    modelsummary_format_numeric_latex = old_opt,
+    modelsummary_stars_note = old_stars_note
+  ), add = TRUE)
+  knitr::opts_knit$set(rmarkdown.pandoc.to = "latex")
+  options(modelsummary_format_numeric_latex = "plain", modelsummary_stars_note = FALSE)
+
+  tex <- suppress_modelsummary_latex_preamble_warning(modelsummary::modelsummary(
+    models = panels,
+    shape = "rbind",
+    coef_map = c("linguistic_distance" = "Linguistic distance from Hindi"),
+    estimate = "{estimate}{stars}",
+    statistic = "({std.error})",
+    stars = regression_star_levels(),
+    fmt = 4,
+    gof_map = gof_map,
+    title = table_caption(name),
+    output = "kableExtra",
+    longtable = TRUE,
+    escape = FALSE,
+    notes = NULL
+  ))
+  tex <- kableExtra::kable_styling(
+    tex,
+    latex_options = c("repeat_header", "striped"),
+    position = "center",
+    full_width = FALSE,
+    font_size = 9
+  )
+  tex <- tex |>
+    kableExtra::column_spec(1, width = "4.6cm") |>
+    kableExtra::column_spec(2:4, width = "3.3cm")
+  note <- public_table_note(name)
+  if (!is.null(note)) {
+    tex <- kableExtra::footnote(
+      tex,
+      general = note,
+      general_title = "",
+      threeparttable = TRUE,
+      footnote_as_chunk = TRUE,
+      escape = FALSE
+    )
+  }
+  single_space_longtable_tex(tex)
+}
+
 paper_local_development_modelsummary_table <- function(table, name) {
   need_pkg("modelsummary", "local-development regression table rendering")
   csv <- safe_df(attr(table, "csv_data", exact = TRUE))
@@ -1203,6 +1316,10 @@ save_table_tex <- function(table, path, name, public = TRUE) {
     tex <- paper_local_development_modelsummary_table(table, name)
     if (!is.null(tex)) return(write_table_tex(tex, path, name))
   }
+  if (identical(name, "appendix_migration_summary")) {
+    tex <- appendix_migration_modelsummary_table(table, name)
+    if (!is.null(tex)) return(write_table_tex(tex, path, name))
+  }
   if (name %in% c("fs_cons", "cons_iv") && !is.null(table_model) && !is_formatted_status_table(as.data.frame(table, check.names = FALSE))) {
     tex <- public_modelsummary_table(
       table_model,
@@ -1235,7 +1352,6 @@ save_table_tex <- function(table, path, name, public = TRUE) {
     "appendix_c6_mapping_composition_sensitivity", "appendix_c7_historical_balance",
     "appendix_c9_historical_first_stage", "appendix_c11_multiple_instruments",
     "appendix_c13_robustness_family_census", "appendix_c14_exclusion_sensitivity",
-    "appendix_d1_migration", "appendix_d2_migration_context",
     "appendix_d3_housing_assets", "appendix_d4_economic_census",
     "appendix_d5_labor", "appendix_d6_household_capacity",
     "appendix_d7_social_heterogeneity", "appendix_d9_residual_spatial_diagnostics",
@@ -1346,8 +1462,6 @@ save_table_tex <- function(table, path, name, public = TRUE) {
       appendix_c11_multiple_instruments = c("3.7cm", "1.3cm", "1.5cm", "1.5cm", "1.3cm", "1.8cm", "1.7cm", "1.0cm"),
       appendix_c13_robustness_family_census = c("3.5cm", "1.0cm", "1.5cm", "1.6cm", "1.5cm", "1.5cm", "1.5cm", "1.4cm"),
       appendix_c14_exclusion_sensitivity = c("1.4cm", "1.5cm", "2.4cm", "1.7cm", "1.8cm", "2.2cm", "2.3cm"),
-      appendix_d1_migration = c("3.5cm", "2.0cm", "2.0cm", "1.3cm", "1.2cm", "1.2cm", "1.2cm", "1.0cm"),
-      appendix_d2_migration_context = c("2.8cm", "5.0cm", "1.5cm", "1.3cm", "1.3cm", "1.0cm"),
       appendix_d3_housing_assets = c("3.5cm", "2.0cm", "2.0cm", "1.3cm", "1.2cm", "1.2cm", "1.2cm", "1.0cm"),
       appendix_d4_economic_census = c("3.5cm", "2.0cm", "2.0cm", "1.3cm", "1.2cm", "1.2cm", "1.2cm", "1.0cm"),
       appendix_d5_labor = c("2.7cm", "3.2cm", "1.8cm", "1.8cm", "1.1cm", "1.1cm", "1.1cm", "1.1cm", "0.9cm"),

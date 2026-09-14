@@ -103,7 +103,7 @@ appendix_c2_residual_geography_plot <- function(panel) {
     ggplot2::facet_wrap(~ measure, nrow = 1) +
     ggplot2::scale_fill_gradient2(midpoint = 0, name = "Within-state\nresidual (SD)") +
     ggplot2::coord_sf(datum = NA) +
-    ggplot2::labs(title = "Appendix C2. Identifying variation after state absorption") +
+    ggplot2::labs(title = "Identifying variation after state absorption") +
     ggplot2::theme_void(base_size = 10) +
     ggplot2::theme(
       legend.position = "bottom",
@@ -438,7 +438,7 @@ appendix_c8_historical_pretrend_plot <- function(pretrend_validation) {
     ggplot2::geom_text(ggplot2::aes(label = p_label), size = 3) +
     ggplot2::scale_fill_viridis_c(name = expression(-log[10](p)), option = "C") +
     ggplot2::labs(
-      title = "Appendix C8. Historical pretrend diagnostics",
+      title = "Historical pretrend diagnostics",
       x = NULL, y = NULL,
       caption = paste(
         "Cells report joint-test p-values on the common historical-language-support sample;",
@@ -606,7 +606,7 @@ appendix_c10_monotonicity_plot <- function(diagnostics) {
     ggplot2::geom_point(size = 2) +
     ggplot2::facet_wrap(~ panel, scales = "free_x", nrow = 1) +
     ggplot2::labs(
-      title = "Appendix C10. Monotonicity and sign heterogeneity",
+      title = "Monotonicity and sign heterogeneity",
       x = NULL,
       y = "Residualized EMI / state-specific slope",
       caption = paste(
@@ -720,7 +720,7 @@ appendix_c12_consumption_iv_dynamics_plot <- function(dynamics) {
     ggplot2::geom_point(size = 2.2, position = dodge) +
     ggplot2::facet_wrap(~ metric, nrow = 2, scales = "free_y") +
     ggplot2::labs(
-      title = "Appendix C12. Full consumption IV dynamics",
+      title = "Full consumption IV dynamics",
       x = "Outcome horizon", y = "Coefficient with 95% Wald interval", shape = NULL,
       caption = paste(
         "Reduced-form and conventional 2SLS coefficients are shown on separate scales because their units differ.",

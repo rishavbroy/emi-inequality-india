@@ -1,4 +1,4 @@
-# Final-paper Appendix D: extended local-development outcomes.
+# Final-paper migration and extended local-development summaries.
 #
 # This module only reshapes canonical diagnostic objects into publication exhibits.
 # Estimation, sample construction, multiplicity adjustment, and geography remain
@@ -14,17 +14,17 @@ appendix_d_mechanism_rows <- function(x, source_label, expected_rows = NULL) {
   )
   missing <- setdiff(required, names(reduced))
   if (length(missing)) {
-    stop("Appendix D mechanism table is missing fields: ", paste(missing, collapse = ", "), ".", call. = FALSE)
+    stop("Local-development appendix table is missing fields: ", paste(missing, collapse = ", "), ".", call. = FALSE)
   }
   if (!is.null(expected_rows) && nrow(reduced) != expected_rows) {
-    stop("Appendix D expected ", expected_rows, " registered rows for ", source_label,
+    stop("Local-development appendix expected ", expected_rows, " registered rows for ", source_label,
          " but found ", nrow(reduced), ".", call. = FALSE)
   }
   if (!nrow(reduced) || any(plain_chr(reduced$status) != "estimated") ||
       any(!is.finite(num(reduced$estimate))) || any(!is.finite(num(reduced$std.error))) ||
       any(!is.finite(num(reduced$p.value))) || any(!is.finite(num(reduced$p_holm_within_spec))) ||
       any(!is.finite(num(reduced$n)))) {
-    stop("Appendix D requires complete estimated mechanism rows for ", source_label, ".", call. = FALSE)
+    stop("Local-development appendix requires complete estimated mechanism rows for ", source_label, ".", call. = FALSE)
   }
   reduced$source <- source_label
   reduced[, c("source", required), drop = FALSE]
@@ -48,54 +48,86 @@ appendix_d_mechanism_display <- function(csv) {
   )
 }
 
-appendix_d1_migration <- function(migration) {
-  csv <- appendix_d_mechanism_rows(migration, "Census migration", 48L)
-  out <- appendix_d_mechanism_display(csv)
-  attr(out, "csv_data") <- csv
-  out
-}
-
-appendix_d2_migration_context <- function(migration) {
+appendix_migration_summary <- function(migration) {
   reduced <- appendix_d_mechanism_rows(migration, "Census migration", 48L)
-  national_ids <- c("skilled_recent_work_migration", "outside_state_recent_work_migration")
+  preferred_ids <- c(
+    "interstate_migrant_composition",
+    "work_migration_reason",
+    "education_migration_reason",
+    "outside_state_recent_work_migration",
+    "skilled_recent_work_migration"
+  )
+  labels <- c(
+    interstate_migrant_composition = "Interstate share among migrants",
+    work_migration_reason = "Work/employment share among migrants",
+    education_migration_reason = "Education share among migrants",
+    outside_state_recent_work_migration = "Outside-state share among recent work migrants",
+    skilled_recent_work_migration = "Graduate/technical-degree share among recent work migrants"
+  )
   national <- reduced[
-    plain_chr(reduced$outcome_id) %in% national_ids &
+    plain_chr(reduced$outcome_id) %in% preferred_ids &
       plain_chr(reduced$adjustment_id) == "state_main" &
       plain_chr(reduced$construction_id) == "nonzero_mean",
     , drop = FALSE
   ]
-  if (nrow(national) != length(national_ids)) {
-    stop("Appendix D2 requires the two registered national recent-work-migration comparisons.", call. = FALSE)
+  national <- national[match(preferred_ids, plain_chr(national$outcome_id)), , drop = FALSE]
+  if (nrow(national) != length(preferred_ids) || anyNA(national$outcome_id)) {
+    stop("Migration appendix requires the five registered preferred national comparisons.", call. = FALSE)
   }
+
   hindi <- safe_df(migration$hindi_belt_skilled_migration %||% data.frame())
-  needed <- c("outcome_id", "estimate", "std.error", "p.value", "n", "n_states", "status")
-  if (length(setdiff(needed, names(hindi))) || nrow(hindi) != 1L ||
-      plain_chr(hindi$status)[[1L]] != "estimated") {
-    stop("Appendix D2 requires the registered Hindi-belt skilled-migration restriction.", call. = FALSE)
+  needed <- c(
+    "outcome_id", "estimate", "std.error", "p.value", "n", "n_states",
+    "adjustment_id", "construction_id", "fixed_effect", "status"
+  )
+  missing <- setdiff(needed, names(hindi))
+  if (length(missing) || nrow(hindi) != 1L ||
+      plain_chr(hindi$status)[[1L]] != "estimated" ||
+      plain_chr(hindi$outcome_id)[[1L]] != "skilled_recent_work_migration") {
+    stop("Migration appendix requires the registered Hindi-belt skilled-migration restriction.", call. = FALSE)
   }
+
   csv <- safe_bind_rows(list(
     data.frame(
-      sample = "National", result = plain_chr(national$outcome_id),
-      estimate = num(national$estimate), std.error = num(national$std.error),
-      p.value = num(national$p.value), n = as.integer(national$n),
-      n_states = NA_integer_, stringsAsFactors = FALSE
+      panel = c(rep("All migrants", 3L), rep("Recent work migrants", 2L)),
+      sample = "All states",
+      outcome_id = plain_chr(national$outcome_id),
+      outcome = unname(labels[plain_chr(national$outcome_id)]),
+      estimate = num(national$estimate),
+      std.error = num(national$std.error),
+      p.value = num(national$p.value),
+      p.value_for_stars = num(national$p_holm_within_spec),
+      p.value_basis = "Holm-adjusted within preferred migration family",
+      n = as.integer(national$n),
+      n_states = NA_integer_,
+      adjustment_id = plain_chr(national$adjustment_id),
+      construction_id = plain_chr(national$construction_id),
+      fixed_effect = plain_chr(national$fixed_effect),
+      stringsAsFactors = FALSE
     ),
     data.frame(
-      sample = "Hindi-belt states", result = plain_chr(hindi$outcome_id),
-      estimate = num(hindi$estimate), std.error = num(hindi$std.error),
-      p.value = num(hindi$p.value), n = as.integer(hindi$n),
-      n_states = as.integer(hindi$n_states), stringsAsFactors = FALSE
+      panel = "Recent work migrants",
+      sample = "Hindi-belt states",
+      outcome_id = plain_chr(hindi$outcome_id),
+      outcome = unname(labels[plain_chr(hindi$outcome_id)]),
+      estimate = num(hindi$estimate),
+      std.error = num(hindi$std.error),
+      p.value = num(hindi$p.value),
+      p.value_for_stars = num(hindi$p.value),
+      p.value_basis = "Raw p-value for predeclared single restriction",
+      n = as.integer(hindi$n),
+      n_states = as.integer(hindi$n_states),
+      adjustment_id = plain_chr(hindi$adjustment_id),
+      construction_id = plain_chr(hindi$construction_id),
+      fixed_effect = plain_chr(hindi$fixed_effect),
+      stringsAsFactors = FALSE
     )
   ))
-  out <- data.frame(
-    Sample = csv$sample,
-    Result = gsub("_", " ", csv$result),
-    Estimate = sprintf("%+.4f", csv$estimate),
-    SE = sprintf("%.4f", csv$std.error),
-    `p-value` = ifelse(csv$p.value < 0.001, "<0.001", sprintf("%.3f", csv$p.value)),
-    N = formatC(csv$n, format = "d", big.mark = ","),
-    check.names = FALSE, stringsAsFactors = FALSE
-  )
+  if (any(!is.finite(csv$estimate)) || any(!is.finite(csv$std.error)) ||
+      any(!is.finite(csv$p.value_for_stars)) || any(!is.finite(csv$n))) {
+    stop("Migration appendix requires finite estimates, inference, and sample sizes.", call. = FALSE)
+  }
+  out <- data.frame(Term = "Linguistic distance from Hindi", stringsAsFactors = FALSE)
   attr(out, "csv_data") <- csv
   out
 }
@@ -120,7 +152,7 @@ appendix_d5_labor <- function(nss66, plfs, plfs_conservative) {
     appendix_d_mechanism_rows(plfs, "PLFS 2017-18 primary", 12L),
     appendix_d_mechanism_rows(plfs_conservative, "PLFS 2017-18 conservative lineage", 12L)
   ))
-  if (nrow(csv) != 36L) stop("Appendix D5 must reconcile to the registered 36-model labor family.", call. = FALSE)
+  if (nrow(csv) != 36L) stop("Labor appendix table must reconcile to the registered 36-model labor family.", call. = FALSE)
   out <- cbind(Survey = csv$source, appendix_d_mechanism_display(csv))
   attr(out, "csv_data") <- csv
   out
@@ -135,7 +167,7 @@ appendix_d6_household_capacity <- function(household_capacity) {
   )
   if (length(setdiff(required, names(csv))) || nrow(csv) != 8L ||
       any(plain_chr(csv$status) != "estimated")) {
-    stop("Appendix D6 requires the eight registered household-capacity trajectory models.", call. = FALSE)
+    stop("Household-capacity appendix table requires the eight registered household-capacity trajectory models.", call. = FALSE)
   }
   out <- data.frame(
     Outcome = gsub("_", " ", plain_chr(csv$outcome_id)),
@@ -161,10 +193,10 @@ appendix_d7_social_heterogeneity <- function(schooling_access, st_heterogeneity)
       any(!is.finite(num(social$estimate))) || any(!is.finite(num(social$std_error_state_clustered))) ||
       any(!is.finite(num(social$p_value_state_clustered))) || any(!is.finite(num(social$p_value_holm_family))) ||
       any(!is.finite(num(social$n_districts)))) {
-    stop("Appendix D7 requires the registered social-group distance-heterogeneity family.", call. = FALSE)
+    stop("Heterogeneity appendix table requires the registered social-group distance-heterogeneity family.", call. = FALSE)
   }
   if (length(setdiff(st_required, names(st))) || !nrow(st) || any(plain_chr(st$status) != "estimated")) {
-    stop("Appendix D7 requires the registered ST-concentration heterogeneity family.", call. = FALSE)
+    stop("Heterogeneity appendix table requires the registered ST-concentration heterogeneity family.", call. = FALSE)
   }
   social_csv <- data.frame(
     family = "Social-group gap x distance", sample = plain_chr(social$sample),
@@ -207,7 +239,7 @@ appendix_d8_raw_spatial_geography <- function(spatial) {
   )
   required <- c("estimand", "estimate", "p.value", "n", "contiguity", "weights_style", "status")
   if (length(setdiff(required, names(x)))) {
-    stop("Appendix D8 spatial diagnostics are missing required Moran fields.", call. = FALSE)
+    stop("Raw-spatial appendix inputs are missing required Moran fields.", call. = FALSE)
   }
   x <- x[match(ids, plain_chr(x$estimand)), , drop = FALSE]
   if (nrow(x) != length(ids) || any(is.na(x$estimand)) ||
@@ -216,7 +248,7 @@ appendix_d8_raw_spatial_geography <- function(spatial) {
       length(unique(as.integer(x$n))) != 1L ||
       length(unique(plain_chr(x$contiguity))) != 1L ||
       length(unique(plain_chr(x$weights_style))) != 1L) {
-    stop("Appendix D8 requires the three preferred raw Moran diagnostics on one spatial-support contract.", call. = FALSE)
+    stop("Raw-spatial appendix requires the three preferred raw Moran diagnostics on one spatial-support contract.", call. = FALSE)
   }
   data.frame(
     panel = c("A", "B", "C"),
@@ -238,7 +270,7 @@ appendix_d8_map_paths <- function(figure_files, map_names) {
   out <- vapply(wanted, function(file) {
     hits <- figure_files[basename(figure_files) == file & file.exists(figure_files)]
     if (length(hits) != 1L) {
-      stop("Appendix D8 requires exactly one rendered source map: ", file, ".", call. = FALSE)
+      stop("Raw-spatial appendix requires exactly one rendered source map: ", file, ".", call. = FALSE)
     }
     hits[[1L]]
   }, character(1))
@@ -246,7 +278,7 @@ appendix_d8_map_paths <- function(figure_files, map_names) {
 }
 
 appendix_d8_labeled_map_image <- function(path, panel, label, moran_i) {
-  need_pkg("magick", "Appendix D8 raw spatial map panel")
+  need_pkg("magick", "raw spatial map panel")
   image <- magick::image_read(path)
   image <- magick::image_background(image, "white", flatten = TRUE)
   image <- magick::image_scale(image, "800")
@@ -269,7 +301,7 @@ appendix_d8_labeled_map_image <- function(path, panel, label, moran_i) {
 save_appendix_d8_raw_spatial_geography <- function(summary, figure_files, cfg) {
   if (!identical(cfg$mode, "final")) return(character())
   if (!is.data.frame(summary) || nrow(summary) != 3L) {
-    stop("Appendix D8 requires its three-row raw spatial summary.", call. = FALSE)
+    stop("Raw-spatial appendix requires its three-row summary.", call. = FALSE)
   }
   paths <- appendix_d8_map_paths(figure_files, summary$map_name)
   images <- Map(
@@ -293,7 +325,7 @@ appendix_d9_residual_spatial_diagnostics <- function(spatial) {
   required <- c("estimand", "estimate", "p.value", "n", "contiguity", "weights_style", "status")
   if (length(setdiff(required, names(x))) || nrow(x) != length(ids) || any(is.na(x$estimand)) ||
       any(plain_chr(x$status) != "estimated") || any(!is.finite(num(x$estimate))) || any(!is.finite(num(x$p.value)))) {
-    stop("Appendix D9 requires the preferred first- and second-stage residual Moran diagnostics.", call. = FALSE)
+    stop("Residual-spatial appendix table requires the preferred first- and second-stage residual Moran diagnostics.", call. = FALSE)
   }
   labels <- c(
     consumption_iv_residual = "Consumption IV residual",
@@ -317,8 +349,7 @@ make_appendix_local_development_exhibits <- function(
     plfs_conservative_labor, household_capacity, schooling_access,
     st_heterogeneity, spatial_autocorrelation) {
   list(
-    appendix_d1_migration = appendix_d1_migration(migration),
-    appendix_d2_migration_context = appendix_d2_migration_context(migration),
+    appendix_migration_summary = appendix_migration_summary(migration),
     appendix_d3_housing_assets = appendix_d3_housing_assets(housing),
     appendix_d4_economic_census = appendix_d4_economic_census(economic_census),
     appendix_d5_labor = appendix_d5_labor(nss66_labor, plfs_labor, plfs_conservative_labor),
@@ -333,8 +364,7 @@ save_appendix_local_development_exhibits <- function(exhibits, figure_files, cfg
   written <- save_appendix_tables(
     exhibits,
     c(
-      "appendix_d1_migration", "appendix_d2_migration_context",
-      "appendix_d3_housing_assets", "appendix_d4_economic_census",
+      "appendix_migration_summary", "appendix_d3_housing_assets", "appendix_d4_economic_census",
       "appendix_d5_labor", "appendix_d6_household_capacity",
       "appendix_d7_social_heterogeneity", "appendix_d9_residual_spatial_diagnostics"
     ),

@@ -1503,6 +1503,41 @@ test_that("paper local-development table keeps a bounded signal-and-null constel
 
 
 
+test_that("migration appendix renderer uses journal regression-table conventions", {
+  skip_if_not_installed("modelsummary")
+  skip_if_not_installed("kableExtra")
+
+  table <- data.frame(Term = "Linguistic distance from Hindi", stringsAsFactors = FALSE)
+  attr(table, "csv_data") <- data.frame(
+    panel = c(rep("All migrants", 3L), rep("Recent work migrants", 3L)),
+    sample = c(rep("All states", 5L), "Hindi-belt states"),
+    outcome = c(
+      "Interstate share among migrants", "Work/employment share among migrants",
+      "Education share among migrants", "Outside-state share among recent work migrants",
+      "Graduate/technical-degree share among recent work migrants",
+      "Graduate/technical-degree share among recent work migrants"
+    ),
+    estimate = c(-0.002, 0.006, 0, 0.005, 0.013, 0.008),
+    std.error = c(0.017, 0.005, 0.001, 0.027, 0.004, 0.006),
+    p.value_for_stars = c(1, 1, 1, 1, 0.03, 0.17),
+    n = c(rep(355L, 5L), 178L),
+    adjustment_id = "state_main", construction_id = "nonzero_mean",
+    stringsAsFactors = FALSE
+  )
+  tex <- paste(as.character(
+    appendix_migration_modelsummary_table(table, "appendix_migration_summary")
+  ), collapse = "\n")
+
+  expect_match(tex, "\\begin{longtable}", fixed = TRUE)
+  expect_match(tex, "(0.0040)", fixed = TRUE)
+  expect_match(tex, "0.0130**", fixed = TRUE)
+  expect_false(grepl("0.0130***", tex, fixed = TRUE))
+  expect_match(tex, "Fixed effects", fixed = TRUE)
+  expect_match(tex, "Observations", fixed = TRUE)
+  expect_false(grepl("Raw p", tex, fixed = TRUE))
+  expect_false(grepl("Holm p", tex, fixed = TRUE))
+})
+
 test_that("paper local-development renderer uses standard regression-table inference", {
   skip_if_not_installed("modelsummary")
   skip_if_not_installed("kableExtra")
