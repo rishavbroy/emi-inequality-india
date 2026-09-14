@@ -1580,63 +1580,94 @@ test_that("paper local-development table fails closed when registered evidence d
   )
 })
 
-test_that("Appendix E selection exhibits consolidate existing evidence without new estimation", {
-  selection <- data.frame(
-    AGE = c(8, 10, 12), HH_SIZE = c(4, 5, 6),
-    ENROLLMENT_COST = c(100, 200, 300),
-    dmean_num_IS_EDU_FREE = c(.2, .3, .4),
-    dmean_num_TUTION_FEE_WAIVED = c(.1, .2, .3),
-    dmean_num_RECD_SCHOLARSHIP_STIPEND = c(.1, .1, .2),
-    dmean_num_RECD_TXT_BOOKS = c(.3, .4, .5),
-    dmean_num_RECD_STATIONERY = c(.2, .3, .4),
-    dmean_num_MID_DAY_MEAL_ETC_RECD = c(.4, .5, .6),
-    dmean_num_ENROLLMENT_COST = c(150, 180, 210),
-    SEX = c("Male", "Female", "Male"),
-    RELIGION = c("Hindu", "Muslim", "Hindu"),
-    SOCIAL_GROUP = c("Other", "SC", "ST"),
-    SECTOR = c("Rural", "Urban", "Rural"),
-    DIST_FROM_NEAREST_PRIMARY_CLASS = c("<1 km", "1-2 km", "<1 km"),
-    father_educ = c("Primary", "Secondary", "Graduate"),
+test_that("selection tables report the fitted estimation sample rather than the child roster", {
+  dat <- data.frame(
+    y = c(0, 1, 0, 1, 1),
+    x = c(0, 1, NA, 2, 3)
+  )
+  fit <- stats::glm(y ~ x, data = dat, family = stats::binomial())
+
+  expect_equal(selection_model_observations(fit, fallback = nrow(dat)), stats::nobs(fit))
+  expect_equal(selection_model_observations(NULL, fallback = nrow(dat)), nrow(dat))
+})
+
+test_that("Education Selection appendix filters presentation without changing the fitted AME evidence", {
+  lookup <- ame_label_lookup()
+  idx <- c(
+    match("AGE", lookup$term),
+    which(lookup$term == "RELIGION" & startsWith(lookup$contrast, "Muslim"))[[1]],
+    which(lookup$term == "father_educ" & startsWith(lookup$contrast, "Primary"))[[1]],
+    match("dmean_num_IS_EDU_FREE", lookup$term)
+  )
+  expect_false(anyNA(idx))
+
+  ame <- data.frame(
+    term = lookup$term[idx],
+    contrast = lookup$contrast[idx],
+    Term = lookup$Term[idx],
+    estimate = c(-.028, -.126, .142, -.089),
+    std.error = c(.001, .010, .012, .011),
+    p.value = c(.001, .001, .001, .001),
     stringsAsFactors = FALSE
   )
+  original <- ame
+  fit <- stats::glm(c(0, 1, 1, 0, 1) ~ c(1, 2, 3, 4, 5), family = stats::binomial())
+
+  table <- appendix_selection_ame_table(ame, fit)
+  csv <- attr(table, "csv_data", exact = TRUE)
+
+  expect_equal(ame, original)
+  expect_equal(attr(table, "marginaleffects_n", exact = TRUE), stats::nobs(fit))
+  expect_true(any(grepl("Muslim", table$Term, fixed = TRUE)))
+  expect_true(any(grepl("Primary", table$Term, fixed = TRUE)))
+  expect_false(any(grepl("free", table$Term, ignore.case = TRUE)))
+  expect_false(any(grepl("free", csv$Term, ignore.case = TRUE)))
+  expect_false(any(grepl("free", appendix_selection_display_terms(), ignore.case = TRUE)))
+})
+
+test_that("Education Selection missingness summary retains registered selection risks", {
   missingness <- structure(
     list(
       missing_counts = data.frame(
-        missing_var = c("AGE", "father_educ", "Total probit-model with NA"),
-        n_missing = c(0L, 1L, 1L),
-        pct_missing = c(0, 1 / 3, 1 / 3),
+        missing_var = c(
+          "DIST_FROM_NEAREST_PRIMARY_CLASS",
+          "dmean_num_ENROLLMENT_COST",
+          "father_educ",
+          "Total probit-model with NA",
+          "Total probit-model complete"
+        ),
+        n_missing = c(312L, 7109L, 5203L, 12283L, 0L),
+        pct_missing = c(.002453, .055897, .040910, .096579, 0),
         stringsAsFactors = FALSE
       ),
       logit_summary = data.frame(
-        missing_var = "father_educ", n_sig = 2L, pseudoR2 = 0.25,
+        missing_var = c(
+          "DIST_FROM_NEAREST_PRIMARY_CLASS",
+          "dmean_num_ENROLLMENT_COST",
+          "father_educ"
+        ),
+        pseudoR2 = c(.2461, .3097, .0230),
         stringsAsFactors = FALSE
       )
     ),
     class = c("emi_missingness_diagnostics", "list")
   )
 
-  exhibits <- make_appendix_selection_exhibits(selection, missingness)
-  expect_setequal(
-    names(exhibits),
-    c("appendix_e1_selection_sample", "appendix_e4_missingness", "missingness_plot_data")
-  )
-  e1 <- exhibits$appendix_e1_selection_sample
-  expect_true(nrow(e1) >= 6L)
-  expect_true(all(c("Variable", "Type", "N", "Summary") %in% names(e1)))
-  expect_false(any(c("status", "reason") %in% names(attr(e1, "csv_data"))))
+  table <- appendix_selection_missingness_table(missingness)
+  csv <- attr(table, "csv_data", exact = TRUE)
 
-  e4 <- exhibits$appendix_e4_missingness
-  e4_csv <- attr(e4, "csv_data")
-  expect_equal(nrow(e4_csv), 2L)
-  expect_false(any(grepl("^Total probit-model", e4_csv$variable)))
-  expect_equal(e4_csv$pseudo_r_squared[e4_csv$variable == "father_educ"], 0.25)
-  expect_true(is.na(e4_csv$pseudo_r_squared[e4_csv$variable == "AGE"]))
-})
+  expect_equal(nrow(csv), 4L)
+  expect_equal(csv$variable_id[[4]], "Total probit-model with NA")
+  expect_equal(csv$n_missing[[4]], 12283L)
+  expect_equal(csv$pseudo_r_squared[1:3], c(.2461, .3097, .0230), tolerance = 1e-10)
+  expect_true(is.na(csv$pseudo_r_squared[[4]]))
 
-test_that("Appendix E missingness exhibit requires canonical diagnostics", {
+  missingness$missing_counts <- missingness$missing_counts[
+    missingness$missing_counts$missing_var != "father_educ", , drop = FALSE
+  ]
   expect_error(
-    appendix_missingness_diagnostics_table(data.frame()),
-    "requires canonical missingness diagnostics",
+    appendix_selection_missingness_table(missingness),
+    "requires all registered model-missingness rows",
     fixed = TRUE
   )
 })

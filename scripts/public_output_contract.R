@@ -45,10 +45,8 @@ paper_new_appendix_render_inputs <- function() {
     "outputs/tables/appendix/appendix_d7_social_heterogeneity.tex",
     "outputs/figures/appendix/appendix_d8_raw_spatial_geography.pdf",
     "outputs/tables/appendix/appendix_d9_residual_spatial_diagnostics.tex",
-    "outputs/tables/appendix/appendix_e1_selection_sample.tex",
-    "outputs/tables/main/probit_mfx.csv",
-    "outputs/tables/appendix/appendix_e4_missingness.tex",
-    "outputs/figures/appendix/appendix_e5_missingness_predictability.png"
+    "outputs/tables/appendix/appendix_selection_ame.tex",
+    "outputs/tables/appendix/appendix_selection_missingness.tex"
   )
 }
 
@@ -214,12 +212,11 @@ required_final_artifacts <- function() {
     "outputs/figures/appendix/appendix_d8_raw_spatial_geography.csv",
     "outputs/tables/appendix/appendix_d9_residual_spatial_diagnostics.csv",
     "outputs/tables/appendix/appendix_d9_residual_spatial_diagnostics.tex",
-    "outputs/tables/appendix/appendix_e1_selection_sample.csv",
-    "outputs/tables/appendix/appendix_e1_selection_sample.tex",
+    "outputs/tables/appendix/appendix_selection_ame.csv",
+    "outputs/tables/appendix/appendix_selection_ame.tex",
     "outputs/tables/main/probit_mfx.tex",
-    "outputs/tables/appendix/appendix_e4_missingness.csv",
-    "outputs/tables/appendix/appendix_e4_missingness.tex",
-    "outputs/figures/appendix/appendix_e5_missingness_predictability.png",
+    "outputs/tables/appendix/appendix_selection_missingness.csv",
+    "outputs/tables/appendix/appendix_selection_missingness.tex",
     "outputs/figures/main/paper_language_schooling_maps.pdf",
     "outputs/figures/main/paper_unequal_schooling_access.pdf",
     "outputs/figures/main/paper_first_stage_absorption.pdf",

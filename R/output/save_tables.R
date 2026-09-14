@@ -320,14 +320,12 @@ ame_modelsummary_table <- function(table, name) {
   knitr::opts_knit$set(rmarkdown.pandoc.to = "latex")
   options(modelsummary_format_numeric_latex = "plain", modelsummary_stars_note = FALSE)
 
+  keep_terms <- attr(table, "ame_keep_terms", exact = TRUE)
   args <- list(
     # Pass the marginaleffects object itself to modelsummary, following the
-    # native marginaleffects -> modelsummary integration.  We keep the same
-    # kableExtra styling path as the IV regression tables.  Observations are
-    # supplied through modelsummary's GOF extension hook instead of
-    # manually inserting a rendered table row.
+    # native marginaleffects -> modelsummary integration. Observations are
+    # supplied through modelsummary's GOF extension hook.
     models = list(mfx),
-    coef_rename = ame_modelsummary_label,
     gof_map = ame_gof_map(),
     gof_function = ame_gof_function(table),
     stars = regression_star_levels(),
@@ -338,6 +336,12 @@ ame_modelsummary_table <- function(table, name) {
     escape = FALSE,
     notes = NULL
   )
+  if (length(keep_terms)) {
+    keep_terms <- ame_modelsummary_label(plain_chr(keep_terms))
+    args$coef_map <- stats::setNames(keep_terms, keep_terms)
+  } else {
+    args$coef_rename <- ame_modelsummary_label
+  }
   tex <- suppress_modelsummary_latex_preamble_warning(do.call(modelsummary::modelsummary, args))
   tex <- kableExtra::kable_styling(
     tex,
@@ -1331,7 +1335,8 @@ save_table_tex <- function(table, path, name, public = TRUE) {
     )
     return(write_table_tex(tex, path, name))
   }
-  if (identical(name, "probit_mfx") && !is_formatted_status_table(as.data.frame(table, check.names = FALSE))) {
+  if (name %in% c("probit_mfx", "appendix_selection_ame") &&
+      !is_formatted_status_table(as.data.frame(table, check.names = FALSE))) {
     tex <- ame_modelsummary_table(table, name)
     if (!is.null(tex)) return(write_table_tex(tex, path, name))
   }
@@ -1357,7 +1362,7 @@ save_table_tex <- function(table, path, name, public = TRUE) {
     "appendix_d3_housing_assets", "appendix_d4_economic_census",
     "appendix_d5_labor", "appendix_d6_household_capacity",
     "appendix_d7_social_heterogeneity", "appendix_d9_residual_spatial_diagnostics",
-    "appendix_e1_selection_sample", "appendix_e4_missingness"
+    "appendix_selection_missingness"
   )
   appendix_long_table <- identical(name, "appendix_c1_full_absorption_ladder")
   if (!regression_table) {
@@ -1470,8 +1475,7 @@ save_table_tex <- function(table, path, name, public = TRUE) {
       appendix_d6_household_capacity = c("2.5cm", "2.3cm", "1.9cm", "1.2cm", "1.1cm", "1.1cm", "1.1cm", "0.9cm"),
       appendix_d7_social_heterogeneity = c("2.4cm", "1.5cm", "2.6cm", "2.2cm", "1.8cm", "1.1cm", "1.0cm", "1.1cm", "0.9cm"),
       appendix_d9_residual_spatial_diagnostics = c("4.2cm", "1.4cm", "1.4cm", "1.0cm", "1.7cm", "1.7cm"),
-      appendix_e1_selection_sample = c("3.8cm", "1.7cm", "1.2cm", "8.0cm"),
-      appendix_e4_missingness = c("4.5cm", "1.6cm", "1.6cm", "1.7cm", "2.6cm")
+      appendix_selection_missingness = c("5.4cm", "1.8cm", "1.8cm", "2.5cm")
     )
     tex <- apply_table_column_widths(tex, widths)
   }

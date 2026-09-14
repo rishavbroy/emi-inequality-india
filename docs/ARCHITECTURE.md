@@ -332,20 +332,19 @@ This boundary follows the publication-dependency rule rather than the age of a m
 
 Final-paper appendix exhibits follow the same ownership rule as main-text exhibits: an
 analysis required by the published appendix is a core analytical dependency, while the
-large forensic persistence bundle may remain extended. Appendix E therefore computes the
-selection missingness diagnostic once in the core measurement graph and reuses the
-canonical `probit_mfx.csv` estimates for the full AME exhibit. The shared public-QMD
-renderer converts those canonical AME rows to Markdown, so Pandoc owns the final table
-alignment instead of injecting the legacy modelsummary longtable into a second Quarto
-document. For appendix tables that remain LaTeX artifacts, the shared table writer escapes
-both body cells and column headers before handing text to `kableExtra` with raw-LaTeX
-styling enabled; publication labels may therefore contain `%`, `&`, `_`, and other TeX
-metacharacters without corrupting the tabular alignment. The legacy TeX artifact remains available to the legacy paper, but it is not an
-Appendix E render dependency. Appendix E writes only the additional compact sample/missingness summaries
-plus missingness-predictability figure under
-`outputs/tables/appendix/` and `outputs/figures/appendix/`. Extended mode persists the full
-missingness matrices, regional screens, and case-study diagnostics from that same object;
-it does not rerun the analysis.
+large forensic persistence bundle may remain extended. The education-selection appendix
+therefore reuses the estimated survey-weighted probit, its `marginaleffects` results, and
+the single core missingness diagnostic. Its AME table suppresses district-level
+schooling-context coefficients from the reader-facing display without changing the fitted
+model; the complete AME output remains in `outputs/tables/main/probit_mfx.csv`. The appendix
+adds only a compact model-missingness summary. Extended mode persists the full missingness
+matrices, regional screens, benefit-variable checks, and case-study diagnostics from that
+same diagnostic result; it does not rerun the analysis.
+
+For appendix tables that remain LaTeX outputs, the shared table writer escapes both body
+cells and column headers before handing text to `kableExtra` with raw-LaTeX styling
+enabled. The legacy probit table remains available to `paper.qmd`; `paper-new.qmd` uses the
+filtered appendix rendering while sharing the same estimated AMEs.
 
 Appendix A is prose-led. `appendix_data_construction_exhibits` now generates only the
 compact district-lineage source summary. DISE, linguistic measures, and consumption

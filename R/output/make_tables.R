@@ -139,6 +139,13 @@ format_gof_number <- function(value, digits = 3L, integer = FALSE) {
   if (isTRUE(integer)) sprintf("%.0f", value) else sprintf(paste0("%.", digits, "f"), value)
 }
 
+selection_model_observations <- function(selection_model, fallback = NA_integer_) {
+  n <- first_finite_scalar(tryCatch(stats::nobs(selection_model), error = function(e) NA_real_))
+  if (is.finite(n)) return(as.integer(round(n)))
+  fallback <- first_finite_scalar(fallback)
+  if (is.finite(fallback)) as.integer(round(fallback)) else NA_integer_
+}
+
 model_gof_frame <- function(model) {
   if (is.null(model) || is_model_status_payload(model)) return(data.frame())
   sm <- tryCatch(summary(model), error = function(e) NULL)
@@ -396,7 +403,11 @@ make_tables <- function(
     selection_n = data.frame(n = nrow(as.data.frame(selection_data))),
     sum_tbl_probit_quant = make_selection_summary_numeric_table(selection_data),
     sum_tbl_probit_cat = make_selection_summary_categorical_table(selection_data),
-    probit_mfx = make_probit_ame_table(ame_results, nrow(as.data.frame(selection_data)), selection_model),
+    probit_mfx = make_probit_ame_table(
+      ame_results,
+      selection_model_observations(selection_model, nrow(as.data.frame(selection_data))),
+      selection_model
+    ),
     sum_tbl_iv = make_iv_summary_table(district_panel),
     paper_core_summary = make_paper_core_summary_table(
       district_panel, consumption_district_welfare
@@ -636,8 +647,8 @@ make_probit_ame_table <- function(ame_results, n = NA_integer_, selection_model 
   )
   if (!is.null(native_ame)) {
     attr(table, "marginaleffects_object") <- native_ame
-    attr(table, "marginaleffects_n") <- n
   }
+  attr(table, "marginaleffects_n") <- n
   if (!is.null(selection_model)) {
     attr(table, "selection_model") <- selection_model
   }

@@ -165,7 +165,7 @@ core_public_target_definitions <- function() {
     tar_target(
       appendix_selection_exhibits,
       make_appendix_selection_exhibits(
-        selection_data, selection_missingness_diagnostics
+        ame_results, selection_model, selection_missingness_diagnostics
       )
     ),
     tar_target(

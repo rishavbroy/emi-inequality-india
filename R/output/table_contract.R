@@ -95,8 +95,14 @@ public_table_caption_text <- function(name) {
     appendix_d6_household_capacity = "Household-Capacity Trajectories",
     appendix_d7_social_heterogeneity = "Social-Group and ST-Concentration Heterogeneity",
     appendix_d9_residual_spatial_diagnostics = "Residual Spatial Diagnostics",
-    appendix_e1_selection_sample = "Enrollment Selection Sample and Covariates",
-    appendix_e4_missingness = "Missingness in the Enrollment Selection Sample",
+    appendix_selection_ame = paste(
+      "Correlates of School Enrollment: Average Marginal Effects from a Survey-Weighted Probit.",
+      "Source: NSS 64th Round, 2007-08, Participation and Expenditure in Education."
+    ),
+    appendix_selection_missingness = paste(
+      "Missingness in the Child-Enrollment Probit.",
+      "Source: NSS 64th Round, 2007-08, Participation and Expenditure in Education."
+    ),
     fs_cons = "First-Stage Regression: EMI Exposure on Linguistic Distance",
     cons_iv = "Second-Stage Regression: Real Log Consumption Growth on EMI Exposure (Fitted)",
     ame_results = "Average Marginal Effects Results",
@@ -231,15 +237,16 @@ public_table_note <- function(name) {
     appendix_d6_household_capacity = "The eight bounded 2001-11 household-capacity models compare linguistic opportunity with observed all-child EMI across four capacity outcomes. State-clustered inference and predictor-family Holm adjustment are preserved from the canonical diagnostic object; the schooling rows are descriptive associations.",
     appendix_d7_social_heterogeneity = "The table combines the registered social-group-gap-by-distance family with the predeclared ST-concentration heterogeneity family. Holm-adjusted p-values are preserved; null interactions are retained because this appendix is intended to document bounded negative as well as positive heterogeneity evidence.",
     appendix_d9_residual_spatial_diagnostics = "Moran's I uses the preferred rook-contiguity, row-standardized Census-2001 district weights on the active IV sample. The first- and second-stage residual diagnostics test whether strong raw spatial concentration remains after the preferred specification; they do not constitute a spatial-IV estimator.",
-    appendix_e1_selection_sample = paste(
-      "NSS 64th-round child-level enrollment sample used by the descriptive selection model.",
-      "Numeric rows report mean, standard deviation, and range; categorical rows report the modal category and observed levels.",
-      "This exhibit establishes sample composition only and is not a causal adjustment set."
+    appendix_selection_ame = paste(
+      "Entries are average changes in predicted enrollment probability.",
+      "Continuous covariates are reported as average slopes; categorical covariates are average discrete comparisons against the stated reference category, evaluated over the observed covariate distribution.",
+      "The probit uses NSS survey weights and design-based standard errors clustered at the primary sampling unit.",
+      "District-level schooling-context controls constructed from enrolled children remain in the fitted model but are omitted from the table and are not interpreted causally."
     ),
-    appendix_e4_missingness = paste(
-      "Missing percentages are computed on the selection-analysis data before model-specific complete-case restriction.",
-      "Pseudo R2 and significant-predictor counts come from the registered missingness-logit screen when a variable is screened; blank cells denote variables outside that screen.",
-      "These diagnostics describe structured missingness and do not impute missing values."
+    appendix_selection_missingness = paste(
+      "The final row reports children missing at least one covariate required by the probit.",
+      "Pseudo-R2 values come from the registered missingness-logit screen; the blank aggregate cell has no corresponding missingness regression.",
+      "No missing-value imputation is used."
     ),
     paper_identification_boundary = paste(
       "Panel A compares excluded-instrument F statistics on one common district support for the unadjusted and state-fixed-effects plus predetermined-controls specifications; partial R-squared refers to the within-state specification.",

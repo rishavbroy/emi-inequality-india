@@ -25,6 +25,11 @@ rm -f \
   "${root%/}/outputs/tables/appendix/appendix_d1_migration.tex" \
   "${root%/}/outputs/tables/appendix/appendix_d2_migration_context.csv" \
   "${root%/}/outputs/tables/appendix/appendix_d2_migration_context.tex" \
+  "${root%/}/outputs/tables/appendix/appendix_e1_selection_sample.csv" \
+  "${root%/}/outputs/tables/appendix/appendix_e1_selection_sample.tex" \
+  "${root%/}/outputs/tables/appendix/appendix_e4_missingness.csv" \
+  "${root%/}/outputs/tables/appendix/appendix_e4_missingness.tex" \
+  "${root%/}/outputs/figures/appendix/appendix_e5_missingness_predictability.png" \
   2>/dev/null || true
 
 rm -rf \

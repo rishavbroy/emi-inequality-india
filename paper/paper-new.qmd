@@ -658,32 +658,45 @@ render_public_table("../outputs/tables/appendix/appendix_d7_social_heterogeneity
 render_public_table("../outputs/tables/appendix/appendix_d9_residual_spatial_diagnostics.tex", "appendix_d9_residual_spatial_diagnostics")
 ```
 
-# Selection into Education {#sec-app-selection}
+# Education Selection {#sec-app-selection}
 
-The household-level enrollment model is retained as descriptive evidence that educational participation is socially structured. It is not used as a control function, Heckman correction, propensity-score design, or source of policy instruments in the district-level causal analysis.
+The district comparisons in the main text show that schooling access differs sharply by social group even within the same local market. I retain the original child-level enrollment model here as a complementary description of *who is enrolled at all*. The model does not identify a causal effect of any household characteristic or schooling program, and I do not use it as a control function or selection correction in the district analysis.
 
-```{r}
-#| label: tbl-app-e1
-#| echo: false
-#| results: asis
-render_public_table("../outputs/tables/appendix/appendix_e1_selection_sample.tex", "appendix_e1_selection_sample")
-```
+## Child-Level Enrollment Model
 
-```{r}
-#| label: tbl-probit-mfx
-#| echo: false
-#| results: asis
-render_public_table("../outputs/tables/main/probit_mfx.csv", "probit_mfx")
-```
+I use the NSS 64th Round *Participation and Expenditure in Education* survey, restricting the child roster to ages 5--19 [@nationalsamplesurveyoffice2008]. The outcome equals one when the child appears in the survey's enrolled-child education record and zero otherwise. The fitted probit includes age, sex, household size, religion, social group, rural or urban residence, distance to the nearest primary class, and the education of the child's father or the registered male household proxy. It also includes district averages of selected schooling-cost and benefit variables among enrolled children. Those district averages are useful adjustment variables for reproducing the original model, but they are partly determined by school provision and the composition of enrolled children. I therefore keep them in the fitted specification while omitting them from the reader-facing coefficient table.
+
+The final specification uses the NSS survey design: household weights, first-stage sampling units corresponding to sampled villages or urban blocks, and the survey's strata and substrata. Because a probit coefficient is expressed on a latent index, I report quantities on the probability scale. For continuous variables, the table reports the average slope of the predicted enrollment probability. For categorical variables, it reports the average discrete change in predicted enrollment probability when each observed child is assigned the comparison category rather than the stated reference category, with the remaining covariates left at their observed values. These are average marginal quantities over the estimation sample rather than effects evaluated at a synthetic "average child" [@hansenEconometrics2022; @arel-bundockHowInterpretStatistical2024].
 
 ```{r}
-#| label: tbl-app-e4
+#| label: tbl-appendix-selection-ame
 #| echo: false
 #| results: asis
-render_public_table("../outputs/tables/appendix/appendix_e4_missingness.tex", "appendix_e4_missingness")
+render_public_table("../outputs/tables/appendix/appendix_selection_ame.tex", "appendix_selection_ame")
 ```
 
-![Predictability of missingness in the enrollment-selection covariates.](../outputs/figures/appendix/appendix_e5_missingness_predictability.png){#fig-app-e5 fig-pos="H" width="90%"}
+The social-identity results reinforce the main-text evidence that access to education is not evenly distributed. Relative to Hindu children with the same modeled covariates, Muslim children have an average predicted enrollment probability about 12.6 percentage points lower; the corresponding Christian comparison is about 4.3 points lower. The Muslim difference is consistent with evidence of persistent educational disadvantage among Indian Muslims [@borooah2021a]. Relative to children in the residual "Other" social-group category, the predicted enrollment probability is about 10.2 points lower for Scheduled Tribe children, 7.5 points lower for Scheduled Caste children, and 2.9 points lower for Other Backward Class children. I interpret these as conditional associations, not as effects of religion or caste. That caution is especially important in a setting where social institutions and caste networks can alter schooling choices and the occupational opportunities attached to them [@munshi2006a].
+
+Parental education displays the largest systematic gradient. Relative to an illiterate father or male household proxy, the average comparison rises from roughly 9.7 percentage points for a literate adult with no formal schooling to about 14.2 points for primary education, 21.2 points for secondary education, and 24.5 points for postsecondary education. Father's education can proxy for several household characteristics at once, including permanent income, information about schooling and labor markets, and preferences or expectations transmitted across generations. The model cannot separate those channels. What it establishes is that enrollment is strongly stratified by intergenerational human capital even after conditioning on the other observed covariates.
+
+Several other estimates are useful mainly as descriptive boundaries. Enrollment probability declines by about 2.8 percentage points per year of age across the 5--19 range. Girls have a roughly 4.4-point higher predicted probability than boys conditional on the other modeled characteristics; I do not attribute that difference to any particular program, although Sarva Shiksha Abhiyan and girls-focused schooling initiatives were already operating before the survey [@pressinformationbureauInitiativesHumanResource2008]. Each additional household member is associated with a small decline in predicted enrollment probability. That sign is consistent with the resource-dilution logic of quantity--quality models, but Indian evidence on whether family size causally reduces child investment is mixed [@beckerEconomicAnalysisFertility1969; @kumarTestingChildrenQuantityQuality2011; @onurBirthOrderSibling2021].
+
+School access is also unevenly related to enrollment. Children whose nearest primary class is reported one to two kilometers away have a predicted enrollment probability about 7.7 percentage points lower than children with a primary class within one kilometer. The more distant categories are estimated much less precisely and do not form a monotone distance gradient. I therefore treat the one-to-two-kilometer comparison as evidence that local access conditions can matter, not as an estimate of a stable distance-response function.
+
+The original model also includes district averages of free schooling, fee waivers, scholarships, textbooks, stationery, mid-day meals, and enrollment cost. I do not display or interpret those coefficients here. These variables are measured among enrolled children and are jointly determined by program targeting, school type, local provision, and household selection. In particular, the negative coefficient on the district share receiving free education cannot establish that free schooling reduces enrollment. Retaining those variables as controls preserves the original specification without turning selected program receipt into a policy effect.
+
+## Missingness and Interpretation
+
+The child roster contains 127,181 observations, but the probit is estimated on complete cases. Missingness is concentrated in three required covariates: father's education, district-average enrollment cost, and distance to the nearest primary class. The registered missingness checks show that approximately 9.7 percent of children are missing at least one required model covariate. Missingness is also predictable from observed characteristics, especially for district-average enrollment cost and school distance, so the estimation sample should not be treated as a random subsample of all children.
+
+```{r}
+#| label: tbl-appendix-selection-missingness
+#| echo: false
+#| results: asis
+render_public_table("../outputs/tables/appendix/appendix_selection_missingness.tex", "appendix_selection_missingness")
+```
+
+This limitation is another reason I use the model only as corroborating descriptive evidence. Its central message agrees with the within-district schooling-access analysis in the main text: educational participation is strongly associated with social identity and family background. The district decomposition is more directly suited to the paper's question about access to English-oriented schooling; the probit shows that unequal selection begins one step earlier, at entry into schooling itself.
 
 \newpage
 
