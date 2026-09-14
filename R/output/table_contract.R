@@ -47,7 +47,10 @@ public_table_caption_text <- function(name) {
     probit_mfx = "Average Marginal Effects and Counterfactual Comparisons for Enrollment Probit",
     sum_tbl_iv = "Summary Statistics for 2SLS Model",
     paper_core_summary = "Core Variables and Summary Statistics. Sources: NSS 64th Round; Census of India 2001; NSS 61st Round; HCES 2022-23 and 2023-24.",
-    paper_schooling_market_geography = "How the Schooling Market Is Geographically Organized",
+    paper_schooling_market_geography = paste(
+      "Geographic Organization of English-Learning Opportunities.",
+      "Sources: NSS 64th Round, 2007-08; DISE 2007-08; Census of India 2001."
+    ),
     paper_language_behavior = paste(
       "Linguistic Distance and Language-Learning Behavior.",
       "Source: Census of India 2001 bilingualism and trilingualism tables."
@@ -117,10 +120,11 @@ public_table_note <- function(name) {
       "Sources: NSS 64th Round; Census of India 2001; NSS 61st Round; HCES 2022-23 and 2023-24. Construction details are documented in the data appendix."
     ),
     paper_schooling_market_geography = paste(
-      "Panel A reports standardized linguistic-distance associations under the canonical raw, region-plus-controls, and state-plus-controls specifications.",
-      "Panel B reports R-squared from regressions of each district measure on state indicators alone.",
-      "Panel C reports raw and state-residual Pearson correlations between DISE 2007-08 English-medium enrollment shares and the corresponding NSS measures.",
-      "Each Panel-A outcome uses one fixed complete-case sample across specifications; DISE is independent administrative validation rather than a replacement treatment definition."
+      "Panel A reports standardized linguistic-distance coefficients in the registered unadjusted, region-fixed-effect, and state-fixed-effect specifications with predetermined controls where indicated.",
+      "Panel B reports R-squared from regressions of each district measure on state indicators alone; these statistics describe where variation lies and do not identify effects of state institutions.",
+      "Panel C reports raw and state-residual Pearson correlations between DISE 2007-08 English-medium enrollment shares and corresponding NSS measures.",
+      "Each Panel-A outcome uses one fixed complete-case sample across specifications. DISE provides independent school-reported validation rather than a replacement treatment definition.",
+      "Sources: NSS 64th Round, 2007-08; DISE 2007-08; Census of India 2001."
     ),
     paper_language_behavior = paste(
       "Each column is a weighted state-by-language regression. Standard errors in parentheses use HC1 heteroskedasticity-robust inference.",

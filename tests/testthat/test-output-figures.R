@@ -591,25 +591,24 @@ schooling_access_figure_fixture <- function() {
 }
 
 
-test_that("paper schooling-access figure uses the bounded Response-9 comparison", {
+test_that("paper schooling-access figure keeps bounded overall and sector comparisons", {
   out <- paper_schooling_access_plot_data(schooling_access_figure_fixture())
 
   expect_equal(nrow(out), 24L)
-  expect_equal(sum(out$panel == "A. Overall within-district gap"), 12L)
-  expect_equal(sum(out$panel == "B. Rural and urban gaps"), 12L)
+  expect_equal(sum(out$stratum == "All children"), 12L)
+  expect_equal(sum(out$stratum %in% c("Rural", "Urban")), 12L)
   expect_setequal(as.character(unique(out$group)), c("OBC", "SC", "ST"))
+  expect_equal(nlevels(out$panel), 2L)
   expect_setequal(
-    as.character(unique(out$outcome_label[out$panel == "A. Overall within-district gap"])),
+    as.character(unique(out$outcome_label[out$stratum == "All children"])),
     c("Enrollment", "EMI among enrolled", "Private enrollment", "Private EMI exposure")
   )
+  sector_rows <- out$stratum %in% c("Rural", "Urban")
   expect_setequal(
-    as.character(unique(out$outcome_label[out$panel == "B. Rural and urban gaps"])),
+    as.character(unique(out$outcome_label[sector_rows])),
     c("EMI among enrolled", "Private EMI exposure")
   )
-  expect_setequal(
-    as.character(unique(out$stratum[out$panel == "B. Rural and urban gaps"])),
-    c("Rural", "Urban")
-  )
+  expect_setequal(as.character(unique(out$stratum[sector_rows])), c("Rural", "Urban"))
 })
 
 

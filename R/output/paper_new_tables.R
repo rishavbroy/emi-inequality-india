@@ -129,8 +129,8 @@ paper_schooling_market_geography_csv_data <- function(
 
 paper_schooling_market_group <- function(label) {
   data.frame(
-    Measure = paste0(label, ":"), Statistic = "", Raw = "",
-    `Region + controls` = "", `State / residual` = "",
+    Measure = paste0(label, ":"), Statistic = "", Unadjusted = "",
+    `Region FE + controls` = "", `State FE / residual` = "",
     check.names = FALSE, stringsAsFactors = FALSE
   )
 }
@@ -152,26 +152,26 @@ make_paper_schooling_market_geography_table <- function(
   row <- function(measure, statistic, raw = NA_real_, region = NA_real_, state = NA_real_) {
     data.frame(
       Measure = measure, Statistic = statistic,
-      Raw = paper_schooling_market_value(raw),
-      `Region + controls` = paper_schooling_market_value(region),
-      `State / residual` = paper_schooling_market_value(state),
+      Unadjusted = paper_schooling_market_value(raw),
+      `Region FE + controls` = paper_schooling_market_value(region),
+      `State FE / residual` = paper_schooling_market_value(state),
       check.names = FALSE, stringsAsFactors = FALSE
     )
   }
   out <- safe_bind_rows(list(
-    paper_schooling_market_group("Panel A. Association with linguistic distance"),
+    paper_schooling_market_group("Panel A. Linguistic distance and schooling"),
     safe_bind_rows(lapply(seq_len(nrow(assoc)), function(i) row(
-      assoc$measure[[i]], "Standardized association", assoc$raw[[i]],
+      assoc$measure[[i]], "Standardized coefficient", assoc$raw[[i]],
       assoc$region_controls[[i]], assoc$state_controls_or_residual[[i]]
     ))),
-    paper_schooling_market_group("Panel B. State organization"),
+    paper_schooling_market_group("Panel B. Variation associated with state membership"),
     safe_bind_rows(lapply(seq_len(nrow(states)), function(i) row(
-      states$measure[[i]], "Variance explained by states",
+      states$measure[[i]], "R-squared from state indicators",
       state = states$state_controls_or_residual[[i]]
     ))),
-    paper_schooling_market_group("Panel C. Independent administrative validation"),
+    paper_schooling_market_group("Panel C. Agreement between NSS and DISE"),
     safe_bind_rows(lapply(seq_len(nrow(validation)), function(i) row(
-      validation$measure[[i]], "DISE-NSS Pearson correlation",
+      validation$measure[[i]], "Pearson correlation",
       raw = validation$raw[[i]], state = validation$state_controls_or_residual[[i]]
     )))
   ))

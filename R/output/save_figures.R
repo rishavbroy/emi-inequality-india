@@ -966,7 +966,7 @@ paper_schooling_access_plot_data <- function(diagnostic) {
       main$outcome %in% registry$outcome[registry$panel_a],
     , drop = FALSE
   ]
-  main$panel <- "A. Overall within-district gap"
+  main$panel <- "A. Overall"
   main$stratum <- "All children"
 
   cross <- safe_df(diagnostic$access_crosscuts %||% data.frame())
@@ -980,7 +980,7 @@ paper_schooling_access_plot_data <- function(diagnostic) {
       cross$outcome %in% registry$outcome[registry$panel_b],
     , drop = FALSE
   ]
-  cross$panel <- "B. Rural and urban gaps"
+  cross$panel <- "B. Rural versus urban"
 
   keep <- c("social_group", "outcome", "mean_district_gap_percentage_points", "panel", "stratum")
   out <- safe_bind_rows(list(main[keep], cross[keep]))
@@ -992,7 +992,7 @@ paper_schooling_access_plot_data <- function(diagnostic) {
   out$group <- factor(out$group, levels = c("OBC", "SC", "ST"))
   out$panel <- factor(
     out$panel,
-    levels = c("A. Overall within-district gap", "B. Rural and urban gaps")
+    levels = c("A. Overall", "B. Rural versus urban")
   )
   out$stratum <- factor(out$stratum, levels = c("All children", "Rural", "Urban"))
   out$outcome_label <- factor(
@@ -1015,16 +1015,9 @@ save_schooling_access_figure <- function(spec, path_base, formats, diagnostic) {
     ggplot2::geom_point(size = 2.5, position = ggplot2::position_dodge(width = 0.45)) +
     ggplot2::facet_grid(panel ~ group, scales = "free_y", space = "free_y") +
     ggplot2::labs(
-      title = spec$title,
-      subtitle = spec$subtitle,
-      x = "Mean gap relative to Other (percentage points)",
+      x = "Mean difference relative to Other (percentage points)",
       y = NULL,
-      shape = "Sample",
-      caption = paste(
-        "NSS 64th Round, children age 5-19.",
-        "Each point is the mean across common districts of the social-group minus Other district gap.",
-        "Panel B uses the predeclared rural/urban cross-cut; no regression adjustment is applied."
-      )
+      shape = "Sample"
     ) +
     ggplot2::theme_minimal(base_size = 11) +
     ggplot2::theme(
@@ -1032,7 +1025,6 @@ save_schooling_access_figure <- function(spec, path_base, formats, diagnostic) {
       panel.grid.major.y = ggplot2::element_blank(),
       strip.text = ggplot2::element_text(face = "bold"),
       axis.title.x = ggplot2::element_text(face = "bold"),
-      plot.caption = ggplot2::element_text(size = 8.5, hjust = 0),
       legend.position = "bottom"
     )
 
