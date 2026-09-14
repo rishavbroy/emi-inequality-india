@@ -64,13 +64,13 @@ public_table_caption_text <- function(name) {
       "Sources: Census of India 2001 and 2011; Economic Census 2005 and 2013; NSS 66th Round; PLFS 2017-18."
     ),
     paper_identification_boundary = "Identification Boundary: Linguistic Distance Does Not Isolate EMI",
-    appendix_a1_data_source_timing = "Appendix A1. Data Sources, Timing, and Analytical Roles",
-    appendix_a3_lineage_source_hierarchy = "Appendix A3. District-Lineage Evidence Hierarchy",
-    appendix_a4_nss_schooling_constructs = "Appendix A4. NSS Schooling Construct Definitions",
-    appendix_a5_dise_construction = "Appendix A5. DISE Schooling Constructs",
-    appendix_a6_linguistic_measures = "Appendix A6. Linguistic-Measure Construction",
-    appendix_a7_consumption_construction = "Appendix A7. Consumption Survey Construction",
-    appendix_a8_other_outcome_panels = "Appendix A8. Other Outcome Panels",
+    appendix_a3_lineage_source_hierarchy = paste(
+      "District-Lineage Sources and Roles.",
+      "Sources: Census of India; Ministry of Panchayati Raj Local Government Directory; Kumar and Somanathan (2016); India State and District Evolution Database; India District Changes Tracker; Development Data Lab SHRUG; Deshpande, Khanna, and Walia concordances."
+    ),
+    appendix_a5_dise_construction = "DISE Schooling Constructs. Source: District Information System for Education district report cards, 2005-06 to 2007-08.",
+    appendix_a6_linguistic_measures = "Linguistic-Measure Construction. Sources: Census of India 1991 and 2001 language tables; Shastry (2012); Glottolog 5.3; Dyen lexicostatistical data.",
+    appendix_a7_consumption_construction = "Consumption Survey Construction. Sources: NSS consumer-expenditure rounds 2004-05, 2009-10, and 2011-12; HCES 2022-23 and 2023-24; official price series.",
     appendix_b1_lineage_readiness = "Appendix B1. District-Lineage Readiness and Coverage",
     appendix_b2_lineage_sensitivity = "Appendix B2. District-Lineage Sensitivity",
     appendix_b3_consumption_reconstruction = "Appendix B3. Consumption Reconstruction Benchmarks",
@@ -158,17 +158,8 @@ public_table_note <- function(name) {
       "The 2001-11 Census and 2005-13 Economic Census windows overlap the 2007 schooling measurement, so these are co-evolving development margins rather than post-treatment EMI mechanisms.",
       "PLFS 2017-18 supplies the displayed labor endpoint; the semantic CSV retains the raw and Holm-adjusted p-values and matched NSS66 adjusted p-values. Heterogeneous outcomes remain in native units, and null outcomes are retained by design. Sources are identified in the caption."
     ),
-    appendix_a1_data_source_timing = paste(
-      "Final-paper source families are shown once at their primary analytical role.",
-      "All raw microdata and administrative files remain local unless redistribution terms explicitly permit otherwise."
-    ),
     appendix_a3_lineage_source_hierarchy = paste(
-      "The lineage registry separates official administrative evidence from independent concordances/geometry and QA/adjudication evidence.",
-      "Accepted mappings must cite registered evidence and satisfy the lineage-readiness gates."
-    ),
-    appendix_a4_nss_schooling_constructs = paste(
-      "All NSS-64 schooling measures use children age 5-19.",
-      "Conditional EMI uses enrolled children with known medium as its denominator; all-child exposure uses all eligible children, so participation and medium choice remain distinct margins."
+      "Rows summarize source families rather than individual files. Detailed source IDs and adjudication ledgers remain available in the lineage CSV outputs."
     ),
     appendix_a5_dise_construction = paste(
       "DISE constructs are derived from the canonical construct registry.",
@@ -181,10 +172,6 @@ public_table_note <- function(name) {
     appendix_a7_consumption_construction = paste(
       "Rows come directly from the registered household-consumption survey contract.",
       "Historical NSS and modern HCES rounds retain their actual schedule/recall and district-identity rules before harmonization to Census-2001 districts."
-    ),
-    appendix_a8_other_outcome_panels = paste(
-      "These panels provide the broader local-development outcomes used in the paper.",
-      "Their observation windows differ, so they are interpreted as co-evolving development margins rather than mechanically post-treatment mediators of 2007-08 schooling."
     ),
     appendix_b1_lineage_readiness = paste(
       "All lineage readiness gates must pass before this table is produced.",

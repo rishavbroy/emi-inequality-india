@@ -1227,10 +1227,8 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   regression_table <- name %in% c("probit_mfx", "fs_cons", "cons_iv") && !is_formatted_status_table(df_render)
   compact_result_table <- identical(name, "paper_identification_boundary")
   appendix_compact_table <- name %in% c(
-    "appendix_a1_data_source_timing", "appendix_a3_lineage_source_hierarchy",
-    "appendix_a4_nss_schooling_constructs", "appendix_a5_dise_construction",
+    "appendix_a3_lineage_source_hierarchy", "appendix_a5_dise_construction",
     "appendix_a6_linguistic_measures", "appendix_a7_consumption_construction",
-    "appendix_a8_other_outcome_panels",
     "appendix_b1_lineage_readiness", "appendix_b2_lineage_sensitivity", "appendix_b3_consumption_reconstruction", "appendix_b4_hces_consistency_summary", "appendix_b6_language_source_validation",
     "appendix_b8_census_universe_reconciliation", "appendix_b9_dise_publication_validation",
     "appendix_c1_full_absorption_ladder", "appendix_c3_control_block_absorption",
@@ -1334,13 +1332,10 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   if (appendix_compact_table) {
     widths <- switch(
       name,
-      appendix_a1_data_source_timing = c("3.8cm", "1.7cm", "3.7cm", "4.5cm"),
-      appendix_a3_lineage_source_hierarchy = c("3.2cm", "5.5cm", "3.2cm", "3.1cm"),
-      appendix_a4_nss_schooling_constructs = c("3.2cm", "3.6cm", "3.7cm", "3.8cm"),
+      appendix_a3_lineage_source_hierarchy = c("4.1cm", "3.5cm", "7.0cm"),
       appendix_a5_dise_construction = c("5.2cm", "2.8cm", "2.8cm", "3.2cm"),
       appendix_a6_linguistic_measures = c("3.2cm", "3.6cm", "4.6cm", "2.5cm"),
       appendix_a7_consumption_construction = c("3.4cm", "1.9cm", "2.2cm", "2.2cm", "3.0cm", "2.0cm"),
-      appendix_a8_other_outcome_panels = c("3.0cm", "2.4cm", "3.8cm", "4.6cm"),
       appendix_b1_lineage_readiness = c("3.6cm", "6.8cm", "2.0cm"),
       appendix_b2_lineage_sensitivity = c("3.2cm", "1.8cm", "2.2cm", "2.8cm", "2.5cm"),
       appendix_b3_consumption_reconstruction = c("2.3cm", "1.4cm", "1.3cm", "2.0cm", "2.0cm", "2.0cm"),

@@ -345,16 +345,15 @@ plus missingness-predictability figure under
 missingness matrices, regional screens, and case-study diagnostics from that same object;
 it does not rerun the analysis.
 
-Appendix A applies the same rule to construction/provenance exhibits without
-promoting new estimators. `appendix_data_construction_exhibits` reshapes the
-canonical data-source registry, district-lineage metadata, NSS schooling
-constructs, DISE construct registry, linguistic-measure taxonomy, consumption
-survey registry, and already-declared outcome-panel definitions. The only new
-visual is the lineage process diagram because the previous carveout-overlap
-histogram did not show the actual mapping decision sequence required by the
-appendix plan. Shared `appendix_*` output helpers own appendix paths and writing,
-so later Appendix B--D bundles reuse one artifact contract rather than duplicating
-save loops.
+Appendix A is prose-led and reserves generated tables for compact source or
+measurement summaries. `appendix_data_construction_exhibits` now reshapes only the
+district-lineage source families, DISE construct registry, linguistic-measure
+taxonomy, and consumption survey registry. The former lineage process diagram and
+generic timing/NSS/outcome inventories were removed from the final-paper bundle:
+the manuscript explains the lineage decision rules directly, while detailed
+source ledgers remain in the machine-readable lineage outputs. Shared `appendix_*`
+output helpers continue to own appendix paths and writing so later Appendix B--D
+bundles reuse one save path rather than duplicating save loops.
 
 Appendix artifacts are listed in `required_final_artifacts()` as soon as their
 builders exist. The exact TeX and figure inputs consumed by the in-document appendices

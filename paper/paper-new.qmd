@@ -357,32 +357,38 @@ All reported exhibits are generated from the registered public target graph. The
 \appendix
 ```
 
-# Data Construction and Provenance {#sec-app-data}
+# Major Data Contributions {#sec-app-data}
 
-The paper harmonizes survey, Census, administrative, and economic data to Census-2001 districts. This appendix documents the source timing, lineage rules, schooling constructs, linguistic measures, consumption construction, and other outcome panels used in the public analysis. The purpose is reproducibility rather than additional specification search.
+Several of the datasets used in this paper are not directly comparable across time or source. District boundaries change; survey district codes follow different vintages; archived school records use their own district labels; and consumption surveys span multiple geographic classifications. I therefore treat geographic and measurement harmonization as part of the empirical work rather than as a preliminary name-matching exercise. This appendix describes the constructions that are most important for interpreting and reproducing the paper.
 
-```{r}
-#| label: tbl-app-a1
-#| echo: false
-#| results: asis
-render_public_table("../outputs/tables/appendix/appendix_a1_data_source_timing.tex", "appendix_a1_data_source_timing")
-```
+## District Lineage Harmonization {#sec-app-lineage}
 
-![District-lineage logic used to harmonize source geographies to Census-2001 districts.](../outputs/figures/appendix/appendix_a2_lineage_logic.pdf){#fig-app-a2 fig-pos="H" width="100%"}
+District names are not longitudinal identifiers in India. Between the 1961 and 2001 Censuses the number of districts rose from 339 to 593, through renamings, partitions, mergers, and boundary changes [@kumarCreatingLongPanels2016]. The 2011 Census contained 640 districts after another 47 were created during the intervening decade [@censusIndiaAdministrativeAtlas2011]. Later surveys and the 2022--24 Household Consumption Expenditure Surveys therefore cannot simply be joined to the 2001 Census by district name. The difficulty is substantive: if a later district contains territory from several earlier districts, assigning it to whichever earlier district has the most similar name changes the population represented by the observation.
+
+I use the 593 Census-2001 districts as the reference geography. Historical boundary evidence extends back to 1961, while source-specific links carry later surveys through the 2023--24 consumption round. This choice keeps the linguistic measures and predetermined Census controls on the geography in which they are observed and gives every later source a common target. Kumar and Somanathan's district histories provide a benchmark for pre-2001 changes [@kumarCreatingLongPanels2016]. For later changes I combine Census district records with the Ministry of Panchayati Raj's Local Government Directory (LGD), which assigns location codes and records the creation and reorganization of local government units [@ministryPanchayatiRajLocalGovernmentDirectory2026]. I cross-check these records against the India State and District Evolution Database, the India District Changes Tracker, and published survey concordances [@joladIndiaStateDistrict2026; @jaacksIndiaDistrictChanges2020; @deshpandeIndianEnigma2024]. SHRUG locality keys supply an independent, population-based account of how 2001 and 2011 places overlap [@asherDevelopmentResearch2021]. Table @tbl-app-lineage-sources summarizes the roles of these source families.
 
 ```{r}
-#| label: tbl-app-a3
+#| label: tbl-app-lineage-sources
 #| echo: false
 #| results: asis
 render_public_table("../outputs/tables/appendix/appendix_a3_lineage_source_hierarchy.tex", "appendix_a3_lineage_source_hierarchy")
 ```
 
-```{r}
-#| label: tbl-app-a4
-#| echo: false
-#| results: asis
-render_public_table("../outputs/tables/appendix/appendix_a4_nss_schooling_constructs.tex", "appendix_a4_nss_schooling_constructs")
-```
+The current procedure supersedes the fuzzy-join method described in the original draft. I standardize spelling and names to generate possible matches, but string similarity cannot accept a district identity. Each survey district must first be tied to a registered Census or LGD unit using its code, an exact or documented renamed identity, or a reviewed source record. Candidate matches that require judgment enter a review ledger that records the decision and the evidence used. The lineage checks require every accepted decision to cite a registered source; in the current build all 1,254 accepted source identities satisfy that requirement. Reorganizations are stored as dated predecessor--successor relationships. A split links one predecessor to several successors, a merger links several predecessors to one successor, and a documented rename or unchanged district preserves identity. Each reviewed relationship records the source used to support it.
+
+The evidence sources have different roles rather than equal votes. Census records and LGD codes provide the strongest evidence on official district identity and code continuity. Published district histories and survey concordances corroborate those identities and describe reorganizations. SHRUG locality keys are used when population overlap is needed to quantify how a later district relates to 2001 geography. A manual review cannot convert a candidate into an accepted link without citing one of the registered sources summarized in Table @tbl-app-lineage-sources.
+
+I then trace each accepted source unit to its Census-2001 predecessor. Three cases are distinguished. First, an unchanged district or documented rename receives a unit weight on the corresponding 2001 district. Second, a later district created wholly from one 2001 district can be assigned to that predecessor when the district history establishes a nested, single-parent relationship, meaning that the later district lies wholly within one 2001 predecessor. Third, a later district can overlap more than one 2001 district. These multi-parent cases do not enter the preferred panel. For sensitivity analysis only, I use SHRUG locality populations to calculate the share of the later district attributable to each 2001 predecessor; accepted fractional weights must be nonnegative and sum to one within the source district. This treatment follows the same principle as the population weights used by @kumarCreatingLongPanels2016 for historical district partitions: aggregation should represent territory and population, not similarity between district names.
+
+The **conservative** lineage variant admits only direct identities, documented renames, and deterministic one-parent transitions. The **primary** variant additionally admits reviewed single-parent cases supported either by official Census/LGD code continuity or by independent district-history evidence corroborated with SHRUG locality overlap; for the latter cases, at least 99 percent of the source district's population must be represented in the locality crosswalk. The **full reviewed** variant is a sensitivity panel that also admits accepted fractional allocations across multiple 2001 predecessors. For the two schooling waves, these rules yield 427 common districts in the conservative panel, 573 in the primary panel used in the main analysis, and 587 in the full reviewed panel. Multi-parent cases remain outside the primary panel even when a fractional sensitivity allocation is available.
+
+The same principle governs aggregation. Counts are summed across source units assigned to a common 2001 district. Rates, shares, and means are reconstructed from pooled numerators and denominators rather than averaged across successor districts. Distributional measures that cannot be recovered from sufficient statistics, such as the consumption Gini, are reconstructed from pooled household records where the underlying microdata permit it. This distinction prevents a small successor district from receiving the same weight as a much larger one merely because both descend from the same reference district.
+
+Geometry is treated separately from statistical allocation. The main geographic files use Census-2001 district boundaries. Where the available 2001 shapefile omits a district whose boundary is demonstrably unchanged, I carry back a 2011 polygon only when the Census administrative atlases establish exact continuity [@censusIndiaAdministrativeAtlas2001; @censusIndiaAdministrativeAtlas2011]; the current build uses this rule for eleven districts. I do not infer missing boundaries by reallocating area between polygons for these geometry repairs. The statistical crosswalk and the geographic display therefore share district identities without allowing the availability of a convenient polygon to determine how observations are allocated.
+
+The purpose of these rules is not to maximize the number of matched districts. It is to make the meaning of a district observation stable enough that differences across years reflect changes in measured outcomes rather than undocumented changes in territory. The three lineage variants make the remaining coverage trade-off explicit. The validation appendix reports the corresponding sample coverage and shows that the paper's identification conclusion is not a consequence of choosing the primary rather than the conservative or full reviewed lineage.
+
+## DISE Data Reconstruction {#sec-app-dise}
 
 ```{r}
 #| label: tbl-app-a5
@@ -391,6 +397,8 @@ render_public_table("../outputs/tables/appendix/appendix_a4_nss_schooling_constr
 render_public_table("../outputs/tables/appendix/appendix_a5_dise_construction.tex", "appendix_a5_dise_construction")
 ```
 
+## Linguistic Measures {#sec-app-linguistic-measures}
+
 ```{r}
 #| label: tbl-app-a6
 #| echo: false
@@ -398,18 +406,13 @@ render_public_table("../outputs/tables/appendix/appendix_a5_dise_construction.te
 render_public_table("../outputs/tables/appendix/appendix_a6_linguistic_measures.tex", "appendix_a6_linguistic_measures")
 ```
 
+## Consumption Harmonization {#sec-app-consumption-construction}
+
 ```{r}
 #| label: tbl-app-a7
 #| echo: false
 #| results: asis
 render_public_table("../outputs/tables/appendix/appendix_a7_consumption_construction.tex", "appendix_a7_consumption_construction")
-```
-
-```{r}
-#| label: tbl-app-a8
-#| echo: false
-#| results: asis
-render_public_table("../outputs/tables/appendix/appendix_a8_other_outcome_panels.tex", "appendix_a8_other_outcome_panels")
 ```
 
 # Measurement and Source Validation {#sec-app-validation}

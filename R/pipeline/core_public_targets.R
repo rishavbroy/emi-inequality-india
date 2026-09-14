@@ -100,20 +100,9 @@ core_public_target_definitions <- function() {
       )
     ),
     tar_target(
-      publication_data_sources_file,
-      path_metadata(paths, "data_sources.csv"),
-      format = "file"
-    ),
-    tar_target(
-      publication_data_sources,
-      utils::read.csv(
-        publication_data_sources_file, stringsAsFactors = FALSE, check.names = FALSE
-      )
-    ),
-    tar_target(
       appendix_data_construction_exhibits,
       make_appendix_data_construction_exhibits(
-        publication_data_sources, district_lineage, consumption_survey_registry
+        district_lineage, consumption_survey_registry
       )
     ),
     tar_target(
