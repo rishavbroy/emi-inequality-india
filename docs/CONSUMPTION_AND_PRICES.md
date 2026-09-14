@@ -737,7 +737,7 @@ The realized intensive-margin family does not repair relevance: none of its 48 c
 
 ### Cross-family robustness evidence
 
-The publication graph now computes the seven realized consumption-IV robustness families once for Appendix C13, while the extended audit persists `consumption_robustness_evidence_grid.csv` and `consumption_robustness_family_summary.csv`. This is a reviewer-facing synthesis layer only: it does not re-estimate models, change common-support rules, or recompute multiplicity. The family summary records model counts, maximum effective F, family-wide reduced-form and Anderson--Rubin signals, bounded/disconnected/grid-truncated AR sets, and realized sample-size ranges so evidence can be compared without treating every family CSV as an independent headline result.
+The publication graph computes the seven realized consumption-IV robustness families once because the IV appendix makes the bounded claim that none restores strong identification. Extended mode persists `consumption_robustness_evidence_grid.csv` and `consumption_robustness_family_summary.csv`. This synthesis layer does not re-estimate models, change common-support rules, or recompute multiplicity. The manuscript consumes only the cross-family identification invariant; the detailed family results remain machine-readable for review and replication.
 
 ## Descriptive schooling-to-consumption bridge
 

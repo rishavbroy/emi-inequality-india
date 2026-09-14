@@ -315,7 +315,7 @@ where $X_d$ contains predetermined Census-2001 controls and $\alpha_s$ denotes C
 
 Nationally, linguistic distance predicts EMI. Within states, the relationship nearly disappears. @fig-first-stage-absorption holds district support fixed while progressively adding geographic absorption and predetermined controls. The excluded-instrument F statistic is in the low-to-mid teens without fixed effects and falls to approximately one or below under the preferred state specification. Richer predetermined controls do not restore the signal.
 
-![First-stage absorption across the predeclared specification ladder. Points report the state-clustered excluded-instrument F statistic for linguistic distance in the EMI-exposure first stage; labels report the corresponding partial R-squared. All specifications use the same complete district support.](../outputs/figures/main/paper_first_stage_absorption.pdf){#fig-first-stage-absorption fig-pos="H" width="100%"}
+![First-stage absorption across the predeclared specification ladder. Points report the state-clustered excluded-instrument F statistic for linguistic distance in the EMI-exposure first stage; labels report the corresponding partial R-squared. All specifications use the same complete district support. Sources: Census of India 2001; NSS 64th Round, 2007-08.](../outputs/figures/main/paper_first_stage_absorption.pdf){#fig-first-stage-absorption fig-pos="H" width="100%"}
 
 The conclusion does not depend on one unfortunate linguistic-distance construction. @tbl-identification-boundary shows that the speaker-weighted distance, the top-three-language distance, genealogical distance, lexical noncognacy, the distant-language share, and a richer language-distance composition all lose most of their broad predictive content under state absorption. The richer vector is strongly jointly predictive in levels, but that fact does not supply persuasive within-state excluded variation. Historical 1991 constructions, mapping sensitivities, control permutations, monotonicity checks, and the full robustness-family census are reported in @sec-app-identification rather than promoted into the main paper.
 
@@ -331,7 +331,7 @@ The long-run weak-IV inference in Panel B makes the consequence explicit. Conven
 
 Measurement validation does not rescue the design either. As discussed in @sec-schooling-market and shown in @fig-nss-dise-agreement, DISE and NSS EMI measures agree strongly in levels and remain correlated after state residualization. The problem is therefore not simply that the NSS treatment was measured badly. More substantively, inherited linguistic incentives and formal English-medium schooling are related but non-interchangeable objects: their correspondence is largely organized at higher geographic levels.
 
-I consequently do **not** interpret the schooling-welfare associations in Table~\ref{tbl-paper-economic-conversion} as causal effects of EMI. The hundreds of weak-IV diagnostics are useful because they show that this conclusion is not the product of one arbitrarily chosen distance measure, treatment definition, control set, or estimator. But they define a boundary around the causal claim; they are not the paper's substantive center.
+I consequently do **not** interpret the schooling-welfare associations in Table~\ref{tbl-paper-economic-conversion} as causal effects of EMI. The broader robustness record shows that this conclusion is not the product of one arbitrarily chosen distance measure, treatment definition, control set, or estimator. Those checks define a boundary around the causal claim; they are not the paper's substantive center.
 
 # Conclusion {#sec-discussion}
 
@@ -462,87 +462,57 @@ The two modern HCES rounds provide a useful internal check because they use the 
 
 ![District-level consistency of reconstructed consumption across the 2022--23 and 2023--24 HCES rounds. Each panel uses districts satisfying the preferred support rule in both rounds; the dashed line is the 45-degree line. Sources: National Sample Survey Office, HCES 2022--23 and HCES 2023--24 [@nsoHCES2022; @nsoHCES2023].](../outputs/figures/appendix/appendix_consumption_hces_consistency.pdf){#fig-app-consumption-hces fig-pos="H" width="90%"}
 
-# Identification Diagnostics {#sec-app-identification}
+# Linguistic Distance as an Instrumental Variable {#sec-app-identification}
 
-The main paper treats linguistic distance as an inherited opportunity gradient and uses the IV analysis only to define an identification boundary. This appendix records the full forensic case: geographic absorption, controls, scale and influence checks, alternative distance constructions, historical balance and pretrends, historical relevance, monotonicity, richer language vectors, weak-IV dynamics, robustness-family coverage, and exclusion sensitivity.
+The main text uses linguistic distance principally as a measure of inherited linguistic conditions. I separately ask whether it can serve as an instrumental variable for English-medium schooling: that is, whether variation in linguistic distance can isolate variation in English-medium exposure that is sufficiently strong and otherwise excluded from the later consumption equation. The answer is no. The purpose of this appendix is to show where the design fails and why changing the linguistic measure does not repair it. This distinction is important because weak instruments can make conventional two-stage least squares (2SLS) estimates and their standard errors unreliable even when a familiar first-stage threshold appears to be met [@keanePracticalGuideWeak2024].
 
-```{r}
-#| label: tbl-app-c1
-#| echo: false
-#| results: asis
-render_public_table("../outputs/tables/appendix/appendix_c1_full_absorption_ladder.tex", "appendix_c1_full_absorption_ladder")
-```
+## First-Stage Collapse
 
-![Within-state residual geography of linguistic distance and EMI.](../outputs/figures/appendix/appendix_c2_residual_geography.pdf){#fig-app-c2 fig-pos="H" width="100%"}
+The broad national relationship between linguistic distance and English-medium schooling is not itself in doubt. With the preferred speaker-weighted distance and the predetermined Census controls, but without geographic fixed effects, the excluded-instrument F statistic is 14.29. Adding region fixed effects reduces it to 3.24; adding state fixed effects instead reduces it to 0.75. This is the collapse shown in @fig-first-stage-absorption. The corresponding state-fixed-effects partial $R^2$ is 0.0039: after comparing districts within the same state and conditioning on predetermined characteristics, linguistic distance explains very little of the remaining variation in all-child English-medium exposure.
 
-```{r}
-#| label: tbl-app-c3
-#| echo: false
-#| results: asis
-render_public_table("../outputs/tables/appendix/appendix_c3_control_block_absorption.tex", "appendix_c3_control_block_absorption")
-```
+The distinction between the conventional first-stage F statistic and the Montiel Olea--Pflueger effective F statistic matters here. The conventional statistic is useful for comparing the same first-stage specification as geographic controls are added. The effective F is designed for assessing weak-instrument relevance when errors may be heteroskedastic or clustered [@montieloleaRobustTestWeak2013]. I therefore use the conventional F statistics to describe geographic absorption and the effective F statistic when evaluating the preferred IV specification. I do not treat a value of 10 as a universal pass/fail rule; contemporary weak-IV guidance shows that important distortions in 2SLS inference can persist well above that threshold [@keanePracticalGuideWeak2024].
+
+The first-stage collapse is substantively informative. Linguistic distance and English-medium schooling are strongly related across broad Indian geography, but most of that relationship is absorbed when districts are compared within states. This fits the institutional evidence in the main text: English-medium schooling, especially in government schools, is strongly organized at the state level. It also means that linguistic distance cannot provide the within-state excluded variation needed to interpret the later schooling--consumption association as a causal effect of English-medium instruction.
+
+## Robustness to Measures and Data
+
+The weak within-state relationship is not specific to one way of measuring linguistic distance. @tbl-app-iv-relevance compares the preferred speaker-weighted measure with the legacy top-three measure, genealogical distance, lexical noncognacy, the population share speaking languages distant from Hindi, a five-component language-distance composition, and the independently reconstructed 1991 distance measure. For each construction, I report the excluded-instrument F statistic without geographic fixed effects, with region fixed effects, and with state fixed effects. The last column reports the state-fixed-effects partial $R^2$.
 
 ```{r}
-#| label: tbl-app-c4
+#| label: tbl-app-iv-relevance
 #| echo: false
 #| results: asis
-render_public_table("../outputs/tables/appendix/appendix_c4_geographic_scale_sensitivity.tex", "appendix_c4_geographic_scale_sensitivity")
+render_public_table("../outputs/tables/appendix/appendix_iv_relevance_summary.tex", "appendix_iv_relevance_summary")
 ```
+
+The scalar alternatives all tell the same story. The top-three measure has a raw F of 16.30 but a state-fixed-effects F of 1.96. The genealogical and lexical measures fall from 10.43 and 5.29 to 0.28 and 0.15, respectively, while the distant-language share falls from 4.08 to 0.59. The richer five-component language composition is strongly jointly predictive without geographic fixed effects, but its state-fixed-effects joint F is only 3.73. A richer set of language shares can therefore predict broad geographic differences without supplying strong within-state excluded variation.
+
+Moving the linguistic measure backward in time does not solve the problem either. On the validated common historical support, the 1991 speaker-weighted distance has an F statistic of about 9.98 without geographic fixed effects, 0.31 with region fixed effects and Census controls, and 0.03 with state fixed effects and those controls. The historical construction is valuable because it separates measurement of the linguistic environment from later schooling, but it does not restore relevance. The broader historical checks reach the same boundary: linguistic geography is persistent, yet predeterminedness and persistence do not imply that the exclusion restriction holds or that the first stage is strong. Pretreatment balance and negative-control checks can inform an IV design, but they cannot by themselves establish exclusion, and their interpretation also depends on specification choices [@danieliNegativeControl2026].
+
+Measurement error in English-medium schooling is also an implausible explanation for the collapse. The independently reconstructed DISE measure agrees closely with the NSS measure in levels and continues to agree after state means are removed; @fig-nss-dise-agreement reports correlations of about 0.896 and 0.607, respectively. The language-measure sensitivities likewise permit alternative crosswalks and language classifications, yet none produces a persuasive state-level first stage. These results make the identification boundary robust to the two most immediate measurement objections: changing the schooling source and changing the linguistic-distance construction.
+
+The richer language-share instruments do not offer a credible escape through multiple instruments. In the registered state-fixed-effects specifications, constituent first stages remain weak and the falsification-adaptive sets contain zero. A falsification-adaptive set summarizes parameter values that remain compatible with the model under minimally sufficient relaxations of overidentifying restrictions [@mastenSalvagingFalsified2021]. Here it reinforces the simpler relevance evidence rather than recovering a stable causal estimate.
+
+## Weak-IV-Robust Inference
+
+Weak first stages change how the second stage should be read. Conventional 2SLS estimates remain useful as a description of what the ratio estimator produces, but their usual $t$ tests are not the basis for inference. I instead emphasize the Montiel Olea--Pflueger effective F statistic and Anderson--Rubin (AR) tests. The AR test evaluates candidate values of the structural coefficient without requiring a strong first stage and is therefore appropriate when identification is weak [@keanePracticalGuideWeak2024].
+
+@tbl-app-iv-weak reports the two long-change specifications used in the main identification discussion. I do not attach conventional significance stars to the 2SLS coefficients. The table instead places the weak-IV statistics directly beside them.
 
 ```{r}
-#| label: tbl-app-c5
+#| label: tbl-app-iv-weak
 #| echo: false
 #| results: asis
-render_public_table("../outputs/tables/appendix/appendix_c5_alternative_scalar_distances.tex", "appendix_c5_alternative_scalar_distances")
+render_public_table("../outputs/tables/appendix/appendix_iv_weak_inference.tex", "appendix_iv_weak_inference")
 ```
 
-```{r}
-#| label: tbl-app-c6
-#| echo: false
-#| results: asis
-render_public_table("../outputs/tables/appendix/appendix_c6_mapping_composition_sensitivity.tex", "appendix_c6_mapping_composition_sensitivity")
-```
+For 2004--05 to 2022--23, the 2SLS coefficient is 0.117 with a state-clustered standard error of 0.152; the effective F statistic is 0.69. For the 2023--24 endpoint, the corresponding estimate is 0.137 with a standard error of 0.234 and an effective F of 0.41. Neither conventional estimate is informative enough to support a causal interpretation. More importantly, the AR confidence sets are disconnected. On the evaluated grid, the 2022 set accepts values at or below approximately $-0.071$ and at or above $0.025$, while the 2023 set accepts values at or below approximately $-0.051$ and at or above $0.015$. Both sets extend to the grid boundaries. Rejecting zero on such a grid does not identify the sign of the effect: both negative and positive values remain compatible with the weak-IV-robust test.
 
-```{r}
-#| label: tbl-app-c7
-#| echo: false
-#| results: asis
-render_public_table("../outputs/tables/appendix/appendix_c7_historical_balance.tex", "appendix_c7_historical_balance")
-```
+The result is not a peculiarity of these two specifications. Across every registered consumption-IV robustness family, no specification satisfies the project's predeclared effective-F strength criterion. The families vary the linguistic measure, English-medium treatment, welfare outcome, controls, parameterization, and historical adjustment. I retain the full model-level results in the replication outputs rather than printing the hundreds of specifications here. Their collective implication is narrower and more useful: there is no nearby specification choice that turns the design into a strongly identified IV strategy.
 
-![Historical pretrend balance across eventual EMI, 2001 linguistic distance, and historical Helms--Lim distance.](../outputs/figures/appendix/appendix_c8_historical_pretrends.pdf){#fig-app-c8 fig-pos="H" width="100%"}
+Finally, I relax exact exclusion rather than treating it as guaranteed. Following the logic of plausibly exogenous instruments, I allow linguistic distance to have a bounded direct effect on the outcome and ask how large that direct effect must be before $\beta=0$ enters the AR confidence set [@conleyPlausiblyExogenous2012]. For the 2022 long change, the minimum bound is about 0.0267 log points, or 41.7% of the observed reduced form. For 2023, the corresponding threshold is about 0.0112 log points, or 19.9% of the reduced form. These are sensitivity thresholds, not estimates of a direct effect. They show that the 2023 result is especially fragile to modest departures from exact exclusion, while even the more persistent 2022 reduced form does not overcome the weak first stage.
 
-```{r}
-#| label: tbl-app-c9
-#| echo: false
-#| results: asis
-render_public_table("../outputs/tables/appendix/appendix_c9_historical_first_stage.tex", "appendix_c9_historical_first_stage")
-```
-
-![State and district slope heterogeneity relevant to monotonicity.](../outputs/figures/appendix/appendix_c10_monotonicity.pdf){#fig-app-c10 fig-pos="H" width="100%"}
-
-```{r}
-#| label: tbl-app-c11
-#| echo: false
-#| results: asis
-render_public_table("../outputs/tables/appendix/appendix_c11_multiple_instruments.tex", "appendix_c11_multiple_instruments")
-```
-
-![Full consumption IV dynamics, including conventional 2SLS, reduced form, and weak-IV-robust inference.](../outputs/figures/appendix/appendix_c12_consumption_iv_dynamics.pdf){#fig-app-c12 fig-pos="H" width="100%"}
-
-```{r}
-#| label: tbl-app-c13
-#| echo: false
-#| results: asis
-render_public_table("../outputs/tables/appendix/appendix_c13_robustness_family_census.tex", "appendix_c13_robustness_family_census")
-```
-
-```{r}
-#| label: tbl-app-c14
-#| echo: false
-#| results: asis
-render_public_table("../outputs/tables/appendix/appendix_c14_exclusion_sensitivity.tex", "appendix_c14_exclusion_sensitivity")
-```
+I therefore do not use linguistic distance to estimate a causal effect of English-medium schooling. The appendix supports a more limited conclusion: linguistic distance is a persistent and economically meaningful feature of India's language environment, but it is too weakly related to within-state English-medium schooling, and too plausibly related to broader local conditions, to isolate that schooling channel. The descriptive schooling--welfare relationships in the main paper remain descriptive.
 
 # Migration {#sec-app-migration}
 

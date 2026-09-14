@@ -294,33 +294,11 @@ turning every forensic diagnostic into a publication dependency.
 
 ### Paper-facing identification versus forensic IV diagnostics
 
-The main-paper identification boundary and final Appendix C share a bounded
-publication layer. Common-support alternative-distance first stages, Hindi-belt
-and child-population added-control comparisons, and the linguistic measurement /
-composition diagnostics used by Appendix C1--C6 live in
-`core_identification_target_definitions()`. Appendix C10--C11 also consumes the
-registered alternative-distance weak-IV, monotonicity, overidentification, and FAS
-object, so that bounded inference augmentation now lives in core as well. The
-extended IV factory persists that shared object. Appendix C13/C14 now make the registered
-consumption robustness and exclusion-sensitivity analyses strict too; extended mode retains
-their large persisted evidence grids, registries, and other reviewer-facing forensics.
+The main paper and its IV appendix consume a deliberately small publication layer. The appendix now asks three questions only: how geographic fixed effects absorb first-stage relevance, whether alternative linguistic measures restore it, and what weak-IV-robust inference permits for the long-run consumption designs. `appendix_identification_exhibits` therefore builds two reader-facing summaries from the registered analytical results: a relevance table spanning modern and historical linguistic measures, and a weak-IV table spanning the 2022--23 and 2023--24 long changes.
 
-This split is intentionally scientific rather than "cheap versus expensive".
-Mapping coverage, distance-4 composition, leave-language-out checks, and the
-richer language vectors are measurement/relevance evidence consumed directly by
-the final appendix, so they are strict. C8 and C10--C14 now complete the strict
-identification appendix: the strict Vanneman pretrend design, bounded monotonicity/FAS
-diagnostics, seven registered consumption robustness families, and bounded exclusion
-sensitivity are computed once because final exhibits consume them. Appendix C2 is rebuilt from within-state
-demeaned linguistic distance and all-child EMI rather than reusing the legacy
-poster residual maps, which partialled six-region fixed effects and expanded
-controls and therefore answered a different geographic question.
+The larger analytical families remain in their owning modules. Control-block permutations, mapping-coverage sensitivity, leave-language-out checks, historical balance and pretrends, state-deletion and influence analyses, monotonicity, overidentification, multi-instrument falsification-adaptive sets, the full consumption robustness grid, and exclusion-sensitivity grids are still computed and tested where they protect the scientific conclusions. They no longer each generate a dedicated manuscript table or figure. This keeps publication dependencies tied to the claims actually made in the paper while retaining machine-readable evidence for review and replication.
 
-This boundary is semantic rather than computational. An analysis becomes core when
-a publication artifact requires its scientific result, even when that publication
-dependency is computationally expensive. Extended ownership therefore means
-"not required by a final exhibit," not "large." Shared analytical objects avoid
-independently maintained publication and forensic versions of the same exercise.
+This boundary is semantic rather than computational. An analysis becomes a paper dependency when the manuscript directly consumes its scientific result; extended ownership means that the result remains available without requiring another reader-facing display. Shared analytical results should be summarized rather than copied into parallel presentation layers.
 
 ### Paper-facing local development versus extended outcome diagnostics
 
@@ -368,7 +346,7 @@ were removed once their material was owned by the manuscripts.
 
 ### Final-paper measurement and identification exhibits
 
-Validation that supports a specific construction stays with that construction rather than occupying a separate manuscript appendix. `appendix_data_construction_exhibits` owns the historical linguistic-persistence and NSS--DISE agreement figures used alongside the corresponding measurement discussion. Historical balance and historical first-stage summaries are owned by `appendix_identification_exhibits`. Source reconciliations, lineage readiness gates, and broader validation tables remain enforced by their analytical modules and persisted as diagnostics rather than being repackaged for the manuscript.
+Validation that supports a specific construction stays with that construction rather than occupying a separate manuscript appendix. `appendix_data_construction_exhibits` owns the historical linguistic-persistence and NSS--DISE agreement figures used alongside the corresponding measurement discussion. `appendix_identification_exhibits` owns only the two compact summaries used by the IV appendix. Historical balance, pretrends, source reconciliations, lineage readiness gates, and broader identification checks remain enforced by their analytical modules and persisted as machine-readable results rather than being repackaged for the manuscript.
 
 ### Migration publication boundary
 

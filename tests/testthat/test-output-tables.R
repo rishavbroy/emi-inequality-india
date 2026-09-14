@@ -994,390 +994,165 @@ test_that("selection tables report the fitted estimation sample rather than the 
   expect_equal(selection_model_observations(NULL, fallback = nrow(dat)), nrow(dat))
 })
 
-test_that("Appendix C1-C3 summarize the complete registered absorption design", {
-  controls <- read_census_2001_control_registry(
-    repo_file("data", "metadata", "census_2001_control_registry.csv")
+iv_relevance_fixture <- function() {
+  constructions <- c(
+    "nonzero_mean", "top3_legacy", "glottolog_mean",
+    "dyen_noncognate", "distant_share", "distance_shares_all"
   )
-  blocks <- names(iv_main_control_blocks(controls))
-  ids <- names(iv_absorption_adjustments(controls))
-  semantic <- data.frame(
-    semantic_specification_id = ids,
-    semantic_label = gsub("_", " ", ids),
-    semantic_fixed_effect = ifelse(grepl("^region", ids), "region", "state"),
-    semantic_control_blocks = "",
-    estimate = seq_along(ids) / 100,
-    std.error = 0.01,
-    excluded_instrument_f = seq_along(ids) + 0.5,
-    partial_r_squared = seq_along(ids) / 1000,
-    n = 500L,
-    status = "estimated",
+  adjustments <- c("unadjusted", "region_main", "state_main")
+  modern <- expand.grid(
+    adjustment_id = adjustments,
+    construction_id = constructions,
     stringsAsFactors = FALSE
   )
-  diagnostics <- structure(
-    list(semantic_summary = semantic),
-    class = "emi_first_stage_absorption"
-  )
+  modern$joint_excluded_f <- seq_len(nrow(modern)) / 2
+  modern$partial_r_squared <- seq_len(nrow(modern)) / 1000
+  modern$n <- 573L
 
-  c1 <- appendix_c1_full_absorption_ladder(diagnostics, controls)
-  expect_equal(nrow(attr(c1, "csv_data")), nrow(semantic))
-  expect_identical(
-    attr(c1, "csv_data")$semantic_specification_id,
-    semantic$semantic_specification_id
-  )
-
-  c3 <- appendix_c3_control_block_absorption(diagnostics, controls)
-  c3_csv <- attr(c3, "csv_data")
-  expect_equal(nrow(c3_csv), 2L * length(blocks))
-  expect_setequal(c3_csv$fixed_effect, c("region", "state"))
-  expect_setequal(c3_csv$block_id, blocks)
-
-  diagnostics$semantic_summary$status[[1L]] <- "not_estimated"
-  expect_error(
-    appendix_c1_full_absorption_ladder(diagnostics, controls),
-    "estimable first stages for every declared semantic specification",
-    fixed = TRUE
-  )
-})
-
-
-test_that("Appendix C2 maps the actual within-state identifying variation", {
-  panel <- data.frame(
-    district_panel_id = paste0("d", 1:6),
-    state_code_2001 = rep(c("01", "02"), each = 3L),
-    ling_distance_nonzero_mean = c(1, 2, 4, 10, 13, 15),
-    emi_exposure_all_children_0708 = c(2, 8, 11, 20, 24, 35),
+  historical <- data.frame(
+    sample = "preferred_geography",
+    specification_id = c(
+      "instrument_only", "region_fe_census_controls", "state_fe_census_controls"
+    ),
+    excluded_instrument_f_1991 = c(9.9, 0.3, 0.04),
+    partial_r_squared_1991 = c(.2, .01, .001),
+    n_1991 = 89L,
+    status_1991 = "estimated",
     stringsAsFactors = FALSE
   )
-  residuals <- appendix_c2_within_state_residual_data(panel)
-  expect_equal(nrow(residuals), 2L * nrow(panel))
-  for (measure in unique(residuals$measure_id)) {
-    x <- residuals[residuals$measure_id == measure, , drop = FALSE]
-    state_means <- tapply(x$residual, x$state_code_2001, mean)
-    expect_true(all(abs(state_means) < 1e-12))
-    expect_equal(stats::sd(x$residual_sd), 1, tolerance = 1e-12)
-  }
-})
 
-
-c4_exhibit_fixture <- function(leverage = c(0.2, 0.3), cooks_distance = c(0.1, 0.3)) {
-  added <- data.frame(
-    adjustment_id = c("main", "region_main"),
-    baseline_excluded_instrument_f = c(14, 3), n = c(500L, 500L),
-    status = "estimated", stringsAsFactors = FALSE
-  )
-  h <- added
-  h$hindi_belt_excluded_instrument_f <- c(9, 3.1)
-  cp <- added
-  cp$augmented_excluded_instrument_f <- c(13.5, 3.2)
   list(
-    hindi = structure(list(summary = h), class = "emi_hindi_belt_first_stage"),
-    child = structure(list(summary = cp), class = "emi_child_population_first_stage"),
-    absorption = structure(
-      list(
-        state_deletion = data.frame(
-          omitted_state = c("01", "02", "03"),
-          excluded_instrument_f = c(0.4, 1.2, 0.8), stringsAsFactors = FALSE
-        ),
-        district_influence = data.frame(
-          state_code_2001 = sprintf("%02d", seq_along(leverage)),
-          district_code_2001 = sprintf("%03d", seq_along(leverage)),
-          leverage = leverage, cooks_distance = cooks_distance,
-          instrument_dfbeta = seq(-0.4, 0.2, length.out = length(leverage)),
-          stringsAsFactors = FALSE
-        )
-      ),
-      class = "emi_first_stage_absorption"
+    modern = structure(list(summary = modern), class = "emi_alternative_distance_first_stages"),
+    historical = list(comparison = historical)
+  )
+}
+
+
+test_that("IV appendix relevance summary preserves registered geographic comparisons", {
+  fixture <- iv_relevance_fixture()
+  out <- appendix_iv_relevance_summary(fixture$modern, fixture$historical)
+  csv <- attr(out, "csv_data")
+
+  expect_setequal(
+    csv$row_id,
+    c(
+      "nonzero_mean", "top3_legacy", "glottolog_mean", "dyen_noncognate",
+      "distant_share", "distance_shares_all", "historical_1991"
     )
   )
-}
+  expect_true(all(csv$n[csv$row_id != "historical_1991"] == 573L))
+  expect_equal(csv$n[csv$row_id == "historical_1991"], 89L)
+  expect_true(all(is.finite(csv$state_f)))
+  expect_true(all(is.finite(csv$state_partial_r2)))
 
-
-test_that("Appendix C4 summarizes registered geography, scale, and influence checks", {
-  fixture <- c4_exhibit_fixture()
-  out <- appendix_c4_geographic_scale_sensitivity(
-    fixture$absorption, fixture$hindi, fixture$child
-  )
-  csv <- attr(out, "csv_data")
-  expect_equal(nrow(csv), 8L)
-  expect_setequal(csv$section, c("Added controls", "Leave-one-state-out", "District influence"))
-  expect_equal(sum(csv$diagnostic == "Hindi-belt indicator"), 2L)
-  expect_equal(sum(csv$diagnostic == "Child population"), 2L)
-})
-
-
-test_that("Appendix C4 treats leverage-one Cook's distance as structurally undefined", {
-  fixture <- c4_exhibit_fixture(
-    leverage = c(0.2, 1, 0.3),
-    cooks_distance = c(0.1, NA_real_, 0.3)
-  )
-
-  out <- appendix_c4_geographic_scale_sensitivity(
-    fixture$absorption, fixture$hindi, fixture$child
-  )
-  csv <- attr(out, "csv_data")
-  cook <- csv[csv$diagnostic == "Maximum Cook's distance", , drop = FALSE]
-
-  expect_equal(cook$value, 0.3)
-  expect_match(cook$context, "2/3 finite", fixed = TRUE)
-  expect_match(cook$context, "1 leverage=1 omitted", fixed = TRUE)
-
-  fixture$absorption$district_influence$cooks_distance[[1L]] <- NA_real_
+  broken <- fixture$modern
+  broken$summary <- broken$summary[!(
+    broken$summary$construction_id == "nonzero_mean" &
+      broken$summary$adjustment_id == "state_main"
+  ), , drop = FALSE]
   expect_error(
-    appendix_c4_geographic_scale_sensitivity(
-      fixture$absorption, fixture$hindi, fixture$child
-    ),
-    "leverage below one", fixed = TRUE
-  )
-})
-
-
-test_that("Appendix C5-C6 summarize registered linguistic alternatives without model dumping", {
-  constructions <- c("nonzero_mean", "top3_legacy", "distant_share", "glottolog_mean", "dyen_noncognate")
-  adjustments <- c("unadjusted", "region_main", "state_main")
-  grid <- expand.grid(adjustment_id = adjustments, construction_id = constructions, stringsAsFactors = FALSE)
-  grid$specification_id <- paste(grid$adjustment_id, grid$construction_id, sep = "__")
-  grid$adjustment <- grid$adjustment_id
-  grid$construction <- grid$construction_id
-  grid$joint_excluded_f <- seq_len(nrow(grid))
-  grid$joint_excluded_p <- 0.5
-  grid$partial_r_squared <- 0.01
-  grid$n <- 500L
-
-  c5_input <- structure(list(summary = grid), class = "emi_alternative_distance_first_stages")
-  c5 <- appendix_c5_alternative_scalar_distances(c5_input)
-  expect_equal(nrow(attr(c5, "csv_data")), 15L)
-  expect_setequal(attr(c5, "csv_data")$construction_id, constructions)
-
-  thresholds <- linguistic_mapping_coverage_thresholds()
-  coverage <- data.frame(
-    specification_id = "state_main__nonzero_mean",
-    minimum_mapped_share = thresholds,
-    joint_excluded_f = seq_along(thresholds), partial_r_squared = 0.01,
-    n = 450L, stringsAsFactors = FALSE
-  )
-  composition_ids <- c(
-    "nonzero_mean_hindi_urdu", "nonzero_mean_hindi_urdu_separate",
-    "nonzero_mean_sensitivity_low", "nonzero_mean_sensitivity_high",
-    "distance_shares_all", "distance_shares_all_unmapped", "distance_shares_mapped"
-  )
-  composition <- data.frame(
-    specification_id = paste("state_main", composition_ids, sep = "__"),
-    construction = composition_ids,
-    joint_excluded_f = seq_along(composition_ids) + 10,
-    partial_r_squared = 0.02, n = 450L, stringsAsFactors = FALSE
-  )
-  leave_one <- data.frame(
-    omitted_distance4_language = c("Kashmiri", "Sindhi"),
-    joint_excluded_f = c(0.5, 0.7), partial_r_squared = c(0.001, 0.002),
-    n = c(450L, 450L), stringsAsFactors = FALSE
-  )
-  distance4 <- data.frame(
-    mother_tongue = c("Kashmiri", "Sindhi"),
-    speaker_share_of_distance4 = c(55, 45), stringsAsFactors = FALSE
-  )
-  c6_input <- structure(
-    list(
-      summary = composition,
-      coverage_sensitivity = coverage,
-      distance4_leave_one_out = leave_one,
-      distance4_languages = distance4
-    ),
-    class = "emi_alternative_distance_first_stages"
-  )
-  c6 <- appendix_c6_mapping_composition_sensitivity(c6_input)
-  csv <- attr(c6, "csv_data")
-  expect_equal(nrow(csv), length(thresholds) + 1L + nrow(leave_one) + length(composition_ids))
-})
-
-
-test_that("Appendix C10 summarizes registered within-state monotonicity diagnostics", {
-  bins <- data.frame(
-    bin = 1:10,
-    instrument = seq(-1, 1, length.out = 10),
-    treatment = seq(-0.5, 0.5, length.out = 10),
-    n = 50L,
-    specification_id = "state_main__nonzero_mean",
-    stringsAsFactors = FALSE
-  )
-  states <- data.frame(
-    state_code_2001 = sprintf("%02d", 1:8), n = 10L,
-    slope = c(-2, -1, -0.2, 0.1, 0.5, 1, 2, 3), status = "estimated",
-    specification_id = "state_main__nonzero_mean", stringsAsFactors = FALSE
-  )
-  summary <- data.frame(
-    specification_id = "state_main__nonzero_mean", linear_slope = 0.5,
-    spearman_rho = 0.2, isotonic_r_squared = 0.1,
-    share_negative_state_slopes = 3 / 8, status = "estimated",
-    stringsAsFactors = FALSE
-  )
-  diagnostics <- structure(
-    list(monotonicity_bins = bins, monotonicity_state_slopes = states, monotonicity_summary = summary),
-    class = "emi_alternative_distance_first_stages"
-  )
-  out <- appendix_c10_monotonicity_plot_data(diagnostics)
-  expect_equal(nrow(out$bins), 10L)
-  expect_equal(nrow(out$states), 8L)
-  expect_true(any(out$states$slope < 0) && any(out$states$slope > 0))
-})
-
-
-test_that("Appendix C11 reports registered rich-vector identification limits", {
-  ids <- paste("state_main", c("distance_shares_all", "distance_shares_all_unmapped", "distance_shares_mapped"), sep = "__")
-  fas <- data.frame(
-    specification_id = ids,
-    construction_id = c("distance_shares_all", "distance_shares_all_unmapped", "distance_shares_mapped"),
-    n_instruments = 5L, n_components_estimated = 5L,
-    fas_lower = c(-0.13, -0.14, -0.07), fas_upper = c(0.11, 0.15, 0.33),
-    fas_contains_zero = TRUE,
-    min_conditional_first_stage_f = c(0.12, 0.09, 0.06),
-    n_conditional_first_stage_f_below_10 = c(4L, 4L, 5L),
-    constituent_relevance_caution = TRUE, n = 573L, status = "estimated",
-    reason = NA_character_, sargan_status = "estimated", sargan_p.value = c(.03, .06, .07),
-    stringsAsFactors = FALSE
-  )
-  diagnostics <- structure(list(falsification_adaptive_summary = fas), class = "emi_alternative_distance_first_stages")
-  out <- appendix_c11_multiple_instruments(diagnostics)
-  csv <- attr(out, "csv_data")
-  expect_equal(nrow(csv), 3L)
-  expect_true(all(csv$fas_contains_zero))
-  expect_true(all(csv$n_conditional_first_stage_f_below_10 > 0L))
-})
-
-
-test_that("Appendix C12 preserves the full registered consumption-IV design", {
-  rounds <- c("nss_2009_10_type2", "nss_2011_12_type2", "hces_2022_23", "hces_2023_24")
-  estimands <- c("ancova", "change")
-  grid <- expand.grid(outcome_round = rounds, estimand = estimands, stringsAsFactors = FALSE)
-  grid$reduced_form_estimate <- seq_len(nrow(grid)) / 100
-  grid$reduced_form_std.error <- 0.02
-  grid$second_stage_estimate <- seq_len(nrow(grid)) / 50
-  grid$second_stage_std.error <- 0.05
-  grid$ar_95_information <- rep(c("zero_included", "zero_excluded_both_signs"), length.out = nrow(grid))
-  grid$ar_95_disconnected <- grid$estimand == "change"
-  grid$ar_95_contains_zero <- grid$estimand == "ancova"
-  grid$status <- "estimated"
-  dynamics <- list(summary = grid, anderson_rubin_grid = data.frame())
-  out <- appendix_c12_consumption_iv_dynamics_data(dynamics)
-  expect_equal(nrow(out), 16L)
-  expect_setequal(out$metric, c("Reduced form", "2SLS"))
-  counts <- table(out$metric)
-  expect_equal(unname(as.integer(counts[c("2SLS", "Reduced form")])), c(8L, 8L))
-  expect_true(all(is.finite(out$conf.low)) && all(is.finite(out$conf.high)))
-})
-
-
-c8_pretrend_fixture <- function() {
-  x <- expand.grid(
-    predictor_id = c("eventual_emie", "census_2001_ld", "helms_lim_ld_1991"),
-    sample_id = "historical_ld_support",
-    period_id = c("1961_1971", "1971_1981", "1981_1991"),
-    domain = c("demography", "labor", "education"),
-    stringsAsFactors = FALSE
-  )
-  x$joint_f <- seq_len(nrow(x)) / 10
-  x$joint_p <- seq(.01, .81, length.out = nrow(x))
-  x$n <- 150L
-  x$status <- "estimated"
-  list(joint_balance = x)
-}
-
-
-test_that("Appendix C8 uses the complete common-support decade-domain pretrend grid", {
-  d <- appendix_c8_historical_pretrend_data(c8_pretrend_fixture())
-
-  expect_equal(nrow(d), 27L)
-  expect_setequal(unique(d$predictor_id), c("eventual_emie", "census_2001_ld", "helms_lim_ld_1991"))
-  expect_setequal(unique(d$period_id), c("1961_1971", "1971_1981", "1981_1991"))
-  expect_setequal(unique(d$domain), c("demography", "labor", "education"))
-  expect_true(all(d$sample_id == "historical_ld_support"))
-  expect_true(all(is.finite(d$minus_log10_p)))
-})
-
-
-test_that("Appendix C13 reconciles the seven registered robustness families to the realized grid", {
-  families <- c(
-    "scalar_iv", "intensive_margin", "welfare_definition", "control_strategy",
-    "control_parameterization", "historical_adjustment", "historical_concept_matched"
-  )
-  n_models <- c(48L, 48L, 120L, 48L, 64L, 32L, 48L)
-  summary <- data.frame(
-    family = families,
-    n_models = n_models,
-    n_strong_first_stage = 0L,
-    max_effective_f = seq_along(families),
-    n_reduced_form_family_signals = c(1L, 1L, 0L, 2L, 0L, 3L, 5L),
-    n_ar_family_signals = c(1L, 1L, 0L, 2L, 0L, 3L, 5L),
-    n_bounded_ar_sets = seq_along(families),
-    min_n = 440L,
-    max_n = 525L,
-    stringsAsFactors = FALSE
-  )
-  grid <- data.frame(model = seq_len(sum(n_models)))
-  out <- appendix_c13_robustness_family_census(list(grid = grid, family_summary = summary))
-
-  expect_equal(nrow(out), 8L)
-  expect_equal(out$Models[out$Family == "All registered families"], 408L)
-  expect_equal(out$`Strong first stage`[out$Family == "All registered families"], 0L)
-})
-
-
-test_that("Appendix C14 reports exact-exclusion fragility for all four long-run designs", {
-  specs <- c(
-    "consumption__long_2022__ancova", "consumption__long_2022__change",
-    "consumption__long_2023__ancova", "consumption__long_2023__change"
-  )
-  exact <- data.frame(
-    specification_id = specs,
-    outcome_round = rep(c("hces_2022_23", "hces_2023_24"), each = 2L),
-    estimand = rep(c("ancova", "change"), 2L),
-    calibration_id = "exact_exclusion",
-    reduced_form_estimate = c(.02, .06, .01, .05),
-    reduced_form_std.error = .02,
-    exclusion_ar_p_beta0 = c(.3, .01, .6, .02),
-    exclusion_ar_95_contains_zero = c(TRUE, FALSE, TRUE, FALSE),
-    minimum_gamma_for_zero_95 = c(0, .025, 0, .01),
-    minimum_gamma_share_of_reduced_form_for_zero_95 = c(0, .42, 0, .20),
-    exclusion_ar_95_information = c("zero_included", "zero_excluded", "zero_included", "zero_excluded"),
-    stringsAsFactors = FALSE
-  )
-  expect_true("reduced_form_std.error" %in% names(exact))
-  expect_false("reduced_form.std.error" %in% names(exact))
-
-  nuisance <- exact
-  nuisance$calibration_id <- "same_sign_rf_050"
-  out <- appendix_c14_exclusion_sensitivity(list(summary = rbind(exact, nuisance)))
-
-  csv <- attr(out, "csv_data")
-  expect_equal(nrow(csv), 4L)
-  expect_identical(csv$specification_id, specs)
-  expect_identical(as.logical(csv$exclusion_ar_95_contains_zero), c(TRUE, FALSE, TRUE, FALSE))
-  expect_equal(num(csv$minimum_gamma_share_of_reduced_form_for_zero_95), c(0, .42, 0, .20))
-
-})
-
-
-test_that("Appendix C14 rejects noncanonical reduced-form SE aliases", {
-  x <- data.frame(
-    specification_id = "consumption__long_2022__ancova",
-    outcome_round = "hces_2022_23",
-    estimand = "ancova",
-    calibration_id = "exact_exclusion",
-    reduced_form_estimate = 0.02,
-    reduced_form.std.error = 0.01,
-    exclusion_ar_p_beta0 = 0.3,
-    exclusion_ar_95_contains_zero = TRUE,
-    minimum_gamma_for_zero_95 = 0,
-    minimum_gamma_share_of_reduced_form_for_zero_95 = 0,
-    exclusion_ar_95_information = "zero_included",
-    stringsAsFactors = FALSE
-  )
-
-  expect_error(
-    appendix_c14_exclusion_sensitivity(list(summary = x)),
-    "reduced_form_std.error",
+    appendix_iv_relevance_summary(broken, fixture$historical),
+    "requires all geographic adjustments",
     fixed = TRUE
   )
 })
+
+
+iv_weak_fixture <- function() {
+  dynamics <- list(summary = data.frame(
+    welfare_specification_id = c("long_2022__change", "long_2023__change"),
+    outcome_round = c("hces_2022_23", "hces_2023_24"),
+    second_stage_estimate = c(.12, .14),
+    second_stage_std.error = c(.15, .23),
+    second_stage_p.value = c(.44, .56),
+    effective_f = c(.69, .41),
+    anderson_rubin_p_beta0 = c(.001, .014),
+    ar_95_components = c("[-.2,-.07] U [.03,.2]", "[-.19,-.05] U [.02,.19]"),
+    ar_95_disconnected = TRUE,
+    ar_95_sign_identified = FALSE,
+    n = c(524L, 522L),
+    status = "estimated",
+    stringsAsFactors = FALSE
+  ))
+
+  exclusion <- list(summary = data.frame(
+    specification_id = c(
+      "consumption__long_2022__change", "consumption__long_2023__change"
+    ),
+    calibration_id = "exact_exclusion",
+    minimum_gamma_for_zero_95 = c(.027, .011),
+    minimum_gamma_share_of_reduced_form_for_zero_95 = c(.417, .199),
+    stringsAsFactors = FALSE
+  ))
+
+  robustness <- list(family_summary = data.frame(
+    family = c("scalar", "controls", "welfare"),
+    n_models = c(10L, 10L, 10L),
+    n_strong_first_stage = 0L,
+    stringsAsFactors = FALSE
+  ))
+
+  fas <- data.frame(
+    adjustment_id = "state_main",
+    construction_id = c(
+      "distance_shares_all", "distance_shares_all_unmapped", "distance_shares_mapped"
+    ),
+    status = "estimated",
+    fas_contains_zero = TRUE,
+    constituent_relevance_caution = TRUE,
+    stringsAsFactors = FALSE
+  )
+  alternative <- structure(
+    list(falsification_adaptive_summary = fas),
+    class = "emi_alternative_distance_first_stages"
+  )
+
+  list(
+    dynamics = dynamics,
+    exclusion = exclusion,
+    robustness = robustness,
+    alternative = alternative
+  )
+}
+
+
+test_that("IV appendix weak-inference summary fails closed on identification claims", {
+  fixture <- iv_weak_fixture()
+  out <- appendix_iv_weak_inference(
+    fixture$dynamics, fixture$exclusion, fixture$robustness, fixture$alternative
+  )
+  csv <- attr(out, "csv_data")
+
+  expect_setequal(csv$row_id, c("long_2022__change", "long_2023__change"))
+  expect_equal(csv$effective_f, c(.69, .41))
+  expect_equal(
+    csv$minimum_gamma_share_of_reduced_form_for_zero_95,
+    c(.417, .199)
+  )
+  expect_true(all(csv$ar_disconnected))
+  expect_false(any(csv$ar_sign_identified))
+
+  strong <- fixture$robustness
+  strong$family_summary$n_strong_first_stage[[1L]] <- 1L
+  expect_error(
+    appendix_iv_weak_inference(
+      fixture$dynamics, fixture$exclusion, strong, fixture$alternative
+    ),
+    "every registered robustness family to remain weak",
+    fixed = TRUE
+  )
+
+  invalid_fas <- fixture$alternative
+  invalid_fas$falsification_adaptive_summary$fas_contains_zero[[1L]] <- FALSE
+  expect_error(
+    appendix_iv_weak_inference(
+      fixture$dynamics, fixture$exclusion, fixture$robustness, invalid_fas
+    ),
+    "state-FE rich-vector FAS results",
+    fixed = TRUE
+  )
+})
+
 
 test_that("retained validation figures enforce registered common support", {
   welfare <- expand.grid(
@@ -1407,38 +1182,4 @@ test_that("retained validation figures enforce registered common support", {
   state_nss_means <- tapply(agreement$nss_residual, agreement$state, mean)
   expect_true(all(abs(state_dise_means) < 1e-12))
   expect_true(all(abs(state_nss_means) < 1e-12))
-})
-
-test_that("historical identification summaries preserve registered designs", {
-  predictors <- c("eventual_emie", "census_2001_ld", "helms_lim_ld_1991")
-  domains <- c("demography", "human_capital", "economic_structure", "rural_development", "urban_development")
-  joint <- expand.grid(predictor_id = predictors, domain = domains, stringsAsFactors = FALSE)
-  joint$sample <- "preferred_geography"
-  joint$predictor <- joint$predictor_id
-  joint$n_tested_covariates <- 2L
-  joint$joint_f <- seq_len(nrow(joint)) / 10
-  joint$joint_p <- .5
-  joint$n <- 90L
-  joint$n_states <- 20L
-  joint$status <- "estimated"
-  joint$reason <- NA_character_
-
-  balance <- appendix_c7_historical_balance(list(joint_balance = joint))
-  balance_csv <- attr(balance, "csv_data")
-  expect_setequal(balance_csv$predictor_id, predictors)
-  expect_setequal(balance_csv$domain, domains)
-  expect_equal(nrow(balance_csv), length(predictors) * length(domains))
-
-  ids <- c(
-    "instrument_only", "region_fe_census_controls", "state_fe_census_controls",
-    "region_fe_expanded_controls", "state_fe_expanded_controls"
-  )
-  comparison <- data.frame(
-    sample = "preferred_geography", specification_id = ids, specification = ids,
-    excluded_instrument_f_1991 = 1:5, partial_r_squared_1991 = seq(.01, .05, .01), n_1991 = 89L,
-    excluded_instrument_f_2001 = 2:6, partial_r_squared_2001 = seq(.02, .06, .01), n_2001 = 89L,
-    status_1991 = "estimated", status_2001 = "estimated", stringsAsFactors = FALSE
-  )
-  first_stage <- appendix_c9_historical_first_stage(list(comparison = comparison))
-  expect_identical(attr(first_stage, "csv_data")$specification_id, ids)
 })

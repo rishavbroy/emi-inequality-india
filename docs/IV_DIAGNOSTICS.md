@@ -122,32 +122,11 @@ the remaining variation.
 The expanded control-intervention family distinguishes **semantic specifications** from **execution specifications**. Fifty-five named absorption questions are retained for scientific governance, but exact formula/sample aliases are fitted only once through the canonical IV-signature de-duplicator. The current registry therefore maps 55 scientific questions to 49 unique executions. `first_stage_absorption_aliases.csv` records the mapping, while `first_stage_absorption_semantic_summary.csv` joins every named question back to the corresponding fitted estimate, partial R-squared, excluded-instrument F statistic, and other execution diagnostics. This keeps the specification audit comprehensive without duplicating regressions or forcing reviewers to join artifacts manually.
 
 
-## Final Appendix C identification summaries
+## Final-paper identification summaries
 
-The final appendix does not expose the diagnostic directory one CSV at a time.
-C1--C6 summarize the existing registered identification evidence into six
-reader-facing questions: the full semantic absorption ladder; within-state
-residual geography; symmetric control-block interventions; Hindi-belt, child-
-population, state-deletion, and influence sensitivity; scalar alternative
-distances; and mapping/language-composition sensitivity. The output builders
-reshape canonical diagnostics only and contain no regression estimator.
+The final appendix does not expose the analysis directory one CSV at a time. Its publication layer consists of two summaries built from registered results. The relevance table compares the preferred and alternative linguistic measures across no-FE, region-FE, and state-FE specifications and adds the validated historical 1991 measure on its common support. The weak-inference table combines the two long-change 2SLS estimates with effective-F, Anderson--Rubin, and bounded-exclusion information.
 
-`augment_alternative_distance_measurement_diagnostics()` owns the linguistic
-measurement/composition augmentation needed by C6.
-`augment_alternative_distance_inference_diagnostics()` owns weak-IV outcomes,
-Anderson--Rubin, overidentification/FAS, and monotonicity. The compatibility
-wrapper composes the two for callers that genuinely need the complete forensic
-bundle. This separation prevents the strict publication graph from pulling in
-outcome-side weak-IV inference merely to draw a language-measurement table, while
-ensuring extended mode reuses rather than recomputes the final-paper measurement
-objects.
-
-C2 deliberately uses direct within-state demeaning for both linguistic distance
-and all-child EMI, then reports residuals in standard-deviation units. This is an
-exact descriptive transformation, not a new fitted model, and it matches the
-identification question posed by state absorption. The older poster residual maps
-use a six-region-plus-expanded-controls residualization and are therefore not
-substitutes for C2.
+`augment_alternative_distance_measurement_diagnostics()` and `augment_alternative_distance_inference_diagnostics()` still own the richer language-measurement and multi-instrument calculations. Extended mode persists those results for review. The paper-facing builder selects only the scientific quantities needed for the appendix argument and contains no regression estimator.
 
 ## Symmetric control evidence and bounded consumption robustness
 
@@ -336,43 +315,8 @@ forensics). This prevents the main paper from duplicating or silently selecting
 from the full diagnostic search space.
 
 
-### Final Appendix C10--C12 identification exhibits
+### Final IV appendix publication summaries
 
-Appendix C10 and C11 consume the registered `alternative_distance_first_stages`
-object directly. Because these are final-paper exhibits, the bounded inference
-augmentation (weak-IV outcomes, monotonicity, overidentification, and the
-falsification-adaptive-set calculations for the registered language-share vectors)
-is computed once in the core identification graph. Extended mode persists the same
-object; it does not recompute a parallel copy. C10 displays the preferred state-main
-monotonicity bins together with the distribution of estimable state-specific slopes.
-C11 reports only the three registered state-main five-share systems and keeps weak
-constituent first stages visible alongside the Sargan test and FAS.
+The final IV appendix no longer mirrors the full analytical inventory. It consumes two compact summaries. `appendix_iv_relevance_summary` compares the registered modern linguistic constructions under no geographic fixed effects, region fixed effects, and state fixed effects, and appends the validated 1991 historical comparison on its own common support. `appendix_iv_weak_inference` reports the two long-change 2SLS estimates together with Montiel Olea--Pflueger effective F, Anderson--Rubin confidence-set topology, and the registered exclusion-sensitivity threshold.
 
-Appendix C12 is built from the already-core `consumption_iv_dynamics` object. Reduced
-form and conventional 2SLS estimates are plotted on separate scales because their
-units differ. The companion CSV retains the Anderson--Rubin topology fields; those
-weak-IV-robust set characteristics take interpretive precedence over the conventional
-2SLS Wald intervals. No additional IV estimator is run by the appendix output layer.
-
-### Final Appendix C8/C13/C14 publication summaries
-
-Appendix C8 promotes only the strict Vanneman pretrend construction and validation used
-by the final heatmap. The exhibit reshapes the common historical-language-support joint
-tests for eventual EMI, Census-2001 linguistic distance, and the independent Helms--Lim
-1991 distance across the three adjacent pre-1991 decades and the registered demography,
-labor, and education domains. Parent-bridge and alternative-geography pretrend variants
-remain extended forensic checks.
-
-Appendix C13 consumes `consumption_robustness_evidence`, which reconciles the seven
-predeclared robustness families to the realized 408-model grid. Because the table is a
-strict publication artifact, the registered family estimations are core-owned once;
-extended mode persists their full family CSVs and the cross-family evidence grid rather
-than rerunning a parallel paper analysis. The table reports model counts, strong-first-
-stage counts, maximum effective F, family-adjusted reduced-form/Anderson--Rubin signals,
-and bounded AR-set counts without selecting a preferred model ex post.
-
-Appendix C14 consumes the existing bounded exclusion-sensitivity inversion for the four
-registered long-run HCES designs. It reports the exact-exclusion benchmark and the
-smallest direct-effect allowance needed for beta=0 to enter the 95% Anderson--Rubin set,
-both in outcome units and as a share of the observed reduced form. The output layer only
-reshapes the registered inversion; no additional IV or sensitivity model is estimated.
+The larger evidence families remain in their analytical modules. Mapping coverage, language omission, historical balance and pretrends, monotonicity, overidentification, falsification-adaptive sets, all registered consumption robustness families, and the full exclusion-sensitivity grid continue to be saved in extended mode. The appendix builders validate the cross-family conclusions they state but do not generate one paper display per analytical family. This prevents the final paper from turning the robustness inventory into a sequence of editorially numbered tables and figures while keeping the underlying evidence reproducible.

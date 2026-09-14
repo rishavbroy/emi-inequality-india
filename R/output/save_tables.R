@@ -1020,6 +1020,106 @@ appendix_migration_modelsummary_table <- function(table, name) {
   tex
 }
 
+
+appendix_iv_weak_inference_modelsummary_table <- function(table, name) {
+  need_pkg("modelsummary", "weak-IV appendix table rendering")
+  csv <- safe_df(attr(table, "csv_data", exact = TRUE))
+  if (!nrow(csv)) return(NULL)
+  required <- c(
+    "outcome", "estimate", "std.error", "effective_f", "ar_p_beta0",
+    "ar_95_components", "minimum_gamma_share_of_reduced_form_for_zero_95", "n"
+  )
+  missing <- setdiff(required, names(csv))
+  if (length(missing)) {
+    stop("Weak-IV appendix regression table is missing columns: ",
+         paste(missing, collapse = ", "), ".", call. = FALSE)
+  }
+
+  models <- lapply(seq_len(nrow(csv)), function(i) {
+    row <- csv[i, , drop = FALSE]
+    structure(
+      list(
+        tidy = data.frame(
+          term = "emi_exposure",
+          estimate = num(row$estimate[[1L]]),
+          std.error = num(row$std.error[[1L]]),
+          stringsAsFactors = FALSE
+        ),
+        glance = data.frame(
+          effective_f = num(row$effective_f[[1L]]),
+          ar_p_beta0 = num(row$ar_p_beta0[[1L]]),
+          ar_set = plain_chr(row$ar_95_components)[[1L]],
+          direct_effect_share = sprintf(
+            "%.1f%%",
+            100 * num(row$minimum_gamma_share_of_reduced_form_for_zero_95[[1L]])
+          ),
+          nobs = as.integer(row$n[[1L]]),
+          stringsAsFactors = FALSE
+        )
+      ),
+      class = "modelsummary_list"
+    )
+  })
+  names(models) <- plain_chr(csv$outcome)
+
+  as_text <- function(x) as.character(x)
+  gof_map <- list(
+    list(raw = "effective_f", clean = "MOP effective F", fmt = 2),
+    list(raw = "ar_p_beta0", clean = "AR p-value at zero", fmt = 3),
+    list(raw = "ar_set", clean = "AR 95% confidence set", fmt = as_text),
+    list(raw = "direct_effect_share", clean = "Direct effect needed to admit zero", fmt = as_text),
+    list(raw = "nobs", clean = "Observations", fmt = 0)
+  )
+
+  old_knit_to <- knitr::opts_knit$get("rmarkdown.pandoc.to")
+  old_opt <- getOption("modelsummary_format_numeric_latex")
+  old_stars_note <- getOption("modelsummary_stars_note")
+  on.exit(knitr::opts_knit$set(rmarkdown.pandoc.to = old_knit_to), add = TRUE)
+  on.exit(options(
+    modelsummary_format_numeric_latex = old_opt,
+    modelsummary_stars_note = old_stars_note
+  ), add = TRUE)
+  knitr::opts_knit$set(rmarkdown.pandoc.to = "latex")
+  options(modelsummary_format_numeric_latex = "plain", modelsummary_stars_note = FALSE)
+
+  tex <- suppress_modelsummary_latex_preamble_warning(modelsummary::modelsummary(
+    models = models,
+    coef_map = c("emi_exposure" = "EMI exposure"),
+    estimate = "{estimate}",
+    statistic = "({std.error})",
+    stars = NULL,
+    fmt = 3,
+    gof_map = gof_map,
+    title = table_caption(name),
+    output = "kableExtra",
+    longtable = FALSE,
+    escape = FALSE,
+    notes = NULL
+  ))
+  tex <- kableExtra::kable_styling(
+    tex,
+    latex_options = c("HOLD_position", "striped"),
+    position = "center",
+    full_width = FALSE,
+    font_size = 9
+  )
+  tex <- tex |>
+    kableExtra::column_spec(1, width = "5.3cm") |>
+    kableExtra::column_spec(2:3, width = "4.0cm")
+  note <- public_table_note(name)
+  if (!is.null(note)) {
+    tex <- kableExtra::footnote(
+      tex,
+      general = note,
+      general_title = "",
+      threeparttable = TRUE,
+      footnote_as_chunk = TRUE,
+      escape = FALSE
+    )
+  }
+  tex
+}
+
 paper_local_development_modelsummary_table <- function(table, name) {
   need_pkg("modelsummary", "local-development regression table rendering")
   csv <- safe_df(attr(table, "csv_data", exact = TRUE))
@@ -1326,6 +1426,10 @@ save_table_tex <- function(table, path, name, public = TRUE) {
     tex <- appendix_migration_modelsummary_table(table, name)
     if (!is.null(tex)) return(write_table_tex(tex, path, name))
   }
+  if (identical(name, "appendix_iv_weak_inference")) {
+    tex <- appendix_iv_weak_inference_modelsummary_table(table, name)
+    if (!is.null(tex)) return(write_table_tex(tex, path, name))
+  }
   if (name %in% c("fs_cons", "cons_iv") && !is.null(table_model) && !is_formatted_status_table(as.data.frame(table, check.names = FALSE))) {
     tex <- public_modelsummary_table(
       table_model,
@@ -1352,14 +1456,10 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   compact_result_table <- identical(name, "paper_identification_boundary")
   appendix_compact_table <- name %in% c(
     "appendix_a3_lineage_source_hierarchy",
-    "appendix_c1_full_absorption_ladder", "appendix_c3_control_block_absorption",
-    "appendix_c4_geographic_scale_sensitivity", "appendix_c5_alternative_scalar_distances",
-    "appendix_c6_mapping_composition_sensitivity", "appendix_c7_historical_balance",
-    "appendix_c9_historical_first_stage", "appendix_c11_multiple_instruments",
-    "appendix_c13_robustness_family_census", "appendix_c14_exclusion_sensitivity",
+    "appendix_iv_relevance_summary",
     "appendix_selection_missingness"
   )
-  appendix_long_table <- identical(name, "appendix_c1_full_absorption_ladder")
+  appendix_long_table <- FALSE
   if (!regression_table) {
     names(df_render) <- table_header_labels(df_render, name)
   }
@@ -1450,16 +1550,7 @@ save_table_tex <- function(table, path, name, public = TRUE) {
     widths <- switch(
       name,
       appendix_a3_lineage_source_hierarchy = c("4.1cm", "3.5cm", "7.0cm"),
-      appendix_c1_full_absorption_ladder = c("3.7cm", "1.0cm", "3.8cm", "1.1cm", "1.1cm", "1.0cm", "1.4cm", "0.9cm"),
-      appendix_c3_control_block_absorption = c("1.7cm", "3.7cm", "2.1cm", "2.6cm", "2.2cm"),
-      appendix_c4_geographic_scale_sensitivity = c("2.2cm", "3.0cm", "2.8cm", "1.6cm", "2.1cm", "2.2cm"),
-      appendix_c5_alternative_scalar_distances = c("5.0cm", "3.0cm", "1.5cm", "1.7cm", "1.2cm"),
-      appendix_c6_mapping_composition_sensitivity = c("3.0cm", "5.4cm", "2.2cm", "1.4cm", "1.7cm", "1.1cm"),
-      appendix_c7_historical_balance = c("2.8cm", "2.5cm", "1.5cm", "1.4cm", "1.4cm", "1.2cm"),
-      appendix_c9_historical_first_stage = c("5.0cm", "1.5cm", "1.9cm", "1.5cm", "1.9cm", "1.2cm"),
-      appendix_c11_multiple_instruments = c("3.7cm", "1.3cm", "1.5cm", "1.5cm", "1.3cm", "1.8cm", "1.7cm", "1.0cm"),
-      appendix_c13_robustness_family_census = c("3.5cm", "1.0cm", "1.5cm", "1.6cm", "1.5cm", "1.5cm", "1.5cm", "1.4cm"),
-      appendix_c14_exclusion_sensitivity = c("1.4cm", "1.5cm", "2.4cm", "1.7cm", "1.8cm", "2.2cm", "2.3cm"),
+      appendix_iv_relevance_summary = c("5.2cm", "1.7cm", "1.5cm", "1.5cm", "1.7cm", "1.0cm"),
       appendix_selection_missingness = c("5.4cm", "1.8cm", "1.8cm", "2.5cm")
     )
     tex <- apply_table_column_widths(tex, widths)

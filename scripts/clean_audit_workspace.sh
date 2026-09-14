@@ -52,6 +52,34 @@ rm -f \
   "${root%/}/outputs/tables/appendix/appendix_d1_migration.tex" \
   "${root%/}/outputs/tables/appendix/appendix_d2_migration_context.csv" \
   "${root%/}/outputs/tables/appendix/appendix_d2_migration_context.tex" \
+  "${root%/}/outputs/tables/appendix/appendix_c1_full_absorption_ladder.csv" \
+  "${root%/}/outputs/tables/appendix/appendix_c1_full_absorption_ladder.tex" \
+  "${root%/}/outputs/tables/appendix/appendix_c3_control_block_absorption.csv" \
+  "${root%/}/outputs/tables/appendix/appendix_c3_control_block_absorption.tex" \
+  "${root%/}/outputs/tables/appendix/appendix_c4_geographic_scale_sensitivity.csv" \
+  "${root%/}/outputs/tables/appendix/appendix_c4_geographic_scale_sensitivity.tex" \
+  "${root%/}/outputs/tables/appendix/appendix_c5_alternative_scalar_distances.csv" \
+  "${root%/}/outputs/tables/appendix/appendix_c5_alternative_scalar_distances.tex" \
+  "${root%/}/outputs/tables/appendix/appendix_c6_mapping_composition_sensitivity.csv" \
+  "${root%/}/outputs/tables/appendix/appendix_c6_mapping_composition_sensitivity.tex" \
+  "${root%/}/outputs/tables/appendix/appendix_c7_historical_balance.csv" \
+  "${root%/}/outputs/tables/appendix/appendix_c7_historical_balance.tex" \
+  "${root%/}/outputs/tables/appendix/appendix_c9_historical_first_stage.csv" \
+  "${root%/}/outputs/tables/appendix/appendix_c9_historical_first_stage.tex" \
+  "${root%/}/outputs/tables/appendix/appendix_c11_multiple_instruments.csv" \
+  "${root%/}/outputs/tables/appendix/appendix_c11_multiple_instruments.tex" \
+  "${root%/}/outputs/tables/appendix/appendix_c13_robustness_family_census.csv" \
+  "${root%/}/outputs/tables/appendix/appendix_c13_robustness_family_census.tex" \
+  "${root%/}/outputs/tables/appendix/appendix_c14_exclusion_sensitivity.csv" \
+  "${root%/}/outputs/tables/appendix/appendix_c14_exclusion_sensitivity.tex" \
+  "${root%/}/outputs/figures/appendix/appendix_c2_residual_geography.pdf" \
+  "${root%/}/outputs/figures/appendix/appendix_c2_residual_geography.png" \
+  "${root%/}/outputs/figures/appendix/appendix_c8_historical_pretrends.pdf" \
+  "${root%/}/outputs/figures/appendix/appendix_c8_historical_pretrends.png" \
+  "${root%/}/outputs/figures/appendix/appendix_c10_monotonicity.pdf" \
+  "${root%/}/outputs/figures/appendix/appendix_c10_monotonicity.png" \
+  "${root%/}/outputs/figures/appendix/appendix_c12_consumption_iv_dynamics.pdf" \
+  "${root%/}/outputs/figures/appendix/appendix_c12_consumption_iv_dynamics.png" \
   "${root%/}/outputs/tables/appendix/appendix_e1_selection_sample.csv" \
   "${root%/}/outputs/tables/appendix/appendix_e1_selection_sample.tex" \
   "${root%/}/outputs/tables/appendix/appendix_e4_missingness.csv" \

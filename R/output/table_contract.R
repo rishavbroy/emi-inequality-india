@@ -63,21 +63,22 @@ public_table_caption_text <- function(name) {
       "Linguistic Conditions and Selective Local Development.",
       "Sources: Census of India 2001 and 2011; Economic Census 2005 and 2013; NSS 66th Round; PLFS 2017-18."
     ),
-    paper_identification_boundary = "Identification Boundary: Linguistic Distance Does Not Isolate EMI",
+    paper_identification_boundary = paste(
+      "Identification Boundary: Linguistic Distance Does Not Isolate EMI.",
+      "Sources: Census of India 1991 and 2001; NSS 61st Round, 2004-05; NSS 64th Round, 2007-08; HCES 2022-23 and 2023-24."
+    ),
     appendix_a3_lineage_source_hierarchy = paste(
       "District-Lineage Sources and Roles.",
       "Sources: Census of India; Ministry of Panchayati Raj Local Government Directory; Kumar and Somanathan (2016); India State and District Evolution Database; India District Changes Tracker; Development Data Lab SHRUG; Deshpande, Khanna, and Walia concordances."
     ),
-    appendix_c1_full_absorption_ladder = "Full First-Stage Absorption Ladder",
-    appendix_c3_control_block_absorption = "Control-Block Absorption",
-    appendix_c4_geographic_scale_sensitivity = "Geographic and Scale Sensitivity",
-    appendix_c5_alternative_scalar_distances = "Alternative Linguistic-Distance First Stages",
-    appendix_c6_mapping_composition_sensitivity = "Mapping and Language-Composition Sensitivity",
-    appendix_c7_historical_balance = "Historical Balance Across Baseline Domains",
-    appendix_c9_historical_first_stage = "Historical First-Stage Comparison",
-    appendix_c11_multiple_instruments = "Multiple Instruments, Overidentification, and Falsification-Adaptive Sets",
-    appendix_c13_robustness_family_census = "Registered Consumption-IV Robustness Families",
-    appendix_c14_exclusion_sensitivity = "Sensitivity to Imperfect Exclusion",
+    appendix_iv_relevance_summary = paste(
+      "First-Stage Relevance Across Linguistic Measures.",
+      "Sources: Census of India 1991 and 2001; NSS 64th Round, 2007-08."
+    ),
+    appendix_iv_weak_inference = paste(
+      "Weak-IV-Robust Long-Run Inference.",
+      "Sources: Census of India 2001; NSS 61st Round, 2004-05; NSS 64th Round, 2007-08; HCES 2022-23 and 2023-24."
+    ),
     appendix_migration_summary = paste(
       "Linguistic Distance and Migration Composition.",
       "Source: Census of India 2011 D-02, D-03, and D-07 migration tables."
@@ -150,49 +151,15 @@ public_table_note <- function(name) {
     appendix_a3_lineage_source_hierarchy = paste(
       "Rows summarize source families rather than individual files. Detailed source IDs and adjudication ledgers remain available in the lineage CSV outputs."
     ),
-    appendix_c1_full_absorption_ladder = paste(
-      "Every declared semantic first-stage absorption specification is shown on the same complete-case district support.",
-      "Excluded-instrument F and partial R-squared are conventional first-stage diagnostics; this table does not substitute them for the separately reported MOP effective-F diagnostic."
+    appendix_iv_relevance_summary = paste(
+      "The first three columns report the state-clustered joint excluded-instrument F statistic under no geographic fixed effects, six-region fixed effects plus the main predetermined controls, and state fixed effects plus the same controls.",
+      "The final relevance column is the state-FE partial R-squared. The historical row uses its validated 1991 common support and is therefore not numerically pooled with the modern district sample.",
+      "These conventional first-stage statistics describe relevance only; they are not substituted for the Montiel Olea-Pflueger effective-F statistic used for weak-IV assessment."
     ),
-    appendix_c3_control_block_absorption = paste(
-      "Each row compares one registered Census-2001 control block entered alone with the main-control specification omitting that block, separately under six-region and state fixed effects.",
-      "The table asks whether one control family mechanically explains the within-state first-stage collapse."
-    ),
-    appendix_c4_geographic_scale_sensitivity = paste(
-      "The added-control rows compare the same common-support first stage before and after the Shastry Hindi-belt indicator or 2001 child-population control.",
-      "Leave-one-state-out and district-influence rows summarize the registered state-deletion and influence diagnostics from the state-FE expanded-control first stage.",
-      "Cook's distance is undefined for leverage-one observations; those saturated fixed-effect cells are reported in the row context and omitted only from the Cook's-distance maximum, while DFBETA retains every finite district."
-    ),
-    appendix_c5_alternative_scalar_distances = paste(
-      "All scalar linguistic-distance constructions are estimated on the common alternative-distance support under unadjusted, six-region-plus-controls, and state-plus-controls specifications.",
-      "The table is a relevance comparison, not evidence that the alternative measures satisfy exclusion."
-    ),
-    appendix_c6_mapping_composition_sensitivity = paste(
-      "Mapping-coverage thresholds, distance-4 leave-one-language-out checks, Shastry composition adjustments, adjudication bounds, and richer distance-share vectors are summarized without printing the full diagnostic grid.",
-      "The Kashmiri row reports its share of distance-4 speakers; the remaining rows report first-stage strength under the registered sensitivity specification."
-    ),
-    appendix_c7_historical_balance = paste(
-      "Joint tests use the preferred historical geography and compare eventual EMI with Census-2001 linguistic distance and the independent Helms-Lim 1991 distance across five predetermined baseline domains.",
-      "This is a historical-balance diagnostic, not evidence that any predictor is randomly assigned."
-    ),
-    appendix_c9_historical_first_stage = paste(
-      "The same validated historical district support is used for the 1991 and 2001 distance constructions within each specification.",
-      "The comparison asks whether historical reconstruction rescues within-state relevance; it is not pooled with the larger modern first-stage sample."
-    ),
-    appendix_c11_multiple_instruments = paste(
-      "Rows report the registered five-share language-vector specifications under state fixed effects and predetermined controls.",
-      "Sargan tests are shown alongside falsification-adaptive sets and constituent conditional first-stage strength.",
-      "A wide FAS containing zero or weak constituent instruments means richer language vectors do not repair identification even when the joint first stage is predictive."
-    ),
-    appendix_c13_robustness_family_census = paste(
-      "The seven rows exhaust the predeclared consumption-IV robustness families; the final row reconciles their model counts to the realized robustness grid.",
-      "Strong first stage compares each model's effective F with its registered critical value; RF and AR signals use family-adjusted p-values.",
-      "This table summarizes the robustness census and does not select a preferred specification from it."
-    ),
-    appendix_c14_exclusion_sensitivity = paste(
-      "Rows use the four registered long-run HCES exclusion-sensitivity designs under exact exclusion as the benchmark.",
-      "The minimum direct effect is the smallest bounded violation needed for beta=0 to enter the 95% Anderson-Rubin inversion; its scale is also reported as a share of the absolute reduced form.",
-      "A zero threshold means beta=0 is already admitted under exact exclusion. These are sensitivity diagnostics, not point estimates of a direct effect."
+    appendix_iv_weak_inference = paste(
+      "Columns report conventional 2SLS coefficients with state-clustered standard errors in parentheses. No significance stars are shown because weak-IV-robust inference takes precedence over conventional 2SLS t tests.",
+      "MOP effective F is the Montiel Olea-Pflueger weak-instrument statistic. AR denotes Anderson-Rubin inference; the reported 95% sets are the accepted values on the registered inversion grid and are disconnected across positive and negative values.",
+      "The direct-effect row reports the smallest bounded exclusion violation, as a share of the absolute reduced form, needed for beta=0 to enter the 95% AR set."
     ),
     appendix_migration_summary = paste(
       "Each column is a separate district regression using speaker-weighted linguistic distance from Hindi, predetermined Census-2001 controls, state fixed effects, and state-clustered standard errors.",

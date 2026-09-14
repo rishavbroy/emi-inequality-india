@@ -115,20 +115,12 @@ core_public_target_definitions <- function() {
     tar_target(
       appendix_identification_exhibits,
       make_appendix_identification_exhibits(
-        first_stage_absorption_diagnostics,
-        district_panel,
-        hindi_belt_first_stage_diagnostics,
-        child_population_first_stage_diagnostics,
         alternative_distance_first_stage_base,
-        alternative_distance_measurement_diagnostics,
+        historical_linguistic_first_stage_robustness,
         alternative_distance_first_stages,
         consumption_iv_dynamics,
-        historical_vanneman_pretrend_validation,
-        historical_baseline_balance_1991,
-        historical_linguistic_first_stage_robustness,
         consumption_robustness_evidence,
-        consumption_exclusion_sensitivity,
-        census_2001_control_registry
+        consumption_exclusion_sensitivity
       )
     ),
     tar_target(

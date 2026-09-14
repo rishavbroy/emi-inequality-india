@@ -1,9 +1,9 @@
-# Publication-required identification diagnostics.
+# Identification results required by the final paper.
 #
-# Keep this factory narrow: it owns identification evidence consumed by the main
-# paper or final Appendix C, including bounded geography/scale and linguistic-
-# measurement diagnostics. Weak-IV outcome grids, monotonicity, FAS, and other
-# forensic inference remain extended and augment this publication base.
+# Keep this factory narrow: it owns the alternative linguistic-distance first
+# stages used by the main identification table and the compact IV appendix.
+# Richer measurement and multi-instrument calculations augment the same
+# registered specifications so publication summaries do not duplicate models.
 core_identification_target_definitions <- function() {
   list(
     tar_target(
@@ -67,18 +67,6 @@ core_identification_target_definitions <- function() {
       augment_alternative_distance_inference_diagnostics(
         alternative_distance_measurement_diagnostics,
         alternative_distance_augmentation_panel
-      )
-    ),
-    tar_target(
-      hindi_belt_first_stage_diagnostics,
-      diagnose_hindi_belt_first_stage(
-        district_panel, control_registry = census_2001_control_registry
-      )
-    ),
-    tar_target(
-      child_population_first_stage_diagnostics,
-      diagnose_child_population_first_stage(
-        district_panel, control_registry = census_2001_control_registry
       )
     )
   )
