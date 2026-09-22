@@ -35,6 +35,9 @@ scan_crossrefs <- function(path) {
   text <- paste(lines, collapse = "\n")
 
   refs <- unique(extract_matches(text, "@(fig|tbl|sec|eq)-[A-Za-z0-9_-]+"))
+  latex_refs <- unique(extract_matches(text, "\\\\ref\\{(fig|tbl|sec|eq)-[A-Za-z0-9_-]+\\}"))
+  latex_refs <- sub("^\\\\ref\\{", "", latex_refs)
+  latex_refs <- sub("\\}$", "", latex_refs)
   # Quarto/Pandoc labels can appear either as a bare attribute,
   # `{#fig-example}`, or alongside other attributes,
   # `{#fig-example fig-pos="H" width="100%"}`. The strict public
@@ -47,8 +50,20 @@ scan_crossrefs <- function(path) {
   chunk_labels <- sub("^\\s*#\\|\\s*label:\\s*", "", chunk_label_lines)
   chunk_labels <- trimws(chunk_labels)
 
-  labels <- unique(c(brace_labels, chunk_labels))
-  refs_no_at <- sub("^@", "", refs)
+  table_tex_files <- if (dir.exists("outputs/tables")) {
+    list.files("outputs/tables", pattern = "\\.tex$", full.names = TRUE, recursive = TRUE)
+  } else {
+    character()
+  }
+  tex_labels <- unique(unlist(lapply(table_tex_files, function(tex_path) {
+    tex <- paste(readLines(tex_path, warn = FALSE), collapse = "\n")
+    hits <- extract_matches(tex, "\\\\label\\{(fig|tbl|sec|eq)-[A-Za-z0-9_-]+\\}")
+    hits <- sub("^\\\\label\\{", "", hits)
+    sub("\\}$", "", hits)
+  }), use.names = FALSE))
+
+  labels <- unique(c(brace_labels, chunk_labels, tex_labels))
+  refs_no_at <- unique(c(sub("^@", "", refs), latex_refs))
   unresolved <- refs_no_at[!refs_no_at %in% labels]
 
   data.frame(
