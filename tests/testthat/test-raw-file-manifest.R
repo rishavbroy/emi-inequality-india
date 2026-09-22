@@ -16,7 +16,7 @@ test_that("metadata CSV catalogs parse without field-loss warnings", {
 
 test_that("file_manifest has required columns", {
   manifest <- readr::read_csv(file.path(Sys.getenv("EMI_PROJECT_ROOT", "."), "data", "metadata", "file_manifest.csv"), show_col_types = FALSE)
-  expect_true(all(c("file_id", "source_id", "required_for_current_pipeline", "relative_path", "reader_function") %in% names(manifest)))
+  expect_true(all(c("file_id", "source_id", "required_for_current_pipeline", "relative_path", "expected_size_bytes", "sha256", "reader_function") %in% names(manifest)))
   expect_equal(anyDuplicated(manifest$file_id), 0L)
 })
 
@@ -182,10 +182,50 @@ test_that("raw-data preflight reports all required missing files once", {
   status <- validate_raw_files(build_paths(root))
 
   expect_error(
-    stop_if_required_files_missing(status),
+    stop_if_required_files_invalid(status),
     "Place these files at the listed paths",
     fixed = TRUE
   )
+})
+
+test_that("raw-data preflight rejects registered size and SHA-256 mismatches", {
+  root <- tempfile("emi-integrity-root-")
+  dir.create(file.path(root, "data", "metadata"), recursive = TRUE)
+  dir.create(file.path(root, "data", "raw"), recursive = TRUE)
+  source <- file.path(root, "data", "raw", "source.csv")
+  writeLines("registered bytes", source)
+  size <- as.numeric(file.info(source)$size)
+  hash <- sha256_file(source)
+
+  write_manifest <- function(expected_size, expected_hash) {
+    manifest <- data.frame(
+      file_id = "source", source_id = "toy_source",
+      required_for_current_pipeline = "true",
+      relative_path = "data/raw/source.csv",
+      expected_size_bytes = expected_size, sha256 = expected_hash,
+      file_type = "csv", reader_function = "reader", target_name = "target", notes = "",
+      stringsAsFactors = FALSE
+    )
+    utils::write.csv(
+      manifest, file.path(root, "data", "metadata", "file_manifest.csv"),
+      row.names = FALSE, na = ""
+    )
+  }
+
+  write_manifest(size + 1, hash)
+  expect_error(
+    stop_if_required_files_invalid(validate_raw_files(build_paths(root))),
+    "bytes; expected", fixed = TRUE
+  )
+
+  write_manifest(size, paste(rep("0", 64L), collapse = ""))
+  expect_error(
+    stop_if_required_files_invalid(validate_raw_files(build_paths(root))),
+    "SHA-256 mismatch", fixed = TRUE
+  )
+
+  write_manifest(size, hash)
+  expect_true(stop_if_required_files_invalid(validate_raw_files(build_paths(root))))
 })
 
 test_that("district boundary reader validates shapefile sidecars before reading shp", {
@@ -430,9 +470,26 @@ test_that("tracked metadata checksum inventory is complete and current", {
   expect_false(any(startsWith(checksums$path, "data/processed/")))
   expect_setequal(checksums$path, relative)
   expect_identical(
-    unname(tools::md5sum(tracked[match(checksums$path, relative)])),
-    checksums$md5
+    sha256_files(tracked[match(checksums$path, relative)]),
+    checksums$sha256
   )
+})
+
+test_that("registered SHA-256 source identities are well formed and Natural Earth is fully pinned", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
+  manifest <- read.csv(
+    file.path(root, "data", "metadata", "file_manifest.csv"),
+    stringsAsFactors = FALSE, na.strings = c("", "NA")
+  )
+  pinned <- !is.na(manifest$sha256) & nzchar(manifest$sha256)
+  expect_true(all(is_sha256(manifest$sha256[pinned])))
+
+  natural_earth <- manifest[manifest$source_id == "natural_earth_admin0_10m", , drop = FALSE]
+  expect_equal(nrow(natural_earth), 15L)
+  expect_true(all(tolower(natural_earth$required_for_current_pipeline) == "true"))
+  expect_true(all(is.finite(as.numeric(natural_earth$expected_size_bytes))))
+  expect_true(all(is_sha256(natural_earth$sha256)))
+  expect_setequal(natural_earth$file_type, c("shp", "dbf", "shx", "prj", "cpg"))
 })
 
 test_that("Glottolog 5.3 source bundle is versioned and complete", {
@@ -539,7 +596,7 @@ test_that("1991 Atlas state and PCA review inputs have explicit source contracts
     , drop = FALSE
   ]
   expect_equal(nrow(accepted), 1L)
-  expect_true(nzchar(accepted$md5[[1L]]))
+  expect_true(is_sha256(accepted$sha256[[1L]]))
 
   cell_reviews <- readr::read_csv(
     file.path(root, "data", "metadata", "language_atlas_1991_cell_reviews.csv"),

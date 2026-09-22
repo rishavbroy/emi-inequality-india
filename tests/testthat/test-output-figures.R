@@ -534,7 +534,7 @@ test_that("Natural Earth file inputs retain complete shapefile bundles without r
   expect_identical(basename(unname(layers)), paste0(unname(spec), ".shp"))
 
   tracked <- natural_earth_map_reference_paths()
-  expected_extensions <- c("shp", "dbf", "shx", "prj")
+  expected_extensions <- c("shp", "dbf", "shx", "prj", "cpg")
   expect_identical(length(tracked), length(spec) * length(expected_extensions))
   for (stem in unname(spec)) {
     bundle <- tracked[startsWith(basename(tracked), paste0(stem, "."))]
@@ -565,6 +565,34 @@ test_that("Natural Earth reference clips only display geometry to de facto India
     as.numeric(sf::st_area(sf::st_transform(clipped, 3857))),
     as.numeric(sf::st_area(sf::st_transform(district, 3857)))
   )
+})
+
+test_that("Natural Earth dispute overlays select India-related claims by attributes", {
+  areas <- data.frame(
+    BRK_A3 = c("B07", "B75", "B45"),
+    NOTE_BRK = c(
+      "Admin. by China; Claimed by India",
+      "Admin. by Bhutan; Claimed by China",
+      "Claimed by Pakistan and India"
+    ),
+    stringsAsFactors = FALSE
+  )
+  selected_areas <- natural_earth_india_disputed_areas(areas)
+  expect_setequal(selected_areas$BRK_A3, c("B07", "B45"))
+
+  lines <- data.frame(
+    FEATURECLA = rep("Claim boundary", 4),
+    BRK_A3 = c("B07", "B75", NA, "other"),
+    ADM0_A3_L = c("CHN", "BTN", "IND", "NPL"),
+    ADM0_A3_R = c("CHN", "BTN", "IND", "NPL"),
+    SOV_A3_L = c("CH1", "BTN", "IND", "NPL"),
+    SOV_A3_R = c("CH1", "BTN", "IND", "NPL"),
+    stringsAsFactors = FALSE
+  )
+  selected_lines <- natural_earth_india_disputed_lines(lines, selected_areas)
+  expect_equal(nrow(selected_lines), 2L)
+  expect_true("B07" %in% selected_lines$BRK_A3)
+  expect_true(any(is.na(selected_lines$BRK_A3)))
 })
 
 test_that("paper consumption level map uses the positive half of the change palette", {

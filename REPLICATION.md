@@ -76,7 +76,7 @@ The only public district data products intended to be tracked at this stage are:
 - [`data/metadata/district_harmonization_crosswalk.csv`](data/metadata/district_harmonization_crosswalk.csv), the single tracked district harmonization authority
 - [`data/processed/district_panel_emi_consumption_2001_2007_2017_2020.csv`](data/processed/district_panel_emi_consumption_2001_2007_2017_2020.csv)
 
-Checksums for tracked metadata CSV/TSV files are recorded in [`data/metadata/checksums.csv`](data/metadata/checksums.csv). Generated processed outputs are validated by the pipeline and output-contract tests rather than pinned to a pre-build checksum. Refresh them with:
+SHA-256 digests for tracked metadata CSV/TSV files are recorded in [`data/metadata/checksums.csv`](data/metadata/checksums.csv). `data/metadata/file_manifest.csv` also supports SHA-256 identities for stable raw inputs; the source preflight enforces registered byte sizes and hashes before readers run. Hashes are left blank when the author-used bytes have not yet been verified. Maintainers can populate or refresh one or more verified source families with `Rscript scripts/update_file_manifest_hashes.R SOURCE_ID [SOURCE_ID ...]`, then refresh the metadata digest registry. Generated processed outputs are validated by the pipeline and output checks rather than pinned to a pre-build digest. Refresh metadata digests with:
 
 ```bash
 Rscript scripts/update_checksums.R
@@ -86,7 +86,7 @@ Rscript scripts/update_checksums.R
 
 The full build begins with `make prepare-data`, which downloads missing Census workbooks covered by the tracked acquisition manifests. Sources that cannot be redistributed or downloaded automatically must still be supplied under the paths in [`data/metadata/file_manifest.csv`](data/metadata/file_manifest.csv). A missing local source should therefore fail during source validation with the exact required path rather than later inside a reader.
 
-`make prepare-data` also downloads the Natural Earth 1:10m admin-0 country, disputed-area, and disputed-boundary themes used only for manuscript cartography.
+`make prepare-data` also downloads the Natural Earth 1:10m admin-0 country, disputed-area, and disputed-boundary themes used only for manuscript cartography. The required shapefile components are registered with exact byte sizes and SHA-256 digests, so a changed upstream release is surfaced instead of silently changing the paper's boundary rendering.
 
 The tracked files under `data/processed/` are useful replication exports, but they do not yet replace every raw source required by the current paper. A raw-data-less clone cannot presently reproduce every estimate from processed data alone. The longer-term replication design is to distinguish analysis replication from distributed processed data from full reconstruction using original source files.
 

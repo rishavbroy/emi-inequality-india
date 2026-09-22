@@ -42,22 +42,72 @@ missing_data_message <- function(rows, label = NULL) {
   )
 }
 
+source_integrity_message <- function(rows) {
+  bad_size <- rows$exists & !rows$size_matches
+  bad_hash <- rows$exists & !rows$sha256_matches
+  lines <- character()
+  if (any(bad_size)) {
+    lines <- c(lines, paste0(
+      "  - ", rows$relative_path[bad_size],
+      " (", rows$size_bytes[bad_size], " bytes; expected ",
+      rows$expected_size_bytes[bad_size], ")"
+    ))
+  }
+  if (any(bad_hash)) {
+    lines <- c(lines, paste0(
+      "  - ", rows$relative_path[bad_hash], " (SHA-256 mismatch)"
+    ))
+  }
+  paste0(
+    "Raw-source integrity check failed.\n",
+    "The following file(s) differ from data/metadata/file_manifest.csv:\n",
+    paste(unique(lines), collapse = "\n"),
+    "\nReacquire the registered source bytes or intentionally update the manifest."
+  )
+}
+
+validate_manifest_rows <- function(rows) {
+  if (!"expected_size_bytes" %in% names(rows)) rows$expected_size_bytes <- NA_real_
+  if (!"sha256" %in% names(rows)) rows$sha256 <- NA_character_
+
+  rows$expected_size_bytes <- suppressWarnings(as.numeric(rows$expected_size_bytes))
+  rows$sha256 <- normalize_sha256(rows$sha256)
+  malformed_hash <- !is.na(rows$sha256) & !is_sha256(rows$sha256)
+  if (any(malformed_hash)) {
+    stop(
+      "file_manifest.csv contains malformed SHA-256 value(s) for: ",
+      paste(rows$relative_path[malformed_hash], collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  is_regular_file <- rows$exists & !dir.exists(rows$absolute_path)
+  rows$size_bytes <- ifelse(is_regular_file, file.info(rows$absolute_path)$size, NA_real_)
+  rows$size_matches <- is.na(rows$expected_size_bytes) |
+    !is_regular_file |
+    rows$expected_size_bytes == rows$size_bytes
+
+  should_hash <- is_regular_file & !is.na(rows$sha256)
+  rows$actual_sha256 <- NA_character_
+  if (any(should_hash)) {
+    rows$actual_sha256[should_hash] <- sha256_files(rows$absolute_path[should_hash])
+  }
+  rows$sha256_matches <- is.na(rows$sha256) |
+    !is_regular_file |
+    rows$sha256 == rows$actual_sha256
+  rows
+}
+
 #' validate raw files
 #'
-#' @return Data frame with manifest metadata, absolute paths, existence, and size checks.
+#' @return Data frame with manifest metadata, absolute paths, existence, size, and SHA-256 checks.
 validate_raw_files <- function(paths = build_paths()) {
-  manifest <- manifest_rows(paths)
-  manifest$expected_size_bytes <- suppressWarnings(as.numeric(manifest$expected_size_bytes))
-  manifest$size_bytes <- ifelse(manifest$exists, file.info(manifest$absolute_path)$size, NA_real_)
-  manifest$size_matches <- is.na(manifest$expected_size_bytes) |
-    is.na(manifest$size_bytes) |
-    manifest$expected_size_bytes == manifest$size_bytes
-  manifest
+  validate_manifest_rows(manifest_rows(paths))
 }
 
 #' require manifest files before reading raw data
 #'
-#' @return Data frame of matching manifest rows, invisibly if all required files exist.
+#' @return Data frame of matching manifest rows, invisibly if all required files are valid.
 require_manifest_files <- function(
   paths, source_id = NULL, target_name = NULL, required_only = TRUE
 ) {
@@ -65,16 +115,27 @@ require_manifest_files <- function(
     paths, source_id = source_id, target_name = target_name, required_only = required_only
   )
   if (!nrow(rows)) stop("No matching rows in file_manifest.csv.", call. = FALSE)
+  rows <- validate_manifest_rows(rows)
   if (any(!rows$exists)) stop(missing_data_message(rows, source_id %||% target_name), call. = FALSE)
+  if (any(!rows$size_matches | !rows$sha256_matches)) {
+    stop(source_integrity_message(rows), call. = FALSE)
+  }
   rows
 }
 
-#' stop if required files missing
+#' stop if required files are missing or differ from pinned source identity
 #'
-#' @return Invisible TRUE when all active required files exist.
-stop_if_required_files_missing <- function(manifest_status) {
+#' @return Invisible TRUE when all active required files exist and pass registered checks.
+stop_if_required_files_invalid <- function(manifest_status) {
   required <- tolower(as.character(manifest_status$required_for_current_pipeline)) == "true"
   missing <- manifest_status[required & !manifest_status$exists, , drop = FALSE]
   if (nrow(missing)) stop(missing_data_message(missing), call. = FALSE)
+
+  invalid <- manifest_status[
+    required & manifest_status$exists &
+      (!manifest_status$size_matches | !manifest_status$sha256_matches),
+    , drop = FALSE
+  ]
+  if (nrow(invalid)) stop(source_integrity_message(invalid), call. = FALSE)
   invisible(TRUE)
 }

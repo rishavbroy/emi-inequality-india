@@ -531,4 +531,5 @@ test_that("Natural Earth downloader pins the three display boundary themes", {
   expect_match(script, "ne_10m_admin_0_disputed_areas", fixed = TRUE)
   expect_match(script, "ne_10m_admin_0_boundary_lines_disputed_areas", fixed = TRUE)
   expect_match(script, "naturalearth.s3.amazonaws.com/10m_cultural", fixed = TRUE)
+  expect_match(script, "shp dbf shx prj cpg", fixed = TRUE)
 })

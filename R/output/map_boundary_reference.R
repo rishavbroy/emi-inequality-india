@@ -13,7 +13,7 @@ natural_earth_map_reference_spec <- function() {
 natural_earth_map_reference_paths <- function(paths = build_paths()) {
   base <- path_project(paths, "data/raw/natural-earth/10m")
   stems <- unname(natural_earth_map_reference_spec())
-  extensions <- c("shp", "dbf", "shx", "prj")
+  extensions <- c("shp", "dbf", "shx", "prj", "cpg")
   as.vector(outer(
     stems,
     extensions,
@@ -60,13 +60,55 @@ natural_earth_india_row <- function(countries) {
   out
 }
 
-near_india_reference_features <- function(x, india, distance_m = 500000) {
+natural_earth_india_disputed_areas <- function(x) {
   if (!nrow(x)) return(x)
-  projected <- 3857
-  india_buffer <- sf::st_buffer(sf::st_transform(india, projected), dist = distance_m)
-  buffer_native <- sf::st_transform(india_buffer, sf::st_crs(x))
-  hits <- lengths(sf::st_intersects(x, buffer_native)) > 0L
-  x[hits, , drop = FALSE]
+  required <- c("NOTE_BRK", "BRK_A3")
+  missing <- setdiff(required, names(x))
+  if (length(missing)) {
+    stop(
+      "Natural Earth disputed-area layer lacks field(s): ",
+      paste(missing, collapse = ", "), ".",
+      call. = FALSE
+    )
+  }
+  note <- as.character(x$NOTE_BRK)
+  x[!is.na(note) & grepl("India", note, ignore.case = TRUE), , drop = FALSE]
+}
+
+natural_earth_india_disputed_lines <- function(x, disputed_areas) {
+  if (!nrow(x)) return(x)
+  codes <- character()
+  if ("BRK_A3" %in% names(disputed_areas)) {
+    codes <- unique(trimws(as.character(disputed_areas$BRK_A3)))
+    codes <- codes[!is.na(codes) & nzchar(codes) & codes != "-99"]
+  }
+
+  by_code <- rep(FALSE, nrow(x))
+  if (length(codes) && "BRK_A3" %in% names(x)) {
+    by_code <- trimws(as.character(x$BRK_A3)) %in% codes
+  }
+
+  required <- c("BRK_A3", "FEATURECLA")
+  missing <- setdiff(required, names(x))
+  actor_fields <- intersect(
+    c("ADM0_A3_L", "ADM0_A3_R", "SOV_A3_L", "SOV_A3_R"),
+    names(x)
+  )
+  if (length(missing) || !length(actor_fields)) {
+    missing <- c(missing, if (!length(actor_fields)) "India actor fields" else character())
+    stop(
+      "Natural Earth disputed-line layer lacks field(s): ",
+      paste(missing, collapse = ", "), ".",
+      call. = FALSE
+    )
+  }
+  by_actor <- rep(FALSE, nrow(x))
+  for (field in actor_fields) {
+    by_actor <- by_actor | trimws(as.character(x[[field]])) == "IND"
+  }
+  by_actor <- by_actor & tolower(trimws(as.character(x$FEATURECLA))) == "claim boundary"
+
+  x[by_code | by_actor, , drop = FALSE]
 }
 
 read_natural_earth_map_reference <- function(files) {
@@ -85,8 +127,8 @@ read_natural_earth_map_reference <- function(files) {
   disputed_areas <- sf::st_read(layers[["disputed_areas"]], quiet = TRUE, stringsAsFactors = FALSE)
   disputed_lines <- sf::st_read(layers[["disputed_lines"]], quiet = TRUE, stringsAsFactors = FALSE)
   india <- natural_earth_india_row(countries)
-  disputed_areas <- near_india_reference_features(disputed_areas, india)
-  disputed_lines <- near_india_reference_features(disputed_lines, india)
+  disputed_areas <- natural_earth_india_disputed_areas(disputed_areas)
+  disputed_lines <- natural_earth_india_disputed_lines(disputed_lines, disputed_areas)
   list(
     india = sf::st_make_valid(india),
     disputed_areas = sf::st_make_valid(disputed_areas),

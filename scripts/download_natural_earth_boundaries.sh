@@ -27,7 +27,7 @@ base_url="https://naturalearth.s3.amazonaws.com/10m_cultural"
 downloaded=0
 skipped=0
 for name in "${names[@]}"; do
-  if [[ -s "$base/${name}.shp" && -s "$base/${name}.dbf" && -s "$base/${name}.shx" && -s "$base/${name}.prj" ]]; then
+  if [[ -s "$base/${name}.shp" && -s "$base/${name}.dbf" && -s "$base/${name}.shx" && -s "$base/${name}.prj" && -s "$base/${name}.cpg" ]]; then
     skipped=$((skipped + 1))
     continue
   fi
@@ -40,7 +40,7 @@ for name in "${names[@]}"; do
   mv "$part" "$archive"
   unzip -oq "$archive" -d "$base"
   rm -f "$archive"
-  for ext in shp dbf shx prj; do
+  for ext in shp dbf shx prj cpg; do
     if [[ ! -s "$base/${name}.${ext}" ]]; then
       printf 'Natural Earth archive did not contain %s.%s\n' "$name" "$ext" >&2
       exit 1

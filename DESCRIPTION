@@ -41,6 +41,7 @@ Imports:
     XML,
     xml2,
     data.table,
+    digest,
     car,
     knitr
 Suggests:

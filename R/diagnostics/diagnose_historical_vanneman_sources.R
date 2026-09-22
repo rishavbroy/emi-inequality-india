@@ -22,7 +22,7 @@ vanneman_historical_paths <- function(paths = build_paths()) {
 read_vanneman_archive_checksums <- function(path) {
   if (!file.exists(path)) stop("Missing Vanneman archive checksum registry: ", path, call. = FALSE)
   x <- read.csv(path, stringsAsFactors = FALSE)
-  required <- c("relative_path", "size_bytes", "md5", "sha256", "archive_snapshot")
+  required <- c("relative_path", "size_bytes", "sha256", "archive_snapshot")
   missing <- setdiff(required, names(x))
   if (length(missing)) {
     stop("Vanneman archive checksum registry lacks columns: ", paste(missing, collapse = ", "), call. = FALSE)
@@ -35,8 +35,8 @@ vanneman_archive_file_verified <- function(path, relative_path, checksums) {
   row <- checksums[checksums$relative_path == relative_path, , drop = FALSE]
   if (nrow(row) != 1L) return(FALSE)
   size_ok <- isTRUE(as.numeric(file.info(path)$size) == as.numeric(row$size_bytes[[1L]]))
-  md5_ok <- identical(unname(tools::md5sum(path)), as.character(row$md5[[1L]]))
-  size_ok && md5_ok
+  sha256_ok <- identical(sha256_file(path), normalize_sha256(row$sha256[[1L]]))
+  size_ok && sha256_ok
 }
 
 vanneman_identifier_rows <- function(path) {

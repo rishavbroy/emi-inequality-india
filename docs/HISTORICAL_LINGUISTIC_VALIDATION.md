@@ -665,7 +665,7 @@ Wayback snapshot (`vanneman.umd.edu/districts/files/index.html`, 2013-07-22). Th
 archived compressed files are byte-for-byte identical to the previously downloaded
 local copies. Production QA therefore treats `data_archived/` and
 `sas_commands_archived/` as the canonical provenance pair and verifies their recorded
-archive sizes and MD5 checksums before declaring the parser contract eligible. The
+archive sizes and SHA-256 digests before declaring the parser contract eligible. The
 duplicate top-level copies are not part of the production contract.
 
 The remaining substantive integration task is now the geography contract. Vanneman's

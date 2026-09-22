@@ -27,8 +27,7 @@ vanneman_test_write_archive_checksums <- function(project_root, source_root) {
   registry <- data.frame(
     relative_path = rel,
     size_bytes = as.numeric(file.info(paths)$size),
-    md5 = unname(tools::md5sum(paths)),
-    sha256 = rep("fixture", length(rel)),
+    sha256 = sha256_files(paths),
     archive_snapshot = rep("fixture", length(rel)),
     stringsAsFactors = FALSE
   )

@@ -89,7 +89,7 @@ core_pipeline_targets <- c(
     read_census_2001_control_registry(census_2001_control_registry_file)
   ),
   tar_target(raw_manifest, validate_raw_files(paths)),
-  tar_target(raw_data_preflight, stop_if_required_files_missing(raw_manifest))
+  tar_target(raw_data_preflight, stop_if_required_files_invalid(raw_manifest))
   ),
   core_consumption_target_definitions(),
   core_measurement_target_definitions(),
