@@ -1,4 +1,4 @@
-.PHONY: all prepare-data init-renv restore snapshot download-census-tables pipeline pipeline-fast diagnostics public-diagnostics extended-diagnostics lineage-geometry-build lineage-geometry benchmarking rerun-extended-diagnostics rerun-benchmarks rerun-analysis analysis analysis-fast render-analysis qmd-renders clean clean-all clean-analysis clean-public-diagnostics clean-extended-diagnostics clean-benchmarking paper paper-new poster samples check-report-values check-report-values-final audit-crossrefs audit-crossrefs-final audit-outputs-final output-manifest check-public check-public-fast check-public-final check-public-final-no-samples check-public-text check-rendered-text check-sample-specs test tests test-affected test-inventory clean-targets clean-renders clean-renders-core clean-renders-no-samples
+.PHONY: all prepare-data init-renv restore snapshot download-census-tables download-natural-earth-boundaries pipeline pipeline-fast diagnostics public-diagnostics extended-diagnostics lineage-geometry-build lineage-geometry benchmarking rerun-extended-diagnostics rerun-benchmarks rerun-analysis analysis analysis-fast render-analysis qmd-renders clean clean-all clean-analysis clean-public-diagnostics clean-extended-diagnostics clean-benchmarking paper paper-new poster samples check-report-values check-report-values-final audit-crossrefs audit-crossrefs-final audit-outputs-final output-manifest check-public check-public-fast check-public-final check-public-final-no-samples check-public-text check-rendered-text check-sample-specs test tests test-affected test-inventory clean-targets clean-renders clean-renders-core clean-renders-no-samples
 
 TEXCACHE_ROOT ?= /private/tmp/emi-inequality-india-texcache
 QUARTO_CACHE_ROOT ?= /private/tmp/emi-inequality-india-quarto-cache
@@ -26,7 +26,7 @@ $(QUARTO_CACHE_DIRS):
 all:
 	bash scripts/run_full_build.sh
 
-prepare-data: download-census-tables
+prepare-data: download-census-tables download-natural-earth-boundaries
 
 init-renv: restore
 	@echo "init-renv is an alias for restore; renv.lock is not modified."
@@ -39,6 +39,10 @@ snapshot:
 
 download-census-tables:
 	bash scripts/download_census_tables.sh
+
+
+download-natural-earth-boundaries:
+	bash scripts/download_natural_earth_boundaries.sh
 
 
 pipeline: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)

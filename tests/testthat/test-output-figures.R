@@ -519,3 +519,58 @@ schooling_access_figure_fixture <- function() {
   cross$mean_district_gap_percentage_points <- -seq_len(nrow(cross)) / 2
   list(access_summary = access, access_crosscuts = cross)
 }
+
+test_that("Natural Earth reference clips only display geometry to de facto India", {
+  skip_if_not_installed("sf")
+  district <- sf::st_sf(
+    target_unit_2001 = "d1",
+    value = 1,
+    geometry = sf::st_sfc(sf::st_polygon(list(rbind(
+      c(0, 0), c(2, 0), c(2, 1), c(0, 1), c(0, 0)
+    ))), crs = 4326)
+  )
+  india <- sf::st_sf(
+    ADM0_A3 = "IND",
+    geometry = sf::st_sfc(sf::st_polygon(list(rbind(
+      c(0, 0), c(1, 0), c(1, 1), c(0, 1), c(0, 0)
+    ))), crs = 4326)
+  )
+
+  clipped <- clip_public_map_to_de_facto_india(district, list(india = india))
+
+  expect_identical(clipped$target_unit_2001, "d1")
+  expect_lt(
+    as.numeric(sf::st_area(sf::st_transform(clipped, 3857))),
+    as.numeric(sf::st_area(sf::st_transform(district, 3857)))
+  )
+})
+
+test_that("paper consumption level map uses the positive half of the change palette", {
+  level_colors <- map_palette_values("poster.consumption.positive", 3L)
+  change_colors <- map_palette_values("poster.diverging.emi", 5L)
+
+  expect_identical(level_colors, change_colors[3:5])
+  expect_identical(
+    public_map_style("paper_real_mean_mpce_2022_23")$palette,
+    "poster.consumption.positive"
+  )
+})
+
+test_that("Natural Earth India selection is based on stable country identifiers", {
+  skip_if_not_installed("sf")
+  polygons <- sf::st_sfc(
+    sf::st_polygon(list(rbind(c(0, 0), c(1, 0), c(1, 1), c(0, 1), c(0, 0)))),
+    sf::st_polygon(list(rbind(c(2, 0), c(3, 0), c(3, 1), c(2, 1), c(2, 0)))),
+    crs = 4326
+  )
+  countries <- sf::st_sf(
+    ADM0_A3 = c("IND", "PAK"),
+    ADMIN = c("India", "Pakistan"),
+    geometry = polygons
+  )
+
+  india <- natural_earth_india_row(countries)
+
+  expect_equal(nrow(india), 1L)
+  expect_identical(india$ADM0_A3, "IND")
+})

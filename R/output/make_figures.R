@@ -142,7 +142,7 @@ add_paper_welfare_map_variables <- function(district_panel, consumption_district
 #' @return A named list of figure specifications consumed by save_figures().
 make_figures <- function(
     district_panel, raw_ilo_figures, cfg, iv_models = NULL,
-    map_geometry = NULL, consumption_iv_dynamics = NULL, schooling_access = NULL,
+    map_geometry = NULL, map_boundary_reference = NULL, consumption_iv_dynamics = NULL, schooling_access = NULL,
     consumption_district_welfare = NULL) {
   district_panel <- add_poster_residual_variables(district_panel)
   district_panel <- add_paper_welfare_map_variables(district_panel, consumption_district_welfare)
@@ -326,6 +326,7 @@ make_figures <- function(
   }
   attr(out, "district_panel") <- district_panel
   attr(out, "map_geometry") <- map_geometry
+  attr(out, "map_boundary_reference") <- map_boundary_reference
   attr(out, "iv_models") <- iv_models
   attr(out, "consumption_iv_dynamics") <- consumption_iv_dynamics
   attr(out, "schooling_access") <- schooling_access

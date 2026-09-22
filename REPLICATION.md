@@ -86,6 +86,8 @@ Rscript scripts/update_checksums.R
 
 The full build begins with `make prepare-data`, which downloads missing Census workbooks covered by the tracked acquisition manifests. Sources that cannot be redistributed or downloaded automatically must still be supplied under the paths in [`data/metadata/file_manifest.csv`](data/metadata/file_manifest.csv). A missing local source should therefore fail during source validation with the exact required path rather than later inside a reader.
 
+`make prepare-data` also downloads the Natural Earth 1:10m admin-0 country, disputed-area, and disputed-boundary themes used only for manuscript cartography.
+
 The tracked files under `data/processed/` are useful replication exports, but they do not yet replace every raw source required by the current paper. A raw-data-less clone cannot presently reproduce every estimate from processed data alone. The longer-term replication design is to distinguish analysis replication from distributed processed data from full reconstruction using original source files.
 
 ## Commands

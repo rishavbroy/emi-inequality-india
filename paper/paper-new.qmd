@@ -168,7 +168,7 @@ The raw district measure has a pronounced geographic pattern, but the preferred 
 
 ![Residual linguistic distance: state fixed effects + predetermined Census-2001 controls.](../outputs/figures/main/map_residual_linguistic_distance_state_main.pdf)
 
-District linguistic distance before and after the preferred state-level adjustment. Sources: Census of India 2001 language and district characteristics [@officeoftheregistrargeneralandcensuscommissionerofindiaCensusIndia20012001; @asherDevelopmentResearch2021].
+District linguistic distance before and after the preferred state-level adjustment. Sources: Census of India 2001 language and district characteristics [@officeoftheregistrargeneralandcensuscommissionerofindiaCensusIndia20012001; @asherDevelopmentResearch2021]. `r paper_map_boundary_note()` Boundary source: Natural Earth 1:10m admin-0 countries and disputed areas [@naturalearthAdmin0].
 :::
 
 I call these conditions *inherited* because the measured district pattern changes little across the decade for which I can reconstruct it independently. Among the 91 Census-2001 districts meeting the historical reconstruction requirements in both years, the correlation between the 1991 and 2001 speaker-weighted distance measures is 0.898; weighting districts by their 1991 populations raises the correlation to 0.928. The share of speakers whose mother tongues are at least three Shastry degrees from Hindi is similarly persistent, with a population-weighted correlation of 0.919. @fig-linguistic-persistence shows the district-level comparison. This persistence is consistent with Shastry's finding that district linguistic distance is highly correlated across earlier Census years [@shastry2012a].
@@ -234,7 +234,7 @@ DISE provides a complementary school-reported perspective. Its district aggregat
 
 ![Private-school EMI exposure among all children.](../outputs/figures/main/map_private_emi_exposure.pdf)
 
-Geography of English-medium instruction on the common Census-2001 district geography. All panels use a common percentage scale. Source: NSS 64th Round, 2007--08 [@nationalsamplesurveyoffice2008].
+Geography of English-medium instruction on the common Census-2001 district geography. All panels use a common percentage scale. Source: NSS 64th Round, 2007--08 [@nationalsamplesurveyoffice2008]. `r paper_map_boundary_note()` Boundary source: Natural Earth 1:10m admin-0 countries and disputed areas [@naturalearthAdmin0].
 :::
 
 ## EMI Access as a Function of Institutional Factors {#sec-schooling-market}
@@ -282,7 +282,7 @@ The later welfare outcomes also vary substantially across districts. @fig-welfar
 
 ![Log change in real consumption per person, 2004--05 to 2022--23.](../outputs/figures/main/map_paper_real_consumption_change.pdf)
 
-Later district consumption and long-run consumption growth on common preferred support. Real consumption is expressed in 2011--12 rupees. Sources: NSS 61st Round, 2004--05, and HCES 2022--23 [@nssHouseholdConsumerExpenditure2004; @nsoHCES2022].
+Later district consumption and long-run consumption growth on common preferred support. Real consumption is expressed in 2011--12 rupees. Gray districts fail the preferred support rule in at least one of the two rounds. Sources: NSS 61st Round, 2004--05, and HCES 2022--23 [@nssHouseholdConsumerExpenditure2004; @nsoHCES2022]. `r paper_map_boundary_note()` Boundary source: Natural Earth 1:10m admin-0 countries and disputed areas [@naturalearthAdmin0].
 :::
 
 Table \ref{tbl-paper-economic-conversion} compares five schooling margins on common district support. Each entry comes from a separate district regression with state fixed effects and predetermined Census-2001 controls; the table assembles those regressions so that the schooling margins can be compared on the same scale. In the 2022--23 ANCOVA specification, a 10 percentage-point increase in enrollment is associated with only about 0.7% higher real mean consumption and is imprecisely estimated. The corresponding associations are about 3.9% for EMI among enrolled children, 5.1% for all-child EMI, 4.1% for public EMI, and 5.3% for private EMI. The 2004--05 to 2022--23 long-change specification particularly singles out private EMI, for which the association is about 5.4% per 10 percentage points. The analogous 2023--24 estimates are smaller, and none survives the predeclared family correction.

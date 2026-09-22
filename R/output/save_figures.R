@@ -210,7 +210,7 @@ public_map_style <- function(variable) {
       labels = NULL
     ),
     paper_real_mean_mpce_2022_23 = list(
-      palette = "poster.consumption",
+      palette = "poster.consumption.positive",
       title = "Real consumption per person\n(2011-12 Rs.)",
       style = "continuous",
       breaks = NULL,
@@ -256,6 +256,7 @@ map_palette_values <- function(palette, n) {
     brown = c("#f6eee3", "#dfc29d", "#bf8f59", "#8c5a2b", "#543005"),
     carto.emrld = c("#d3f2a3", "#97e196", "#6cc08b", "#4c9b82", "#217a79"),
     poster.consumption = c("#f7fbff", "#c6dbef", "#6baed6", "#2171b5", "#08306b"),
+    poster.consumption.positive = c("#f7f7f7", "#f4a582", "#b2182b"),
     poster.diverging.emi = c("#2166ac", "#92c5de", "#f7f7f7", "#f4a582", "#b2182b"),
     poster.diverging.iv = c("#762a83", "#af8dc3", "#f7f7f7", "#7fbf7b", "#1b7837"),
     c("#eff3ff", "#bdd7e7", "#6baed6", "#3182bd", "#08519c")
@@ -415,7 +416,7 @@ public_map_state_boundaries <- function(plot_data) {
   stats::aggregate(data, by = list(state = state[keep]), FUN = length)
 }
 
-build_public_ggplot_map <- function(plot_data, spec) {
+build_public_ggplot_map <- function(plot_data, spec, boundary_reference = NULL) {
   need_pkg("ggplot2", "classified choropleth maps")
   style <- public_map_style(spec$variable)
   fill <- public_map_fill(plot_data, spec$variable, style)
@@ -431,6 +432,23 @@ build_public_ggplot_map <- function(plot_data, spec) {
   if (!is.null(state_boundaries) && nrow(state_boundaries)) {
     base <- base + ggplot2::geom_sf(
       data = state_boundaries, fill = NA, color = "grey15", linewidth = 0.28
+    )
+  }
+  if (!is.null(boundary_reference$disputed_areas) && nrow(boundary_reference$disputed_areas)) {
+    base <- base + ggplot2::geom_sf(
+      data = boundary_reference$disputed_areas, fill = NA, color = "grey25",
+      linewidth = 0.30, linetype = "22"
+    )
+  }
+  if (!is.null(boundary_reference$disputed_lines) && nrow(boundary_reference$disputed_lines)) {
+    base <- base + ggplot2::geom_sf(
+      data = boundary_reference$disputed_lines, color = "grey10",
+      linewidth = 0.36, linetype = "22"
+    )
+  }
+  if (!is.null(boundary_reference$india) && nrow(boundary_reference$india)) {
+    base <- base + ggplot2::geom_sf(
+      data = boundary_reference$india, fill = NA, color = "grey10", linewidth = 0.38
     )
   }
   base <- base +
@@ -494,7 +512,7 @@ save_map_plot_formats <- function(map_plot, path_base, formats, width = 8, heigh
   save_plot_formats(map_plot, path_base, formats, width = width, height = height, dpi = dpi)
 }
 
-save_map_figure <- function(spec, path_base, district_panel, map_geometry, formats) {
+save_map_figure <- function(spec, path_base, district_panel, map_geometry, boundary_reference, formats) {
   if (!has_sf_geometry(district_panel)) {
     stop("Map figure '", spec$name, "' requires an sf district_panel with validated geometry.", call. = FALSE)
   }
@@ -503,8 +521,9 @@ save_map_figure <- function(spec, path_base, district_panel, map_geometry, forma
   }
 
   plot_data <- complete_public_map_geometry(district_panel, map_geometry)
+  plot_data <- clip_public_map_to_de_facto_india(plot_data, boundary_reference)
   plot_data <- prepare_public_map_data(plot_data, spec$variable)
-  p <- build_public_ggplot_map(plot_data, spec)
+  p <- build_public_ggplot_map(plot_data, spec, boundary_reference = boundary_reference)
   save_map_plot_formats(p, path_base, formats, width = 7.2, height = 5.2, dpi = 300)
 }
 
@@ -1119,6 +1138,7 @@ save_figures <- function(figures, cfg) {
         spec, path_base,
         attr(figures, "district_panel") %||% data.frame(),
         attr(figures, "map_geometry") %||% data.frame(),
+        attr(figures, "map_boundary_reference") %||% list(),
         formats
       ),
       district_carveouts_shifts = save_district_carveouts_shifts(spec, path_base, formats),
