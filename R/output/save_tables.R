@@ -1437,9 +1437,11 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   df <- sanitize_table_for_kable(format_table_for_output(table, public = public))
   grouped <- summary_table_groups(df)
   df_render <- wrap_table_text_columns(grouped$data, name)
-  single_page_wide_table <- identical(name, "paper_core_summary")
+  # The core summary may span pages now that it reports the full preferred
+  # control inventory; use the existing landscape longtable path rather than
+  # forcing a nonbreaking float.
   landscape_longtable <- name %in% c(
-    "sum_tbl_iv", "sum_tbl_probit_quant", "sum_tbl_probit_cat"
+    "paper_core_summary", "sum_tbl_iv", "sum_tbl_probit_quant", "sum_tbl_probit_cat"
   )
   landscape_table <- landscape_longtable
   regression_table <- name %in% c("probit_mfx", "fs_cons", "cons_iv") && !is_formatted_status_table(df_render)
@@ -1479,10 +1481,6 @@ save_table_tex <- function(table, path, name, public = TRUE) {
     latex_options <- c("hold_position", "repeat_header", "striped")
   } else if (compact_table) {
     latex_options <- c("repeat_header", "striped")
-  } else if (single_page_wide_table) {
-    # Short landscape tables stay non-breaking here; paper-new.qmd owns page
-    # orientation through Quarto's native .landscape block.
-    latex_options <- c("HOLD_position", "striped")
   } else if (landscape_longtable) {
     # Genuinely long landscape tables remain non-floating longtables so they
     # can break across pages without escaping the pdflscape environment.
@@ -1495,7 +1493,7 @@ save_table_tex <- function(table, path, name, public = TRUE) {
     latex_options = latex_options,
     full_width = FALSE,
     position = "center",
-    font_size = if (single_page_wide_table || landscape_table || regression_table || compact_table) 9 else NULL
+    font_size = if (landscape_table || regression_table || compact_table) 9 else NULL
   )
   if (nrow(grouped$groups)) {
     for (i in rev(seq_len(nrow(grouped$groups)))) {

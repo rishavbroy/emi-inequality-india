@@ -64,6 +64,23 @@ poly2nb_with_optional_snap <- function(panel, queen, snap = NULL) {
   spdep::poly2nb(panel, queen = queen, snap = snap)
 }
 
+# These Census-2001 districts are genuine islands in the reference geometry,
+# so their lack of polygon-contiguous neighbours should not trigger a larger
+# poly2nb snap tolerance.
+spatial_expected_offshore_district_ids <- function() {
+  c("2001__31__01", "2001__35__01", "2001__35__02")
+}
+
+spatial_expected_offshore_islands <- function(neighbor_ledger, n_subgraphs) {
+  ledger <- safe_df(neighbor_ledger)
+  if (!nrow(ledger) || !all(c("n_neighbors", "district_panel_id") %in% names(ledger))) return(FALSE)
+  islands <- ledger[ledger$n_neighbors == 0L, , drop = FALSE]
+  ids <- plain_chr(islands$district_panel_id)
+  length(ids) == length(spatial_expected_offshore_district_ids()) &&
+    setequal(ids, spatial_expected_offshore_district_ids()) &&
+    is.finite(n_subgraphs) && n_subgraphs == length(ids) + 1L
+}
+
 #' build spatial weights for selected district-panel rows
 #'
 #' @return A list with nb, binary matrix, and row-standardized listw objects.
@@ -110,7 +127,10 @@ build_spatial_weights_for_rows <- function(district_panel, rows, queen = FALSE, 
   snap_used <- if (is.null(snap)) NA_real_ else as.numeric(snap)
   panel_data <- as.data.frame(sf::st_drop_geometry(panel), stringsAsFactors = FALSE)
   identifier_cols <- intersect(
-    c("district_panel_id", "state_20", "district_20", "state_std", "district_std"),
+    c(
+      "district_panel_id", "state_code_2001", "district_code_2001",
+      "state_20", "district_20", "state_std", "district_std"
+    ),
     names(panel_data)
   )
   neighbor_ledger <- data.frame(
@@ -121,6 +141,11 @@ build_spatial_weights_for_rows <- function(district_panel, rows, queen = FALSE, 
     stringsAsFactors = FALSE
   )
 
+  offshore_islands_expected <- spatial_expected_offshore_islands(
+    neighbor_ledger, n_components
+  )
+  disconnected <- sum(neighbor_counts == 0L) > 0L ||
+    (!is.na(n_components) && n_components > 1L)
   out <- list(
     status = "constructed",
     contiguity = if (isTRUE(queen)) "queen" else "rook",
@@ -138,7 +163,8 @@ build_spatial_weights_for_rows <- function(district_panel, rows, queen = FALSE, 
     mean_neighbors = mean(neighbor_counts),
     n_subgraphs = n_components,
     snap = snap_used,
-    snap_investigation_needed = sum(neighbor_counts == 0L) > 0L || (!is.na(n_components) && n_components > 1L),
+    offshore_islands_expected = offshore_islands_expected,
+    snap_investigation_needed = disconnected && !offshore_islands_expected,
     warnings = spatial_warnings
   )
   class(out) <- c("emi_spatial_weights", class(out))
@@ -169,6 +195,7 @@ diagnose_spatial_weights <- function(district_panel, spatial_weights, cfg) {
     mean_neighbors = spatial_weights$mean_neighbors %||% NA_real_,
     n_subgraphs = spatial_weights$n_subgraphs %||% NA_integer_,
     snap = spatial_weights$snap %||% NA_real_,
+    offshore_islands_expected = spatial_weights$offshore_islands_expected %||% NA,
     snap_investigation_needed = spatial_weights$snap_investigation_needed %||% NA,
     panel_scope = spatial_weights$panel_scope %||% "current_final_matched_panel_non_empty_geometry",
     warnings = paste(spatial_weights$warnings %||% attr(spatial_weights, "spatial_warnings") %||% character(), collapse = "; "),
@@ -211,12 +238,20 @@ compare_rook_queen_contiguity <- function(district_panel, snap = NULL) {
       )
     })[["elapsed"]]
     cards <- spdep::card(nb)
+    n_subgraphs <- spdep::n.comp.nb(nb)$nc %||% NA_integer_
+    panel_data <- as.data.frame(sf::st_drop_geometry(panel), stringsAsFactors = FALSE)
+    ledger <- data.frame(
+      n_neighbors = cards,
+      district_panel_id = panel_data$district_panel_id %||% NA_character_,
+      stringsAsFactors = FALSE
+    )
     tibble::tibble(
       contiguity = if (isTRUE(queen)) "queen" else "rook",
       n = length(nb),
       mean_neighbors = mean(cards),
       n_islands = sum(cards == 0L),
-      n_subgraphs = spdep::n.comp.nb(nb)$nc %||% NA_integer_,
+      n_subgraphs = n_subgraphs,
+      offshore_islands_expected = spatial_expected_offshore_islands(ledger, n_subgraphs),
       snap = if (is.null(snap)) NA_real_ else as.numeric(snap),
       panel_scope = "current_final_matched_panel_non_empty_geometry",
       elapsed_seconds = unname(elapsed),
@@ -274,14 +309,18 @@ summarize_neighbor_counts <- function(spatial_weights) {
 #' Summarize graph connectivity and whether `poly2nb()` snap needs review
 summarize_spatial_connectivity <- function(spatial_weights) {
   if (!inherits(spatial_weights, "emi_spatial_weights")) return(tibble::tibble())
+  expected_islands <- isTRUE(spatial_weights$offshore_islands_expected)
   tibble::tibble(
     n = spatial_weights$n,
     n_islands = spatial_weights$n_islands,
     n_subgraphs = spatial_weights$n_subgraphs,
+    offshore_islands_expected = expected_islands,
     snap = spatial_weights$snap,
     snap_investigation_needed = isTRUE(spatial_weights$snap_investigation_needed),
     recommendation = if (isTRUE(spatial_weights$snap_investigation_needed)) {
       "Inspect geometry validity and sensitivity to a documented poly2nb snap value before interpreting spatial results."
+    } else if (expected_islands) {
+      "Disconnected components are the mainland plus expected offshore island districts; zero.policy = TRUE handles their no-neighbour rows, so no snap adjustment is indicated."
     } else {
       "No island/subgraph-driven snap investigation is currently indicated."
     }

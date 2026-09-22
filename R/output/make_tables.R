@@ -376,7 +376,8 @@ clustered_model_vcov <- function(model, data = NULL) {
 make_tables <- function(
     selection_data, ame_results, district_panel, iv_models, first_stage_tests, cfg,
     selection_model = NULL, consumption_district_welfare = NULL,
-    schooling_consumption_bridge = NULL) {
+    schooling_consumption_bridge = NULL, control_registry = NULL,
+    census_c17_state_languages = NULL) {
   cons_iv <- tidy_iv_models(iv_models, district_panel)
   cons_iv_required <- filter_table_model(cons_iv, c("consumption", "baseline"))
   table_failures <- c(
@@ -410,7 +411,9 @@ make_tables <- function(
     ),
     sum_tbl_iv = make_iv_summary_table(district_panel),
     paper_core_summary = make_paper_core_summary_table(
-      district_panel, consumption_district_welfare
+      district_panel, consumption_district_welfare,
+      control_registry = control_registry,
+      census_c17_state_languages = census_c17_state_languages
     ),
     fs_cons = fs_cons,
     cons_iv = cons_iv_table,
@@ -563,12 +566,98 @@ paper_core_summary_csv_data <- function(table) {
   )
 }
 
-#' Compact descriptive table for the paper's headline constructs.
+paper_control_summary_unit <- function(variable) {
+  if (identical(variable, "log_population_2001")) return("log persons")
+  if (identical(variable, "log_population_density_2001")) return("log persons/km$^2$")
+  "%"
+}
+
+paper_control_summary_groups <- function(panel, control_registry = NULL) {
+  registry <- resolve_census_2001_control_registry(control_registry)
+  registry <- registry[registry$main_paper %in% TRUE, , drop = FALSE]
+  if (!nrow(registry)) return(data.frame())
+
+  summary_group <- ifelse(
+    registry$control_block %in% c("human_capital", "demography"),
+    "human_capital_demography", registry$control_block
+  )
+  group_order <- c(
+    "basic_scale_geography", "social_composition", "human_capital_demography",
+    "economic_structure", "basic_development"
+  )
+  group_labels <- c(
+    basic_scale_geography = "Scale and geography",
+    social_composition = "Social composition",
+    human_capital_demography = "Human capital and demography",
+    economic_structure = "Economic structure",
+    basic_development = "Basic development"
+  )
+  unknown_groups <- setdiff(unique(summary_group), group_order)
+  if (length(unknown_groups)) {
+    stop(
+      "Paper control summary has unclassified preferred control blocks: ",
+      paste(unknown_groups, collapse = ", "), call. = FALSE
+    )
+  }
+
+  get <- function(variable) if (variable %in% names(panel)) panel[[variable]] else numeric()
+  rows <- list()
+  panel_letter <- 3L
+  for (group in group_order) {
+    index <- which(summary_group == group)
+    if (!length(index)) next
+    part <- registry[index, , drop = FALSE]
+    part <- part[order(part$sequence), , drop = FALSE]
+    rows[[length(rows) + 1L]] <- paper_summary_group(paste0(
+      "Panel ", LETTERS[[panel_letter]], ". Predetermined controls: ", group_labels[[group]]
+    ))
+    rows <- c(rows, lapply(seq_len(nrow(part)), function(i) {
+      paper_summary_row(
+        part$label[[i]], get(part$variable[[i]]), "2001",
+        paper_control_summary_unit(part$variable[[i]])
+      )
+    }))
+    panel_letter <- panel_letter + 1L
+  }
+  safe_bind_rows(rows)
+}
+
+paper_language_behavior_control_summary <- function(c17) {
+  x <- safe_df(c17)
+  required <- c("state_code", "sex", "native_language", "native_speakers")
+  if (!nrow(x) || length(setdiff(required, names(x)))) return(data.frame())
+  x <- add_census_c17_language_composition_controls(x)
+  x <- x[plain_chr(x$sex) == "Persons", , drop = FALSE]
+  if (!nrow(x)) return(data.frame())
+  native_language <- normalize_census_language_label(x$native_language)
+  hindi_urdu_reference <- as.integer(native_language %in% c("Hindi", "Urdu"))
+
+  safe_bind_rows(list(
+    paper_summary_group("Panel H. Language-behavior regression controls"),
+    paper_summary_row(
+      "Native-language share within state", 100 * num(x$native_share_state),
+      "2001", "% of state native-language speakers"
+    ),
+    paper_summary_row(
+      "State modal-language indicator", num(x$state_modal_language),
+      "2001", "indicator"
+    ),
+    paper_summary_row(
+      "Hindi/Urdu reference indicator", hindi_urdu_reference,
+      "2001", "indicator"
+    )
+  ))
+}
+
+#' Compact descriptive table for the paper's headline constructs and controls.
 #'
-#' The table deliberately summarizes district-level analytical constructs rather
-#' than raw microdata. Modern welfare rows use only preferred-eligible district
-#' estimates, so small-domain support rules are respected before presentation.
-make_paper_core_summary_table <- function(district_panel, consumption_district_welfare = NULL) {
+#' District controls are generated from the same registry used by the empirical
+#' specifications. Modern welfare rows use only preferred-eligible district
+#' estimates. The language-behavior controls use Census C-17 state-language
+#' cells and are shown separately because their unit of observation differs.
+make_paper_core_summary_table <- function(
+    district_panel, consumption_district_welfare = NULL,
+    control_registry = NULL, census_c17_state_languages = NULL) {
   panel <- safe_df(district_panel)
   get <- function(variable) if (variable %in% names(panel)) panel[[variable]] else numeric()
 
@@ -590,21 +679,16 @@ make_paper_core_summary_table <- function(district_panel, consumption_district_w
     paper_summary_row(linguistic_labels[["distant_share"]], get("ling_share_distance_ge3"), "2001", "% of mother-tongue speakers")
   ))
 
-  capacity <- safe_bind_rows(list(
-    paper_summary_group("Panel C. Predetermined district capacity"),
-    paper_summary_row("Secondary-plus share, age 7+", get("adult_secondary_plus_share_2001"), "2001", "%"),
-    paper_summary_row("Urban population share", get("urban_share_2001"), "2001", "%"),
-    paper_summary_row("Scheduled Tribe share", get("st_share_2001"), "2001", "%")
-  ))
-
+  controls <- paper_control_summary_groups(panel, control_registry)
+  language_controls <- paper_language_behavior_control_summary(census_c17_state_languages)
   welfare <- safe_bind_rows(list(
-    paper_summary_group("Panel D. Later welfare"),
+    paper_summary_group("Panel I. Later welfare"),
     paper_welfare_summary_row(consumption_district_welfare, "nss_2004_05", "Real mean consumption per person"),
     paper_welfare_summary_row(consumption_district_welfare, "hces_2022_23", "Real mean consumption per person"),
     paper_welfare_summary_row(consumption_district_welfare, "hces_2023_24", "Real mean consumption per person")
   ))
 
-  out <- safe_bind_rows(list(schooling, inherited, capacity, welfare))
+  out <- safe_bind_rows(list(schooling, inherited, controls, language_controls, welfare))
   attr(out, "csv_data") <- paper_core_summary_csv_data(out)
   names(out)[names(out) == "N"] <- "$N$"
   names(out)[names(out) == "p10"] <- "$p_{10}$"

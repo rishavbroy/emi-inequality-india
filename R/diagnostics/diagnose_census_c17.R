@@ -125,26 +125,7 @@ prepare_census_c17_mechanism_data <- function(
     levels = c("1", "0", "2", "3", "4", "5")
   )
 
-  groups <- split(seq_len(nrow(out)), interaction(out$state_code, out$sex, drop = TRUE))
-  out$native_share_state <- NA_real_
-  out$state_modal_language <- 0L
-  for (index in groups) {
-    speakers <- num(out$native_speakers[index])
-    total <- sum(speakers[is.finite(speakers)], na.rm = TRUE)
-    if (!is.finite(total) || total <= 0) next
-    out$native_share_state[index] <- speakers / total
-    maximum <- max(speakers, na.rm = TRUE)
-    modal <- index[is.finite(speakers) & speakers == maximum]
-    if (length(modal) != 1L) {
-      stop("Census C-17 has an ambiguous modal native language within a state/sex cell.", call. = FALSE)
-    }
-    out$state_modal_language[modal] <- 1L
-  }
-
-  if (any(is.finite(out$native_share_state) & (out$native_share_state < 0 | out$native_share_state > 1))) {
-    stop("Census C-17 native-language state shares must lie in [0, 1].", call. = FALSE)
-  }
-  out
+  add_census_c17_language_composition_controls(out)
 }
 
 census_c17_mechanism_formula <- function(specification) {

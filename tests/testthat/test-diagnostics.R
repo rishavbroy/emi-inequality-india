@@ -110,19 +110,24 @@ test_that("public spatial autocorrelation diagnostics return tracked files", {
   expect_true(all(file.exists(paths)))
 })
 
-test_that("report values read Moran p-values from spatial autocorrelation diagnostics", {
+test_that("report values read Moran estimates by contiguity definition", {
   diag <- data.frame(
-    legacy_name = c("m_cons_resid", "m_cons"),
-    estimand = c("consumption_iv_residual", "consumption_growth"),
+    legacy_name = c("m_cons_resid", "m_cons_resid", "m_cons"),
+    estimand = c("consumption_iv_residual", "consumption_iv_residual", "consumption_growth"),
     status = "estimated",
-    p.value = c(0.01234, 0.98765),
+    contiguity = c("rook", "queen", "rook"),
+    estimate = c(0.0026, 0.0031, 0.3071),
+    p.value = c(0.4349, 0.4212, 5.736e-31),
     stringsAsFactors = FALSE
   )
 
   values <- build_report_values(data.frame(), data.frame(), list(), data.frame(), data.frame(), diag, list())
 
-  expect_equal(values[["moran_iv_residual_p"]], signif(0.01234, 3))
-  expect_equal(values[["moran_consumption_growth_p"]], signif(0.98765, 3))
+  expect_equal(values[["moran_iv_residual_i"]], signif(0.0026, 3))
+  expect_equal(values[["moran_iv_residual_p"]], signif(0.4349, 3))
+  expect_equal(values[["moran_iv_residual_p_queen"]], signif(0.4212, 3))
+  expect_equal(values[["moran_consumption_growth_i"]], signif(0.3071, 3))
+  expect_equal(values[["moran_consumption_growth_p"]], signif(5.736e-31, 3))
 })
 
 test_that("report values expose MOP effective F from canonical first-stage diagnostics", {
@@ -656,6 +661,21 @@ test_that("spatial island diagnostics use spdep cardinalities", {
   expect_equal(islands$district_panel_id, "island")
   expect_true(connectivity$snap_investigation_needed)
   expect_gt(weights$n_subgraphs, 1L)
+})
+
+
+test_that("spatial connectivity recognizes expected offshore island components", {
+  ledger <- data.frame(
+    n_neighbors = c(4L, 0L, 0L, 0L),
+    district_panel_id = c(
+      "2001__01__01", "2001__31__01", "2001__35__01", "2001__35__02"
+    ),
+    stringsAsFactors = FALSE
+  )
+
+  expect_true(spatial_expected_offshore_islands(ledger, n_subgraphs = 4L))
+  ledger$district_panel_id[[2L]] <- "2001__09__01"
+  expect_false(spatial_expected_offshore_islands(ledger, n_subgraphs = 4L))
 })
 
 
@@ -3542,4 +3562,12 @@ test_that("Anderson-Rubin topology classifies the information that survives weak
     classify_anderson_rubin_information(component(c(-2, .1), c(-.1, 2))),
     "zero_excluded_both_signs"
   )
+})
+
+test_that("named spatial residual diagnostics do not relabel another IV model", {
+  consumption <- structure(list(), class = "ivreg")
+  models <- list(consumption = consumption)
+
+  expect_identical(spatial_iv_model(models, "consumption"), consumption)
+  expect_null(spatial_iv_model(models, "gini"))
 })

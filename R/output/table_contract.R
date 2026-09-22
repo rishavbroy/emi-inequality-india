@@ -117,9 +117,9 @@ public_table_caption_text <- function(name) {
     probit_mfx = "Average Marginal Effects and Counterfactual Comparisons for Enrollment Probit",
     sum_tbl_iv = "Summary Statistics for 2SLS Model",
     paper_core_summary = "Core Variables and Summary Statistics",
-    paper_schooling_market_geography = "Linguistic Distance and English-Learning Opportunities across Geographic Specifications",
+    paper_schooling_market_geography = "Linguistic Distance and English-Medium Schooling across Geographic Specifications",
     paper_language_behavior = "Linguistic Distance and Language-Learning Behavior",
-    paper_economic_conversion = "English-Intensive Schooling, Later Consumption, and Predetermined Complements",
+    paper_economic_conversion = "English-Medium Schooling, Later Consumption, and Predetermined Complements",
     paper_local_development = "Linguistic Conditions and Selective Local Development",
     appendix_iv_relevance_summary = "First-Stage Relevance Across Linguistic Measures",
     appendix_iv_weak_inference = "Weak-IV-Robust Long-Run Inference",
@@ -147,8 +147,9 @@ public_table_note <- function(name) {
     sum_tbl_probit_quant = "Min. = minimum; 1Q = first quartile; Med. = median; 3Q = third quartile; Max. = maximum; Mean = arithmetic mean; SD = standard deviation; $N$ = number of observations.",
     sum_tbl_iv = "Min. = minimum; 1Q = first quartile; Med. = median; 3Q = third quartile; Max. = maximum; Mean = arithmetic mean; SD = standard deviation; $N$ = number of observations.",
     paper_core_summary = paste(
-      "District-level descriptive statistics; $N$ is the number of districts with finite values.",
-      "Schooling measures use NSS 2007-08 children age 5-19; linguistic distance and predetermined capacity use Census-2001 geography.",
+      "District rows are unweighted descriptive statistics; $N$ is the number of districts with finite values.",
+      "Schooling measures use NSS 2007-08 children age 5-19; linguistic distance and the ten predetermined district controls use Census-2001 geography.",
+      "The language-behavior controls are summarized separately across Census-2001 state-by-native-language cells for persons because those regressions use a different unit of observation; native-language share is displayed in percentage points.",
       "Modern consumption rows summarize districts meeting the survey-design, price, and district-lineage requirements used for the preferred estimates.",
       "$p_{10}$ and $p_{90}$ are the 10th and 90th percentiles. Construction details are documented in the data appendix."
     ),

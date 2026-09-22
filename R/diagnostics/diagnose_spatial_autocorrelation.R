@@ -5,10 +5,12 @@
 
 #' diagnose spatial autocorrelation
 #'
-#' Reproduce the legacy Rmd's Moran's I diagnostics for the 2019-20 district
-#' geometry path.  The legacy workflow used rook contiguity, row-standardized
-#' weights, `zero.policy = TRUE`, IV-model residuals, first-stage residuals,
-#' the main treatment/instrument variables, and the consumption/Gini outcomes.
+#' Reproduce the Moran's I diagnostics on the harmonized Census-2001 district
+#' geometry. Rook contiguity remains the primary definition used by the paper;
+#' queen contiguity is evaluated as a sensitivity check. Both use row-standardized
+#' weights with `zero.policy = TRUE` for genuine no-neighbour island districts.
+#' Tests cover IV-model residuals, first-stage residuals, the preferred treatment
+#' and instrument, and the consumption/Gini outcomes.
 #'
 #' @return A data frame with Moran diagnostics.
 diagnose_spatial_autocorrelation <- function(district_panel, iv_models, spatial_weights, cfg) {
@@ -26,70 +28,96 @@ diagnose_spatial_autocorrelation <- function(district_panel, iv_models, spatial_
   if (!length(rows)) {
     return(spatial_autocorrelation_status_row("out_of_active_pipeline", "Could not recover the IV model analysis rows for spatial diagnostics."))
   }
-  weights <- build_spatial_weights_for_rows(district_panel, rows, queen = FALSE)
-  if (!identical(weights$status, "constructed")) {
-    return(spatial_autocorrelation_status_row(weights$status %||% "out_of_active_pipeline", weights$reason %||% "Could not build rook-contiguity weights."))
+
+  rook <- if (
+    inherits(spatial_weights, "emi_spatial_weights") &&
+      identical(spatial_weights$status, "constructed") &&
+      identical(as.integer(spatial_weights$row_index), as.integer(rows))
+  ) {
+    spatial_weights
+  } else {
+    build_spatial_weights_for_rows(district_panel, rows, queen = FALSE)
+  }
+  queen <- build_spatial_weights_for_rows(district_panel, rows, queen = TRUE)
+  weights <- list(rook, queen)
+  if (any(!vapply(weights, function(x) identical(x$status, "constructed"), logical(1)))) {
+    bad <- weights[[which(!vapply(weights, function(x) identical(x$status, "constructed"), logical(1)))[[1L]]]]
+    return(spatial_autocorrelation_status_row(
+      bad$status %||% "out_of_active_pipeline",
+      bad$reason %||% "Could not build contiguity weights."
+    ))
   }
 
-  rows <- weights$row_index
-  panel <- as.data.frame(sf::st_drop_geometry(district_panel[rows, , drop = FALSE]))
-  out <- list()
-
-  out <- c(out, list(spatial_moran_test_from_model_residuals(
-    model = spatial_iv_model(iv_models, "consumption"),
-    district_panel = district_panel,
-    weights = weights,
-    legacy_name = "m_cons_resid",
-    estimand = "consumption_iv_residual",
-    variable = "resid_cons",
-    source = "second_stage_residual"
-  )))
-
-  out <- c(out, list(spatial_moran_test_from_model_residuals(
-    model = spatial_iv_model(iv_models, "gini"),
-    district_panel = district_panel,
-    weights = weights,
-    legacy_name = "m_gini_resid",
-    estimand = "gini_iv_residual",
-    variable = "resid_gini",
-    source = "second_stage_residual"
-  )))
-
-  out <- c(out, list(spatial_moran_test_from_first_stage_residuals(
-    model = spatial_iv_model(iv_models, "consumption"),
-    district_panel = district_panel,
-    weights = weights,
-    legacy_name = "m_fscons_resid",
-    estimand = "consumption_first_stage_residual",
-    variable = "resid_fscons",
-    source = "first_stage_residual"
-  )))
-
-  out <- c(out, list(spatial_moran_test_from_first_stage_residuals(
-    model = spatial_iv_model(iv_models, "gini"),
-    district_panel = district_panel,
-    weights = weights,
-    legacy_name = "m_fsgini_resid",
-    estimand = "gini_first_stage_residual",
-    variable = "resid_fsgini",
-    source = "first_stage_residual"
-  )))
-
-  spec <- preferred_iv_variables()
-  out <- c(out, list(compute_moran_tests(
-    panel[[spec$treatment]], weights, legacy_name = "m_EMIE", estimand = "emie",
-    variable = spec$treatment, source = "treatment"
-  )))
-  out <- c(out, list(compute_moran_tests(
-    panel[[spec$instrument]], weights, legacy_name = "m_wavg_ling_degrees", estimand = "linguistic_distance",
-    variable = spec$instrument, source = "instrument"
-  )))
-  out <- c(out, list(compute_moran_tests(panel$real_log_consumption_change, weights, legacy_name = "m_cons", estimand = "real_consumption_growth", variable = "real_log_consumption_change", source = "outcome")))
-  out <- c(out, list(compute_moran_tests(panel$gini_change, weights, legacy_name = "m_gini", estimand = "gini_change", variable = "gini_change", source = "outcome")))
-
-  out <- safe_bind_rows(out)
+  out <- safe_bind_rows(lapply(weights, function(w) {
+    diagnose_spatial_autocorrelation_for_weights(district_panel, iv_models, w)
+  }))
   out$legacy_note <- spatial_legacy_note(out$legacy_name)
   out
+}
+
+#' Moran diagnostics for one spatial-weights definition.
+diagnose_spatial_autocorrelation_for_weights <- function(district_panel, iv_models, weights) {
+  rows <- weights$row_index
+  panel <- as.data.frame(sf::st_drop_geometry(district_panel[rows, , drop = FALSE]))
+  out <- list(
+    spatial_moran_test_from_model_residuals(
+      model = spatial_iv_model(iv_models, "consumption"),
+      district_panel = district_panel,
+      weights = weights,
+      legacy_name = "m_cons_resid",
+      estimand = "consumption_iv_residual",
+      variable = "resid_cons",
+      source = "second_stage_residual"
+    ),
+    spatial_moran_test_from_model_residuals(
+      model = spatial_iv_model(iv_models, "gini"),
+      district_panel = district_panel,
+      weights = weights,
+      legacy_name = "m_gini_resid",
+      estimand = "gini_iv_residual",
+      variable = "resid_gini",
+      source = "second_stage_residual"
+    ),
+    spatial_moran_test_from_first_stage_residuals(
+      model = spatial_iv_model(iv_models, "consumption"),
+      district_panel = district_panel,
+      weights = weights,
+      legacy_name = "m_fscons_resid",
+      estimand = "consumption_first_stage_residual",
+      variable = "resid_fscons",
+      source = "first_stage_residual"
+    ),
+    spatial_moran_test_from_first_stage_residuals(
+      model = spatial_iv_model(iv_models, "gini"),
+      district_panel = district_panel,
+      weights = weights,
+      legacy_name = "m_fsgini_resid",
+      estimand = "gini_first_stage_residual",
+      variable = "resid_fsgini",
+      source = "first_stage_residual"
+    )
+  )
+
+  spec <- preferred_iv_variables()
+  out <- c(out, list(
+    compute_moran_tests(
+      panel[[spec$treatment]], weights, legacy_name = "m_EMIE", estimand = "emie",
+      variable = spec$treatment, source = "treatment"
+    ),
+    compute_moran_tests(
+      panel[[spec$instrument]], weights, legacy_name = "m_wavg_ling_degrees", estimand = "linguistic_distance",
+      variable = spec$instrument, source = "instrument"
+    ),
+    compute_moran_tests(
+      panel$real_log_consumption_change, weights, legacy_name = "m_cons",
+      estimand = "real_consumption_growth", variable = "real_log_consumption_change", source = "outcome"
+    ),
+    compute_moran_tests(
+      panel$gini_change, weights, legacy_name = "m_gini",
+      estimand = "gini_change", variable = "gini_change", source = "outcome"
+    )
+  ))
+  safe_bind_rows(out)
 }
 
 spatial_autocorrelation_status_row <- function(status, reason) {
@@ -123,8 +151,11 @@ spatial_autocorrelation_status_row <- function(status, reason) {
 
 spatial_iv_model <- function(iv_models, name) {
   if (is.list(iv_models) && !is.null(iv_models[[name]])) return(iv_models[[name]])
-  if (is.list(iv_models) && length(iv_models)) return(iv_models[[1]])
-  iv_models
+  if (identical(name, "consumption")) {
+    if (is.list(iv_models) && length(iv_models)) return(iv_models[[1L]])
+    if (inherits(iv_models, "ivreg")) return(iv_models)
+  }
+  NULL
 }
 
 spatial_model_rows <- function(model, district_panel) {
@@ -139,7 +170,9 @@ spatial_moran_test_from_model_residuals <- function(model, district_panel, weigh
   }
   rows <- spatial_model_rows(model, district_panel)
   if (!identical(as.integer(rows), as.integer(weights$row_index))) {
-    weights <- build_spatial_weights_for_rows(district_panel, rows, queen = FALSE)
+    weights <- build_spatial_weights_for_rows(
+      district_panel, rows, queen = identical(weights$contiguity, "queen")
+    )
   }
   x <- tryCatch(stats::residuals(model), error = function(e) NA_real_)
   compute_moran_tests(x, weights, legacy_name, estimand, variable, source)
@@ -152,7 +185,9 @@ spatial_moran_test_from_first_stage_residuals <- function(model, district_panel,
   }
   rows <- spatial_model_rows(fit, district_panel)
   if (!identical(as.integer(rows), as.integer(weights$row_index))) {
-    weights <- build_spatial_weights_for_rows(district_panel, rows, queen = FALSE)
+    weights <- build_spatial_weights_for_rows(
+      district_panel, rows, queen = identical(weights$contiguity, "queen")
+    )
   }
   x <- tryCatch(stats::residuals(fit), error = function(e) NA_real_)
   compute_moran_tests(x, weights, legacy_name, estimand, variable, source)

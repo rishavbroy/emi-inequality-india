@@ -1202,3 +1202,29 @@ test_that("retained validation figures enforce registered common support", {
   expect_true(all(abs(state_dise_means) < 1e-12))
   expect_true(all(abs(state_nss_means) < 1e-12))
 })
+
+test_that("paper core summary derives preferred controls from their registries", {
+  registry <- read_census_2001_control_registry()
+  preferred <- registry[registry$main_paper %in% TRUE, , drop = FALSE]
+  panel <- as.data.frame(setNames(
+    lapply(seq_len(nrow(preferred)), function(i) c(i, i + 1, i + 2)),
+    preferred$variable
+  ))
+
+  controls <- paper_control_summary_groups(panel, registry)
+  control_csv <- paper_core_summary_csv_data(controls)
+  expect_setequal(control_csv$variable, preferred$label)
+
+  c17 <- data.frame(
+    state_code = c("01", "01", "02", "02"),
+    sex = rep("Persons", 4),
+    native_language = c("Hindi", "English", "Urdu", "Bengali"),
+    native_speakers = c(80, 20, 25, 75),
+    stringsAsFactors = FALSE
+  )
+  language_controls <- paper_language_behavior_control_summary(c17)
+  language_csv <- paper_core_summary_csv_data(language_controls)
+  expect_equal(nrow(language_csv), 3L)
+  expect_equal(language_csv$n, rep(4L, 3L))
+  expect_equal(sort(language_csv$mean), sort(c(0.5, 0.5, 50)))
+})

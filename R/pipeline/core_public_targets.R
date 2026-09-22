@@ -145,7 +145,8 @@ core_public_target_definitions <- function() {
         out <- make_tables(
           selection_data, ame_results, district_panel, revised_iv_models,
           revised_first_stage_tests, cfg, selection_model, consumption_district_welfare,
-          schooling_consumption_bridge
+          schooling_consumption_bridge, census_2001_control_registry,
+          census_2001_c17_state_languages
         )
         out$paper_schooling_market_geography <- paper_schooling_market_geography
         out$paper_language_behavior <- paper_language_behavior

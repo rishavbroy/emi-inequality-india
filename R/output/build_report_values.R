@@ -32,18 +32,30 @@ build_report_values <- function(ame_results, first_stage_tests, iv_models, selec
   values <- set_report_value(values, "ame_edu_free_s", lookup_ame_s_value(ame_results, "dmean_num.*IS_EDU_FREE|IS_EDU_FREE.*dmean_num", digits = 3), unavailable_ame)
 
   morans_unavailable <- "Moran's I diagnostic is not available from the active spatial-autocorrelation target."
-  values <- set_report_value(
-    values,
-    "moran_iv_residual_p",
-    spatial_p_value(diag_spatial_autocorrelation, legacy_name = "m_cons_resid", pattern = "consumption.*resid|iv_residual"),
-    morans_unavailable
+  spatial_keys <- list(
+    moran_emi_i = c("m_EMIE", "estimate", "rook"),
+    moran_linguistic_distance_i = c("m_wavg_ling_degrees", "estimate", "rook"),
+    moran_consumption_growth_i = c("m_cons", "estimate", "rook"),
+    moran_consumption_growth_p = c("m_cons", "p.value", "rook"),
+    moran_gini_change_i = c("m_gini", "estimate", "rook"),
+    moran_iv_residual_i = c("m_cons_resid", "estimate", "rook"),
+    moran_iv_residual_p = c("m_cons_resid", "p.value", "rook"),
+    moran_first_stage_residual_i = c("m_fscons_resid", "estimate", "rook"),
+    moran_first_stage_residual_p = c("m_fscons_resid", "p.value", "rook"),
+    moran_iv_residual_p_queen = c("m_cons_resid", "p.value", "queen"),
+    moran_first_stage_residual_p_queen = c("m_fscons_resid", "p.value", "queen")
   )
-  values <- set_report_value(
-    values,
-    "moran_consumption_growth_p",
-    spatial_p_value(diag_spatial_autocorrelation, legacy_name = "m_cons", pattern = "real.*consumption.*growth|real_log_consumption_change"),
-    morans_unavailable
-  )
+  for (key in names(spatial_keys)) {
+    entry <- spatial_keys[[key]]
+    values <- set_report_value(
+      values, key,
+      spatial_diagnostic_value(
+        diag_spatial_autocorrelation,
+        legacy_name = entry[[1L]], field = entry[[2L]], contiguity = entry[[3L]]
+      ),
+      morans_unavailable
+    )
+  }
 
   values <- set_report_value(values, "kappa", condition_number_value(model), "The model design matrix condition number is not available from the active model specification.")
 
