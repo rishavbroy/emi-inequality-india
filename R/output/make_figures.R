@@ -306,7 +306,7 @@ make_figures <- function(
   )
 
   if (!maps_available && !identical(cfg$mode, "final")) {
-    # Draft-mode diagnostics live outside outputs/figures/main and are explicitly
+    # Fast-mode diagnostics live outside outputs/figures/main and are explicitly
     # labeled as diagnostics by figure_output_dir().
     map_specs <- map_specs[c("map_emi_exposure", "map_consumption_growth")]
   }

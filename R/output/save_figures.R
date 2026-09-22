@@ -211,7 +211,7 @@ public_map_style <- function(variable) {
     ),
     paper_real_mean_mpce_2022_23 = list(
       palette = "poster.consumption",
-      title = "Real consumption per person (2011-12 Rs.)",
+      title = "Real consumption per person\n(2011-12 Rs.)",
       style = "continuous",
       breaks = NULL,
       labels = NULL
