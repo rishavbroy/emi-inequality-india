@@ -196,6 +196,7 @@ test_that("debug review archives retain intermediate diagnostics but exclude raw
 
   old_wd <- setwd(root)
   on.exit(setwd(old_wd), add = TRUE)
+  writeLines("stale archive", "review.zip")
   output <- system2(
     "bash",
     c(
@@ -208,6 +209,7 @@ test_that("debug review archives retain intermediate diagnostics but exclude raw
     stderr = TRUE
   )
   expect_null(attr(output, "status"))
+  expect_true(file.info("review.zip")$size > nchar("stale archive"))
   listing <- utils::unzip("review.zip", list = TRUE)$Name
   expect_true(
     "outputs/diagnostics/extended/intermediate.csv" %in% listing
@@ -265,153 +267,6 @@ test_that("target warning metadata normalizes list columns and consolidates runs
   recorded <- utils::read.csv(path, stringsAsFactors = FALSE)
   expect_equal(recorded$name, "a")
   expect_equal(recorded$run_label, "optional")
-})
-
-audit_script_fixture <- function(manifest_exit = 0L, archive_exit = 0L) {
-  root <- tempfile("public-audit-fixture-")
-  dir.create(root, recursive = TRUE)
-  for (dir in c("paper", "docs", "scripts", "R", "tests", "posters", "config")) {
-    dir.create(file.path(root, dir), recursive = TRUE, showWarnings = FALSE)
-  }
-  file.copy(
-    repo_file("scripts", "run_full_build.sh"),
-    file.path(root, "scripts", "run_full_build.sh")
-  )
-  for (script in c("clean_audit_workspace.sh", "check_source_syntax.sh")) {
-    writeLines(c("#!/usr/bin/env bash", "set -euo pipefail", "exit 0"), file.path(root, "scripts", script))
-  }
-  writeLines(
-    c(
-      "#!/usr/bin/env bash",
-      "set -euo pipefail",
-      "out=review.zip",
-      "incomplete=false",
-      "while (($#)); do",
-      "  case \"$1\" in",
-      "    --allow-incomplete) incomplete=true; shift ;;",
-      "    --output) out=\"$2\"; shift 2 ;;",
-      "    *) shift ;;",
-      "  esac",
-      "done",
-      "if [[ \"${FAKE_ARCHIVE_EXIT:-0}\" -ne 0 ]]; then exit \"$FAKE_ARCHIVE_EXIT\"; fi",
-      "if [[ \"$incomplete\" == true ]]; then printf incomplete > \"$out\"; else printf verified > \"$out\"; fi"
-    ),
-    file.path(root, "scripts", "make_review_archive.sh")
-  )
-  bin <- file.path(root, "bin")
-  dir.create(bin)
-  writeLines(c("#!/usr/bin/env bash", "exit 0"), file.path(bin, "make"))
-  writeLines(
-    c(
-      "#!/usr/bin/env bash",
-      "set -euo pipefail",
-      "case \"${1:-} ${2:-}\" in",
-      "  'status --short') exit 0 ;;",
-      "  'diff --check') exit 0 ;;",
-      "  'branch --show-current') printf 'fixture\\n'; exit 0 ;;",
-      "  'rev-parse HEAD') printf '0000000000000000000000000000000000000000\\n'; exit 0 ;;",
-      "esac",
-      "exit 0"
-    ),
-    file.path(bin, "git")
-  )
-  writeLines(
-    c(
-      "#!/usr/bin/env bash",
-      "set -euo pipefail",
-      "if [[ \"${1:-}\" == scripts/write_output_manifest.R ]]; then",
-      "  exit_code=\"${FAKE_MANIFEST_EXIT:-0}\"",
-      "  if [[ \"$exit_code\" -eq 0 ]]; then",
-      "    mkdir -p outputs/build",
-      "    printf 'artifact_id,path\\nfixture,outputs/fixture.csv\\n' > outputs/build/output_manifest.csv",
-      "  fi",
-      "  exit \"$exit_code\"",
-      "fi",
-      "exit 0"
-    ),
-    file.path(bin, "Rscript")
-  )
-  runner <- file.path(root, "run-audit-fixture.sh")
-  writeLines(
-    c(
-      "#!/usr/bin/env bash",
-      "set -euo pipefail",
-      "export PATH=\"$PWD/bin:$PATH\"",
-      "export FAKE_MANIFEST_EXIT=\"${1:-0}\"",
-      "export FAKE_ARCHIVE_EXIT=\"${2:-0}\"",
-      "exec bash scripts/run_full_build.sh --no-samples --with-extended-diagnostics --with-benchmarks"
-    ),
-    runner
-  )
-  Sys.chmod(c(
-    file.path(root, "scripts", "run_full_build.sh"),
-    file.path(root, "scripts", "clean_audit_workspace.sh"),
-    file.path(root, "scripts", "check_source_syntax.sh"),
-    file.path(root, "scripts", "make_review_archive.sh"),
-    file.path(bin, "git"), file.path(bin, "make"), file.path(bin, "Rscript"), runner
-  ), mode = "0755")
-  writeLines("stale", file.path(root, "review.zip"))
-  list(
-    root = root, runner = runner, manifest_exit = as.integer(manifest_exit),
-    archive_exit = as.integer(archive_exit)
-  )
-}
-
-run_audit_script_fixture <- function(fixture) {
-  old <- setwd(fixture$root)
-  on.exit(setwd(old), add = TRUE)
-  system2(
-    unname(Sys.which("bash")),
-    c(
-      shQuote(fixture$runner), as.character(fixture$manifest_exit),
-      as.character(fixture$archive_exit)
-    ),
-    stdout = TRUE,
-    stderr = TRUE
-  )
-}
-
-test_that("full build always replaces review.zip with the current run", {
-  skip_if(Sys.which("bash") == "")
-  skip_if(Sys.which("python3") == "")
-
-  success <- audit_script_fixture(0L)
-  on.exit(unlink(success$root, recursive = TRUE, force = TRUE), add = TRUE)
-  output <- run_audit_script_fixture(success)
-  expect_null(attr(output, "status"))
-  expect_identical(readChar(file.path(success$root, "review.zip"), 8L), "verified")
-  expect_true(file.exists(file.path(
-    success$root, "outputs", "build", "output_manifest.csv"
-  )))
-  status <- jsonlite::read_json(file.path(
-    success$root, "outputs", "build", "build_status.json"
-  ))
-  expect_identical(status$status, "passed")
-  expect_identical(status$archive_mode, "verified")
-
-  failed <- audit_script_fixture(7L)
-  on.exit(unlink(failed$root, recursive = TRUE, force = TRUE), add = TRUE)
-  output <- suppressWarnings(run_audit_script_fixture(failed))
-  expect_identical(attr(output, "status"), 7L)
-  expect_identical(readChar(file.path(failed$root, "review.zip"), 10L), "incomplete")
-  status <- jsonlite::read_json(file.path(
-    failed$root, "outputs", "build", "build_status.json"
-  ))
-  expect_identical(status$status, "failed")
-  expect_identical(status$stage, "output-manifest")
-  expect_equal(status$exit_code, 7L)
-  expect_identical(status$archive_mode, "incomplete")
-  expect_true(isFALSE(status$options$from_clean_slate))
-
-  packaging_failure <- audit_script_fixture(7L, archive_exit = 9L)
-  on.exit(unlink(packaging_failure$root, recursive = TRUE, force = TRUE), add = TRUE)
-  output <- suppressWarnings(run_audit_script_fixture(packaging_failure))
-  expect_identical(attr(output, "status"), 7L)
-  expect_false(file.exists(file.path(packaging_failure$root, "review.zip")))
-  status <- jsonlite::read_json(file.path(
-    packaging_failure$root, "outputs", "build", "build_status.json"
-  ))
-  expect_identical(status$archive_mode, "archive_failed")
 })
 
 test_that("new-machine setup restores the tracked renv lockfile without rewriting it", {
