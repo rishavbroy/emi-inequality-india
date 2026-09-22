@@ -218,6 +218,12 @@ test_that("raw-data preflight rejects registered size and SHA-256 mismatches", {
     "bytes; expected", fixed = TRUE
   )
 
+  write_manifest(size, "not-a-sha256")
+  expect_error(
+    validate_raw_files(build_paths(root)),
+    "malformed SHA-256", fixed = TRUE
+  )
+
   write_manifest(size, paste(rep("0", 64L), collapse = ""))
   expect_error(
     stop_if_required_files_invalid(validate_raw_files(build_paths(root))),

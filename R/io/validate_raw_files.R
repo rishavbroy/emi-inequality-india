@@ -8,7 +8,18 @@
 read_manifest <- function(paths = build_paths()) {
   manifest_path <- path_metadata(paths, "file_manifest.csv")
   if (!file.exists(manifest_path)) stop("Missing file manifest: ", manifest_path, call. = FALSE)
-  utils::read.csv(manifest_path, stringsAsFactors = FALSE, na.strings = c("", "NA"))
+
+  header <- names(utils::read.csv(manifest_path, nrows = 0L, stringsAsFactors = FALSE))
+  col_classes <- rep(NA_character_, length(header))
+  names(col_classes) <- header
+  if ("sha256" %in% header) col_classes[["sha256"]] <- "character"
+
+  utils::read.csv(
+    manifest_path,
+    stringsAsFactors = FALSE,
+    na.strings = c("", "NA"),
+    colClasses = col_classes
+  )
 }
 
 #' filter manifest rows for source or target
