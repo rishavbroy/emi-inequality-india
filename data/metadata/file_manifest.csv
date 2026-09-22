@@ -54,7 +54,7 @@ district_boundaries_2020_prj,district_boundaries_2020,true,data/raw/district_bou
 district_changes_alluvial,district_changes,true,data/raw/district_changes/Time series- State and Districts Changes -Alluvial 1951-2024.xlsx,64960,,xlsx,readxl::read_xlsx,raw_district_changes,Primary alluvial district-change source
 district_changes_carveouts,district_changes,true,data/raw/district_changes/District Carve-Outs and Renamings 1961-2001.csv,12737,,csv,read_district_carveouts,raw_district_changes,Headerless five-column carve-out/renaming source
 district_changes_tracker,district_changes,true,data/raw/district_changes/IndiaDistrictTracker2001to2020.ods,111057,,ods,readODS::read_ods,raw_district_changes,Tracker source
-district_changes_new_districts,district_changes,true,data/raw/district_changes/New Districts Created between 1951-2024.xlsx,29535,,xlsx,readxl::read_xlsx,raw_district_changes,Validation source
+district_changes_new_districts,district_changes,true,data/raw/district_changes/New Districts Created between 1951-2024.xlsx,29532,,xlsx,readxl::read_xlsx,raw_district_changes,Validation source
 district_changes_name_changes,district_changes,true,data/raw/district_changes/Name Changes_Districts_Indian States_1951-2021.xlsx,18606,,xlsx,readxl::read_xlsx,raw_district_changes,Validation source
 district_changes_splits,district_changes,true,data/raw/district_changes/District Splits and Carve outs-decadewise  1951-2024.xlsx,41924,,xlsx,readxl::read_xlsx,raw_district_changes,Validation source
 ilo_real_earnings,ilo_figures,true,assets/ilo_figures/average_monthly_real_earnings_total.png,194963,,png,magick::image_read,raw_ilo_figures,Static ILO image asset
