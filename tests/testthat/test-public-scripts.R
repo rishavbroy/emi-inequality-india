@@ -60,6 +60,22 @@ test_that("current public build helper scripts parse", {
   expect_silent(parse(repo_file("R", "application_samples", "extract_qmd_excerpts.R")))
 })
 
+test_that("conference poster requirements are opt-in", {
+  env <- new.env(parent = globalenv())
+  sys.source(repo_file("scripts", "public_output_contract.R"), envir = env)
+
+  ordinary <- env$required_final_documents(
+    require_application_samples = FALSE, require_poster = FALSE
+  )
+  with_poster <- env$required_final_documents(
+    require_application_samples = FALSE, require_poster = TRUE
+  )
+
+  expect_false(any(grepl("posters/", ordinary, fixed = TRUE)))
+  expect_true("posters/2026_predoc_conference/poster.pdf" %in% with_poster)
+  expect_true("posters/2026_predoc_conference/RishavRoy-Education.png" %in% with_poster)
+})
+
 test_that("public QMD helper loads its table-formatting dependencies", {
   env <- new.env(parent = baseenv())
   sys.source(repo_file("R", "output", "public_qmd_helpers.R"), envir = env)
@@ -83,17 +99,17 @@ test_that("audit workspace cleanup removes transient state and preserves optiona
   on.exit(unlink(root, recursive = TRUE, force = TRUE), add = TRUE)
 
   transient <- c(
-    "outputs/diagnostics/build/build.csv",
+    "outputs/build/build.csv",
     "outputs/diagnostics/public/public.csv",
     "outputs/diagnostics/root.csv",
     "outputs/diagnostics/extended/district_lineage_v2/stale.csv",
-    "outputs/derived/district_lineage_v2/stale.gpkg",
+    "data/processed/geography_v2/stale.gpkg",
     "paper/references_bibertool.bib"
   )
   preserved <- c(
     "outputs/diagnostics/extended/current.csv",
     "outputs/benchmarking/current.csv",
-    "outputs/derived/district_lineage/current.gpkg"
+    "data/processed/geography/current.gpkg"
   )
 
   for (path in c(transient, preserved)) {
@@ -114,7 +130,7 @@ test_that("audit workspace cleanup removes transient state and preserves optiona
   expect_null(attr(status, "status"))
   expect_false(any(file.exists(file.path(root, transient))))
   expect_true(all(file.exists(file.path(root, preserved))))
-  expect_true(dir.exists(file.path(root, "outputs/diagnostics/build")))
+  expect_true(dir.exists(file.path(root, "outputs/build")))
   expect_true(dir.exists(file.path(root, "outputs/diagnostics/public")))
   expect_true(dir.exists(file.path(root, "outputs/diagnostics/extended")))
   expect_true(dir.exists(file.path(root, "outputs/benchmarking")))
@@ -258,8 +274,8 @@ audit_script_fixture <- function(manifest_exit = 0L, archive_exit = 0L) {
     dir.create(file.path(root, dir), recursive = TRUE, showWarnings = FALSE)
   }
   file.copy(
-    repo_file("scripts", "run_public_build_audit.sh"),
-    file.path(root, "scripts", "run_public_build_audit.sh")
+    repo_file("scripts", "run_full_build.sh"),
+    file.path(root, "scripts", "run_full_build.sh")
   )
   for (script in c("clean_audit_workspace.sh", "check_source_syntax.sh")) {
     writeLines(c("#!/usr/bin/env bash", "set -euo pipefail", "exit 0"), file.path(root, "scripts", script))
@@ -292,8 +308,8 @@ audit_script_fixture <- function(manifest_exit = 0L, archive_exit = 0L) {
       "if [[ \"${1:-}\" == scripts/write_output_manifest.R ]]; then",
       "  exit_code=\"${FAKE_MANIFEST_EXIT:-0}\"",
       "  if [[ \"$exit_code\" -eq 0 ]]; then",
-      "    mkdir -p outputs/diagnostics/build",
-      "    printf 'artifact_id,path\\nfixture,outputs/fixture.csv\\n' > outputs/diagnostics/build/output_manifest.csv",
+      "    mkdir -p outputs/build",
+      "    printf 'artifact_id,path\\nfixture,outputs/fixture.csv\\n' > outputs/build/output_manifest.csv",
       "  fi",
       "  exit \"$exit_code\"",
       "fi",
@@ -309,12 +325,12 @@ audit_script_fixture <- function(manifest_exit = 0L, archive_exit = 0L) {
       "export PATH=\"$PWD/bin:$PATH\"",
       "export FAKE_MANIFEST_EXIT=\"${1:-0}\"",
       "export FAKE_ARCHIVE_EXIT=\"${2:-0}\"",
-      "exec bash scripts/run_public_build_audit.sh --incremental --with-extended-diagnostics --with-benchmarks"
+      "exec bash scripts/run_full_build.sh --no-samples --with-extended-diagnostics --with-benchmarks"
     ),
     runner
   )
   Sys.chmod(c(
-    file.path(root, "scripts", "run_public_build_audit.sh"),
+    file.path(root, "scripts", "run_full_build.sh"),
     file.path(root, "scripts", "clean_audit_workspace.sh"),
     file.path(root, "scripts", "check_source_syntax.sh"),
     file.path(root, "scripts", "make_review_archive.sh"),
@@ -342,7 +358,7 @@ run_audit_script_fixture <- function(fixture) {
   )
 }
 
-test_that("public audit always replaces review.zip with the current run", {
+test_that("full build always replaces review.zip with the current run", {
   skip_if(Sys.which("bash") == "")
   skip_if(Sys.which("git") == "")
   skip_if(Sys.which("python3") == "")
@@ -353,10 +369,10 @@ test_that("public audit always replaces review.zip with the current run", {
   expect_null(attr(output, "status"))
   expect_identical(readChar(file.path(success$root, "review.zip"), 8L), "verified")
   expect_true(file.exists(file.path(
-    success$root, "outputs", "diagnostics", "build", "output_manifest.csv"
+    success$root, "outputs", "build", "output_manifest.csv"
   )))
   status <- jsonlite::read_json(file.path(
-    success$root, "outputs", "diagnostics", "build", "audit_status.json"
+    success$root, "outputs", "build", "build_status.json"
   ))
   expect_identical(status$status, "passed")
   expect_identical(status$archive_mode, "verified")
@@ -367,13 +383,13 @@ test_that("public audit always replaces review.zip with the current run", {
   expect_identical(attr(output, "status"), 7L)
   expect_identical(readChar(file.path(failed$root, "review.zip"), 10L), "incomplete")
   status <- jsonlite::read_json(file.path(
-    failed$root, "outputs", "diagnostics", "build", "audit_status.json"
+    failed$root, "outputs", "build", "build_status.json"
   ))
   expect_identical(status$status, "failed")
   expect_identical(status$stage, "output-manifest")
   expect_equal(status$exit_code, 7L)
   expect_identical(status$archive_mode, "incomplete")
-  expect_false("archive_on_failure" %in% names(status$options))
+  expect_true(isFALSE(status$options$from_clean_slate))
 
   packaging_failure <- audit_script_fixture(7L, archive_exit = 9L)
   on.exit(unlink(packaging_failure$root, recursive = TRUE, force = TRUE), add = TRUE)
@@ -381,7 +397,7 @@ test_that("public audit always replaces review.zip with the current run", {
   expect_identical(attr(output, "status"), 7L)
   expect_false(file.exists(file.path(packaging_failure$root, "review.zip")))
   status <- jsonlite::read_json(file.path(
-    packaging_failure$root, "outputs", "diagnostics", "build", "audit_status.json"
+    packaging_failure$root, "outputs", "build", "build_status.json"
   ))
   expect_identical(status$archive_mode, "archive_failed")
 })

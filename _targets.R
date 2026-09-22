@@ -54,7 +54,11 @@ env_flag_enabled <- function(name, default = FALSE) {
 }
 
 render_application_samples_enabled <- function() {
-  env_flag_enabled("EMI_RENDER_APPLICATION_SAMPLES", default = TRUE)
+  env_flag_enabled("EMI_RENDER_APPLICATION_SAMPLES", default = FALSE)
+}
+
+render_poster_enabled <- function() {
+  env_flag_enabled("EMI_RENDER_POSTER", default = FALSE)
 }
 
 extended_diagnostics_enabled <- function() {
@@ -72,7 +76,7 @@ analysis_notes_enabled <- function() {
 
 core_pipeline_targets <- c(
   list(
-  tar_target(config_path, Sys.getenv("EMI_CONFIG", "config/draft.yml"), cue = tar_cue(mode = "always")),
+  tar_target(config_path, Sys.getenv("EMI_CONFIG", "config/fast.yml"), cue = tar_cue(mode = "always")),
   tar_target(cfg, read_config(config_path)),
   tar_target(paths, build_paths()),
   tar_target(
@@ -182,6 +186,8 @@ application_sample_targets <- list(
   tar_target(coding_sample_pdfs, { report_values; application_sample_inputs; render_coding_samples(output_files = c(figure_files, table_files)) }, format = "file")
 )
 
+poster_targets <- poster_target_definitions()
+
 selected_targets <- core_pipeline_targets
 
 if (extended_diagnostics_enabled() || benchmarks_enabled()) {
@@ -190,26 +196,22 @@ if (extended_diagnostics_enabled() || benchmarks_enabled()) {
 
 if (extended_diagnostics_enabled()) {
   selected_targets <- c(selected_targets, legacy_comparison_targets, extended_diagnostic_targets)
-} else {
-  message("EMI_RUN_EXTENDED_DIAGNOSTICS=false: omitting extended diagnostic targets from this targets run.")
 }
 
 if (benchmarks_enabled()) {
   selected_targets <- c(selected_targets, benchmark_targets)
-} else {
-  message("EMI_RUN_BENCHMARKS=false: omitting benchmark targets from this targets run.")
 }
 
 if (analysis_notes_enabled()) {
   selected_targets <- c(selected_targets, analysis_note_targets)
-} else {
-  message("EMI_RENDER_ANALYSIS_NOTES=false: omitting analysis-note render targets from this targets run.")
 }
 
 if (render_application_samples_enabled()) {
   selected_targets <- c(selected_targets, application_sample_targets)
-} else {
-  message("EMI_RENDER_APPLICATION_SAMPLES=false: omitting application-sample targets from this targets run.")
+}
+
+if (render_poster_enabled()) {
+  selected_targets <- c(selected_targets, poster_targets)
 }
 
 selected_targets

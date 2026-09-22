@@ -28,7 +28,7 @@ keys <- extract_report_value_keys(report_sources)
 
 report_values <- tryCatch(
   targets::tar_read(report_values),
-  error = function(e) stop("Could not read report_values target. Run `make pipeline-final` first. ", conditionMessage(e), call. = FALSE)
+  error = function(e) stop("Could not read report_values target. Run `make pipeline` first. ", conditionMessage(e), call. = FALSE)
 )
 if (is.null(report_values) || !is.list(report_values)) {
   stop("report_values target did not return a named list.", call. = FALSE)

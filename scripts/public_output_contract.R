@@ -26,8 +26,18 @@ paper_new_appendix_render_inputs <- function() {
   )
 }
 
-required_public_render_inputs <- function() {
+poster_render_inputs <- function() {
   c(
+    "outputs/figures/main/poster_emie_expected_values.pdf",
+    "outputs/figures/main/poster_first_stage_specs.pdf",
+    "outputs/figures/main/poster_second_stage_specs.pdf",
+    "assets/uw-logo-horizontal-full-color-print.pdf",
+    "assets/repo-qr.svg"
+  )
+}
+
+required_public_render_inputs <- function(require_poster = FALSE) {
+  files <- c(
     "paper/references.bib",
     "outputs/tables/main/sum_tbl_probit_quant.csv",
     "outputs/tables/main/sum_tbl_probit_cat.csv",
@@ -50,17 +60,15 @@ required_public_render_inputs <- function() {
     "outputs/figures/main/consumption_iv_dynamics.pdf",
     "outputs/figures/main/fig_ilo_trends.png",
     "outputs/figures/main/district_carveouts_shifts.png",
-    "outputs/figures/main/poster_emie_expected_values.pdf",
     "outputs/figures/main/poster_first_stage_specs.pdf",
-    "outputs/figures/main/poster_second_stage_specs.pdf",
     "outputs/figures/main/map_emi_exposure.pdf",
     "outputs/figures/main/map_residual_emi_exposure.pdf",
     "outputs/figures/main/map_linguistic_distance.pdf",
     "outputs/figures/main/map_residual_linguistic_distance.pdf",
-    "assets/uw-logo-horizontal-full-color-print.pdf",
-    "assets/repo-qr.svg",
     paper_new_appendix_render_inputs()
   )
+  if (isTRUE(require_poster)) files <- c(files, poster_render_inputs())
+  unique(files)
 }
 
 application_sample_outputs <- function() {
@@ -74,13 +82,15 @@ application_sample_outputs <- function() {
   )
 }
 
-required_final_documents <- function(require_application_samples = TRUE) {
-  files <- c(
-    "paper/paper.pdf",
-    "paper/paper-new.pdf",
-    "posters/2026_predoc_conference/poster.pdf",
-    "posters/2026_predoc_conference/RishavRoy-Education.png"
-  )
+required_final_documents <- function(require_application_samples = TRUE, require_poster = FALSE) {
+  files <- c("paper/paper.pdf", "paper/paper-new.pdf")
+  if (isTRUE(require_poster)) {
+    files <- c(
+      files,
+      "posters/2026_predoc_conference/poster.pdf",
+      "posters/2026_predoc_conference/RishavRoy-Education.png"
+    )
+  }
   if (isTRUE(require_application_samples)) files <- c(files, application_sample_outputs())
   files
 }
@@ -113,8 +123,8 @@ required_extended_diagnostic_outputs <- function() {
   )
 }
 
-required_final_artifacts <- function() {
-  c(
+required_final_artifacts <- function(require_poster = FALSE) {
+  files <- c(
     "paper/references.bib",
     "outputs/tables/main/sum_tbl_probit_quant.csv",
     "outputs/tables/main/sum_tbl_probit_cat.csv",
@@ -160,15 +170,20 @@ required_final_artifacts <- function() {
     "outputs/figures/main/district_carveouts_shifts.png",
     "outputs/figures/main/collage_main_maps.png",
     "outputs/figures/main/collage_iv_region_maps.png",
-    "outputs/figures/main/poster_emie_expected_values.pdf",
     "outputs/figures/main/poster_first_stage_specs.pdf",
-    "posters/2026_predoc_conference/poster.pdf",
-    "posters/2026_predoc_conference/RishavRoy-Education.png",
     "outputs/diagnostics/public/spatial_moran_tests.csv",
     "outputs/diagnostics/public/spatial_moran_mc_reference.csv",
     "outputs/diagnostics/public/multicollinearity_diagnostics.csv",
     "outputs/diagnostics/public/anderson_rubin_candidate_designs.csv"
   )
+  if (isTRUE(require_poster)) {
+    files <- c(
+      files, poster_render_inputs(),
+      "posters/2026_predoc_conference/poster.pdf",
+      "posters/2026_predoc_conference/RishavRoy-Education.png"
+    )
+  }
+  unique(files)
 }
 
 missing_or_empty_files <- function(paths) {

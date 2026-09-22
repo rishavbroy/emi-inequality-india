@@ -108,7 +108,7 @@ test_that("programmatic selection formulas remain reconstructable", {
     AGE = 6:13,
     weight = rep(1, 8)
   )
-  model <- estimate_selection_probit(selection_data, list(mode = "draft"))
+  model <- estimate_selection_probit(selection_data, list(mode = "fast"))
 
   expect_s3_class(model$call$formula, "formula")
   expect_identical(model$call$formula, attr(model, "selection_probit_formula"))
@@ -122,7 +122,7 @@ test_that("AME benchmark exercises the production marginaleffects wrapper", {
     AGE = seq_len(40),
     weight = rep(c(1, 2), 20)
   )
-  model <- estimate_selection_probit(selection_data, list(mode = "draft"))
+  model <- estimate_selection_probit(selection_data, list(mode = "fast"))
 
   out <- benchmark_ame_methods(model, list(), sample_sizes = 20L)
 

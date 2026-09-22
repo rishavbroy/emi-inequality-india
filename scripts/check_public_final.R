@@ -3,8 +3,9 @@
 source("scripts/public_output_contract.R", local = TRUE)
 
 require_application_samples <- !is_false_env("EMI_REQUIRE_APPLICATION_SAMPLES", Sys.getenv("EMI_RENDER_APPLICATION_SAMPLES", "true"))
+require_poster <- !is_false_env("EMI_REQUIRE_POSTER", Sys.getenv("EMI_RENDER_POSTER", "false"))
 
-required_files <- required_final_documents(require_application_samples)
+required_files <- required_final_documents(require_application_samples, require_poster)
 missing_or_empty <- missing_or_empty_files(required_files)
 
 failures <- character()
@@ -23,6 +24,9 @@ if (length(failures)) {
 }
 
 if (!require_application_samples) {
-  message("Final public checks skipped application-sample output requirements because EMI_REQUIRE_APPLICATION_SAMPLES=false.")
+  message("Final checks skipped application-sample output requirements.")
+}
+if (!require_poster) {
+  message("Final checks skipped conference-poster output requirements.")
 }
 message("Final public checks passed.")

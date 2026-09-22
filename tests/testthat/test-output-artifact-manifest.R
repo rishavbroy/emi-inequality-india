@@ -16,7 +16,7 @@ test_that("output artifact manifest records target references and canonical anal
   )
   csv_path <- file.path(root, "outputs", "diagnostics", "extended", "iv", "estimates.csv")
   utils::write.csv(diagnostic, csv_path, row.names = FALSE)
-  manifest_path <- file.path(root, "outputs", "diagnostics", "build", "output_manifest.csv")
+  manifest_path <- file.path(root, "outputs", "build", "output_manifest.csv")
   dir.create(dirname(manifest_path), recursive = TRUE)
   utils::write.csv(data.frame(stale = TRUE), manifest_path, row.names = FALSE)
   writeLines("paper", file.path(root, "paper", "paper.pdf"))
@@ -42,7 +42,7 @@ test_that("output artifact manifest records target references and canonical anal
   expect_equal(row$analysis_id_count, 2L)
   expect_identical(row$analysis_families, "family_a;family_b")
   expect_true("paper/paper.pdf" %in% out$path)
-  expect_false("outputs/diagnostics/build/output_manifest.csv" %in% out$path)
+  expect_false("outputs/build/output_manifest.csv" %in% out$path)
 })
 
 
@@ -150,7 +150,7 @@ test_that("output artifact manifest ignores duplicate source targets outside cat
 
 test_that("output artifact manifest scopes are semantic rather than filename-specific", {
   paths <- c(
-    "outputs/diagnostics/build/a.csv",
+    "outputs/build/a.csv",
     "outputs/diagnostics/public/a.csv",
     "outputs/diagnostics/extended/x/a.csv",
     "outputs/benchmarking/a.csv",
@@ -170,4 +170,13 @@ test_that("output artifact manifest scopes are semantic rather than filename-spe
       "documentation", "poster", "analysis_note", "application_sample"
     )
   )
+})
+
+
+test_that("output artifact roots keep optional render families opt-in", {
+  expect_false("posters" %in% output_artifact_roots())
+  expect_false("analysis" %in% output_artifact_roots())
+  expect_true("posters" %in% output_artifact_roots(include_poster = TRUE))
+  expect_true("analysis" %in% output_artifact_roots(include_analysis = TRUE))
+  expect_true("application-samples/output" %in% output_artifact_roots(include_samples = TRUE))
 })

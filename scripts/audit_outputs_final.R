@@ -3,12 +3,13 @@
 source("scripts/public_output_contract.R", local = TRUE)
 
 if (!file.exists(".pipeline-final-ok")) {
-  stop("Final output audit requires a successful current final pipeline run. Run `make pipeline-final` first.", call. = FALSE)
+  stop("Final output audit requires a successful current final pipeline run. Run `make pipeline` with the final configuration first.", call. = FALSE)
 }
 
 failures <- character()
 
-required_files <- required_final_artifacts()
+require_poster <- !is_false_env("EMI_REQUIRE_POSTER", Sys.getenv("EMI_RENDER_POSTER", "false"))
+required_files <- required_final_artifacts(require_poster)
 missing_required <- missing_or_empty_files(required_files)
 if (length(missing_required)) {
   add_failure("Missing required public output files: ", paste(missing_required, collapse = ", "))

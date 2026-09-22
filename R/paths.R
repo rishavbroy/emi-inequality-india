@@ -17,6 +17,7 @@ build_paths <- function(root = ".") {
     metadata = file.path(root, "data", "metadata"),
     assets = file.path(root, "assets"),
     outputs = file.path(root, "outputs"),
+    build = file.path(root, "outputs", "build"),
     figures = file.path(root, "outputs", "figures"),
     tables = file.path(root, "outputs", "tables"),
     diagnostics = file.path(root, "outputs", "diagnostics"),

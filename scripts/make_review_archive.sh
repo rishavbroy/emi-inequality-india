@@ -3,18 +3,20 @@ set -euo pipefail
 
 out="review.zip"
 include_samples="true"
+include_analysis="false"
+include_poster="false"
 allow_incomplete="false"
 
 usage() {
   cat <<'USAGE'
-Usage: bash scripts/make_review_archive.sh [--with-samples|--without-samples] [--allow-incomplete] [-o OUT.zip]
+Usage: bash scripts/make_review_archive.sh [--with-samples|--no-samples] [--with-analysis] [--with-poster] [--allow-incomplete] [-o OUT.zip]
        bash scripts/make_review_archive.sh OUT.zip
 
 Creates a public review archive from the current working tree. By default the
-archive is written to review.zip and includes application-sample PDFs. Use
---without-samples for fast-audit archives that intentionally omit
-application-samples/output. Use --allow-incomplete only for debugging failed
-audits; it includes diagnostics without requiring final public artifacts.
+archive is written to review.zip and includes application-sample PDFs. Analysis
+report renders and conference-poster renders are included only when explicitly
+requested. Use --allow-incomplete only for debugging failed builds; it packages
+the current state without requiring final deliverables.
 USAGE
 }
 
@@ -26,6 +28,14 @@ while [[ $# -gt 0 ]]; do
       ;;
     --without-samples|--no-samples)
       include_samples="false"
+      shift
+      ;;
+    --with-analysis)
+      include_analysis="true"
+      shift
+      ;;
+    --with-poster)
+      include_poster="true"
       shift
       ;;
     --allow-incomplete)
@@ -88,6 +98,12 @@ done < <(git ls-files -z)
 # Include regenerated public artifacts whether tracked or not.
 mkdir -p "$tmpdir/paper" "$tmpdir/docs" "$tmpdir/outputs"
 cp -f paper/paper.pdf paper/paper.html paper/paper.qmd paper/paper-new.pdf paper/paper-new.html paper/paper-new.qmd "$tmpdir/paper/" 2>/dev/null || true
+if [[ "$include_poster" == "true" ]]; then
+  mkdir -p "$tmpdir/posters/2026_predoc_conference"
+  cp -f posters/2026_predoc_conference/poster.pdf posters/2026_predoc_conference/RishavRoy-Education.png "$tmpdir/posters/2026_predoc_conference/" 2>/dev/null || true
+else
+  rm -f "$tmpdir/posters/2026_predoc_conference/poster.pdf" "$tmpdir/posters/2026_predoc_conference/RishavRoy-Education.png"
+fi
 if [[ "$include_samples" == "true" ]]; then
   mkdir -p "$tmpdir/application-samples/output"
   cp -f application-samples/output/*.pdf "$tmpdir/application-samples/output/" 2>/dev/null || true
@@ -97,9 +113,9 @@ fi
 cp -R outputs/figures "$tmpdir/outputs/" 2>/dev/null || true
 cp -R outputs/tables "$tmpdir/outputs/" 2>/dev/null || true
 cp -R outputs/diagnostics "$tmpdir/outputs/" 2>/dev/null || true
-mkdir -p "$tmpdir/outputs/diagnostics/build"
-if [[ ! -s "$tmpdir/outputs/diagnostics/build/audit_status.json" ]]; then
-  ARCHIVE_ALLOW_INCOMPLETE="$allow_incomplete" ARCHIVE_INCLUDE_SAMPLES="$include_samples" python3 - "$tmpdir/outputs/diagnostics/build/audit_status.json" <<'PY_STATUS'
+mkdir -p "$tmpdir/outputs/build"
+if [[ ! -s "$tmpdir/outputs/build/build_status.json" ]]; then
+  ARCHIVE_ALLOW_INCOMPLETE="$allow_incomplete" ARCHIVE_INCLUDE_SAMPLES="$include_samples" ARCHIVE_INCLUDE_ANALYSIS="$include_analysis" ARCHIVE_INCLUDE_POSTER="$include_poster" python3 - "$tmpdir/outputs/build/build_status.json" <<'PY_STATUS'
 import json
 import os
 import sys
@@ -115,29 +131,36 @@ status = {
     "archive_mode": "incomplete" if os.environ["ARCHIVE_ALLOW_INCOMPLETE"] == "true" else "artifact_only",
     "updated_at_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
     "options": {
-        "with_samples": os.environ["ARCHIVE_INCLUDE_SAMPLES"] == "true"
+        "with_samples": os.environ["ARCHIVE_INCLUDE_SAMPLES"] == "true",
+        "with_analysis": os.environ["ARCHIVE_INCLUDE_ANALYSIS"] == "true",
+        "with_poster": os.environ["ARCHIVE_INCLUDE_POSTER"] == "true"
     },
-    "note": "The archive was created outside scripts/run_public_build_audit.sh; no audit result is asserted."
+    "note": "The archive was created outside scripts/run_full_build.sh; no build result is asserted."
 }
 path.write_text(json.dumps(status, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 PY_STATUS
 fi
-cp -f "$tmpdir/outputs/diagnostics/build/audit_status.json" "$tmpdir/audit_status.json"
-# The canonical diagnostics layout is outputs/diagnostics/{build,public,extended}.
-# Drop stale root-level CSVs from earlier layouts before zipping review.zip.
+cp -f "$tmpdir/outputs/build/build_status.json" "$tmpdir/build_status.json"
+# Build metadata is stored separately from empirical diagnostic results.
+# Drop stale root-level diagnostic CSVs from earlier layouts before zipping review.zip.
 if [[ -d "$tmpdir/outputs/diagnostics" ]]; then
   find "$tmpdir/outputs/diagnostics" -maxdepth 1 -type f -name '*.csv' -delete
 fi
 cp -R outputs/benchmarking "$tmpdir/outputs/" 2>/dev/null || true
-# Include rendered analysis notebooks, which are intentionally outside the
-# normal public-paper render path. Keep GitHub-flavored Markdown outputs and
-# source QMDs, but do not carry stale HTML/PDF/TeX analysis renders.
+# Analysis source files may be tracked, but generated Markdown is included only
+# when this archive corresponds to a build that rendered analysis reports.
 cp -R analysis "$tmpdir/" 2>/dev/null || true
 if [[ -d "$tmpdir/analysis" ]]; then
   find "$tmpdir/analysis" -type f \( -name '*.html' -o -name '*.pdf' -o -name '*.tex' -o -name '*.log' \) -delete
+  if [[ "$include_analysis" != "true" ]]; then
+    find "$tmpdir/analysis" -type f -name '*.md' -delete
+  fi
 fi
-mkdir -p "$tmpdir/data/processed"
-cp -f data/processed/*.csv "$tmpdir/data/processed/" 2>/dev/null || true
+rm -rf "$tmpdir/data/processed"
+if [[ -d data/processed ]]; then
+  mkdir -p "$tmpdir/data"
+  cp -R data/processed "$tmpdir/data/"
+fi
 
 # Manually remove the eight local-only/cache families identified in review, plus
 # common render/cache byproducts.
@@ -174,6 +197,12 @@ if [[ "$include_samples" == "true" ]]; then
     "application-samples/output/RishavRoy_CodingSample25pg.pdf"
   )
 fi
+if [[ "$include_poster" == "true" ]]; then
+  required_public+=(
+    "posters/2026_predoc_conference/poster.pdf"
+    "posters/2026_predoc_conference/RishavRoy-Education.png"
+  )
+fi
 if [[ "$allow_incomplete" != "true" ]]; then
   for f in "${required_public[@]}"; do
     if [[ ! -s "$tmpdir/$f" ]]; then
@@ -184,7 +213,7 @@ if [[ "$allow_incomplete" != "true" ]]; then
 fi
 
 if [[ "$include_samples" != "true" && -d "$tmpdir/application-samples/output" ]]; then
-  echo "Fast review archive unexpectedly contains application-samples/output." >&2
+  echo "Review archive unexpectedly contains application-samples/output." >&2
   exit 1
 fi
 
@@ -196,7 +225,7 @@ if unzip -l "$tmp_archive" | grep -E '(^|/)(_targets|renv/library|application-sa
 fi
 
 if [[ "$include_samples" != "true" ]] && unzip -l "$tmp_archive" | grep -E '(^|/)application-samples/output/' >/dev/null; then
-  echo "Fast review archive contains application-samples/output despite --without-samples." >&2
+  echo "Review archive contains application-samples/output despite --no-samples." >&2
   exit 1
 fi
 
@@ -210,5 +239,11 @@ if [[ "$allow_incomplete" == "true" ]]; then
   echo "Archive was created in --allow-incomplete debug mode; final public artifacts may be absent."
 fi
 if [[ "$include_samples" != "true" ]]; then
-  echo "Application-sample outputs were omitted; rerun with --with-samples for the full review archive."
+  echo "Application-sample outputs were omitted; rerun with --with-samples to include them."
+fi
+if [[ "$include_analysis" != "true" ]]; then
+  echo "Rendered analysis reports were omitted; rerun with --with-analysis to include them."
+fi
+if [[ "$include_poster" != "true" ]]; then
+  echo "Conference-poster renders were omitted; rerun with --with-poster to include them."
 fi

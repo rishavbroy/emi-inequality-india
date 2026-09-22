@@ -3,12 +3,12 @@
 
 source("scripts/target_metadata_helpers.R", local = TRUE)
 
-config <- Sys.getenv("EMI_CONFIG", "config/draft.yml")
+config <- Sys.getenv("EMI_CONFIG", "config/fast.yml")
 is_final <- identical(basename(config), "final.yml")
-stamp <- if (is_final) ".pipeline-final-ok" else ".pipeline-draft-ok"
+stamp <- if (is_final) ".pipeline-final-ok" else ".pipeline-fast-ok"
 unlink(stamp)
 if (is_final) unlink(".public-final-ok")
-unlink("outputs/diagnostics/build/target_warnings.csv")
+unlink("outputs/build/target_warnings.csv")
 
 if (!requireNamespace("targets", quietly = TRUE)) {
   stop("Package 'targets' is required. Run `make restore`.", call. = FALSE)

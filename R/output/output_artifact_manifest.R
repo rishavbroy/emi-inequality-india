@@ -2,8 +2,9 @@
 # the {targets} graph: estimation metadata stays authoritative in its registries,
 # while target/file provenance comes from targets::tar_meta().
 
-output_artifact_roots <- function(include_samples = FALSE, include_analysis = FALSE) {
-  roots <- c("paper", "outputs", "docs", "posters")
+output_artifact_roots <- function(include_samples = FALSE, include_analysis = FALSE, include_poster = FALSE) {
+  roots <- c("paper", "outputs", "docs")
+  if (isTRUE(include_poster)) roots <- c(roots, "posters")
   if (isTRUE(include_samples)) roots <- c(roots, "application-samples/output")
   if (isTRUE(include_analysis)) roots <- c(roots, "analysis")
   roots
@@ -11,7 +12,7 @@ output_artifact_roots <- function(include_samples = FALSE, include_analysis = FA
 
 output_artifact_scope <- function(path) {
   rules <- c(
-    "^outputs/diagnostics/build/" = "build_diagnostic",
+    "^outputs/build/" = "build_diagnostic",
     "^outputs/diagnostics/public/" = "public_diagnostic",
     "^outputs/diagnostics/extended/" = "extended_diagnostic",
     "^outputs/benchmarking/" = "benchmark",
@@ -44,7 +45,7 @@ build_output_artifact_manifest <- function(target_meta, design_registry, roots, 
   paths <- paths[file.exists(paths) & !dir.exists(paths)]
   paths <- paths[tolower(tools::file_ext(paths)) %in% extensions]
   paths <- sort(unique(relative_output_path(paths, root)))
-  paths <- setdiff(paths, "outputs/diagnostics/build/output_manifest.csv")
+  paths <- setdiff(paths, "outputs/build/output_manifest.csv")
 
   meta <- as.data.frame(target_meta, stringsAsFactors = FALSE)
   if (!all(c("name", "format", "path") %in% names(meta))) {

@@ -24,7 +24,7 @@ _targets.Rout
 # stamp files
 .pipeline-final-ok
 .public-final-ok
-.pipeline-draft-ok
+.pipeline-fast-ok
 
 # raw, future, and intermediate data
 data/raw/
@@ -34,11 +34,12 @@ data/interim/
 # locally stored literature PDFs
 relevant-literature/
 
-# locally reproducible derived artifacts
-outputs/derived/district_lineage/*.gpkg
+# locally reproducible processed geography
+data/processed/geography/*.gpkg
 
 # short-lived target/build diagnostics
 outputs/diagnostics/*.csv
+outputs/build/
 outputs/diagnostics/build/
 outputs/diagnostics/public/
 outputs/diagnostics/extended/district_lineage/

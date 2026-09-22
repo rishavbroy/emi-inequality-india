@@ -11,8 +11,6 @@ run_diagnostics:
   spatial_autocorrelation: true
   multicollinearity: true
   spatial_iv_experimental: false
-sample_rows:
-  selection: null
 output_formats:
   figures: ["pdf", "png"]
   tables: ["csv", "tex"]

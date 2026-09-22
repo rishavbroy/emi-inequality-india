@@ -1,11 +1,11 @@
 #!/usr/bin/env Rscript
 
 args <- commandArgs(trailingOnly = TRUE)
-allowed <- c("--with-samples", "--with-analysis-notes")
+allowed <- c("--with-samples", "--with-analysis", "--with-poster")
 if (length(setdiff(args, allowed))) stop("Unknown output-manifest argument.", call. = FALSE)
 source("R/output/output_artifact_manifest.R", local = TRUE)
 
-path <- "outputs/diagnostics/build/output_manifest.csv"
+path <- "outputs/build/output_manifest.csv"
 design_path <- "outputs/diagnostics/extended/iv/analysis_design_registry.csv"
 design_registry <- if (file.exists(design_path)) {
   utils::read.csv(design_path, stringsAsFactors = FALSE, check.names = FALSE)
@@ -17,7 +17,8 @@ manifest <- build_output_artifact_manifest(
   design_registry = design_registry,
   roots = output_artifact_roots(
     include_samples = "--with-samples" %in% args,
-    include_analysis = "--with-analysis-notes" %in% args
+    include_analysis = "--with-analysis" %in% args,
+    include_poster = "--with-poster" %in% args
   )
 )
 dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)

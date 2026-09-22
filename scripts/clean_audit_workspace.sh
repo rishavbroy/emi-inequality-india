@@ -3,7 +3,8 @@ set -euo pipefail
 
 root="${1:-.}"
 diagnostics_root="${root%/}/outputs/diagnostics"
-derived_root="${root%/}/outputs/derived"
+build_root="${root%/}/outputs/build"
+legacy_derived_root="${root%/}/outputs/derived"
 paper_root="${root%/}/paper"
 
 rm -f "$paper_root"/*_bibertool.bib 2>/dev/null || true
@@ -98,14 +99,15 @@ rm -f \
   2>/dev/null || true
 
 rm -rf \
+  "$build_root" \
   "$diagnostics_root/build" \
   "$diagnostics_root/public" \
   "$diagnostics_root/extended/district_lineage_v2" \
-  "$derived_root/district_lineage_v2"
+  "$legacy_derived_root/district_lineage_v2"
 
 find "$diagnostics_root" -maxdepth 1 -type f -name '*.csv' -delete 2>/dev/null || true
 mkdir -p \
-  "$diagnostics_root/build" \
+  "$build_root" \
   "$diagnostics_root/public" \
   "$diagnostics_root/extended" \
   "${root%/}/outputs/benchmarking"

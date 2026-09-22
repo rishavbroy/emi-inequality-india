@@ -8,6 +8,7 @@ require_stamp <- "--require-final-stamp" %in% args
 extended_only <- "--extended-diagnostics-only" %in% args
 
 failures <- character()
+require_poster <- !is_false_env("EMI_REQUIRE_POSTER", Sys.getenv("EMI_RENDER_POSTER", "false"))
 
 if (extended_only) {
   missing <- missing_or_empty_files(required_extended_diagnostic_outputs())
@@ -16,10 +17,10 @@ if (extended_only) {
   }
 } else {
   if (require_stamp && !file.exists(".pipeline-final-ok")) {
-    add_failure("Missing .pipeline-final-ok; run `make pipeline-final` successfully before rendering public outputs.")
+    add_failure("Missing .pipeline-final-ok; run `make pipeline` successfully with config/final.yml before rendering public outputs.")
   }
 
-  missing <- missing_or_empty_files(required_public_render_inputs())
+  missing <- missing_or_empty_files(required_public_render_inputs(require_poster = require_poster))
   if (length(missing)) add_failure("Missing required public file(s): ", paste(missing, collapse = ", "))
 }
 

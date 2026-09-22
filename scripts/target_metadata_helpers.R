@@ -79,14 +79,14 @@ safe_target_run_label <- function(label) {
   if (nzchar(label)) label else "selected_targets"
 }
 
-write_target_run_metadata <- function(meta, label, dir = "outputs/diagnostics/build") {
+write_target_run_metadata <- function(meta, label, dir = "outputs/build") {
   dir.create(dir, recursive = TRUE, showWarnings = FALSE)
   path <- file.path(dir, paste0("target_meta_after_", safe_target_run_label(label), "_run.csv"))
   utils::write.csv(normalize_target_metadata(meta), path, row.names = FALSE, na = "")
   path
 }
 
-record_target_warnings <- function(meta, label, path = "outputs/diagnostics/build/target_warnings.csv") {
+record_target_warnings <- function(meta, label, path = "outputs/build/target_warnings.csv") {
   warnings <- target_metadata_issue_rows(meta, "warnings")
   if (!nrow(warnings)) return(invisible(data.frame()))
   fields <- intersect(c("name", "warnings"), names(warnings))
