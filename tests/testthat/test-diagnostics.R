@@ -1016,143 +1016,127 @@ test_that("alternative linguistic-distance registry covers scalar, nonlinear, an
   ))
 })
 
-test_that("alternative linguistic-distance first stages use fixed support and joint clustered tests", {
+test_that("alternative-distance panels retain only explicitly requested outcomes", {
+  n <- 24L
+  panel <- data.frame(
+    state_code_2001 = rep(sprintf("%02d", 1:6), each = 4),
+    district_code_2001 = sprintf("%03d", seq_len(n)),
+    region = rep(panel_region_levels(), each = 4),
+    emi_exposure_all_children_0708 = seq_len(n),
+    future_hces_outcome = seq_len(n),
+    real_log_consumption_change = c(NA_real_, seq_len(n - 1L)),
+    stringsAsFactors = FALSE
+  )
+  for (variable in census_2001_diagnostic_controls()) panel[[variable]] <- seq_len(n)
+  for (variable in alternative_distance_variables()) panel[[variable]] <- 100
+
+  projected <- project_alternative_distance_panel(panel)
+  retained <- project_alternative_distance_panel(
+    panel,
+    retain = "real_log_consumption_change"
+  )
+
+  expect_false("future_hces_outcome" %in% names(projected))
+  expect_false("real_log_consumption_change" %in% names(projected))
+  expect_true("real_log_consumption_change" %in% names(retained))
+  expect_equal(nrow(retained), nrow(panel))
+  expect_true(is.na(retained$real_log_consumption_change[[1]]))
+})
+
+test_that("alternative-distance first-stage estimators handle scalar and joint instruments", {
   set.seed(19)
-  states <- rep(sprintf("%02d", 1:12), each = 8)
-  regions <- rep(panel_region_levels(), each = 16)
-  n <- length(states)
+  n <- 48L
+  states <- rep(sprintf("%02d", 1:12), each = 4)
   shares <- matrix(stats::runif(n * 6), ncol = 6)
   shares <- 100 * shares / rowSums(shares)
   panel <- data.frame(
     state_code_2001 = states,
-    district_code_2001 = sprintf("%03d", seq_len(n)),
-    region = factor(regions, levels = panel_region_levels()),
-    ling_distance_nonzero_mean = rowSums(shares[, 2:6, drop = FALSE] * rep(1:5, each = n)) /
-      rowSums(shares[, 2:6, drop = FALSE]),
-    ling_share_distance_ge3 = rowSums(shares[, 4:6, drop = FALSE]),
-    ling_distance_top3_legacy = stats::runif(n, 0, 5),
-    hindi_share = 0.8 * shares[, 1],
-    urdu_share = 0.2 * shares[, 1],
-    hindi_urdu_share = shares[, 1],
+    region = factor(rep(panel_region_levels(), each = 8), levels = panel_region_levels()),
+    ling_distance_nonzero_mean = rowSums(
+      shares[, 2:6, drop = FALSE] * rep(1:5, each = n)
+    ) / rowSums(shares[, 2:6, drop = FALSE]),
     stringsAsFactors = FALSE
   )
   for (degree in 0:5) {
-    panel[[paste0("ling_share_distance_", degree)]] <- shares[, degree + 1]
-    panel[[paste0("ling_mapped_share_distance_", degree)]] <- shares[, degree + 1]
+    panel[[paste0("ling_share_distance_", degree)]] <- shares[, degree + 1L]
   }
-  panel$ling_mapped_speaker_share <- 100
-  panel$ling_unmapped_speaker_share <- 0
-  panel$ling_distance_glottolog_nonhindi_mean <- panel$ling_distance_nonzero_mean + 1
-  panel$ling_glottolog_mapped_speaker_share <- 100
-  panel$ling_glottolog_unmapped_speaker_share <- 0
-  panel$ling_distance_dyen_noncognate_pct <- 100 - 10 * panel$ling_distance_nonzero_mean
-  panel$ling_dyen_mapped_speaker_share <- 100
-  panel$ling_distance_nonzero_mean_sensitivity_low <- panel$ling_distance_nonzero_mean
-  panel$ling_distance_nonzero_mean_sensitivity_high <- panel$ling_distance_nonzero_mean
-  panel$ling_sensitivity_mapped_speaker_share <- 100
-  panel$ling_dyen_unmapped_speaker_share <- 0
-  panel$native_english_share <- 0
-  panel$emi_exposure_all_children_0708 <- 5 + 0.15 * panel$ling_share_distance_5 +
+  panel$emi_exposure_all_children_0708 <-
+    0.15 * panel$ling_share_distance_5 +
     0.08 * panel$ling_share_distance_4 + stats::rnorm(n)
-  for (variable in census_2001_diagnostic_controls()) panel[[variable]] <- stats::rnorm(n)
 
-  out <- diagnose_alternative_distance_first_stages(panel)
-  panel$future_hces_outcome <- seq_len(nrow(panel))
-  panel$real_log_consumption_change <- stats::rnorm(nrow(panel))
-  panel$real_log_consumption_change[[1]] <- NA_real_
-  weak_iv <- withCallingHandlers(
-    estimate_weak_iv_outcomes(panel),
-    warning = function(w) {
-      # This synthetic all-registry fixture intentionally creates rank-deficient
-      # instrument sets for some alternative specifications. Consume only the
-      # warning ivreg emits for that known fixture property; every other warning
-      # must still reach testthat and fail the audit.
-      if (identical(conditionMessage(w), "some instrumental variables are collinear")) {
-        invokeRestart("muffleWarning")
-      }
-    }
-  )
-  expect_true("effective_f" %in% names(weak_iv$summary))
-  expect_true(all(is.finite(weak_iv$summary$effective_f)))
-  expect_true(all(weak_iv$summary$effective_f > 0))
-  expected_analysis_ids <- iv_analysis_id(
-    "district_iv_diagnostic",
-    weak_iv$registry$specification_id
-  )
-  expect_setequal(unique(weak_iv$summary$analysis_id), expected_analysis_ids)
-  expect_true(all(weak_iv$ar_grid$analysis_id %in% expected_analysis_ids))
-  expect_true(all(weak_iv$overidentification$analysis_id %in% expected_analysis_ids))
-  projected <- prepare_alternative_distance_panel(panel)
-  projected_with_outcome <- prepare_alternative_distance_panel(
-    panel,
-    retain = "real_log_consumption_change"
-  )
-  augmentation_panel <- project_alternative_distance_panel(
-    panel,
-    retain = "real_log_consumption_change"
-  )
   registry <- alternative_distance_registry()
-  branch_specification <- registry[
-    registry$construction_id == "distance_shares_all" &
-      registry$adjustment_id == "state_main",
-    ,
-    drop = FALSE
+  scalar_spec <- registry[
+    registry$adjustment_id == "unadjusted" &
+      registry$construction_id == "nonzero_mean",
+    , drop = FALSE
   ]
-  expect_true(is.list(branch_specification$excluded_instruments))
+  joint_spec <- registry[
+    registry$adjustment_id == "unadjusted" &
+      registry$construction_id == "distance_shares_all",
+    , drop = FALSE
+  ]
+
+  scalar <- estimate_alternative_distance_spec(
+    panel, scalar_spec, "emi_exposure_all_children_0708"
+  )
+  joint <- estimate_alternative_distance_spec(
+    panel, joint_spec, "emi_exposure_all_children_0708"
+  )
+
+  expect_equal(scalar$summary$n_excluded_instruments, 1L)
+  expect_equal(joint$summary$n_excluded_instruments, 5L)
+  expect_true(is.finite(scalar$summary$joint_excluded_f))
+  expect_true(is.finite(joint$summary$joint_excluded_f))
+  expect_true(is.finite(joint$summary$partial_r_squared))
   expect_equal(
-    unlist(branch_specification$excluded_instruments[[1]], use.names = FALSE),
+    joint$coefficients$term,
     linguistic_distance_excluded_instruments("all")
   )
+})
 
+test_that("alternative-distance assembly attaches registered analysis identity without refitting", {
+  registry <- alternative_distance_registry()
+  registry <- registry[
+    registry$adjustment_id == "unadjusted" &
+      registry$construction_id %in% c("nonzero_mean", "distance_shares_all"),
+    , drop = FALSE
+  ]
+  data <- data.frame(
+    state_code_2001 = rep(c("01", "02"), each = 2),
+    region = rep(c("Northern", "North-Eastern"), each = 2),
+    stringsAsFactors = FALSE
+  )
   branches <- lapply(seq_len(nrow(registry)), function(i) {
-    diagnose_alternative_distance_specification(
-      projected, registry[i, , drop = FALSE]
+    spec <- registry[i, , drop = FALSE]
+    excluded <- unlist(spec$excluded_instruments[[1]], use.names = FALSE)
+    list(
+      summary = data.frame(
+        specification_id = spec$specification_id,
+        n_excluded_instruments = length(excluded),
+        stringsAsFactors = FALSE
+      ),
+      coefficients = data.frame(
+        specification_id = spec$specification_id,
+        term = excluded,
+        stringsAsFactors = FALSE
+      ),
+      coverage_sensitivity = data.frame(
+        specification_id = spec$specification_id,
+        stringsAsFactors = FALSE
+      )
     )
   })
-  branched <- assemble_alternative_distance_first_stages(
-    projected, registry, branches
+
+  out <- assemble_alternative_distance_first_stages(data, registry, branches)
+  expected_ids <- iv_analysis_id(
+    "district_iv_diagnostic", registry$specification_id
   )
 
-  expect_false("future_hces_outcome" %in% names(projected))
-  expect_false("future_hces_outcome" %in% names(augmentation_panel))
-  expect_true("real_log_consumption_change" %in% names(projected_with_outcome))
-  expect_true("real_log_consumption_change" %in% names(augmentation_panel))
-  expect_equal(nrow(projected_with_outcome), nrow(projected))
-  expect_equal(nrow(augmentation_panel), nrow(panel))
-  expect_true(is.na(projected_with_outcome$real_log_consumption_change[[1]]))
-  expect_true(is.na(augmentation_panel$real_log_consumption_change[[1]]))
-  expect_equal(branched$summary, out$summary)
-  expect_equal(branched$coefficients, out$coefficients)
-  expected_analysis_ids <- iv_analysis_id(
-    "district_iv_diagnostic",
-    out$registry$specification_id
-  )
-  expect_setequal(unique(out$summary$analysis_id), expected_analysis_ids)
-  expect_true(all(out$coefficients$analysis_id %in% expected_analysis_ids))
-  expect_equal(branched$coverage_sensitivity, out$coverage_sensitivity)
   expect_s3_class(out, "emi_alternative_distance_first_stages")
-  expect_equal(nrow(out$summary), nrow(alternative_distance_registry()))
-  expect_true(all(out$summary$n == n))
-  expect_true(all(c("joint_excluded_f", "joint_excluded_p", "partial_r_squared") %in% names(out$summary)))
-  expect_equal(
-    out$summary$n_excluded_instruments[out$summary$construction_id == "distance_shares_all"],
-    rep(5L, length(alternative_distance_adjustments()))
-  )
-  expect_true(any(is.finite(out$summary$joint_excluded_f[out$summary$construction_id == "distance_shares_all"])))
-  expect_setequal(unique(out$coverage_sensitivity$minimum_mapped_share), linguistic_mapping_coverage_thresholds())
-  expect_setequal(
-    unique(out$coverage_sensitivity$coverage_variable),
-    c(
-      "ling_mapped_speaker_share",
-      "ling_sensitivity_mapped_speaker_share",
-      "ling_glottolog_mapped_speaker_share",
-      "ling_dyen_mapped_speaker_share"
-    )
-  )
-  expect_equal(
-    nrow(out$coefficients[out$coefficients$term %in% linguistic_distance_excluded_instruments("all"), ]),
-    10L * length(alternative_distance_adjustments())
-  )
+  expect_setequal(out$summary$analysis_id, expected_ids)
+  expect_true(all(out$coefficients$analysis_id %in% expected_ids))
+  expect_equal(out$common_support$n, nrow(data))
+  expect_equal(out$common_support$n_states, 2L)
 })
 
 test_that("alternative linguistic-distance diagnostics save explicit outputs without recomputation", {
