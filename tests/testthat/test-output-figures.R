@@ -520,6 +520,24 @@ schooling_access_figure_fixture <- function() {
   list(access_summary = access, access_crosscuts = cross)
 }
 
+test_that("Natural Earth file inputs retain complete shapefile bundles without relying on vector names", {
+  spec <- natural_earth_map_reference_spec()
+  files <- unname(c(
+    paste0("/tmp/", spec[["disputed_lines"]], c(".dbf", ".shp", ".prj", ".shx")),
+    paste0("/tmp/", spec[["countries"]], c(".prj", ".shx", ".dbf", ".shp")),
+    paste0("/tmp/", spec[["disputed_areas"]], c(".shx", ".dbf", ".shp", ".prj"))
+  ))
+
+  layers <- natural_earth_reference_shapefiles(files)
+
+  expect_identical(names(layers), names(spec))
+  expect_identical(basename(unname(layers)), paste0(unname(spec), ".shp"))
+
+  tracked <- natural_earth_map_reference_paths()
+  expect_identical(length(tracked), length(spec) * 4L)
+  expect_true(all(c(".shp", ".dbf", ".shx", ".prj") %in% tools::file_ext(tracked)))
+})
+
 test_that("Natural Earth reference clips only display geometry to de facto India", {
   skip_if_not_installed("sf")
   district <- sf::st_sf(
