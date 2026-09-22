@@ -26,7 +26,9 @@ validate_nss64_source_pair <- function(usual_activity, migration, ddi_contract =
 }
 
 
-nss64_shared_design_columns <- nss_labor_shared_design_columns
+nss64_shared_design_columns <- function() {
+  nss_labor_shared_design_columns()
+}
 
 
 validate_nss64_cross_block_design <- function(usual_activity, migration) {
@@ -182,8 +184,13 @@ summarize_nss_labor_target_support <- function(lineaged_persons) {
   out[order(out$target_unit_2001), , drop = FALSE]
 }
 
-summarize_nss64_lineage_support <- summarize_nss_labor_lineage_support
-summarize_nss64_target_support <- summarize_nss_labor_target_support
+summarize_nss64_lineage_support <- function(x) {
+  summarize_nss_labor_lineage_support(x)
+}
+
+summarize_nss64_target_support <- function(x) {
+  summarize_nss_labor_target_support(x)
+}
 
 nss66_reviewed_lineage_map <- function(consumption_bridge) {
   bridge <- safe_df(consumption_bridge)

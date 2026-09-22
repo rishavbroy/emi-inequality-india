@@ -11,11 +11,20 @@ if (!requireNamespace("sf", quietly = TRUE)) {
   stop("Package 'sf' is required. Run `make restore`.", call. = FALSE)
 }
 
-targets::tar_source(
-  list.files(
-    "R", pattern = "\\.[Rr]$", recursive = TRUE, full.names = TRUE
-  )
-)
+# This standalone builder needs only the modules below. Sourcing the full R/ tree
+# makes a geometry-only task depend on unrelated module load order and defeats the
+# separation provided by the main {targets} pipeline. Keep this dependency list
+# explicit so the builder remains small and independently runnable.
+for (path in c(
+  "R/paths.R",
+  "R/io/utils_data_frame.R",
+  "R/districts/build_district_keys.R",
+  "R/districts/lineage_bridge.R",
+  "R/districts/lineage_completion.R",
+  "R/districts/lineage_sources.R"
+)) {
+  sys.source(path, envir = environment())
+}
 
 census_2001_languages <- targets::tar_read(census_2001_languages)
 admin_2001 <- build_admin_registry_2001(census_2001_languages)

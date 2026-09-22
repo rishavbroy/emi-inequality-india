@@ -1,3 +1,21 @@
+test_that("NSS64 diagnostic adapters do not depend on source order", {
+  env <- new.env(parent = globalenv())
+  sys.source(
+    repo_file("R", "diagnostics", "diagnose_nss_labor.R"),
+    envir = env
+  )
+
+  expect_true(is.function(env$nss64_shared_design_columns))
+  expect_true(is.function(env$summarize_nss64_lineage_support))
+  expect_true(is.function(env$summarize_nss64_target_support))
+
+  sys.source(repo_file("R", "io", "read_nss_labor.R"), envir = env)
+  expect_identical(
+    env$nss64_shared_design_columns(),
+    env$nss_labor_shared_design_columns()
+  )
+})
+
 test_that("NSS64 source normalizer preserves survey design and person keys", {
   raw <- data.frame(
     key_memb = c("a", "b"),
