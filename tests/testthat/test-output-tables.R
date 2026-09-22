@@ -700,6 +700,34 @@ test_that("generated public table footnotes retain citation and math escapes", {
 })
 
 
+test_that("paper core summary delegates landscape placement to the manuscript", {
+  skip_if_not_installed("kableExtra")
+  table <- data.frame(
+    variable = c("Panel A", "Example"),
+    mean = c("", "1.00"),
+    sd = c("", "0.10"),
+    `$N$` = c("", "10"),
+    `$p_{10}$` = c("", "0.90"),
+    `$p_{90}$` = c("", "1.10"),
+    `Year / unit` = c("", "2001; unit"),
+    check.names = FALSE
+  )
+  dir <- tempfile("paper-core-summary-")
+  dir.create(dir)
+  path <- save_table_tex(
+    table = table,
+    path = file.path(dir, "paper_core_summary.tex"),
+    name = "paper_core_summary",
+    public = TRUE
+  )
+  tex <- paste(readLines(path, warn = FALSE), collapse = "\n")
+
+  expect_true(grepl("\\begin{longtable}", tex, fixed = TRUE))
+  expect_true(grepl("\\label{tbl-paper-core-summary}", tex, fixed = TRUE))
+  expect_false(grepl("\\begin{landscape}", tex, fixed = TRUE))
+})
+
+
 test_that("paper schooling-market renderer uses modelsummary regression blocks", {
   skip_if_not_installed("modelsummary")
   skip_if_not_installed("kableExtra")

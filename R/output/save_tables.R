@@ -1443,7 +1443,13 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   landscape_longtable <- name %in% c(
     "paper_core_summary", "sum_tbl_iv", "sum_tbl_probit_quant", "sum_tbl_probit_cat"
   )
-  landscape_table <- landscape_longtable
+  # paper-new.qmd owns the landscape environment for its core summary. Keep the
+  # generated file as a longtable so it can paginate, but do not nest a second
+  # pdflscape environment around it. The legacy summary tables are included
+  # without a document-level landscape wrapper and therefore retain it here.
+  landscape_table <- name %in% c(
+    "sum_tbl_iv", "sum_tbl_probit_quant", "sum_tbl_probit_cat"
+  )
   regression_table <- name %in% c("probit_mfx", "fs_cons", "cons_iv") && !is_formatted_status_table(df_render)
   compact_table <- name %in% c(
     "appendix_iv_relevance_summary",
