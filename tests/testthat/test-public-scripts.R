@@ -337,6 +337,19 @@ audit_script_fixture <- function(manifest_exit = 0L, archive_exit = 0L) {
     file.path(bin, "make"), file.path(bin, "Rscript"), runner
   ), mode = "0755")
   system2("git", c("-C", shQuote(root), "init", "-q"))
+  system2(
+    "git",
+    c("-C", shQuote(root), "add", "scripts/run_full_build.sh")
+  )
+  system2(
+    "git",
+    c(
+      "-C", shQuote(root),
+      "-c", "user.name=Fixture",
+      "-c", "user.email=fixture@example.invalid",
+      "commit", "-q", "-m", "fixture"
+    )
+  )
   writeLines("stale", file.path(root, "review.zip"))
   list(
     root = root, runner = runner, manifest_exit = as.integer(manifest_exit),

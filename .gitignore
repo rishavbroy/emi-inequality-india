@@ -40,7 +40,6 @@ data/processed/geography/*.gpkg
 # short-lived target/build diagnostics
 outputs/diagnostics/*.csv
 outputs/build/
-outputs/diagnostics/build/
 outputs/diagnostics/public/
 outputs/diagnostics/extended/district_lineage/
 
