@@ -65,7 +65,16 @@ test_that("processed replication rejects duplicate empirical keys", {
 
 test_that("processed replication graph is independent of raw-data and selection targets", {
   skip_if_not_installed("targets")
-  manifest <- targets::tar_manifest(script = "_targets_processed.R", fields = c("name", "command", "format"))
+  script <- repo_file("_targets_processed.R")
+  root <- dirname(script)
+  old_wd <- setwd(root)
+  on.exit(setwd(old_wd), add = TRUE)
+  manifest <- targets::tar_manifest(
+    script = basename(script),
+    fields = tidyselect::any_of(c("name", "command", "format")),
+    callr_function = NULL,
+    envir = new.env(parent = globalenv())
+  )
   names <- plain_chr(manifest$name)
 
   expect_true(all(c(
@@ -75,9 +84,36 @@ test_that("processed replication graph is independent of raw-data and selection 
     "schooling_consumption_bridge",
     "schooling_consumption_conversion",
     "alternative_distance_first_stage_base",
+    "first_stage_absorption_diagnostics",
     "processed_replication_files"
   ) %in% names))
   expect_false(any(c("raw_data_preflight", "selection_data", "selection_model", "ame_results") %in% names))
   expect_identical(manifest$format[match("processed_district_panel_file", names)], "file")
   expect_identical(manifest$format[match("processed_consumption_welfare_file", names)], "file")
+})
+
+
+test_that("processed replication verification compares target output hashes", {
+  targets <- processed_replication_shared_targets()
+  full <- data.frame(
+    name = targets,
+    data = paste0("hash-", seq_along(targets)),
+    stringsAsFactors = FALSE
+  )
+  processed <- full
+
+  matched <- compare_processed_replication_metadata(full, processed, targets)
+  expect_true(all(matched$status == "match"))
+
+  processed$data[[2L]] <- "different"
+  mismatched <- compare_processed_replication_metadata(full, processed, targets)
+  expect_identical(mismatched$status[[2L]], "hash_mismatch")
+  expect_identical(mismatched$target[[2L]], targets[[2L]])
+
+  missing <- compare_processed_replication_metadata(
+    full,
+    processed[processed$name != targets[[3L]], , drop = FALSE],
+    targets
+  )
+  expect_identical(missing$status[[3L]], "missing_processed")
 })

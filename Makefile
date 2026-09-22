@@ -1,4 +1,4 @@
-.PHONY: all prepare-data init-renv restore snapshot download-census-tables download-natural-earth-boundaries pipeline pipeline-fast diagnostics public-diagnostics extended-diagnostics lineage-geometry-build lineage-geometry benchmarking rerun-extended-diagnostics rerun-benchmarks rerun-analysis analysis analysis-fast render-analysis qmd-renders clean clean-all clean-analysis clean-public-diagnostics clean-extended-diagnostics clean-benchmarking paper paper-new poster samples check-report-values check-report-values-final audit-crossrefs audit-crossrefs-final audit-outputs-final output-manifest check-public check-public-fast check-public-final check-public-final-no-samples check-public-text check-rendered-text check-sample-specs test tests test-affected test-inventory clean-targets clean-renders clean-renders-core clean-renders-no-samples
+.PHONY: all prepare-data init-renv restore snapshot download-census-tables download-natural-earth-boundaries pipeline pipeline-fast replicate-processed verify-processed-replication clean-processed-replication diagnostics public-diagnostics extended-diagnostics lineage-geometry-build lineage-geometry benchmarking rerun-extended-diagnostics rerun-benchmarks rerun-analysis analysis analysis-fast render-analysis qmd-renders clean clean-all clean-analysis clean-public-diagnostics clean-extended-diagnostics clean-benchmarking paper paper-new poster samples check-report-values check-report-values-final audit-crossrefs audit-crossrefs-final audit-outputs-final output-manifest check-public check-public-fast check-public-final check-public-final-no-samples check-public-text check-rendered-text check-sample-specs test tests test-affected test-inventory clean-targets clean-renders clean-renders-core clean-renders-no-samples
 
 TEXCACHE_ROOT ?= /private/tmp/emi-inequality-india-texcache
 QUARTO_CACHE_ROOT ?= /private/tmp/emi-inequality-india-quarto-cache
@@ -51,6 +51,9 @@ pipeline: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
 
 pipeline-fast: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
 	$(MAKE) pipeline CONFIG=config/fast.yml RENDER_SAMPLES=$(RENDER_SAMPLES) RENDER_POSTER=$(RENDER_POSTER)
+
+verify-processed-replication: replicate-processed
+	Rscript scripts/check_processed_replication.R
 
 replicate-processed:
 	Rscript -e 'targets::tar_make(script = "_targets_processed.R", store = "_targets_processed")'
@@ -258,7 +261,7 @@ clean-targets:
 	Rscript -e 'targets::tar_destroy(destroy = "all"); if (dir.exists("_targets_processed")) targets::tar_destroy(destroy = "all", script = "_targets_processed.R", store = "_targets_processed", ask = FALSE)'
 
 clean-renders-core:
-	rm -rf outputs/figures/* outputs/tables/* outputs/build outputs/diagnostics/public paper/output/*
+	rm -rf outputs/figures/* outputs/tables/* outputs/build outputs/diagnostics/public outputs/replication paper/output/*
 	rm -f outputs/diagnostics/*.csv
 	mkdir -p outputs/build outputs/diagnostics/public
 	rm -f paper/paper.pdf paper/paper.html paper/paper.tex paper/paper-new.pdf paper/paper-new.html paper/paper-new.tex paper/appendix.pdf paper/appendix.html paper/appendix.tex

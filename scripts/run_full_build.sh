@@ -339,6 +339,10 @@ else
     EMI_REQUIRE_POSTER="$with_poster" \
     Rscript scripts/check_public_final.R
   touch .public-final-ok
+
+  current_stage="processed-replication-verification"
+  echo "=== PROCESSED-DATA REPLICATION VERIFICATION ==="
+  make verify-processed-replication
 fi
 
 if [[ "$with_benchmarks" == "true" ]]; then

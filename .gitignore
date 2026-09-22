@@ -94,5 +94,8 @@ autorun.inf
 # Quarto Typst render intermediates
 posters/2026_predoc_conference/poster.typ
 
+# Generated processed-data replication results
+outputs/replication/
+
 # Separate cache for processed-data-only analysis replication
 _targets_processed/

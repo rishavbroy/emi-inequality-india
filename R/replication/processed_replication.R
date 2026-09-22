@@ -91,3 +91,89 @@ save_processed_replication_results <- function(
   )
   unique(unname(files))
 }
+
+
+processed_replication_shared_targets <- function() {
+  c(
+    "consumption_iv_dynamics",
+    "schooling_consumption_bridge",
+    "schooling_consumption_conversion",
+    "alternative_distance_first_stage_base",
+    "first_stage_absorption_diagnostics"
+  )
+}
+
+compare_processed_replication_metadata <- function(
+    full_meta,
+    processed_meta,
+    target_names = processed_replication_shared_targets()) {
+  full_meta <- as.data.frame(full_meta, stringsAsFactors = FALSE)
+  processed_meta <- as.data.frame(processed_meta, stringsAsFactors = FALSE)
+  required <- c("name", "data")
+  for (x in list(full = full_meta, processed = processed_meta)) {
+    missing <- setdiff(required, names(x))
+    if (length(missing)) {
+      stop(
+        "Target metadata is missing required fields: ",
+        paste(missing, collapse = ", "),
+        call. = FALSE
+      )
+    }
+  }
+
+  select_hash <- function(meta, target) {
+    rows <- which(as.character(meta$name) == target)
+    if (!length(rows)) return(NA_character_)
+    if (length(rows) != 1L) {
+      stop("Expected exactly one metadata row for target: ", target, call. = FALSE)
+    }
+    as.character(meta$data[[rows]])
+  }
+
+  full_hash <- vapply(target_names, function(x) select_hash(full_meta, x), character(1))
+  processed_hash <- vapply(target_names, function(x) select_hash(processed_meta, x), character(1))
+  status <- ifelse(
+    is.na(full_hash), "missing_full",
+    ifelse(
+      is.na(processed_hash), "missing_processed",
+      ifelse(full_hash == processed_hash, "match", "hash_mismatch")
+    )
+  )
+  data.frame(
+    target = target_names,
+    full_data_hash = unname(full_hash),
+    processed_data_hash = unname(processed_hash),
+    status = unname(status),
+    stringsAsFactors = FALSE
+  )
+}
+
+verify_processed_replication <- function(
+    full_store = "_targets",
+    processed_store = "_targets_processed",
+    output_path = "outputs/replication/processed/verification.csv") {
+  if (!targets::tar_exist_meta(store = full_store)) {
+    stop("Full-source targets metadata is missing: ", full_store, call. = FALSE)
+  }
+  if (!targets::tar_exist_meta(store = processed_store)) {
+    stop("Processed targets metadata is missing: ", processed_store, call. = FALSE)
+  }
+
+  report <- compare_processed_replication_metadata(
+    targets::tar_meta(store = full_store, targets_only = TRUE),
+    targets::tar_meta(store = processed_store, targets_only = TRUE)
+  )
+  dir.create(dirname(output_path), recursive = TRUE, showWarnings = FALSE)
+  utils::write.csv(report, output_path, row.names = FALSE, na = "")
+
+  failures <- report$target[report$status != "match"]
+  if (length(failures)) {
+    stop(
+      "Processed replication differs from the full-source build for: ",
+      paste(failures, collapse = ", "),
+      ". See ", output_path, ".",
+      call. = FALSE
+    )
+  }
+  normalizePath(output_path, mustWork = TRUE)
+}
