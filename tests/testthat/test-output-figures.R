@@ -534,8 +534,12 @@ test_that("Natural Earth file inputs retain complete shapefile bundles without r
   expect_identical(basename(unname(layers)), paste0(unname(spec), ".shp"))
 
   tracked <- natural_earth_map_reference_paths()
-  expect_identical(length(tracked), length(spec) * 4L)
-  expect_true(all(c(".shp", ".dbf", ".shx", ".prj") %in% tools::file_ext(tracked)))
+  expected_extensions <- c("shp", "dbf", "shx", "prj")
+  expect_identical(length(tracked), length(spec) * length(expected_extensions))
+  for (stem in unname(spec)) {
+    bundle <- tracked[startsWith(basename(tracked), paste0(stem, "."))]
+    expect_setequal(tools::file_ext(bundle), expected_extensions)
+  }
 })
 
 test_that("Natural Earth reference clips only display geometry to de facto India", {
