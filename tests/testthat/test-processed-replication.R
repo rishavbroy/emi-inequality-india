@@ -121,7 +121,7 @@ test_that("processed replication file target returns only existing paths", {
   )
 
   expect_type(files, "character")
-  expect_false(anyDuplicated(files))
+  expect_false(anyDuplicated(files) > 0L)
   expect_true(all(file.exists(files)))
 })
 
