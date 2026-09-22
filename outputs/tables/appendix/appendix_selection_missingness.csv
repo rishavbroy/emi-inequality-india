@@ -1,0 +1,5 @@
+"variable_id","variable","n_missing","pct_missing","pseudo_r_squared"
+"DIST_FROM_NEAREST_PRIMARY_CLASS","Distance to nearest primary class",312,0.00245319662528208,0.246129391640931
+"dmean_num_ENROLLMENT_COST","District-average enrollment cost",7109,0.0558967141318279,0.309698731925251
+"father_educ","Father's education",5203,0.0409101988504572,0.0230209989667974
+"Total probit-model with NA","Any model covariate",12283,0.096578891501089,NA

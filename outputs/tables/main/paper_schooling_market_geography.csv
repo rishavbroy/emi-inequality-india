@@ -1,0 +1,26 @@
+"panel","measure_id","measure","specification_id","statistic","estimate","std_error","p_value","n"
+"association","nss_enrollment","Enrollment","unadjusted","standardized_coefficient",0.249186451822854,0.0792585907201177,0.00175331134758192,573
+"association","nss_enrollment","Enrollment","region_main","standardized_coefficient",0.176914755716785,0.059615277490412,0.00313045144340802,573
+"association","nss_enrollment","Enrollment","state_main","standardized_coefficient",0.119565649992409,0.0681336243972592,0.0798626295566166,573
+"association","nss_emi_enrolled","English-medium share among enrolled","unadjusted","standardized_coefficient",0.364038713249004,0.110842548137489,0.00108500237881947,573
+"association","nss_emi_enrolled","English-medium share among enrolled","region_main","standardized_coefficient",0.174806992621847,0.10353042548176,0.091883671675769,573
+"association","nss_emi_enrolled","English-medium share among enrolled","state_main","standardized_coefficient",0.0328794208045585,0.0623012716955334,0.597895826931778,573
+"association","nss_emie_all_children","English-medium exposure among all children","unadjusted","standardized_coefficient",0.376462539996759,0.109913909939453,0.000658788597301679,573
+"association","nss_emie_all_children","English-medium exposure among all children","region_main","standardized_coefficient",0.189652766505232,0.105401743518217,0.0725082136782081,573
+"association","nss_emie_all_children","English-medium exposure among all children","state_main","standardized_coefficient",0.0626379289077879,0.072096408513242,0.385347702294227,573
+"association","nss_emi_public","Public-school English-medium exposure","unadjusted","standardized_coefficient",0.330739325480894,0.126522755064613,0.00918314768720203,573
+"association","nss_emi_public","Public-school English-medium exposure","region_main","standardized_coefficient",0.175626654786433,0.096102032668557,0.0681601408901665,573
+"association","nss_emi_public","Public-school English-medium exposure","state_main","standardized_coefficient",0.0545070403149643,0.077055432595583,0.479646526511101,573
+"association","nss_emi_private","Private-school English-medium exposure","unadjusted","standardized_coefficient",0.449636455090117,0.0852739045374622,1.91429719115611e-07,568
+"association","nss_emi_private","Private-school English-medium exposure","region_main","standardized_coefficient",0.190286197513889,0.0738902438718315,0.01027625539984,568
+"association","nss_emi_private","Private-school English-medium exposure","state_main","standardized_coefficient",0.0928370965087421,0.0564873072738653,0.100880903446258,568
+"association","dise_emi_enrollment","DISE English-medium enrollment share","unadjusted","standardized_coefficient",0.402512411577507,0.110531855636542,0.000298192863946321,520
+"association","dise_emi_enrollment","DISE English-medium enrollment share","region_main","standardized_coefficient",0.141871061773566,0.0854037666096715,0.0973003427500309,520
+"association","dise_emi_enrollment","DISE English-medium enrollment share","state_main","standardized_coefficient",0.0451005559042664,0.0532891687224849,0.397788675551618,520
+"state_organization","ling_distance_nonzero_mean","Speaker-weighted distance from Hindi","state_membership","r_squared",0.843727615671441,NA,NA,573
+"state_organization","nss_enrollment","Enrollment","state_membership","r_squared",0.359058426647225,NA,NA,573
+"state_organization","nss_emi_enrolled","English-medium share among enrolled","state_membership","r_squared",0.84045969979349,NA,NA,573
+"state_organization","nss_emie_all_children","English-medium exposure among all children","state_membership","r_squared",0.828802373468869,NA,NA,573
+"state_organization","nss_emi_public","Public-school English-medium exposure","state_membership","r_squared",0.895324395646135,NA,NA,573
+"state_organization","nss_emi_private","Private-school English-medium exposure","state_membership","r_squared",0.569567894454967,NA,NA,568
+"state_organization","dise_emi_enrollment","DISE English-medium enrollment share","state_membership","r_squared",0.841259784022897,NA,NA,520
