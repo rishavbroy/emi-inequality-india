@@ -102,13 +102,11 @@ The imperfect-IV consolidation is likewise complete: weak-IV results report the 
 
 ### 5. Paper and reviewer-facing outputs
 
-With the empirical P0--P2 tranche, source/mechanism phases, and outcome/robustness registries now frozen, the active next phase is the paper rewrite:
+The final-paper rewrite is implemented in `paper/paper-new.qmd`: the introduction is organized around inherited linguistic conditions, access to EMI, and local economic outcomes; weak first-stage evidence is stated prominently; local associations are distinguished from individual effects; and the migration, selection, identification, and data-construction appendices use the generated evidence. Remaining manuscript work is editorial refinement rather than a new empirical phase.
 
-- rewrite the introduction around the outcomes the data can actually identify;
-- report first-stage and weak-IV limitations prominently;
-- distinguish local effects from individual effects when migration or firm relocation is plausible;
-- align discussion/appendix caveats with generated mechanism evidence;
-- remove stale references to obsolete geography, nominal consumption, and superseded estimator choices.
+### 6. Processed-data replication
+
+The active repository phase is to separate district-level analysis replication from full source reconstruction. The tracked district panel and district welfare estimates support a dedicated `_targets_processed.R` entry point that reruns the registered district consumption/IV, schooling-conversion, alternative-distance first-stage, and first-stage-absorption analyses without raw survey files. Individual-level education selection remains outside this tier until redistribution rights for its NSS source inputs are established. Full source reconstruction and source-validation analyses continue to use `_targets.R`.
 
 ## Explicit non-goals
 

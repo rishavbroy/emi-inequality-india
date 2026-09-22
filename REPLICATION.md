@@ -71,10 +71,11 @@ Project paths are relative to the repository root by default. Moving or renaming
 
 ## Public processed outputs
 
-The only public district data products intended to be tracked at this stage are:
+The tracked district-level replication inputs are:
 
-- [`data/metadata/district_harmonization_crosswalk.csv`](data/metadata/district_harmonization_crosswalk.csv), the single tracked district harmonization authority
-- [`data/processed/district_panel_emi_consumption_2001_2007_2017_2020.csv`](data/processed/district_panel_emi_consumption_2001_2007_2017_2020.csv)
+- [`data/metadata/district_harmonization_crosswalk.csv`](data/metadata/district_harmonization_crosswalk.csv), the single tracked district harmonization authority;
+- [`data/processed/district_panel_emi_consumption_2001_2007_2017_2020.csv`](data/processed/district_panel_emi_consumption_2001_2007_2017_2020.csv), the harmonized Census-2001 district panel; and
+- [`data/processed/consumption_district_welfare.csv`](data/processed/consumption_district_welfare.csv), district-by-round welfare estimates and support flags for the registered NSS/HCES rounds.
 
 SHA-256 digests for tracked metadata CSV/TSV files are recorded in [`data/metadata/checksums.csv`](data/metadata/checksums.csv). `data/metadata/file_manifest.csv` also supports SHA-256 identities for stable raw inputs; the source preflight enforces registered byte sizes and hashes before readers run. Hashes are left blank when the author-used bytes have not yet been verified. Maintainers can populate or refresh one or more verified source families with `Rscript scripts/update_file_manifest_hashes.R SOURCE_ID [SOURCE_ID ...]`, then refresh the metadata digest registry. Generated processed outputs are validated by the pipeline and output checks rather than pinned to a pre-build digest. Refresh metadata digests with:
 
@@ -88,7 +89,7 @@ The full build begins with `make prepare-data`, which downloads missing Census w
 
 `make prepare-data` also downloads the Natural Earth 1:10m admin-0 country, disputed-area, and disputed-boundary themes used only for manuscript cartography. The required shapefile components are registered with exact byte sizes and SHA-256 digests, so a changed upstream release is surfaced instead of silently changing the paper's boundary rendering.
 
-The tracked files under `data/processed/` are useful replication exports, but they do not yet replace every raw source required by the current paper. A raw-data-less clone cannot presently reproduce every estimate from processed data alone. The longer-term replication design is to distinguish analysis replication from distributed processed data from full reconstruction using original source files.
+A raw-data-less clone can rerun the district-level consumption, conversion-gradient, linguistic-distance first-stage, and weak-IV analyses from the tracked processed inputs with `make replicate-processed`. That command uses a separate `_targets_processed.R` script and `_targets_processed/` store, so it does not depend on or mutate the full-reconstruction target store. The processed tier intentionally excludes the individual-level education-selection model because the repository does not assert redistribution rights for the underlying NSS microdata. Full reconstruction, selection estimation, DISE reconstruction, Census mechanism rebuilding, and other source-level validation still require the original inputs listed in the raw manifest.
 
 ## Commands
 
@@ -100,6 +101,9 @@ make test
 
 # Verified target build with the final scientific configuration.
 make pipeline
+
+# District-level analysis replication from tracked processed inputs only.
+make replicate-processed
 
 # Faster target build that omits expensive full AME computation.
 make pipeline-fast

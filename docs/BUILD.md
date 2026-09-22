@@ -56,3 +56,7 @@ The default preserves cached target values because `{targets}` already reruns on
 The environment switches `EMI_RUN_EXTENDED_DIAGNOSTICS`, `EMI_RUN_BENCHMARKS`, `EMI_RENDER_ANALYSIS_NOTES`, `EMI_RENDER_APPLICATION_SAMPLES`, and `EMI_RENDER_POSTER` determine which optional target definitions `_targets.R` includes. They do not select a different YAML configuration.
 
 The full-build script is the intended human interface to those switches. `_targets.R` does not print a message every time an omitted family is encountered; the script prints one build-profile summary instead.
+
+## Processed-data analysis replication
+
+`make replicate-processed` runs `_targets_processed.R` in its own `_targets_processed/` store using only the tracked district panel, district welfare estimates, and tracked metadata. It reruns the paper-facing district consumption/IV, schooling-conversion, alternative-distance first-stage, and first-stage-absorption analyses. It intentionally does not rerun the individual-level NSS selection model or source-level reconstruction.

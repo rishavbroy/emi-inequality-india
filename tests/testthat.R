@@ -10,7 +10,7 @@ source("R/paths.R")
 # avoiding a hard dependency on targets itself.
 source_dirs <- c(
   "R/io", "R/clean", "R/districts", "R/measures", "R/prices", "R/controls", "R/selection",
-  "R/iv", "R/diagnostics", "R/benchmarking", "R/output", "R/application_samples"
+  "R/iv", "R/diagnostics", "R/benchmarking", "R/output", "R/replication", "R/application_samples"
 )
 for (dir in source_dirs) {
   files <- sort(list.files(dir, pattern = "\\.R$", full.names = TRUE))

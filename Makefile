@@ -52,6 +52,13 @@ pipeline: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
 pipeline-fast: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
 	$(MAKE) pipeline CONFIG=config/fast.yml RENDER_SAMPLES=$(RENDER_SAMPLES) RENDER_POSTER=$(RENDER_POSTER)
 
+replicate-processed:
+	Rscript -e 'targets::tar_make(script = "_targets_processed.R", store = "_targets_processed")'
+
+clean-processed-replication:
+	Rscript -e 'if (dir.exists("_targets_processed")) targets::tar_destroy(destroy = "all", script = "_targets_processed.R", store = "_targets_processed", ask = FALSE)'
+	rm -rf outputs/replication/processed
+
 diagnostics: extended-diagnostics
 
 public-diagnostics:
@@ -248,7 +255,7 @@ clean:
 clean-all: clean clean-targets
 
 clean-targets:
-	Rscript -e 'targets::tar_destroy(destroy = "all")'
+	Rscript -e 'targets::tar_destroy(destroy = "all"); if (dir.exists("_targets_processed")) targets::tar_destroy(destroy = "all", script = "_targets_processed.R", store = "_targets_processed", ask = FALSE)'
 
 clean-renders-core:
 	rm -rf outputs/figures/* outputs/tables/* outputs/build outputs/diagnostics/public paper/output/*

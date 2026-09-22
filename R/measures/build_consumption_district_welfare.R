@@ -666,6 +666,6 @@ estimate_consumption_district_mean <- function(lineaged_households) {
 }
 
 save_consumption_district_welfare <- function(
-    outcomes, path = "outputs/diagnostics/public/consumption_district_welfare.csv") {
+    outcomes, path = "data/processed/consumption_district_welfare.csv") {
   write_diagnostic_csv(safe_df(outcomes), path)
 }
