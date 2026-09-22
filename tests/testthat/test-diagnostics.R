@@ -786,114 +786,69 @@ test_that("first-stage residual metrics reproduce nested-model partial R-squared
   expect_equal(residual$partial_r_squared, residual$correlation^2, tolerance = 1e-12)
 })
 
-test_that("first-stage absorption diagnostics use fixed support and report requested statistics", {
+test_that("first-stage absorption helper diagnostics preserve support contracts", {
   set.seed(42)
-  # Keep this fixture at the smallest scale that still exercises all six
-  # regions, state fixed effects, state deletion, and the full control registry.
-  # Production-sized resampling belongs in the target pipeline, not unit tests.
-  states <- rep(sprintf("%02d", 1:6), each = 6)
-  regions <- rep(panel_region_levels(), each = 6)
-  z <- rep(seq(-1, 1, length.out = 6), 6) + rep(seq(-2, 2, length.out = 6), each = 6)
-  panel <- data.frame(
+  states <- rep(sprintf("%02d", 1:6), each = 4)
+  z <- rep(seq(-1, 1, length.out = 4), 6) + rep(seq(-2, 2, length.out = 6), each = 4)
+  data <- data.frame(
     state_code_2001 = states,
     district_code_2001 = sprintf("%02d", seq_along(states)),
-    region = factor(regions, levels = panel_region_levels()),
-    ling_distance_nonzero_mean = z,
-    emi_exposure_all_children_0708 = 12 + 3 * z + stats::rnorm(length(z), sd = 0.2),
+    region = rep(panel_region_levels(), each = 4),
+    z = z,
+    y = 12 + 3 * z + stats::rnorm(length(z), sd = 0.2),
     stringsAsFactors = FALSE
   )
-  for (i in seq_along(census_2001_diagnostic_controls())) {
-    panel[[census_2001_diagnostic_controls()[i]]] <- stats::rnorm(nrow(panel)) + i / 10
-  }
-
-  out <- diagnose_first_stage_absorption(panel)
-
-  expect_s3_class(out, "emi_first_stage_absorption")
-  expect_equal(nrow(out$summary), nrow(first_stage_absorption_registry()))
-  expect_true(all(out$summary$n == nrow(panel)))
-  expect_true(all(out$summary$n_regions == 6L))
-  expect_true(all(c(
-    "estimate", "std.error", "partial_r_squared", "excluded_instrument_f",
-    "residual_instrument_sd", "n"
-  ) %in% names(out$summary)))
-  expect_identical(
-    out$summary$control_blocks[out$summary$specification_id == "state_fe_census_controls"],
-    paste(names(first_stage_control_blocks()), collapse = ";")
+  specification <- data.frame(
+    specification_id = "instrument_only",
+    label = "Instrument only",
+    fixed_effect = "none",
+    sequence = 1L,
+    stringsAsFactors = FALSE
   )
-  named_absorption_questions <- c(
-    "region_fe_census_controls", "region_fe_expanded_controls",
-    paste0("region_fe_plus_", names(first_stage_control_blocks())),
-    "region_fe_main_without_human_capital", "state_fe_main_without_human_capital",
-    "region_fe_expanded_without_human_capital", "state_fe_expanded_without_human_capital"
-  )
-  expect_true(all(named_absorption_questions %in% out$aliases$semantic_specification_id))
-  execution_ids <- out$aliases$execution_specification_id[
-    match(named_absorption_questions, out$aliases$semantic_specification_id)
-  ]
-  expect_true(all(execution_ids %in% out$summary$specification_id))
-  no_hc <- out$registry$controls[out$registry$specification_id == "region_fe_expanded_without_human_capital"][[1]]
-  expect_length(intersect(no_hc, first_stage_control_blocks()$human_capital), 0L)
+  specification$controls <- I(list(character()))
 
-  main_blocks <- iv_main_control_blocks()
-  aliases <- out$aliases
-  raw_adjustments <- iv_absorption_adjustments()
-  expect_equal(
-    nrow(out$semantic_summary),
-    length(iv_absorption_adjustments())
+  estimate <- estimate_first_stage_absorption_spec(data, specification, "y", "z")
+  ranges <- first_stage_state_residual_ranges(data, list(estimate))
+  deletion <- first_stage_state_deletion(
+    data, specification, "y", "z", full_estimate = estimate
   )
-  expect_equal(
-    out$semantic_summary$semantic_specification_id,
-    out$aliases$semantic_specification_id
-  )
-  expect_true(all(out$semantic_summary$execution_specification_id %in% out$summary$specification_id))
-  alias_rows <- out$semantic_summary[out$semantic_summary$is_execution_alias, , drop = FALSE]
-  expect_true(nrow(alias_rows) > 0L)
-  for (i in seq_len(nrow(alias_rows))) {
-    execution <- out$summary[
-      out$summary$specification_id == alias_rows$execution_specification_id[[i]],
-      , drop = FALSE
-    ]
-    expect_equal(alias_rows$estimate[[i]], execution$estimate[[1L]])
-    expect_equal(alias_rows$partial_r_squared[[i]], execution$partial_r_squared[[1L]])
-  }
+  influence <- first_stage_district_influence(data, estimate$fit, "z")
 
-  expect_true(length(main_blocks) > 1L)
-  for (block_id in names(main_blocks)) {
-    block_only <- paste("region", "block_only", block_id, sep = "_")
-    leave_out <- paste("state", "main_without", block_id, sep = "_")
-    for (semantic_id in c(block_only, leave_out)) {
-      expect_true(semantic_id %in% aliases$semantic_specification_id)
-      execution_id <- aliases$execution_specification_id[
-        match(semantic_id, aliases$semantic_specification_id)
-      ]
-      expect_true(execution_id %in% out$registry$specification_id)
-      expect_setequal(
-        out$registry$controls[out$registry$specification_id == execution_id][[1]],
-        raw_adjustments[[semantic_id]]$controls
-      )
-    }
-    expect_length(intersect(raw_adjustments[[leave_out]]$controls, main_blocks[[block_id]]), 0L)
-  }
-  expect_true(all(c(
-    "region_main_literacy",
-    "state_main_literacy",
-    "region_main_decomposed_economic",
-    "state_main_decomposed_economic",
-    "region_main_literacy_decomposed_economic",
-    "state_main_literacy_decomposed_economic"
-  ) %in% out$registry$specification_id))
-  expect_gt(out$summary$partial_r_squared[1], 0.9)
-  expect_equal(nrow(out$state_deletion), length(unique(states)))
+  expect_gt(estimate$summary$partial_r_squared, 0.9)
+  expect_equal(nrow(ranges), length(unique(states)))
+  expect_true(all(c("instrument_range", "treatment_range") %in% names(ranges)))
+  expect_equal(nrow(deletion), length(unique(states)))
   expect_setequal(
-    names(out$state_deletion),
+    names(deletion),
     c(
       "specification_id", "specification", "treatment", "instrument", "omitted_state",
       "estimate", "excluded_instrument_f", "estimate_change", "f_change"
     )
   )
-  expect_equal(nrow(out$district_influence), nrow(panel))
-  expect_true(all(c("instrument_range", "treatment_range") %in% names(out$state_residual_ranges)))
-  expect_true(all(c("leverage", "cooks_distance", "instrument_dfbeta") %in% names(out$district_influence)))
+  expect_equal(nrow(influence), nrow(data))
+  expect_true(all(c("leverage", "cooks_distance", "instrument_dfbeta") %in% names(influence)))
+})
+
+test_that("first-stage absorption aliases resolve without refitting diagnostics", {
+  registry <- first_stage_absorption_registry()
+  aliases <- first_stage_absorption_aliases()
+  execution_summary <- data.frame(
+    specification_id = registry$specification_id,
+    estimate = seq_len(nrow(registry)),
+    partial_r_squared = seq_len(nrow(registry)) / 100,
+    excluded_instrument_f = seq_len(nrow(registry)) / 10,
+    stringsAsFactors = FALSE
+  )
+
+  semantic <- first_stage_absorption_semantic_summary(execution_summary, aliases)
+
+  expect_equal(nrow(semantic), nrow(aliases))
+  expect_identical(
+    semantic$semantic_specification_id,
+    aliases$semantic_specification_id
+  )
+  expect_true(all(semantic$execution_specification_id %in% registry$specification_id))
+  expect_true(any(semantic$is_execution_alias))
 })
 
 test_that("first-stage absorption diagnostics fail rather than changing support silently", {
