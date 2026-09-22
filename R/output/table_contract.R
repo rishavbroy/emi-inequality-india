@@ -81,22 +81,6 @@ public_table_source_note <- function(name) {
       cite("nationalsamplesurveyofficeIndiaEmploymentUnemployment2010", "NSS 66th Round"),
       cite("nationalstatisticalofficeINDIAPeriodicLabour2019", "PLFS 2017--18")
     ),
-    appendix_a3_lineage_source_hierarchy = join_sources(
-      cite("officeoftheregistrargeneralandcensuscommissionerofindiaCensusIndia20012001", "Census of India"),
-      cite("ministryPanchayatiRajLocalGovernmentDirectory2026", "Local Government Directory"),
-      cite("kumarCreatingLongPanels2016", "Kumar and Somanathan (2016)"),
-      cite("joladIndiaStateDistrict2026", "India State and District Evolution Database"),
-      cite("jaacksIndiaDistrictChanges2020", "India District Changes Tracker"),
-      cite("asherDevelopmentResearch2021", "SHRUG"),
-      cite("deshpandeIndianEnigma2024", "published survey concordances")
-    ),
-    appendix_a6_linguistic_measures = join_sources(
-      cite("officeoftheregistrargeneralandcensuscommissionerofindiaCensusIndia20012001", "Census of India 2001 language tables"),
-      cite("officeRegistrarLanguageAtlasIndia2004", "Language Atlas of India 1991"),
-      cite("shastry2012a", "Shastry (2012)"),
-      cite("hammarstromGlottologGlottologGlottolog2026", "Glottolog 5.3"),
-      paste0(cite("dyenIndoeuropeanClassification1992", "Dyen, Kruskal, and Black (1992)"), " and ", cite("dyenComparativeIndoeuropeanDatabase1997", "Dyen et al. database"))
-    ),
     appendix_iv_relevance_summary = join_sources(
       cite("officeRegistrarLanguageAtlasIndia2004", "Census of India 1991 Language Atlas"),
       cite("officeoftheregistrargeneralandcensuscommissionerofindiaCensusIndia20012001", "Census of India 2001"),
@@ -137,8 +121,6 @@ public_table_caption_text <- function(name) {
     paper_language_behavior = "Linguistic Distance and Language-Learning Behavior",
     paper_economic_conversion = "English-Intensive Schooling, Later Consumption, and Predetermined Complements",
     paper_local_development = "Linguistic Conditions and Selective Local Development",
-    appendix_a3_lineage_source_hierarchy = "District-Lineage Sources and Roles",
-    appendix_a6_linguistic_measures = "Linguistic-Measure Constructions and Their Roles",
     appendix_iv_relevance_summary = "First-Stage Relevance Across Linguistic Measures",
     appendix_iv_weak_inference = "Weak-IV-Robust Long-Run Inference",
     appendix_migration_summary = "Linguistic Distance and Migration Composition",
@@ -197,9 +179,6 @@ public_table_note <- function(name) {
       regression_star_note(),
       "The 2001-11 Census and 2005-13 Economic Census windows overlap the 2007 schooling measurement, so these are co-evolving development margins rather than post-treatment EMI mechanisms.",
       "PLFS 2017-18 supplies the displayed labor endpoint; the semantic CSV retains the raw and Holm-adjusted $p$-values and matched NSS66 adjusted $p$-values. Heterogeneous outcomes remain in native units, and null outcomes are retained by design."
-    ),
-    appendix_a3_lineage_source_hierarchy = paste(
-      "Rows summarize source families rather than individual files. Detailed source IDs and adjudication ledgers remain available in the lineage CSV outputs."
     ),
     appendix_iv_relevance_summary = paste(
       "The first three columns report the state-clustered joint excluded-instrument $F$ statistic under no geographic fixed effects, six-region fixed effects plus the main predetermined controls, and state fixed effects plus the same controls.",

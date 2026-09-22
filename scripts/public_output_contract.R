@@ -15,7 +15,6 @@ public_report_value_sources <- function() {
 
 paper_new_appendix_render_inputs <- function() {
   c(
-    "outputs/tables/appendix/appendix_a3_lineage_source_hierarchy.tex",
     "outputs/figures/appendix/appendix_consumption_hces_consistency.pdf",
     "outputs/figures/appendix/appendix_historical_language_persistence.pdf",
     "outputs/figures/appendix/appendix_nss_dise_agreement.pdf",
@@ -128,8 +127,6 @@ required_final_artifacts <- function() {
     "outputs/tables/main/paper_economic_conversion.tex",
     "outputs/tables/main/paper_local_development.csv",
     "outputs/tables/main/paper_local_development.tex",
-    "outputs/tables/appendix/appendix_a3_lineage_source_hierarchy.csv",
-    "outputs/tables/appendix/appendix_a3_lineage_source_hierarchy.tex",
     "outputs/figures/appendix/appendix_consumption_hces_consistency.pdf",
     "outputs/figures/appendix/appendix_historical_language_persistence.pdf",
     "outputs/figures/appendix/appendix_nss_dise_agreement.pdf",

@@ -1444,8 +1444,6 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   landscape_table <- landscape_longtable
   regression_table <- name %in% c("probit_mfx", "fs_cons", "cons_iv") && !is_formatted_status_table(df_render)
   compact_table <- name %in% c(
-    "appendix_a3_lineage_source_hierarchy",
-    "appendix_a6_linguistic_measures",
     "appendix_iv_relevance_summary",
     "appendix_selection_missingness"
   )
@@ -1530,8 +1528,6 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   if (compact_table) {
     widths <- switch(
       name,
-      appendix_a3_lineage_source_hierarchy = c("4.1cm", "3.5cm", "7.0cm"),
-      appendix_a6_linguistic_measures = c("3.8cm", "3.8cm", "5.3cm", "3.3cm"),
       appendix_iv_relevance_summary = c("5.2cm", "1.7cm", "1.5cm", "1.5cm", "1.7cm", "1.0cm"),
       appendix_selection_missingness = c("5.4cm", "1.8cm", "1.8cm", "2.5cm")
     )

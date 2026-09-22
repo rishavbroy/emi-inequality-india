@@ -13,6 +13,10 @@ rm -f \
   "${root%/}/docs/long-paths-and-8-3-filenames.html" "${root%/}/docs/long-paths-and-8-3-filenames.pdf" "${root%/}/docs/long-paths-and-8-3-filenames.tex" \
   2>/dev/null || true
 rm -f \
+  "${root%/}/outputs/tables/appendix/appendix_a3_lineage_source_hierarchy.csv" \
+  "${root%/}/outputs/tables/appendix/appendix_a3_lineage_source_hierarchy.tex" \
+  "${root%/}/outputs/tables/appendix/appendix_a6_linguistic_measures.csv" \
+  "${root%/}/outputs/tables/appendix/appendix_a6_linguistic_measures.tex" \
   "${root%/}/outputs/tables/appendix/appendix_b1_lineage_readiness.csv" \
   "${root%/}/outputs/tables/appendix/appendix_b1_lineage_readiness.tex" \
   "${root%/}/outputs/tables/appendix/appendix_b2_lineage_sensitivity.csv" \

@@ -1,115 +1,8 @@
-# Final-paper Appendix A exhibit builders.
+# Final-paper Appendix A figure builders.
 #
-# Appendix A is prose-led. These helpers retain compact source/construction tables
-# and validation figures used by the manuscript; detailed measurement and
-# validation files remain available as machine-readable outputs.
-
-appendix_a3_lineage_source_hierarchy <- function(district_lineage) {
-  if (!is.list(district_lineage)) {
-    stop("District-lineage source summary requires registered district lineage output.", call. = FALSE)
-  }
-  registry <- safe_df(district_lineage$source_registry)
-  if (!all(c("source_id", "citation") %in% names(registry)) || !nrow(registry)) {
-    stop("District-lineage source summary requires the lineage source registry.", call. = FALSE)
-  }
-
-  source_families <- list(
-    c("datameet_census_2001_districts", "census_registry_2001_2011_continuity",
-      "nss64_education_district_codes", "nss75_official_district_list_census2011_exact"),
-    c("lgd_districts", "lgd_mod_districts_2001_2011", "lgd_mod_districts"),
-    "kumar_somanathan_2016",
-    c("isded_1951_2024", "india_district_tracker"),
-    c("shrug_pc_keys", "shrug_pc11_district_geometry"),
-    c("concordance_plfs_nss", "concordance_census_plfs")
-  )
-  required_ids <- unique(unlist(source_families, use.names = FALSE))
-  missing_ids <- setdiff(required_ids, plain_chr(registry$source_id))
-  if (length(missing_ids)) {
-    stop(
-      "District-lineage source summary is missing registered evidence: ",
-      paste(missing_ids, collapse = ", "),
-      call. = FALSE
-    )
-  }
-
-  csv <- data.frame(
-    source_family = c(
-      "Census and NSS district records",
-      "Local Government Directory",
-      "Kumar and Somanathan district histories",
-      "India State Stories / District Changes Tracker",
-      "SHRUG locality and district keys",
-      "Published survey concordances"
-    ),
-    coverage = c(
-      "Census 2001 and 2011; NSS 64th and 75th rounds",
-      "2001 onward",
-      "1961-2001",
-      "1951 onward / 2001-2020",
-      "Population Censuses 1991-2011",
-      "Census, NSS, and PLFS district codes"
-    ),
-    role = c(
-      "Define reference districts and resolve survey identities",
-      "Verify district creation, renaming, and Census-code continuity",
-      "Benchmark historical partitions and population transfers",
-      "Cross-check district histories and predecessor relationships",
-      "Measure locality-based overlap when later districts cross 2001 boundaries",
-      "Cross-check survey-to-Census district links"
-    ),
-    stringsAsFactors = FALSE
-  )
-  out <- data.frame(
-    Source = csv$source_family, Coverage = csv$coverage, Role = csv$role,
-    check.names = FALSE, stringsAsFactors = FALSE
-  )
-  attr(out, "csv_data") <- csv
-  out
-}
-
-
-appendix_a6_linguistic_measures_table <- function() {
-  data.frame(
-    `Manuscript measure` = c(
-      "Speaker-weighted distance from Hindi",
-      "Top-three-language distance from Hindi",
-      "Share speaking languages distant from Hindi",
-      "Language-distance composition",
-      "Historical speaker-weighted distance from Hindi",
-      "Genealogical distance from Hindi",
-      "Lexical noncognacy with Hindi"
-    ),
-    Concept = c(
-      "Average relative separation from Hindi among distance-bearing local languages",
-      "Same Shastry concept using only the largest local languages",
-      "Population mass facing relatively large Hindi distance",
-      "Distribution of local speakers across the Shastry scale",
-      "Earlier analogue of the preferred measure",
-      "Separation in a modern language-family classification",
-      "Dissimilarity in basic vocabulary"
-    ),
-    Construction = c(
-      "Census-2001 mother-tongue speaker weights $\\times$ reviewed Shastry 0--5 degrees; Hindi/Urdu and native English do not enter the weighted mean",
-      "Speaker-weighted mean among the three largest mapped mother tongues",
-      "Share of all mother-tongue speakers assigned Shastry degree 3--5",
-      "All-speaker shares at degrees 1--5; degree 0 is the joint-model reference",
-      "1991 Language Atlas speaker counts $\\times$ the reviewed Shastry basis, subject to coverage and uncertainty thresholds",
-      "Census speaker weights $\\times$ reviewed Glottolog 5.3 genealogical edge distance",
-      "Census speaker weights $\\times$ (100 - Dyen cognate percentage with Hindi)"
-    ),
-    Purpose = c(
-      "Primary comparative language-cost measure",
-      "Comparison with the original analysis",
-      "Nonlinear alternative",
-      "Richer composition sensitivity",
-      "Persistence and historical validation",
-      "Genealogical robustness",
-      "Lexical robustness"
-    ),
-    check.names = FALSE,
-    stringsAsFactors = FALSE
-  )
-}
+# Appendix A relies on prose. These helpers retain the validation figures used
+# by the manuscript; detailed measurement and validation files remain available
+# as machine-readable outputs.
 
 appendix_historical_language_persistence_data <- function(persistence) {
   if (!is.list(persistence)) stop("Appendix B5 requires canonical historical persistence output.", call. = FALSE)
@@ -219,13 +112,10 @@ appendix_consumption_hces_consistency_plot <- function(welfare) {
 }
 
 
-make_appendix_data_construction_exhibits <- function(
-    district_lineage, consumption_district_welfare,
-    historical_linguistic_persistence_validation, district_panel_with_dise,
-    dise_iv_nss_validation) {
+make_appendix_data_construction_figures <- function(
+    consumption_district_welfare, historical_linguistic_persistence_validation,
+    district_panel_with_dise, dise_iv_nss_validation) {
   list(
-    appendix_a3_lineage_source_hierarchy = appendix_a3_lineage_source_hierarchy(district_lineage),
-    appendix_a6_linguistic_measures = appendix_a6_linguistic_measures_table(),
     appendix_consumption_hces_consistency = appendix_consumption_hces_consistency_plot(consumption_district_welfare),
     appendix_historical_language_persistence = appendix_historical_language_persistence_plot(
       historical_linguistic_persistence_validation
@@ -236,18 +126,15 @@ make_appendix_data_construction_exhibits <- function(
   )
 }
 
-save_appendix_data_construction_exhibits <- function(exhibits, cfg) {
+save_appendix_data_construction_figures <- function(figures, cfg) {
   required <- c(
-    "appendix_a3_lineage_source_hierarchy", "appendix_a6_linguistic_measures",
     "appendix_consumption_hces_consistency",
     "appendix_historical_language_persistence", "appendix_nss_dise_agreement"
   )
-  if (!is.list(exhibits) || !all(required %in% names(exhibits))) {
-    stop("Data-construction exhibit bundle is incomplete.", call. = FALSE)
+  if (!is.list(figures) || !all(required %in% names(figures))) {
+    stop("Data-construction figure bundle is incomplete.", call. = FALSE)
   }
-  written <- save_appendix_tables(
-    exhibits, c("appendix_a3_lineage_source_hierarchy", "appendix_a6_linguistic_measures"), cfg
-  )
+  written <- character()
   formats <- figure_formats(cfg)
   for (name in c(
     "appendix_consumption_hces_consistency",
@@ -257,7 +144,7 @@ save_appendix_data_construction_exhibits <- function(exhibits, cfg) {
     written <- c(
       written,
       save_plot_formats(
-        exhibits[[name]], appendix_figure_path_base(name), formats,
+        figures[[name]], appendix_figure_path_base(name), formats,
         width = 8.2, height = 3.8
       )
     )

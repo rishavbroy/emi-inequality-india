@@ -92,16 +92,15 @@ core_public_target_definitions <- function() {
       )
     ),
     tar_target(
-      appendix_data_construction_exhibits,
-      make_appendix_data_construction_exhibits(
-        district_lineage, consumption_district_welfare,
-        historical_linguistic_persistence_validation, district_panel_with_dise,
-        dise_iv_nss_validation
+      appendix_data_construction_figures,
+      make_appendix_data_construction_figures(
+        consumption_district_welfare, historical_linguistic_persistence_validation,
+        district_panel_with_dise, dise_iv_nss_validation
       )
     ),
     tar_target(
       appendix_data_construction_files,
-      save_appendix_data_construction_exhibits(appendix_data_construction_exhibits, cfg),
+      save_appendix_data_construction_figures(appendix_data_construction_figures, cfg),
       format = "file"
     ),
     tar_target(

@@ -699,12 +699,6 @@ test_that("generated public table footnotes retain citation and math escapes", {
                  !grepl("\\citeproc{ref-nsoHCES2022}", tex, fixed = TRUE))
 })
 
-test_that("linguistic-measure appendix table is canonical table data", {
-  table <- appendix_a6_linguistic_measures_table()
-  expect_identical(names(table), c("Manuscript measure", "Concept", "Construction", "Purpose"))
-  expect_equal(nrow(table), 7L)
-  expect_true(all(nzchar(table$Purpose)))
-})
 
 test_that("paper schooling-market renderer uses modelsummary regression blocks", {
   skip_if_not_installed("modelsummary")
