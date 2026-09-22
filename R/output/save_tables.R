@@ -252,7 +252,7 @@ apply_table_column_widths <- function(tex, widths) {
 add_public_longtable_notes <- function(tex, name) {
   kableExtra::footnote(
     tex,
-    general = public_longtable_notes(name),
+    general = kableextra_latex_note(public_longtable_notes(name)),
     general_title = "",
     threeparttable = TRUE,
     footnote_as_chunk = TRUE,
@@ -702,7 +702,7 @@ paper_schooling_market_modelsummary_table <- function(table, name) {
   if (!is.null(note)) {
     tex <- kableExtra::footnote(
       tex,
-      general = note,
+      general = kableextra_latex_note(note),
       general_title = "",
       threeparttable = TRUE,
       footnote_as_chunk = TRUE,
@@ -884,7 +884,7 @@ paper_economic_conversion_modelsummary_table <- function(table, name) {
   if (!is.null(note)) {
     tex <- kableExtra::footnote(
       tex,
-      general = note,
+      general = kableextra_latex_note(note),
       general_title = "",
       threeparttable = TRUE,
       footnote_as_chunk = TRUE,
@@ -999,7 +999,7 @@ appendix_migration_modelsummary_table <- function(table, name) {
   if (!is.null(note)) {
     tex <- kableExtra::footnote(
       tex,
-      general = note,
+      general = kableextra_latex_note(note),
       general_title = "",
       threeparttable = TRUE,
       footnote_as_chunk = TRUE,
@@ -1099,7 +1099,7 @@ appendix_iv_weak_inference_modelsummary_table <- function(table, name) {
   if (!is.null(note)) {
     tex <- kableExtra::footnote(
       tex,
-      general = note,
+      general = kableextra_latex_note(note),
       general_title = "",
       threeparttable = TRUE,
       footnote_as_chunk = TRUE,
@@ -1261,7 +1261,7 @@ paper_local_development_modelsummary_table <- function(table, name) {
   if (!is.null(note)) {
     tex <- kableExtra::footnote(
       tex,
-      general = note,
+      general = kableextra_latex_note(note),
       general_title = "",
       threeparttable = TRUE,
       footnote_as_chunk = TRUE,
@@ -1383,7 +1383,7 @@ paper_language_behavior_modelsummary_table <- function(table, name) {
   if (!is.null(note)) {
     tex <- kableExtra::footnote(
       tex,
-      general = note,
+      general = kableextra_latex_note(note),
       general_title = "",
       threeparttable = TRUE,
       footnote_as_chunk = TRUE,
@@ -1551,7 +1551,7 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   }
   note <- public_table_note(name)
   if (!is.null(note)) {
-    tex <- kableExtra::footnote(tex, general = note, threeparttable = TRUE, footnote_as_chunk = TRUE, escape = FALSE)
+    tex <- kableExtra::footnote(tex, general = kableextra_latex_note(note), threeparttable = TRUE, footnote_as_chunk = TRUE, escape = FALSE)
   }
   if (landscape_table) {
     tex <- kableExtra::landscape(tex)

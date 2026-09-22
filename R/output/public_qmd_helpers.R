@@ -145,7 +145,7 @@ render_public_table <- function(path, name) {
     if (name == "sum_tbl_iv") tab <- kableExtra::column_spec(kableExtra::column_spec(kableExtra::column_spec(tab, 1, width = "3.0cm"), 2, width = "4.6cm"), 3:ncol(df_render), width = "1.45cm")
     if (name == "sum_tbl_probit_quant") tab <- kableExtra::column_spec(kableExtra::column_spec(tab, 1, width = "4.0cm"), 2:ncol(df_render), width = "1.55cm")
     note <- table_note(name)
-    if (!is.null(note)) tab <- kableExtra::footnote(tab, general = note, threeparttable = TRUE, footnote_as_chunk = TRUE, escape = FALSE)
+    if (!is.null(note)) tab <- kableExtra::footnote(tab, general = kableextra_latex_note(note), threeparttable = TRUE, footnote_as_chunk = TRUE, escape = FALSE)
     if (wide) tab <- kableExtra::landscape(tab)
   }
   tab

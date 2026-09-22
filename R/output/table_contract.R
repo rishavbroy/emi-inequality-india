@@ -209,7 +209,7 @@ public_table_note <- function(name) {
     appendix_iv_weak_inference = paste(
       "2SLS standard errors are state-clustered; conventional significance stars are omitted because weak-IV-robust inference takes precedence.",
       "MOP effective $F$ is the Montiel Olea--Pflueger statistic. AR denotes Anderson--Rubin inference; the 95\\% accepted sets are displayed as unions of intervals on the registered inversion grid, and both reported sets touch the grid boundaries.",
-      "The direct-effect row is the smallest bounded exclusion violation, as a share of the absolute reduced form, that admits $\beta = 0$."
+      "The direct-effect row is the smallest bounded exclusion violation, as a share of the absolute reduced form, that admits $\\beta = 0$."
     ),
     appendix_migration_summary = paste(
       "Each column is a separate district regression using speaker-weighted linguistic distance from Hindi, predetermined Census-2001 controls, state fixed effects, and state-clustered standard errors.",
@@ -245,6 +245,19 @@ public_table_note <- function(name) {
   parts <- parts[!vapply(parts, is.null, logical(1)) & nzchar(parts)]
   if (!length(parts)) return(NULL)
   paste(parts, collapse = " ")
+}
+
+# kableExtra inserts LaTeX footnotes through regex replacement.  With
+# `escape = FALSE`, a single backslash in the replacement text is consumed by
+# R's replacement-string semantics before the TeX file is written.  Double raw
+# LaTeX backslashes at this boundary so math escapes and citeproc links survive
+# exactly once in the emitted table source.
+kableextra_latex_note <- function(note) {
+  if (is.null(note) || !length(note)) return(note)
+  vapply(note, function(item) {
+    chars <- strsplit(item, "", fixed = TRUE)[[1L]]
+    paste0(ifelse(chars == "\\", "\\\\", chars), collapse = "")
+  }, character(1), USE.NAMES = FALSE)
 }
 
 table_note <- public_table_note

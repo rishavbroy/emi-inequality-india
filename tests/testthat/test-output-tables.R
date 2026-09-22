@@ -669,6 +669,36 @@ test_that("public table sources live in bottom notes rather than titles", {
   expect_false(grepl("95%", weak_note, fixed = TRUE))
 })
 
+
+
+test_that("kableExtra note boundary preserves raw LaTeX commands", {
+  note <- "95\\% and \\citeproc{ref-example}{Example}; $\\beta = 0$"
+  prepared <- kableextra_latex_note(note)
+  expect_identical(
+    prepared,
+    "95\\\\% and \\\\citeproc{ref-example}{Example}; $\\\\beta = 0$"
+  )
+})
+
+test_that("generated public table footnotes retain citation and math escapes", {
+  skip_if_not_installed("kableExtra")
+  table <- data.frame(Term = "A", Value = "1", check.names = FALSE)
+  dir <- tempfile("public-note-")
+  dir.create(dir)
+  path <- save_table_tex(
+    table = table,
+    path = file.path(dir, "appendix_iv_weak_inference.tex"),
+    name = "appendix_iv_weak_inference",
+    public = TRUE
+  )
+  tex <- paste(readLines(path, warn = FALSE), collapse = "\n")
+  expect_match(tex, "95\\% accepted sets", fixed = TRUE)
+  expect_match(tex, "\\citeproc{ref-nsoHCES2022}{HCES 2022--23}", fixed = TRUE)
+  expect_match(tex, "$\\beta = 0$", fixed = TRUE)
+  expect_false(grepl("citeproc{ref-nsoHCES2022}", tex, fixed = TRUE) &
+                 !grepl("\\citeproc{ref-nsoHCES2022}", tex, fixed = TRUE))
+})
+
 test_that("linguistic-measure appendix table is canonical table data", {
   table <- appendix_a6_linguistic_measures_table()
   expect_identical(names(table), c("Manuscript measure", "Concept", "Construction", "Purpose"))
