@@ -357,11 +357,11 @@ fi
 
 current_stage="output-manifest"
 echo "=== OUTPUT MANIFEST ==="
-manifest_args=()
+manifest_args=(scripts/write_output_manifest.R)
 if [[ "$render_samples" == "true" ]]; then manifest_args+=(--with-samples); fi
 if [[ "$with_analysis" == "true" ]]; then manifest_args+=(--with-analysis); fi
 if [[ "$with_poster" == "true" ]]; then manifest_args+=(--with-poster); fi
-Rscript scripts/write_output_manifest.R "${manifest_args[@]}"
+Rscript "${manifest_args[@]}"
 if [[ ! -s outputs/build/output_manifest.csv ]]; then
   echo "Output manifest was not created or is empty." >&2
   exit 1
