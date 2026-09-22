@@ -186,7 +186,11 @@ package_review_archive() {
 
 dump_build_state() {
   local exit_code="$1"
+  local build_result="FAILED"
   trap - EXIT
+  # Reporting is best-effort: preserve the build status even if a diagnostic
+  # command in this EXIT handler cannot run.
+  set +e
   if [[ "$build_completed" != "true" && "$exit_code" -eq 0 ]]; then
     echo "Build exited before completion without a nonzero status; normalizing to exit code 1." >&2
     exit_code=1
@@ -194,6 +198,7 @@ dump_build_state() {
   echo "=== EXIT CODE: ${exit_code} ==="
 
   if [[ "$build_completed" == "true" && "$exit_code" -eq 0 ]]; then
+    build_result="PASSED"
     write_build_status "passed" "complete" 0 "$([[ "$fast_mode" == "true" ]] && echo fast || echo verified)"
   else
     write_build_status "failed" "$current_stage" "$exit_code" "incomplete"
@@ -225,7 +230,8 @@ dump_build_state() {
     echo "No target_meta_after_strict_run.csv found"
   fi
   echo "=== END: git state ==="
-  git status --short
+  git status --short || true
+  printf '=== BUILD RESULT: %s (exit %d) ===\n' "$build_result" "$exit_code"
   exit "$exit_code"
 }
 trap 'build_exit_code=$?; dump_build_state "$build_exit_code"' EXIT
