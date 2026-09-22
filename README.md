@@ -1,24 +1,14 @@
-# Escaping Inequality in India: English-Medium Instruction and Local Development
+# Unequal Access to Equalizing Opportunities
 
-This repository contains the code and derived data needed to replicate my paper, "Escaping Inequality in India: The Role of English-Medium Instruction," as well as the application samples and supplemental analysis notebooks built from it.
+This repository contains the code, metadata, processed outputs, and build instructions for my paper, "Unequal Access to Equalizing Opportunities: Variation in Linguistic Conditions, Access to English-Medium Instruction, and Local Economic Outcomes in India."
 
-> THIS PROJECT IS STILL UNDERGOING A MAJOR RENOVATION. The paper's text may not match current results.
-
-This project has also completed a major refactoring recently. To learn more about it, review [`archive/refactoring/README.md`](archive/refactoring/README.md) and the tag and branch mentioned therein.
-
-Finally, go to ["Commands for running and auditing"](#commands-for-running-and-auditing) below if you want to:
-
-1. Generate empirical outputs using [`{targets}`](_targets.R).
-2. Render the current paper, application samples, and all other public artifacts.
-3. Run tests and checks.
-4. Optionally run extended diagnostics, benchmarks, and analysis notebooks.
+For build and replication commands, see [`docs/BUILD.md`](docs/BUILD.md) and [`REPLICATION.md`](REPLICATION.md).
 
 ## Key files
 
-- **[`paper/paper.pdf`](paper/paper.pdf): Reviewed/current paper**. All of its results, tables, and figures are generated in this codebase.
-- [`paper/paper.qmd`](paper/paper.qmd): Reviewed paper source. Manual edits and approved sections belong here.
-- [`paper/paper-new.qmd`](paper/paper-new.qmd): ChatGPT working paper source and emerging final-paper narrative. The strict pipeline now renders it alongside `paper.qmd`; `make paper-new` refreshes only this target. Application-sample excerpts remain tied to manually approved `paper.qmd` prose.
-- [`paper/paper-new.pdf`](paper/paper-new.pdf): Latest explicitly rendered working-paper PDF, when available.
+- **[`paper/paper-new.pdf`](paper/paper-new.pdf): Current paper.** Its tables, figures, and reported quantities are generated from the repository.
+- [`paper/paper-new.qmd`](paper/paper-new.qmd): Current paper source.
+- [`paper/paper.qmd`](paper/paper.qmd) and [`paper/paper.pdf`](paper/paper.pdf): Earlier paper retained for comparison and application-sample source excerpts.
 - [`REPLICATION.md`](REPLICATION.md): Replication guide.
 - [`DATA_AVAILABILITY.md`](DATA_AVAILABILITY.md): Source-by-source data availability and redistribution notes.
 
@@ -28,7 +18,7 @@ Finally, go to ["Commands for running and auditing"](#commands-for-running-and-a
 
 ## Research question
 
-Does baseline district-level exposure to English-medium instruction (EMI) in 2007-08 affect later local educational and economic outcomes, and through which channels?
+How are inherited linguistic conditions, access to English-medium instruction (EMI), and the later local economic setting distributed across Indian districts, and how do these conditions relate to inequality?
 
 ## Empirical design and current status
 
@@ -45,116 +35,67 @@ Current build status:
 
 ## For faculty reviewers and hiring/admissions committees
 
-I believe the [current draft](paper/paper.pdf) displays multiple traits that are essential to high-quality economics research: a commitment to institutional knowledge and literature reviews, a deep understanding of econometrics, and meticulous empirical judgement.
+I believe the [current paper](paper/paper-new.pdf) displays multiple traits that are essential to high-quality economics research: a commitment to institutional knowledge and literature reviews, a deep understanding of econometrics, and meticulous empirical judgement.
 
 This repository, on the other hand, is intended to signal more than just one PDF. Its current state contains the following:
 
 - **Completed refactor proof.** The legacy-to-Quarto migration and parity machinery has been frozen under `archive/refactoring/` and the `archive/refactoring-complete` branch/tag workflow. Active paper and analysis sources are now edited directly.
-- **Targets-based research pipeline.** [`_targets.R`](_targets.R) organizes raw-data readers, district tracking, measure construction, IV/probit models, figures, tables, diagnostics, report rendering, and application samples.
-- **Audited public artifacts.** [`scripts/run_public_build_audit.sh`](scripts/run_public_build_audit.sh) checks source whitespace without modifying the working tree, runs tests and final public checks, optionally runs extended diagnostics/benchmarks, records machine-readable audit status, and packages `review.zip`.
-- **Review archives without raw data.** [`scripts/make_review_archive.sh`](scripts/make_review_archive.sh) packages source, public outputs, and diagnostics into `review.zip` while omitting local raw data and caches.
-- **Explicit diagnostics policy.** Public/build diagnostics are short-lived; extended diagnostics and benchmarking outputs are preserved unless intentionally cleaned.
-- **Application-sample automation.** Writing and coding samples are generated from the same source/pipeline used for the paper rather than hand-maintained as separate PDFs.
+- **Targets-based research build.** [`_targets.R`](_targets.R) organizes raw-data readers, district tracking, measure construction, IV/probit models, figures, tables, diagnostics, report rendering, and application samples.
+- **Verified final outputs.** [`scripts/run_full_build.sh`](scripts/run_full_build.sh) checks source whitespace without modifying the working tree, runs tests and final checks, optionally runs extended research checks and benchmarks, records machine-readable build status, and packages `review.zip`.
+- **Review archives without raw data.** [`scripts/make_review_archive.sh`](scripts/make_review_archive.sh) packages source, rendered outputs, and selected research checks into `review.zip` while omitting local raw data and caches.
+- **Explicit optional-analysis policy.** Build metadata are short-lived; extended research checks and benchmark outputs are preserved unless intentionally removed.
+- **Application-sample automation.** Writing and coding samples are generated from the same source and target build used for the paper rather than hand-maintained as separate PDFs.
 
 ## Repository map
 
-- [`R/`](R/): function-based research pipeline.
-- [`R/diagnostics/`](R/diagnostics/): public and extended diagnostic code.
+- [`R/`](R/): function-based research code.
+- [`R/diagnostics/`](R/diagnostics/): core and extended research checks.
 - [`R/benchmarking/`](R/benchmarking/): opt-in benchmarking/tuning target helpers.
-- [`config/`](config/): draft/final/diagnostic run settings.
+- [`config/`](config/): `fast.yml` for iteration and `final.yml` for paper/release calculations.
 - [`_targets.R`](_targets.R): dependency graph for data cleaning, modeling, diagnostics, benchmarks, figures, tables, report rendering, and application samples.
 - [`paper/`](paper/): Quarto source and rendered paper output.
 - [`application-samples/`](application-samples/): cover notes, sample specifications, and generated writing/coding samples.
 - [`analysis/diagnostics/`](analysis/diagnostics/): lightweight diagnostic notebooks and rendered diagnostic reports.
 - [`analysis/benchmarking/`](analysis/benchmarking/): opt-in benchmarking reports generated by benchmark targets.
-- `outputs/diagnostics/build/`: short-lived target metadata and warnings, regenerated by audits and intentionally untracked.
-- `outputs/diagnostics/public/`: short-lived public-build diagnostics, regenerated by audits and intentionally untracked.
+- `outputs/build/`: short-lived build metadata and warnings, regenerated by full builds and intentionally untracked.
+- `outputs/diagnostics/public/`: short-lived core research checks, regenerated by builds and intentionally untracked.
 - [`outputs/diagnostics/extended/`](outputs/diagnostics/extended/): opt-in diagnostic artifacts preserved across ordinary public builds.
 - [`outputs/benchmarking/`](outputs/benchmarking/): opt-in method/timing/tuning benchmark artifacts.
 - [`data/metadata/`](data/metadata/): tracked source catalog, manifests, checksums, current crosswalk, and district-lineage adjudication ledgers; see [`data/metadata/README.md`](data/metadata/README.md).
 - [`docs/DISTRICT_LINEAGE.md`](docs/DISTRICT_LINEAGE.md): durable data and methodology handoff for the Census 2001 district panel.
-- [`data/processed/`](data/processed/): tracked processed district tracker and district panel.
+- [`docs/EDUCATION_SELECTION.md`](docs/EDUCATION_SELECTION.md): enrollment selection and average marginal effects.
+- [`docs/SPATIAL_ANALYSIS.md`](docs/SPATIAL_ANALYSIS.md): spatial weights, Moran tests, and the boundary around experimental spatial IV work.
+- [`data/processed/`](data/processed/): processed analysis exports and reproducible processed geography used downstream.
 - `data/raw/`, `data/raw_future/`, `data/interim/`: local-only, gitignored data folders.
 - [`docs/`](docs/): methodological notes and project planning documents.
 - [`archive/`](archive/): legacy drafts, rendered artifacts, source samples, and extracted legacy Rmd chunks.
 
-## Quickstart using Makefile
+## Quickstart
 
 ```bash
-make restore     # first local setup on a new machine; restores renv.lock
-make test        # unit tests and input/output contracts; should pass without raw data
-make pipeline-draft
-make paper
-make paper-new
-make samples
-make check-public-draft
+make restore   # restore the R library recorded in renv.lock
+make test      # unit tests
+make pipeline  # final research targets, without samples or poster
+make paper     # render and validate the papers
+make samples   # application samples
+make all       # ordinary full build; equivalent to scripts/run_full_build.sh
 ```
 
-Raw data are not tracked. Place raw files according to [`data/metadata/file_manifest.csv`](data/metadata/file_manifest.csv). See [`REPLICATION.md`](REPLICATION.md) for the current replication data contract and expected behavior on a fresh clone without local-only raw data.
+The full command reference and the distinction between `config/fast.yml`, `config/final.yml`, and optional build families are in [`docs/BUILD.md`](docs/BUILD.md).
 
-The two tracked public district data products are:
+Raw data are not tracked. The full build first runs `make prepare-data`, which downloads any missing Census tables listed in the Census acquisition manifests. Sources that cannot be redistributed or downloaded automatically must be placed at the paths in [`data/metadata/file_manifest.csv`](data/metadata/file_manifest.csv); see [`DATA_AVAILABILITY.md`](DATA_AVAILABILITY.md).
 
-- [`data/metadata/district_harmonization_crosswalk.csv`](data/metadata/district_harmonization_crosswalk.csv), the single tracked harmonization authority
-- [`data/processed/district_panel_emi_consumption_2001_2007_2017_2020.csv`](data/processed/district_panel_emi_consumption_2001_2007_2017_2020.csv)
-
-## Commands for running and auditing
-
-Use a small number of commands repeatedly rather than trying to remember every [`Makefile`](Makefile) target.
-
-| Use case | Command | Explanation |
-|---|---|---|
-| Unit-test smoke check | `make test` | Fast contract tests; should pass without local raw data. |
-| Fast public audit, no samples | `make public-build-audit` | Runs the canonical audit without application samples and always replaces `review.zip`: verified on success, explicitly incomplete on failure. |
-| Full reviewer-facing audit | `make public-build-audit-full` | Runs cached `{targets}` public render targets for the report, docs, and application samples, audits outputs, and always replaces `review.zip` with the current run. |
-| Cache-preserving debug audit | `make public-build-audit-full-incremental` | Preserves generated renders and the `{targets}` cache while still replacing `review.zip` with the current complete-or-incomplete run. |
-| Extended diagnostics only | `make extended-diagnostics` | Runs opt-in `diag_ext_*` targets, respecting the targets cache. |
-| Benchmarks only | `make benchmarking` | Runs opt-in `bench_*` targets, respecting the targets cache. |
-| Full audit plus diagnostics/benchmarks | `make public-build-audit-full-with-benchmarks` | Runs the full public audit, then opt-in extended diagnostics and benchmarks. Use when reviewing methodological/debug outputs, not for every edit. |
-
-Cleaning commands are intentionally separate. `make clean` removes rendered/public artifacts, analysis markdown, extended diagnostics, and benchmark outputs, while leaving the `{targets}` cache intact. `make clean-targets` destroys the `{targets}` store; use `make clean-all` only when you want both generated artifacts and the target cache removed. The narrower targets (`make clean-renders`, `make clean-analysis`, `make clean-extended-diagnostics`, and `make clean-benchmarking`) are useful when you only want to refresh one output family.
-
-## Script variants for reviewers, LLM users, and debugging
-
-The shell script is the canonical configurable audit. It is more flexible than the [`Makefile`](Makefile) aliases:
+For the usual no-samples review run used during development:
 
 ```bash
-# macOS/Linux/Git Bash: full reviewer bundle; always refresh review.zip and save the log.
-bash scripts/run_public_build_audit.sh --with-samples 2>&1 | tee full_output.txt
-
-# Faster iterative debug run: keep caches/renders, omit application samples, refresh review.zip.
-bash scripts/run_public_build_audit.sh --without-samples --incremental 2>&1 | tee full_output.txt
-
-# Full diagnostic/benchmarking run: expensive, but useful before methodological review.
-bash scripts/run_public_build_audit.sh --with-samples --incremental --with-extended-diagnostics --with-benchmarks 2>&1 | tee full_output_with_diagnostics_benchmarks.txt
+caffeinate -dimsu bash scripts/run_full_build.sh \
+  --no-samples \
+  --with-extended-diagnostics \
+  --with-benchmarks \
+  2>&1 | tee full_output.txt
 ```
 
-On Windows, use WSL or Git Bash for the same commands. From PowerShell, the equivalent logging pattern is:
-
-```powershell
-bash scripts/run_public_build_audit.sh --with-samples 2>&1 | Tee-Object -FilePath full_output.txt
-```
-
-From `cmd.exe`, use:
-
-```bat
-bash scripts\run_public_build_audit.sh --with-samples > full_output.txt 2>&1
-```
-
-### Cheaper workflow for LLMs
-
-If you want help changing the code but do not want to spend hundreds of dollars on a coding agent, run one of the audit commands above yourself and upload both files to the chatbot's web interface:
-
-1. `review.zip`
-2. the corresponding log file, usually `full_output.txt` or `full_output_with_diagnostics_benchmarks.txt`
-
-Every audit run refreshes `review.zip`. A successful run atomically replaces it with a verified archive; a failed run atomically replaces it with a current **incomplete** snapshot containing the failed run's `audit_status.json`, diagnostics, and current tracked source tree. If incomplete packaging itself fails, the script removes the stale destination rather than leave an older archive that could be mistaken for the current run. The no-samples/incremental variants are cheaper for iteration; the full `--with-samples` run is the better reviewer-facing proof build.
-
-
-### Review archive contract
-
-Build `review.zip` through [`scripts/run_public_build_audit.sh`](scripts/run_public_build_audit.sh) or after a final public check succeeds. The packaging script stages the current working tree and omits raw data and local caches. Successful audit packaging requires the `.public-final-ok` stamp; the audit uses the archive script's explicit incomplete mode after failures. Each archive is built and validated in a temporary sibling path before replacement. If even incomplete failure packaging cannot complete, the audit removes the old destination so `review.zip` can never silently describe an earlier run.
-
-For fast iteration, run `bash scripts/run_public_build_audit.sh --without-samples`. This mode omits [`application-samples/output/`](application-samples/output/) from `review.zip`, so it cannot accidentally package stale sample PDFs. Before a full submission or application bundle, run `bash scripts/run_public_build_audit.sh --with-samples`; that mode renders application samples and requires them in `review.zip`. Because public PDFs and sample PDFs are tracked deliverables, commit intentional regenerated outputs before treating the run as a final proof.
+The ordinary script invocation includes application samples but does not render analysis reports or the conference poster. Add `--with-analysis` or `--with-poster` when those outputs are wanted. Use `--from-clean-slate` only when you specifically want to destroy the `{targets}` store and generated outputs before reconstruction.
 
 ## Behavior without raw data
 

@@ -334,9 +334,9 @@ The governance layer distinguishes visibility from execution. The registered eig
 
 The preferred district mean is
 
-\[
+$$
 \bar c_d = \frac{\sum_h w_h X_h}{\sum_h w_h n_h},
-\]
+$$
 
 where `X_h` is total monthly household expenditure, `n_h` is household size,
 and `w_h` is the NSS household multiplier. This is mean expenditure per
@@ -426,10 +426,10 @@ remove the latter by construction.
 
 For state `s`, sector `r`, and month `t`, the combined deflator is
 
-\[
+$$
 D_{srt}=\frac{PL_{sr}}{816}\times
 \frac{CPI_{srt}}{\overline{CPI}_{sr,2011\text{-}12}}.
-\]
+$$
 
 The output records the temporal source state, whether the observation is
 direct, inherited, or a fallback, the fallback reason, and the poverty-line
@@ -444,9 +444,9 @@ Both NSS 64 (July 2007-June 2008) and NSS 75 (July 2017-June 2018) divide the an
 
 `prepare_2007_consumption_households()` and `prepare_2017_consumption_households()` deduplicate Block 3 household records, resolve NSS state and rural/urban codes, attach the sub-round price object, and retain nominal and real household totals and per-capita values. Deflation occurs before district aggregation. District real consumption is therefore
 
-\[
+$$
 \bar c^{real}_{dt}=\frac{\sum_h w_h X^{real}_h}{\sum_h w_h n_h},
-\]
+$$
 
 with the household-weighted mean retained separately. The district outputs also record the person-weighted mean deflator and the survey-weighted household share using inheritance or fallback rules.
 

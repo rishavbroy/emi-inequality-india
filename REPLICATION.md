@@ -84,63 +84,83 @@ Rscript scripts/update_checksums.R
 
 ## Expected behavior without raw data
 
-`make pipeline-draft` may stop early on a fresh clone without raw data. That is acceptable only if the error clearly names [`data/metadata/file_manifest.csv`](data/metadata/file_manifest.csv) and lists the missing files. Cryptic path errors from `read_sav()`, `read_excel()`, `sf::st_read()`, or similar readers should be treated as bugs.
+The full build begins with `make prepare-data`, which downloads missing Census workbooks covered by the tracked acquisition manifests. Sources that cannot be redistributed or downloaded automatically must still be supplied under the paths in [`data/metadata/file_manifest.csv`](data/metadata/file_manifest.csv). A missing local source should therefore fail during source validation with the exact required path rather than later inside a reader.
+
+The tracked files under `data/processed/` are useful replication exports, but they do not yet replace every raw source required by the current paper. A raw-data-less clone cannot presently reproduce every estimate from processed data alone. The longer-term replication design is to distinguish analysis replication from distributed processed data from full reconstruction using original source files.
 
 ## Commands
 
-The recommended replication entry point is the [scripted public-build audit](scripts/run_public_build_audit.sh), because it checks the current public QMD sources, runs tests, executes the final public checks, checks report values, and packages a review archive. Lower-level [`Makefile`](Makefile) targets remain useful for development, but they are not a substitute for the audit script before sharing a bundle.
+The human-facing build commands are documented in [`docs/BUILD.md`](docs/BUILD.md). The principal commands are:
 
 ```bash
-# Fast contract tests; should pass without local raw data.
+# Unit tests.
 make test
 
-# Full reviewer-facing archive with a log; every run refreshes review.zip.
-bash scripts/run_public_build_audit.sh --with-samples 2>&1 | tee full_output.txt
+# Verified target build with the final scientific configuration.
+make pipeline
 
-# Faster cache-preserving iteration without application samples.
-bash scripts/run_public_build_audit.sh --without-samples --incremental 2>&1 | tee full_output.txt
+# Faster target build that omits expensive full AME computation.
+make pipeline-fast
 
-# Full optional diagnostics/benchmarking run for methodological review.
-bash scripts/run_public_build_audit.sh --with-samples --incremental --with-extended-diagnostics --with-benchmarks 2>&1 | tee full_output_with_diagnostics_benchmarks.txt
+# Paper-facing outputs and checks.
+make paper
+
+# Application samples only.
+make samples
+
+# Extended analyses, benchmarks, and their rendered reports.
+make analysis
+
+# Complete repository build. Equivalent to the script below.
+make all
+bash scripts/run_full_build.sh
 ```
 
-`make test` should pass without local raw data. The full pipeline requires the local-only raw files listed in the manifest. [`bash scripts/run_public_build_audit.sh`](scripts/run_public_build_audit.sh) defaults to the faster no-samples mode and writes `review.zip` without [`application-samples/output/`](application-samples/output/); pass `--with-samples` before a full submission/review bundle so the application samples are rendered and required in the archive. Commit intentional regenerated outputs after a proof run; the audit does not require a clean working tree because public PDFs and sample PDFs are tracked deliverables that may be regenerated.
-
-The public target stages request up to four parallel consumption-domain workers for the expensive design-based distributional welfare statistics. Override this with `EMI_CONSUMPTION_DOMAIN_CORES=1` for serial execution or a smaller value on memory-constrained machines; the R helper clamps the request to detected physical cores and Windows remains serial. Core and distributional welfare targets are separately cached, so `--incremental` avoids recomputing core welfare when only a distributional robustness specification changes.
-
-Useful lower-level Makefile targets are:
+`run_full_build.sh` uses [`config/final.yml`](config/final.yml), includes application samples, writes `review.zip`, and leaves analysis reports and the conference poster out unless requested. Useful options are:
 
 ```bash
-make restore
-make pipeline-draft
-make paper
-make paper-new
-make samples
-Rscript scripts/run_targets_checked.R poster
-make check-public-draft
-make check-public-final
-make check-public-final-no-samples
+# The command used for routine development review after source changes.
+caffeinate -dimsu bash scripts/run_full_build.sh \
+  --no-samples \
+  --with-extended-diagnostics \
+  --with-benchmarks \
+  2>&1 | tee full_output.txt
+
+# Also render the analysis reports. Their required extended results and
+# benchmarks are enabled automatically.
+bash scripts/run_full_build.sh --with-analysis
+
+# Include the conference poster.
+bash scripts/run_full_build.sh --with-poster
+
+# Use the faster scientific configuration.
+bash scripts/run_full_build.sh --fast
+
+# Delete generated outputs and the {targets} store before reconstruction.
+bash scripts/run_full_build.sh --from-clean-slate
 ```
 
-`make paper-new` renders the `paper_new` target from the same strict graph used by the final build. The working draft is therefore continuously checked against its table, figure, report-value, and raw-data dependencies. Application samples continue to use manually approved excerpts from `paper/paper.qmd`.
+The ordinary build keeps the `{targets}` store and existing generated files. `{targets}` determines which steps are out of date, so routine development does not need an "incremental" mode. `--from-clean-slate` is an exceptional reconstruction check. A fresh clone already begins without a `{targets}` store.
 
-`make check-public-draft` is the public-render smoke check. It tolerates explicitly deferred geometry/map work but still fails on scaffold prose, broken application-sample specs, render failures, and rendered placeholder phrases. `make check-public-final` uses [`config/final.yml`](config/final.yml), checks all current report quantities, audits final output artifacts, relies on cached `{targets}` render targets for the report, conference poster, docs, and application samples, checks PDF text when the Poppler `pdftotext` executable is available, and fails on visible public-document cross-reference artifacts or incomplete report values/cross-references. `make check-public-final-no-samples` runs the same final checks but omits application-sample targets, text checks, and output requirements.
+The main target build requests up to four parallel consumption-domain workers for expensive design-based distributional welfare statistics. Set `EMI_CONSUMPTION_DOMAIN_CORES=1` for serial execution or a smaller value on a memory-constrained machine; the R helper clamps the request to detected physical cores and Windows remains serial.
 
-On Windows, run the same audit commands through WSL or Git Bash. From PowerShell, replace `tee` with `Tee-Object -FilePath full_output.txt`; from `cmd.exe`, redirect with `> full_output.txt 2>&1`.
+`make pipeline-fast` changes the scientific configuration to [`config/fast.yml`](config/fast.yml). It does not select a different set of optional target families. Extended diagnostics, benchmarks, analysis reports, application samples, and the poster are selected separately by the build command. See [`docs/BUILD.md`](docs/BUILD.md) for the distinction.
 
-## Review archive contract
+On Windows, run the shell entry point through WSL or Git Bash. From PowerShell, replace `tee` with `Tee-Object -FilePath full_output.txt`; from `cmd.exe`, redirect with `> full_output.txt 2>&1`.
 
-[`scripts/make_review_archive.sh`](scripts/make_review_archive.sh) is intentionally not a substitute for the final public checks. It writes `review.zip` by default and normally refuses to package the repository unless `.public-final-ok` exists, which is written only after a final public check completes successfully. The audit has a stronger recency contract: every run refreshes `review.zip`. Successful runs write a verified archive; failed runs invoke the archive script's explicit `--allow-incomplete` mode so the ZIP captures the current broken state and failed `audit_status.json`. Each replacement is built and validated in a temporary sibling path before rename. If incomplete packaging itself fails, the audit removes the old destination rather than leave stale bytes that could be mistaken for the latest run. By default the archive script includes application-sample PDFs; pass `--without-samples` only when the audit intentionally skipped rendering them and the archive should omit [`application-samples/output/`](application-samples/output/) rather than risk packaging stale sample PDFs.
+## Review archive
+
+[`scripts/make_review_archive.sh`](scripts/make_review_archive.sh) writes `review.zip`. Outside failure/debug mode it requires `.public-final-ok`, which is written only after a verified final build. `run_full_build.sh` replaces the archive on every run and can package the current failed state with `--allow-incomplete` when a build stops early. Use `--no-archive` on the full build when no archive should be created.
+
+Archive contents follow the selected build profile. Application-sample PDFs are included by default; analysis-report renders and conference-poster renders are included only when their corresponding build options were requested. Raw data, dependency libraries, target caches, and other local caches are excluded.
 
 ### Lineage-source execution
 
-Extended district-lineage diagnostics track and cache each loaded raw source independently. Large LGD SpreadsheetML changed-unit rosters are streamed into their canonical columns, and SHRUG key readers retain only columns needed by the bridge. Inventory-only geometry and locality-attribute archives remain visible in the source inventory without being loaded into the general lineage bundle. Incremental audits therefore reread only sources whose specification, reader, or file changed; village changed-unit coverage remains included.
+Extended district-lineage checks track each loaded raw source independently. Large LGD SpreadsheetML changed-unit rosters are streamed into the columns needed by the lineage code, and SHRUG key readers retain only the fields used by the bridge. Large geometry and locality-attribute archives that are not required by a selected run remain inventoried without being loaded. The reviewed Census-2001 geometry is stored at `data/processed/geography/district_2001.gpkg` and can be reconstructed from its tracked source inputs.
 
+The project disables renv's automatic synchronization message at activation. The full build restores the tracked lockfile once, then `scripts/check_source_syntax.sh` runs one explicit development-aware `renv::status(dev = TRUE)` verification. This avoids repeating the same synchronization scan in every child R process while preserving a failing gate when restoration does not produce the locked environment.
 
-The project disables renv's automatic synchronization message at activation. The canonical audit restores the tracked lockfile once, then `scripts/check_source_syntax.sh` runs one explicit development-aware `renv::status(dev = TRUE)` verification. This avoids repeating the same synchronization scan in every child R process while preserving a failing gate for a restore that did not produce the locked environment.
-
-The poster extension follows Quarto's documented two-part Typst format. `typst-show.typ` forwards metadata and the rendered document body to the poster function, while `typst-template.typ` contains the upstream `typst-poster` layout directly so project images resolve from the generated document without a separate package root. Content remains in `poster.qmd`; reusable presentation settings such as colors, text sizes, header offsets, and logo/title proportions are format metadata forwarded through `typst-show.typ`. The template retains the earlier Wisconsin poster layout for margins, footer, section bands, typography, and column spacing. This keeps routine visual changes out of the template implementation. Poster content flows through the template's columns automatically; the source does not force column breaks, because a break issued from the final column starts a new page. Pandoc resolves citations in the text, while `suppress-bibliography: true` keeps the full reference list in the linked paper rather than duplicating it on the poster. During poster drafting, `render_poster_pdf()` requires only a successful Quarto render and a non-empty PDF. Page-count and section-presence gates are intentionally deferred until the poster content is frozen, so normal drafting changes can overflow or rename sections without failing the full project build.
-
+The conference poster uses Quarto's Typst custom format. It is intentionally outside the ordinary build and renders only when `--with-poster` or `make poster` is requested.
 
 ### NSS 64 labor source validation
 

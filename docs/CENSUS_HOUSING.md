@@ -95,9 +95,9 @@ Telephone access should be interpreted as a broad communications-access measure 
 
 For every completely reconstructed Census-2001 parent, the diagnostic reports 2001 and 2011 household shares and the arithmetic change
 
-\[
+$$
 \Delta s_d = s_{d,2011} - s_{d,2001}.
-\]
+$$
 
 The longitudinal table now also reports bathroom, flush/water-closet latrine, pit latrine, closed/no drainage, separate-kitchen, solid-fuel, clean-cooking-fuel, and structural-durability changes in addition to room/crowding, drinking-water, lighting/electricity, latrine availability, banking, and asset changes. Changes are retained as missing when either year's underlying share is unavailable; `change_coverage.csv` reports this support outcome by variable.
 
