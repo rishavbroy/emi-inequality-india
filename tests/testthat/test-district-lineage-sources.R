@@ -460,7 +460,7 @@ test_that("lineage summary preserves the complete diagnostic metric contract", {
   )
 })
 
-test_that("production Census 2001 geometry has an explicit tracked path", {
+test_that("production Census 2001 geometry has an explicit processed-data path", {
   root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
   paths <- build_paths(root)
 
@@ -468,7 +468,7 @@ test_that("production Census 2001 geometry has an explicit tracked path", {
     normalizePath(lineage_geometry_2001_path(paths), mustWork = FALSE),
     normalizePath(
       file.path(
-        root, "outputs", "derived", "district_lineage",
+        root, "data", "processed", "geography",
         "district_2001.gpkg"
       ),
       mustWork = FALSE

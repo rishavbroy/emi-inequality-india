@@ -1244,7 +1244,7 @@ test_that("preferred public outcome is real log consumption growth", {
     real_consumption_1718 = c(111, 134),
     stringsAsFactors = FALSE
   )
-  figures <- make_figures(panel, character(), list(mode = "draft"))
+  figures <- make_figures(panel, character(), list(mode = "fast"))
   expect_identical(figures$map_consumption_growth$variable, "real_log_consumption_change")
 })
 

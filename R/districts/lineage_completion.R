@@ -475,7 +475,7 @@ read_zipped_gpkg <- function(path) {
 
 save_lineage_geometry_2001 <- function(
   geometry_2001, admin_2001,
-  path = "outputs/derived/district_lineage/district_2001.gpkg"
+  path = "data/processed/geography/district_2001.gpkg"
 ) {
   need_pkg("sf", "Census 2001 district geometry output")
   if (!inherits(geometry_2001, "sf") || !nrow(geometry_2001)) {

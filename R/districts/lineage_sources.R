@@ -162,7 +162,7 @@ read_datameet_census_2001_geometry <- function(path, admin_2001) {
   geometry["unit_id"]
 }
 
-#' Path to the tracked Census-2001 district geometry
+#' Path to the processed Census-2001 district geometry
 #'
 #' This derived GeoPackage is a required production input because public maps,
 #' spatial weights, and Moran diagnostics all use the same reviewed district
@@ -170,7 +170,7 @@ read_datameet_census_2001_geometry <- function(path, admin_2001) {
 lineage_geometry_2001_path <- function(paths = build_paths()) {
   path_project(
     paths,
-    "outputs/derived/district_lineage/district_2001.gpkg"
+    "data/processed/geography/district_2001.gpkg"
   )
 }
 
