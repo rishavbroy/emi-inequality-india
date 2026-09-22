@@ -56,7 +56,7 @@ verify-processed-replication: replicate-processed
 	Rscript scripts/check_processed_replication.R
 
 replicate-processed:
-	Rscript -e 'targets::tar_make(script = "_targets_processed.R", store = "_targets_processed")'
+	Rscript -e 'targets::tar_make(script = "_targets_processed.R", store = "_targets_processed"); bad <- targets::tar_errored(store = "_targets_processed"); if (length(bad)) stop("Processed targets failed: ", paste(bad, collapse = ", "), call. = FALSE)'
 
 clean-processed-replication:
 	Rscript -e 'if (dir.exists("_targets_processed")) targets::tar_destroy(destroy = "all", script = "_targets_processed.R", store = "_targets_processed", ask = FALSE)'

@@ -87,9 +87,9 @@ save_processed_replication_results <- function(
       safe_df(alternative_first_stages$coefficients),
       file.path(directory, "alternative_distance_first_stage_coefficients.csv")
     ),
-    unname(save_first_stage_absorption_diagnostics(first_stage_absorption, dir = directory))
+    save_first_stage_absorption_diagnostics(first_stage_absorption, dir = directory)$path
   )
-  unique(unname(files))
+  unique(unname(as.character(files)))
 }
 
 
@@ -103,49 +103,96 @@ processed_replication_shared_targets <- function() {
   )
 }
 
-compare_processed_replication_metadata <- function(
-    full_meta,
-    processed_meta,
-    target_names = processed_replication_shared_targets()) {
-  full_meta <- as.data.frame(full_meta, stringsAsFactors = FALSE)
-  processed_meta <- as.data.frame(processed_meta, stringsAsFactors = FALSE)
-  required <- c("name", "data")
-  for (x in list(full = full_meta, processed = processed_meta)) {
-    missing <- setdiff(required, names(x))
-    if (length(missing)) {
-      stop(
-        "Target metadata is missing required fields: ",
-        paste(missing, collapse = ", "),
-        call. = FALSE
-      )
+canonicalize_processed_replication_frame <- function(x) {
+  x <- as.data.frame(x, stringsAsFactors = FALSE, check.names = FALSE)
+  rownames(x) <- NULL
+  for (name in names(x)) {
+    if (is.factor(x[[name]])) x[[name]] <- as.character(x[[name]])
+  }
+  x
+}
+
+processed_replication_components <- function(value, target) {
+  if (!is.list(value)) {
+    stop("Processed replication target is not a list: ", target, call. = FALSE)
+  }
+  keep <- vapply(value, is.data.frame, logical(1))
+  components <- value[keep]
+  if (!length(components)) {
+    stop("Processed replication target has no tabular result components: ", target, call. = FALSE)
+  }
+  lapply(components, canonicalize_processed_replication_frame)
+}
+
+compare_processed_replication_values <- function(
+    full_values,
+    processed_values,
+    target_names = processed_replication_shared_targets(),
+    tolerance = sqrt(.Machine$double.eps)) {
+  compare_one <- function(target) {
+    if (!target %in% names(full_values)) {
+      return(c(status = "missing_full", detail = "target is absent from the full store"))
     }
+    if (!target %in% names(processed_values)) {
+      return(c(status = "missing_processed", detail = "target is absent from the processed store"))
+    }
+
+    full <- processed_replication_components(full_values[[target]], target)
+    processed <- processed_replication_components(processed_values[[target]], target)
+    if (!identical(names(full), names(processed))) {
+      return(c(status = "component_mismatch", detail = "reported component names differ"))
+    }
+
+    for (component in names(full)) {
+      full_frame <- full[[component]]
+      processed_frame <- processed[[component]]
+      if (!identical(names(full_frame), names(processed_frame))) {
+        return(c(
+          status = "value_mismatch",
+          detail = paste0(component, ": column names differ")
+        ))
+      }
+      if (!identical(dim(full_frame), dim(processed_frame))) {
+        return(c(
+          status = "value_mismatch",
+          detail = paste0(component, ": dimensions differ")
+        ))
+      }
+      for (column in names(full_frame)) {
+        comparison <- all.equal(
+          full_frame[[column]], processed_frame[[column]],
+          tolerance = tolerance, check.attributes = FALSE
+        )
+        if (!isTRUE(comparison)) {
+          detail <- paste(as.character(comparison), collapse = "; ")
+          return(c(
+            status = "value_mismatch",
+            detail = substr(
+              paste0(component, "$", column, ": ", detail), 1L, 1000L
+            )
+          ))
+        }
+      }
+    }
+    c(status = "match", detail = "")
   }
 
-  select_hash <- function(meta, target) {
-    rows <- which(as.character(meta$name) == target)
-    if (!length(rows)) return(NA_character_)
-    if (length(rows) != 1L) {
-      stop("Expected exactly one metadata row for target: ", target, call. = FALSE)
-    }
-    as.character(meta$data[[rows]])
-  }
-
-  full_hash <- vapply(target_names, function(x) select_hash(full_meta, x), character(1))
-  processed_hash <- vapply(target_names, function(x) select_hash(processed_meta, x), character(1))
-  status <- ifelse(
-    is.na(full_hash), "missing_full",
-    ifelse(
-      is.na(processed_hash), "missing_processed",
-      ifelse(full_hash == processed_hash, "match", "hash_mismatch")
-    )
-  )
+  compared <- lapply(target_names, compare_one)
   data.frame(
     target = target_names,
-    full_data_hash = unname(full_hash),
-    processed_data_hash = unname(processed_hash),
-    status = unname(status),
+    status = vapply(compared, `[[`, character(1), "status"),
+    detail = vapply(compared, `[[`, character(1), "detail"),
     stringsAsFactors = FALSE
   )
+}
+
+read_processed_replication_targets <- function(
+    store, target_names = processed_replication_shared_targets()) {
+  meta <- targets::tar_meta(store = store, fields = "name", targets_only = TRUE)
+  available <- intersect(target_names, as.character(meta$name))
+  values <- lapply(available, targets::tar_read_raw, store = store)
+  names(values) <- available
+  values
 }
 
 verify_processed_replication <- function(
@@ -159,9 +206,9 @@ verify_processed_replication <- function(
     stop("Processed targets metadata is missing: ", processed_store, call. = FALSE)
   }
 
-  report <- compare_processed_replication_metadata(
-    targets::tar_meta(store = full_store, targets_only = TRUE),
-    targets::tar_meta(store = processed_store, targets_only = TRUE)
+  report <- compare_processed_replication_values(
+    read_processed_replication_targets(full_store),
+    read_processed_replication_targets(processed_store)
   )
   dir.create(dirname(output_path), recursive = TRUE, showWarnings = FALSE)
   utils::write.csv(report, output_path, row.names = FALSE, na = "")

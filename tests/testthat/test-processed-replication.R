@@ -93,26 +93,59 @@ test_that("processed replication graph is independent of raw-data and selection 
 })
 
 
-test_that("processed replication verification compares target output hashes", {
-  targets <- processed_replication_shared_targets()
-  full <- data.frame(
-    name = targets,
-    data = paste0("hash-", seq_along(targets)),
-    stringsAsFactors = FALSE
+test_that("processed replication file target returns only existing paths", {
+  dir <- tempfile("processed-replication-")
+  on.exit(unlink(dir, recursive = TRUE, force = TRUE), add = TRUE)
+  frame <- data.frame(id = "x", estimate = 1, stringsAsFactors = FALSE)
+  dynamics <- list(summary = frame, anderson_rubin_grid = frame)
+  bridge <- list(
+    treatments = frame, welfare = frame,
+    specifications = frame, estimates = frame
   )
-  processed <- full
+  conversion <- list(specifications = frame, estimates = frame)
+  alternative <- structure(
+    list(summary = frame, coefficients = frame),
+    class = "emi_alternative_distance_first_stages"
+  )
+  absorption <- structure(
+    list(
+      summary = frame, semantic_summary = frame, registry = frame,
+      aliases = frame, common_support = frame, state_residual_ranges = frame,
+      state_deletion = frame, district_influence = frame, vif = frame
+    ),
+    class = "emi_first_stage_absorption"
+  )
 
-  matched <- compare_processed_replication_metadata(full, processed, targets)
+  files <- save_processed_replication_results(
+    dynamics, bridge, conversion, alternative, absorption, directory = dir
+  )
+
+  expect_type(files, "character")
+  expect_false(anyDuplicated(files))
+  expect_true(all(file.exists(files)))
+})
+
+test_that("processed replication verification compares reported empirical components", {
+  targets <- processed_replication_shared_targets()
+  template <- list(
+    summary = data.frame(specification_id = "main", estimate = 1),
+    estimates = data.frame(specification_id = "main", estimate = 2)
+  )
+  full <- setNames(rep(list(template), length(targets)), targets)
+  processed <- full
+  processed[[targets[[1L]]]]$summary$estimate <- 1L
+
+  matched <- compare_processed_replication_values(full, processed, targets)
   expect_true(all(matched$status == "match"))
 
-  processed$data[[2L]] <- "different"
-  mismatched <- compare_processed_replication_metadata(full, processed, targets)
-  expect_identical(mismatched$status[[2L]], "hash_mismatch")
-  expect_identical(mismatched$target[[2L]], targets[[2L]])
+  processed[[targets[[2L]]]]$estimates$estimate <- 2.1
+  mismatched <- compare_processed_replication_values(full, processed, targets)
+  expect_identical(mismatched$status[[2L]], "value_mismatch")
+  expect_match(mismatched$detail[[2L]], "difference|Mean relative difference")
 
-  missing <- compare_processed_replication_metadata(
+  missing <- compare_processed_replication_values(
     full,
-    processed[processed$name != targets[[3L]], , drop = FALSE],
+    processed[setdiff(names(processed), targets[[3L]])],
     targets
   )
   expect_identical(missing$status[[3L]], "missing_processed")
