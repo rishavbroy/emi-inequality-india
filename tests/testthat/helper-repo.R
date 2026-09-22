@@ -33,7 +33,7 @@ repo_target_manifest <- function() {
     # isolated environment. This matters because the target script deliberately
     # uses project-relative source paths.
     manifest <- targets::tar_manifest(
-      fields = tidyselect::any_of(c("name", "command")),
+      fields = tidyselect::any_of(c("name", "command", "format")),
       callr_function = NULL,
       envir = new.env(parent = globalenv()),
       script = "_targets.R"

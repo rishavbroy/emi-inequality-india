@@ -60,6 +60,17 @@ test_that("current public build helper scripts parse", {
   expect_silent(parse(repo_file("R", "application_samples", "extract_qmd_excerpts.R")))
 })
 
+test_that("raw source registry is a tracked target input", {
+  manifest <- repo_target_manifest()
+  row <- manifest[manifest$name == "raw_file_manifest_file", , drop = FALSE]
+
+  expect_equal(nrow(row), 1L)
+  expect_identical(row$format[[1L]], "file")
+
+  command <- parse(text = repo_target_command("raw_manifest"))[[1L]]
+  expect_true("raw_file_manifest_file" %in% all.names(command))
+})
+
 test_that("conference poster requirements are opt-in", {
   env <- new.env(parent = globalenv())
   sys.source(repo_file("scripts", "public_output_contract.R"), envir = env)

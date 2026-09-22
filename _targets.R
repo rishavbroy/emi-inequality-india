@@ -88,7 +88,18 @@ core_pipeline_targets <- c(
     census_2001_control_registry,
     read_census_2001_control_registry(census_2001_control_registry_file)
   ),
-  tar_target(raw_manifest, validate_raw_files(paths)),
+  tar_target(
+    raw_file_manifest_file,
+    path_metadata(paths, "file_manifest.csv"),
+    format = "file"
+  ),
+  tar_target(
+    raw_manifest,
+    {
+      raw_file_manifest_file
+      validate_raw_files(paths)
+    }
+  ),
   tar_target(raw_data_preflight, stop_if_required_files_invalid(raw_manifest))
   ),
   core_consumption_target_definitions(),
