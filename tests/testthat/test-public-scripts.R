@@ -305,6 +305,20 @@ audit_script_fixture <- function(manifest_exit = 0L, archive_exit = 0L) {
     c(
       "#!/usr/bin/env bash",
       "set -euo pipefail",
+      "case \"${1:-} ${2:-}\" in",
+      "  'status --short') exit 0 ;;",
+      "  'diff --check') exit 0 ;;",
+      "  'branch --show-current') printf 'fixture\\n'; exit 0 ;;",
+      "  'rev-parse HEAD') printf '0000000000000000000000000000000000000000\\n'; exit 0 ;;",
+      "esac",
+      "exit 0"
+    ),
+    file.path(bin, "git")
+  )
+  writeLines(
+    c(
+      "#!/usr/bin/env bash",
+      "set -euo pipefail",
       "if [[ \"${1:-}\" == scripts/write_output_manifest.R ]]; then",
       "  exit_code=\"${FAKE_MANIFEST_EXIT:-0}\"",
       "  if [[ \"$exit_code\" -eq 0 ]]; then",
@@ -334,22 +348,8 @@ audit_script_fixture <- function(manifest_exit = 0L, archive_exit = 0L) {
     file.path(root, "scripts", "clean_audit_workspace.sh"),
     file.path(root, "scripts", "check_source_syntax.sh"),
     file.path(root, "scripts", "make_review_archive.sh"),
-    file.path(bin, "make"), file.path(bin, "Rscript"), runner
+    file.path(bin, "git"), file.path(bin, "make"), file.path(bin, "Rscript"), runner
   ), mode = "0755")
-  system2("git", c("-C", shQuote(root), "init", "-q"))
-  system2(
-    "git",
-    c("-C", shQuote(root), "add", "scripts/run_full_build.sh")
-  )
-  system2(
-    "git",
-    c(
-      "-C", shQuote(root),
-      "-c", "user.name=Fixture",
-      "-c", "user.email=fixture@example.invalid",
-      "commit", "-q", "-m", "fixture"
-    )
-  )
   writeLines("stale", file.path(root, "review.zip"))
   list(
     root = root, runner = runner, manifest_exit = as.integer(manifest_exit),
@@ -373,7 +373,6 @@ run_audit_script_fixture <- function(fixture) {
 
 test_that("full build always replaces review.zip with the current run", {
   skip_if(Sys.which("bash") == "")
-  skip_if(Sys.which("git") == "")
   skip_if(Sys.which("python3") == "")
 
   success <- audit_script_fixture(0L)

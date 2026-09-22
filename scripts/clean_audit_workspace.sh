@@ -98,6 +98,19 @@ rm -f \
   "${root%/}/outputs/figures/appendix/appendix_e5_missingness_predictability.png" \
   2>/dev/null || true
 
+# Retire the old processed-geography location once the new copy exists. If only
+# the legacy copy exists, keep it so lineage-geometry-build can relocate it.
+processed_geography_root="${root%/}/data/processed/geography"
+legacy_lineage_root="$legacy_derived_root/district_lineage"
+if [[ -f "$processed_geography_root/district_2001.gpkg" ]]; then
+  rm -f \
+    "$legacy_lineage_root/district_2001.gpkg" \
+    "$legacy_lineage_root/district_2001_qa.csv" \
+    2>/dev/null || true
+  rmdir "$legacy_lineage_root" 2>/dev/null || true
+  rmdir "$legacy_derived_root" 2>/dev/null || true
+fi
+
 rm -rf \
   "$build_root" \
   "$diagnostics_root/build" \
