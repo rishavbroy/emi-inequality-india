@@ -392,6 +392,31 @@ test_that("lineage panels construct real outcomes and ANCOVA levels", {
   expect_equal(out$real_log_consumption_change, log(120) - log(80))
 })
 
+test_that("C-16 parser supports blank workbook headers preserved by readxl", {
+  raw <- data.frame(
+    V1 = c("C0116", "C0116", "C0116"),
+    V2 = c("10", "10", "10"),
+    V3 = c("00", "01", "01"),
+    V4 = c("0000", "0000", "0000"),
+    V5 = c("State - Bihar", "District - Patna  01", "District - Patna  01"),
+    V6 = c("006000", "006000", "006001"),
+    V7 = c("6 HINDI", "6 HINDI", "1 HINDI"),
+    V8 = c("1000", "500", "500"),
+    stringsAsFactors = FALSE,
+    check.names = FALSE
+  )
+  names(raw) <- c("C-16 POPULATION BY MOTHER TONGUE", rep("", 7L))
+
+  state_totals <- census_2001_state_language_totals(list(raw))
+  district <- clean_census_2001_languages(list(raw))
+
+  expect_identical(state_totals$state_code, "10")
+  expect_identical(state_totals$native_language_code, "006000")
+  expect_equal(state_totals$native_speakers, 1000)
+  expect_identical(district$mother_tongue_code, "006001")
+  expect_equal(district$spkr_tot, 500)
+})
+
 test_that("C-16 cleaner removes group subtotals and carries parent language to leaves", {
   raw <- data.frame(
     `C-16 POPULATION BY MOTHER TONGUE` = rep("C0116", 6),

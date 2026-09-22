@@ -11,17 +11,27 @@ clean_census_2001_languages <- function(raw) {
   validate_census_2001_language_distribution(out)
 }
 
+census_2001_c16_col <- function(x, candidates, position) {
+  column <- first_col(x, candidates)
+  if (!is.null(column)) return(column)
+  if (ncol(x) >= position) return(position)
+  NULL
+}
+
 parse_census_2001_language_file <- function(x) {
   x <- safe_df(x)
 
-  table <- first_col(x, c("table", "TABLE", "C-16 POPULATION BY MOTHER TONGUE", "...1"))
-  state <- first_col(x, c("state_code", "STATE", "state", "...2"))
-  district <- first_col(x, c("district_code", "DISTRICT", "district", "...3"))
-  tehsil <- first_col(x, c("tehsil_code", "TEHSIL", "tehsil", "...4"))
-  area <- first_col(x, c("area_name", "AREA NAME", "Area Name", "Name", "...5"))
-  mother_tongue_code <- first_col(x, c("mother_tongue_code", "MOTHER TONGUE CODE", "...6"))
-  mother_tongue <- first_col(x, c("mother_tongue", "MOTHER TONGUE", "Mother Tongue", "Language", "...7"))
-  speakers <- first_col(x, c("spkr_tot", "TOTAL", "population", "speakers", "...8"))
+  # Census C-16 workbooks contain blank header cells. readxl's minimal name
+  # repair preserves those blanks, so use the published eight-column layout as
+  # a positional fallback instead of depending on readxl-generated ...2 names.
+  table <- census_2001_c16_col(x, c("table", "TABLE", "C-16 POPULATION BY MOTHER TONGUE", "...1"), 1L)
+  state <- census_2001_c16_col(x, c("state_code", "STATE", "state", "...2"), 2L)
+  district <- census_2001_c16_col(x, c("district_code", "DISTRICT", "district", "...3"), 3L)
+  tehsil <- census_2001_c16_col(x, c("tehsil_code", "TEHSIL", "tehsil", "...4"), 4L)
+  area <- census_2001_c16_col(x, c("area_name", "AREA NAME", "Area Name", "Name", "...5"), 5L)
+  mother_tongue_code <- census_2001_c16_col(x, c("mother_tongue_code", "MOTHER TONGUE CODE", "...6"), 6L)
+  mother_tongue <- census_2001_c16_col(x, c("mother_tongue", "MOTHER TONGUE", "Mother Tongue", "Language", "...7"), 7L)
+  speakers <- census_2001_c16_col(x, c("spkr_tot", "TOTAL", "population", "speakers", "...8"), 8L)
 
   required <- list(table, state, district, tehsil, area, mother_tongue_code, mother_tongue, speakers)
   if (any(vapply(required, is.null, logical(1)))) return(data.frame())
