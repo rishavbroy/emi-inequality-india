@@ -16,6 +16,7 @@ test_that("read_with_short_path reports missing files clearly", {
   )
 })
 
-test_that("Excel reader defaults to text columns to avoid raw import type-guess warnings", {
+test_that("Excel reader preserves raw headers without type or name guessing", {
   expect_identical(as.character(formals(read_excel_short)$col_types), "text")
+  expect_identical(as.character(formals(read_excel_short)$.name_repair), "minimal")
 })
