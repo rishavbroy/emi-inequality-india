@@ -196,8 +196,9 @@ test_that("poster first-stage specifications use one common sample", {
   panel$region <- factor(rep(panel_region_levels()[1:6], length.out = 90L), levels = panel_region_levels())
   panel$ling_distance_nonzero_mean <- stats::rnorm(90L)
   panel$emi_exposure_all_children_0708 <- 3 * panel$ling_distance_nonzero_mean + stats::rnorm(90L)
-  for (v in census_2001_absorption_controls()) panel[[v]] <- stats::rnorm(90L)
-  panel[[census_2001_absorption_controls()[[1]]]][[1]] <- NA_real_
+  controls <- poster_spec_controls(poster_first_stage_specs())
+  for (v in controls) panel[[v]] <- stats::rnorm(90L)
+  panel[[controls[[1L]]]][[1L]] <- NA_real_
 
   plot_data <- poster_first_stage_spec_data(panel)
 
@@ -231,7 +232,8 @@ test_that("poster first-stage figure is a binned view of registered common-suppo
   panel$region <- factor(rep(panel_region_levels(), length.out = 120L), levels = panel_region_levels())
   panel$ling_distance_nonzero_mean <- stats::rnorm(120L)
   panel$emi_exposure_all_children_0708 <- 4 * panel$ling_distance_nonzero_mean + stats::rnorm(120L)
-  for (v in census_2001_absorption_controls()) panel[[v]] <- stats::rnorm(120L)
+  controls <- poster_spec_controls(poster_first_stage_specs())
+  for (v in controls) panel[[v]] <- stats::rnorm(120L)
 
   plot_data <- poster_first_stage_spec_data(panel, bins = 12L)
   specs <- poster_first_stage_specs()
@@ -363,7 +365,7 @@ test_that("poster second-stage specifications use preferred variables and one sa
   panel <- poster_map_fixture(120L)
   panel$state_code_2001 <- rep(sprintf("%02d", 1:12), each = 10)
   panel$region <- rep(panel_region_levels(), length.out = nrow(panel))
-  controls <- census_2001_absorption_controls()
+  controls <- poster_spec_controls(poster_second_stage_specs())
   for (control in controls) panel[[control]] <- stats::rnorm(nrow(panel))
   panel$ling_distance_nonzero_mean <- stats::rnorm(nrow(panel))
   panel$emi_exposure_all_children_0708 <-

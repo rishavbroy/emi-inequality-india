@@ -643,8 +643,12 @@ poster_model_specs <- function() {
 
 poster_first_stage_specs <- poster_model_specs
 
+poster_spec_controls <- function(specs = poster_model_specs()) {
+  unique(unlist(lapply(specs, `[[`, "controls"), use.names = FALSE))
+}
+
 poster_first_stage_common_sample <- function(data, specs, treatment, instrument) {
-  controls <- unique(unlist(lapply(specs, `[[`, "controls"), use.names = FALSE))
+  controls <- poster_spec_controls(specs)
   required <- unique(c(treatment, instrument, "state_code_2001", "region", controls))
   if (length(setdiff(required, names(data)))) return(data.frame())
   out <- data[stats::complete.cases(data[, required, drop = FALSE]), required, drop = FALSE]
@@ -768,7 +772,7 @@ poster_second_stage_spec_data <- function(district_panel) {
   treatment <- "emi_exposure_all_children_0708"
   instrument <- "ling_distance_nonzero_mean"
   specs <- poster_second_stage_specs()
-  controls <- unique(unlist(lapply(specs, `[[`, "controls"), use.names = FALSE))
+  controls <- poster_spec_controls(specs)
   required <- unique(c(outcome, treatment, instrument, "state_code_2001", "region", controls))
   if (length(setdiff(required, names(data)))) return(data.frame())
   data <- data[stats::complete.cases(data[, required, drop = FALSE]), required, drop = FALSE]
