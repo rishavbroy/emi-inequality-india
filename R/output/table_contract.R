@@ -182,7 +182,7 @@ public_table_note <- function(name) {
       "PLFS 2017-18 supplies the displayed labor endpoint; the semantic CSV retains the raw and Holm-adjusted $p$-values and matched NSS66 adjusted $p$-values. Heterogeneous outcomes remain in native units, and null outcomes are retained by design."
     ),
     appendix_iv_relevance_summary = paste(
-      "The first three columns report the state-clustered joint excluded-instrument $F$ statistic under no geographic fixed effects, six-region fixed effects plus the main predetermined controls, and state fixed effects plus the same controls.",
+      "The first three columns report the state-clustered joint excluded-instrument $F$ statistic for the unadjusted specification (no fixed effects or controls), six-region fixed effects plus the main predetermined controls, and state fixed effects plus the same controls.",
       "The final relevance column is the state-FE partial $R^2$. The historical row uses its validated 1991 common support and is therefore not numerically pooled with the modern district sample.",
       "These conventional first-stage statistics describe relevance only; they are not substituted for the Montiel Olea--Pflueger effective $F$ statistic used for weak-IV assessment."
     ),

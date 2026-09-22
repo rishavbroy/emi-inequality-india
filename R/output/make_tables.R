@@ -566,17 +566,24 @@ paper_core_summary_csv_data <- function(table) {
   )
 }
 
-paper_control_summary_unit <- function(variable) {
+paper_control_summary_unit <- function(variable, denominator) {
   if (identical(variable, "log_population_2001")) return("log persons")
   if (identical(variable, "log_population_density_2001")) return("log persons/km$^2$")
-  "%"
+  if (identical(variable, "dependency_ratio_2001")) return("dependents per 100 persons age 15-64")
+  switch(
+    plain_chr(denominator),
+    "total population" = "% of population",
+    "population age 7 plus" = "% of population age 7+",
+    "total workers" = "% of workers",
+    "total households" = "% of households",
+    "%"
+  )
 }
 
-paper_control_summary_groups <- function(panel, control_registry = NULL) {
+paper_control_summary <- function(panel, control_registry = NULL) {
   registry <- resolve_census_2001_control_registry(control_registry)
   registry <- registry[registry$main_paper %in% TRUE, , drop = FALSE]
   if (!nrow(registry)) return(data.frame())
-
   summary_group <- ifelse(
     registry$control_block %in% c("human_capital", "demography"),
     "human_capital_demography", registry$control_block
@@ -585,40 +592,18 @@ paper_control_summary_groups <- function(panel, control_registry = NULL) {
     "basic_scale_geography", "social_composition", "human_capital_demography",
     "economic_structure", "basic_development"
   )
-  group_labels <- c(
-    basic_scale_geography = "Scale and geography",
-    social_composition = "Social composition",
-    human_capital_demography = "Human capital and demography",
-    economic_structure = "Economic structure",
-    basic_development = "Basic development"
-  )
-  unknown_groups <- setdiff(unique(summary_group), group_order)
-  if (length(unknown_groups)) {
-    stop(
-      "Paper control summary has unclassified preferred control blocks: ",
-      paste(unknown_groups, collapse = ", "), call. = FALSE
-    )
-  }
+  registry <- registry[order(match(summary_group, group_order), registry$sequence), , drop = FALSE]
 
   get <- function(variable) if (variable %in% names(panel)) panel[[variable]] else numeric()
-  rows <- list()
-  panel_letter <- 3L
-  for (group in group_order) {
-    index <- which(summary_group == group)
-    if (!length(index)) next
-    part <- registry[index, , drop = FALSE]
-    part <- part[order(part$sequence), , drop = FALSE]
-    rows[[length(rows) + 1L]] <- paper_summary_group(paste0(
-      "Panel ", LETTERS[[panel_letter]], ". Predetermined controls: ", group_labels[[group]]
-    ))
-    rows <- c(rows, lapply(seq_len(nrow(part)), function(i) {
+  rows <- c(
+    list(paper_summary_group("Panel B. Predetermined Census-2001 controls")),
+    lapply(seq_len(nrow(registry)), function(i) {
       paper_summary_row(
-        part$label[[i]], get(part$variable[[i]]), "2001",
-        paper_control_summary_unit(part$variable[[i]])
+        registry$label[[i]], get(registry$variable[[i]]), "2001",
+        paper_control_summary_unit(registry$variable[[i]], registry$denominator[[i]])
       )
-    }))
-    panel_letter <- panel_letter + 1L
-  }
+    })
+  )
   safe_bind_rows(rows)
 }
 
@@ -633,7 +618,7 @@ paper_language_behavior_control_summary <- function(c17) {
   hindi_urdu_reference <- as.integer(native_language %in% c("Hindi", "Urdu"))
 
   safe_bind_rows(list(
-    paper_summary_group("Panel H. Language-behavior regression controls"),
+    paper_summary_group("Panel C. Language-behavior regression controls"),
     paper_summary_row(
       "Native-language share within state", 100 * num(x$native_share_state),
       "2001", "% of state native-language speakers"
@@ -663,32 +648,25 @@ make_paper_core_summary_table <- function(
 
   schooling_labels <- paper_schooling_display_labels()
   linguistic_labels <- paper_linguistic_distance_display_labels()
-  schooling <- safe_bind_rows(list(
-    paper_summary_group("Panel A. Schooling, 2007-08"),
+  principal <- safe_bind_rows(list(
+    paper_summary_group("Panel A. Principal variables"),
     paper_summary_row(schooling_labels[["enrollment"]], get("enrollment_rate_0708"), "2007-08", "% of children age 5-19"),
     paper_summary_row(schooling_labels[["emi_enrolled"]], get("emi_share_enrolled_0708"), "2007-08", "% of enrolled children"),
     paper_summary_row(schooling_labels[["emi_all_children"]], get("emi_exposure_all_children_0708"), "2007-08", "% of children age 5-19"),
     paper_summary_row(schooling_labels[["public_emi"]], get("public_emi_exposure_all_children_0708"), "2007-08", "% of children age 5-19"),
     paper_summary_row(schooling_labels[["private_emi"]], get("private_emi_exposure_all_children_0708"), "2007-08", "% of children age 5-19"),
-    paper_summary_row(schooling_labels[["private_enrollment"]], get("private_share_enrolled_0708"), "2007-08", "% of enrolled children")
-  ))
-
-  inherited <- safe_bind_rows(list(
-    paper_summary_group("Panel B. Inherited linguistic conditions"),
+    paper_summary_row(schooling_labels[["private_enrollment"]], get("private_share_enrolled_0708"), "2007-08", "% of enrolled children"),
     paper_summary_row(linguistic_labels[["nonzero_mean"]], get("ling_distance_nonzero_mean"), "2001", "Shastry degrees"),
-    paper_summary_row(linguistic_labels[["distant_share"]], get("ling_share_distance_ge3"), "2001", "% of mother-tongue speakers")
-  ))
-
-  controls <- paper_control_summary_groups(panel, control_registry)
-  language_controls <- paper_language_behavior_control_summary(census_c17_state_languages)
-  welfare <- safe_bind_rows(list(
-    paper_summary_group("Panel I. Later welfare"),
+    paper_summary_row(linguistic_labels[["distant_share"]], get("ling_share_distance_ge3"), "2001", "% of mother-tongue speakers"),
     paper_welfare_summary_row(consumption_district_welfare, "nss_2004_05", "Real mean consumption per person"),
     paper_welfare_summary_row(consumption_district_welfare, "hces_2022_23", "Real mean consumption per person"),
     paper_welfare_summary_row(consumption_district_welfare, "hces_2023_24", "Real mean consumption per person")
   ))
 
-  out <- safe_bind_rows(list(schooling, inherited, controls, language_controls, welfare))
+  controls <- paper_control_summary(panel, control_registry)
+  language_controls <- paper_language_behavior_control_summary(census_c17_state_languages)
+
+  out <- safe_bind_rows(list(principal, controls, language_controls))
   attr(out, "csv_data") <- paper_core_summary_csv_data(out)
   names(out)[names(out) == "N"] <- "$N$"
   names(out)[names(out) == "p10"] <- "$p_{10}$"

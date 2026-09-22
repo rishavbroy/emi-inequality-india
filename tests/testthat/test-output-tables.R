@@ -783,6 +783,10 @@ test_that("public LaTeX table text escapes metacharacters before raw kable styli
   escaped_math <- escape_table_for_latex(math_df)
   expect_identical(names(escaped_math), "Missing $N$")
   expect_identical(escaped_math[[1L]], "Partial $R^2$; 10\\%")
+  expect_identical(
+    nice_column_name(c("No geographic FE $F$", "State partial $R^2$", "$N$")),
+    c("No Geographic FE $F$", "State Partial $R^2$", "$N$")
+  )
 
   currency_df <- data.frame(Value = "$100 #1", check.names = FALSE)
   escaped_currency <- escape_table_for_latex(currency_df)
@@ -827,6 +831,8 @@ test_that("paper language-behavior renderer uses standard economics regression l
   expect_match(tex, "Outcome", fixed = TRUE)
   expect_match(tex, "Population", fixed = TRUE)
   expect_match(tex, "Partial $R^2$", fixed = TRUE)
+  expect_match(tex, "Linguistic distance", fixed = TRUE)
+  expect_false(grepl("Linguistic distance from Hindi", tex, fixed = TRUE))
 })
 
 test_that("regression stars use the manuscript-wide economics convention", {
@@ -1239,9 +1245,26 @@ test_that("paper core summary derives preferred controls from their registries",
     preferred$variable
   ))
 
-  controls <- paper_control_summary_groups(panel, registry)
+  controls <- paper_control_summary(panel, registry)
   control_csv <- paper_core_summary_csv_data(controls)
   expect_setequal(control_csv$variable, preferred$label)
+  expect_identical(unique(control_csv$panel), "Panel B. Predetermined Census-2001 controls")
+  expect_identical(
+    control_csv$unit[match("Urban population share", control_csv$variable)],
+    "% of population"
+  )
+  expect_identical(
+    control_csv$unit[match("Agricultural worker share", control_csv$variable)],
+    "% of workers"
+  )
+  expect_identical(
+    control_csv$unit[match("Electricity access share", control_csv$variable)],
+    "% of households"
+  )
+  expect_identical(
+    control_csv$unit[match("Dependency ratio", control_csv$variable)],
+    "dependents per 100 persons age 15-64"
+  )
 
   c17 <- data.frame(
     state_code = c("01", "01", "02", "02"),

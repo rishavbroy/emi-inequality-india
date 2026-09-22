@@ -29,7 +29,20 @@ nice_column_name <- function(x) {
   x <- gsub("_", " ", x)
   x <- gsub("p value", "p-value", x, ignore.case = TRUE)
   x <- gsub("std error", "Std. Error", x, ignore.case = TRUE)
-  tools::toTitleCase(x)
+
+  # tools::toTitleCase() lowercases letters inside inline LaTeX math, turning
+  # $F$, $R^2$, and $N$ into different symbols. Protect math spans while
+  # polishing the surrounding prose header.
+  vapply(x, function(label) {
+    hits <- regmatches(label, gregexpr("\\$[^$]+\\$", label, perl = TRUE))[[1L]]
+    if (!length(hits)) return(tools::toTitleCase(label))
+    protected <- label
+    tokens <- paste0("MATHSEGMENT", seq_along(hits), "TOKEN")
+    for (i in seq_along(hits)) protected <- sub(hits[[i]], tokens[[i]], protected, fixed = TRUE)
+    protected <- tools::toTitleCase(protected)
+    for (i in seq_along(hits)) protected <- sub(tokens[[i]], hits[[i]], protected, ignore.case = TRUE)
+    protected
+  }, character(1), USE.NAMES = FALSE)
 }
 
 public_longtable_notes <- function(name) {
@@ -1348,7 +1361,7 @@ paper_language_behavior_modelsummary_table <- function(table, name) {
   tex <- suppress_modelsummary_latex_preamble_warning(modelsummary::modelsummary(
     models = models,
     coef_map = c(
-      "shastry_degree" = "Linguistic distance from Hindi",
+      "shastry_degree" = "Linguistic distance",
       "distance_distant" = "Distant-language indicator"
     ),
     estimate = "{estimate}{stars}",
