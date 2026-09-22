@@ -90,9 +90,9 @@ appendix_selection_missingness_table <- function(missingness) {
 
   out <- data.frame(
     Variable = csv$variable,
-    `Missing N` = formatC(csv$n_missing, format = "d", big.mark = ","),
+    `Missing $N$` = formatC(csv$n_missing, format = "d", big.mark = ","),
     `Missing %` = sprintf("%.1f", 100 * csv$pct_missing),
-    `Missingness pseudo-R2` = ifelse(
+    `Missingness pseudo-$R^2$` = ifelse(
       is.finite(csv$pseudo_r_squared),
       sprintf("%.3f", csv$pseudo_r_squared),
       ""

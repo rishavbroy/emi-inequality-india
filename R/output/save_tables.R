@@ -161,17 +161,6 @@ format_table_for_output <- function(table, public = TRUE) {
 }
 
 
-render_table_math_labels <- function(df) {
-  df <- as.data.frame(df, check.names = FALSE, stringsAsFactors = FALSE)
-  for (nm in names(df)) {
-    if (!is.character(df[[nm]])) next
-    df[[nm]] <- gsub("$\\%\\Delta\\text{Consumption}$", "Percent change in consumption", df[[nm]], fixed = TRUE)
-    df[[nm]] <- gsub("$%\\Delta\\text{Consumption}$", "Percent change in consumption", df[[nm]], fixed = TRUE)
-    df[[nm]] <- gsub("$\\Delta\\text{Gini}^{\\text{Consumption}}$", "Change in Gini of consumption", df[[nm]], fixed = TRUE)
-  }
-  df
-}
-
 table_alignments <- function(df, name) {
   if (name %in% c("probit_mfx", "fs_cons", "cons_iv")) return(c("l", rep("c", max(0, ncol(df) - 1L))))
   if (ncol(df) <= 1L) return("l")
@@ -480,13 +469,13 @@ sanitize_table_for_kable <- function(df) {
   for (nm in names(df)) {
     df[[nm]] <- table_contract_column_strings(df[[nm]])
   }
-  render_table_math_labels(df)
+  df
 }
 
 escape_table_for_latex <- function(df) {
   df <- as.data.frame(df, check.names = FALSE, stringsAsFactors = FALSE)
-  for (nm in names(df)) df[[nm]] <- latex_escape_text(df[[nm]])
-  names(df) <- latex_escape_text(names(df))
+  for (nm in names(df)) df[[nm]] <- latex_escape_text_preserving_math(df[[nm]])
+  names(df) <- latex_escape_text_preserving_math(names(df))
   df
 }
 
@@ -982,7 +971,7 @@ appendix_migration_modelsummary_table <- function(table, name) {
   tex <- suppress_modelsummary_latex_preamble_warning(modelsummary::modelsummary(
     models = panels,
     shape = "rbind",
-    coef_map = c("linguistic_distance" = "Linguistic distance from Hindi"),
+    coef_map = c("linguistic_distance" = "Linguistic distance"),
     estimate = "{estimate}{stars}",
     statistic = "({std.error})",
     stars = regression_star_levels(),
@@ -1027,7 +1016,7 @@ appendix_iv_weak_inference_modelsummary_table <- function(table, name) {
   if (!nrow(csv)) return(NULL)
   required <- c(
     "outcome", "estimate", "std.error", "effective_f", "ar_p_beta0",
-    "ar_95_components", "minimum_gamma_share_of_reduced_form_for_zero_95", "n"
+    "ar_95_latex", "minimum_gamma_share_of_reduced_form_for_zero_95", "n"
   )
   missing <- setdiff(required, names(csv))
   if (length(missing)) {
@@ -1048,9 +1037,9 @@ appendix_iv_weak_inference_modelsummary_table <- function(table, name) {
         glance = data.frame(
           effective_f = num(row$effective_f[[1L]]),
           ar_p_beta0 = num(row$ar_p_beta0[[1L]]),
-          ar_set = plain_chr(row$ar_95_components)[[1L]],
+          ar_set = plain_chr(row$ar_95_latex)[[1L]],
           direct_effect_share = sprintf(
-            "%.1f%%",
+            "%.1f\\%%",
             100 * num(row$minimum_gamma_share_of_reduced_form_for_zero_95[[1L]])
           ),
           nobs = as.integer(row$n[[1L]]),
@@ -1064,9 +1053,9 @@ appendix_iv_weak_inference_modelsummary_table <- function(table, name) {
 
   as_text <- function(x) as.character(x)
   gof_map <- list(
-    list(raw = "effective_f", clean = "MOP effective F", fmt = 2),
-    list(raw = "ar_p_beta0", clean = "AR p-value at zero", fmt = 3),
-    list(raw = "ar_set", clean = "AR 95% confidence set", fmt = as_text),
+    list(raw = "effective_f", clean = "MOP effective $F$", fmt = 2),
+    list(raw = "ar_p_beta0", clean = "AR $p$-value at zero", fmt = 3),
+    list(raw = "ar_set", clean = "AR 95\\% accepted set", fmt = as_text),
     list(raw = "direct_effect_share", clean = "Direct effect needed to admit zero", fmt = as_text),
     list(raw = "nobs", clean = "Observations", fmt = 0)
   )
@@ -1093,14 +1082,12 @@ appendix_iv_weak_inference_modelsummary_table <- function(table, name) {
     title = table_caption(name),
     output = "kableExtra",
     longtable = FALSE,
-    # This table body is ordinary text. Let modelsummary/kableExtra escape LaTeX
-    # metacharacters in labels and GOF values, including percentage signs.
-    escape = TRUE,
+    escape = FALSE,
     notes = NULL
   ))
   tex <- kableExtra::kable_styling(
     tex,
-    latex_options = c("HOLD_position", "striped"),
+    latex_options = c("striped"),
     position = "center",
     full_width = FALSE,
     font_size = 9
@@ -1121,6 +1108,7 @@ appendix_iv_weak_inference_modelsummary_table <- function(table, name) {
   }
   tex
 }
+
 
 paper_local_development_modelsummary_table <- function(table, name) {
   need_pkg("modelsummary", "local-development regression table rendering")
@@ -1247,7 +1235,7 @@ paper_local_development_modelsummary_table <- function(table, name) {
   tex <- suppress_modelsummary_latex_preamble_warning(modelsummary::modelsummary(
     models = panels,
     shape = "rbind",
-    coef_map = c("linguistic_distance" = "Linguistic distance from Hindi"),
+    coef_map = c("linguistic_distance" = "Linguistic distance"),
     estimate = "{estimate}{stars}",
     statistic = "({std.error})",
     stars = regression_star_levels(),
@@ -1457,6 +1445,7 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   regression_table <- name %in% c("probit_mfx", "fs_cons", "cons_iv") && !is_formatted_status_table(df_render)
   compact_table <- name %in% c(
     "appendix_a3_lineage_source_hierarchy",
+    "appendix_a6_linguistic_measures",
     "appendix_iv_relevance_summary",
     "appendix_selection_missingness"
   )
@@ -1491,9 +1480,7 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   if (regression_table) {
     latex_options <- c("hold_position", "repeat_header", "striped")
   } else if (compact_table) {
-    # Keep compact paper-result tables visually neutral. Semantic panel grouping
-    # and parenthesized standard errors already provide the needed row structure.
-    latex_options <- c("repeat_header")
+    latex_options <- c("repeat_header", "striped")
   } else if (single_page_wide_table) {
     # Short landscape tables stay non-breaking here; paper-new.qmd owns page
     # orientation through Quarto's native .landscape block.
@@ -1544,6 +1531,7 @@ save_table_tex <- function(table, path, name, public = TRUE) {
     widths <- switch(
       name,
       appendix_a3_lineage_source_hierarchy = c("4.1cm", "3.5cm", "7.0cm"),
+      appendix_a6_linguistic_measures = c("3.8cm", "3.8cm", "5.3cm", "3.3cm"),
       appendix_iv_relevance_summary = c("5.2cm", "1.7cm", "1.5cm", "1.5cm", "1.7cm", "1.0cm"),
       appendix_selection_missingness = c("5.4cm", "1.8cm", "1.8cm", "2.5cm")
     )

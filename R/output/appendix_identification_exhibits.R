@@ -104,11 +104,11 @@ appendix_iv_relevance_summary <- function(alternative_first_stages, historical_f
   csv <- safe_bind_rows(rows)
   out <- data.frame(
     `Linguistic measure` = csv$measure,
-    `No geographic FE F` = sprintf("%.2f", csv$no_fe_f),
-    `Region FE F` = sprintf("%.2f", csv$region_f),
-    `State FE F` = sprintf("%.2f", csv$state_f),
-    `State partial R2` = sprintf("%.3f", csv$state_partial_r2),
-    N = formatC(csv$n, format = "d", big.mark = ","),
+    `No geographic FE $F$` = sprintf("%.2f", csv$no_fe_f),
+    `Region FE $F$` = sprintf("%.2f", csv$region_f),
+    `State FE $F$` = sprintf("%.2f", csv$state_f),
+    `State partial $R^2$` = sprintf("%.3f", csv$state_partial_r2),
+    `$N$` = formatC(csv$n, format = "d", big.mark = ","),
     check.names = FALSE,
     stringsAsFactors = FALSE
   )
@@ -118,14 +118,14 @@ appendix_iv_relevance_summary <- function(alternative_first_stages, historical_f
 
 appendix_iv_weak_inference <- function(
     dynamics, exclusion_sensitivity, robustness_evidence, alternative_inference) {
-  if (!is.list(dynamics) || is.null(dynamics$summary)) {
+  if (!is.list(dynamics) || !all(c("summary", "anderson_rubin_grid") %in% names(dynamics))) {
     stop("Weak-IV inference summary requires canonical consumption-IV dynamics.", call. = FALSE)
   }
   x <- safe_df(dynamics$summary)
   wanted <- c("long_2022__change", "long_2023__change")
   x <- x[match(wanted, plain_chr(x$welfare_specification_id)), , drop = FALSE]
   required <- c(
-    "welfare_specification_id", "outcome_round", "second_stage_estimate",
+    "specification_id", "welfare_specification_id", "outcome_round", "second_stage_estimate",
     "second_stage_std.error", "second_stage_p.value", "effective_f",
     "anderson_rubin_p_beta0", "ar_95_components", "ar_95_disconnected",
     "ar_95_sign_identified", "n", "status"
@@ -176,6 +176,19 @@ appendix_iv_weak_inference <- function(
     stop("Weak-IV inference summary requires the registered state-FE rich-vector FAS results.", call. = FALSE)
   }
 
+
+  ar_grid <- safe_df(dynamics$anderson_rubin_grid)
+  format_component <- function(specification_id) {
+    grid <- ar_grid[plain_chr(ar_grid$specification_id) == specification_id, , drop = FALSE]
+    components <- anderson_rubin_acceptance_components(grid)
+    if (nrow(components) != 2L) {
+      stop("Weak-IV appendix expects two disconnected AR acceptance components.", call. = FALSE)
+    }
+    interval <- function(lower, upper) sprintf("\\left[%.3f,\\,%.3f\\right]", lower, upper)
+    paste0("$", interval(components$lower[[1L]], components$upper[[1L]]),
+           " \\cup ", interval(components$lower[[2L]], components$upper[[2L]]), "$")
+  }
+  ar_latex <- vapply(plain_chr(x$specification_id), format_component, character(1))
   csv <- data.frame(
     row_id = wanted,
     outcome = c("2022-23 long change", "2023-24 long change"),
@@ -185,6 +198,7 @@ appendix_iv_weak_inference <- function(
     effective_f = num(x$effective_f),
     ar_p_beta0 = num(x$anderson_rubin_p_beta0),
     ar_95_components = plain_chr(x$ar_95_components),
+    ar_95_latex = ar_latex,
     ar_disconnected = as.logical(x$ar_95_disconnected),
     ar_sign_identified = as.logical(x$ar_95_sign_identified),
     minimum_gamma_for_zero_95 = num(sensitivity$minimum_gamma_for_zero_95),
@@ -201,12 +215,12 @@ appendix_iv_weak_inference <- function(
     Outcome = csv$outcome,
     `2SLS estimate` = sprintf("%.3f", csv$estimate),
     SE = sprintf("%.3f", csv$std.error),
-    `Effective F` = sprintf("%.2f", csv$effective_f),
-    `AR p(0)` = sprintf("%.3f", csv$ar_p_beta0),
+    `Effective $F$` = sprintf("%.2f", csv$effective_f),
+    `AR $p(0)$` = sprintf("%.3f", csv$ar_p_beta0),
     `Minimum direct-effect share` = sprintf(
       "%.1f%%", 100 * csv$minimum_gamma_share_of_reduced_form_for_zero_95
     ),
-    N = formatC(csv$n, format = "d", big.mark = ","),
+    `$N$` = formatC(csv$n, format = "d", big.mark = ","),
     check.names = FALSE,
     stringsAsFactors = FALSE
   )

@@ -606,6 +606,9 @@ make_paper_core_summary_table <- function(district_panel, consumption_district_w
 
   out <- safe_bind_rows(list(schooling, inherited, capacity, welfare))
   attr(out, "csv_data") <- paper_core_summary_csv_data(out)
+  names(out)[names(out) == "N"] <- "$N$"
+  names(out)[names(out) == "p10"] <- "$p_{10}$"
+  names(out)[names(out) == "p90"] <- "$p_{90}$"
   out
 }
 

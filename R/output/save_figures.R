@@ -1001,15 +1001,17 @@ save_schooling_access_figure <- function(spec, path_base, formats, diagnostic) {
 
   p <- ggplot2::ggplot(
     data,
-    ggplot2::aes(x = gap, y = outcome_label, shape = stratum)
+    ggplot2::aes(x = gap, y = outcome_label, shape = stratum, color = stratum)
   ) +
     ggplot2::geom_vline(xintercept = 0, linewidth = 0.45, linetype = 2) +
     ggplot2::geom_point(size = 2.5, position = ggplot2::position_dodge(width = 0.45)) +
+    ggplot2::scale_color_brewer(palette = "Dark2") +
     ggplot2::facet_grid(panel ~ group, scales = "free_y", space = "free_y") +
     ggplot2::labs(
       x = "Mean difference relative to Other (percentage points)",
       y = NULL,
-      shape = "Sample"
+      shape = "Sample",
+      color = "Sample"
     ) +
     ggplot2::theme_minimal(base_size = 11) +
     ggplot2::theme(

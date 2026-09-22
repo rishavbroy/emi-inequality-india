@@ -658,6 +658,24 @@ test_that("public table captions fall back safely for unregistered names", {
   )
 })
 
+
+test_that("public table sources live in bottom notes rather than titles", {
+  expect_false(grepl("Source", table_caption("paper_core_summary"), fixed = TRUE))
+  note <- public_table_note("paper_core_summary")
+  expect_match(note, "Sources:", fixed = TRUE)
+  expect_match(note, "\\citeproc{ref-nationalsamplesurveyoffice2008}", fixed = TRUE)
+  weak_note <- public_table_note("appendix_iv_weak_inference")
+  expect_match(weak_note, "95\\%", fixed = TRUE)
+  expect_false(grepl("95%", weak_note, fixed = TRUE))
+})
+
+test_that("linguistic-measure appendix table is canonical table data", {
+  table <- appendix_a6_linguistic_measures_table()
+  expect_identical(names(table), c("Manuscript measure", "Concept", "Construction", "Purpose"))
+  expect_equal(nrow(table), 7L)
+  expect_true(all(nzchar(table$Purpose)))
+})
+
 test_that("paper schooling-market renderer uses modelsummary regression blocks", {
   skip_if_not_installed("modelsummary")
   skip_if_not_installed("kableExtra")
@@ -707,6 +725,16 @@ test_that("public LaTeX table text escapes metacharacters before raw kable styli
   header_df <- data.frame(`Zero in exact 95% set` = "Yes", check.names = FALSE)
   escaped_header <- escape_table_for_latex(header_df)
   expect_identical(names(escaped_header), "Zero in exact 95\\% set")
+
+
+  math_df <- data.frame(`Missing $N$` = "Partial $R^2$; 10%", check.names = FALSE)
+  escaped_math <- escape_table_for_latex(math_df)
+  expect_identical(names(escaped_math), "Missing $N$")
+  expect_identical(escaped_math[[1L]], "Partial $R^2$; 10\\%")
+
+  currency_df <- data.frame(Value = "$100 #1", check.names = FALSE)
+  escaped_currency <- escape_table_for_latex(currency_df)
+  expect_identical(escaped_currency$Value, "\\$100 \\#1")
 })
 
 paper_language_behavior_fixture <- function() {
@@ -992,6 +1020,7 @@ test_that("IV appendix relevance summary preserves registered geographic compari
 
 iv_weak_fixture <- function() {
   dynamics <- list(summary = data.frame(
+    specification_id = c("consumption__long_2022__change", "consumption__long_2023__change"),
     welfare_specification_id = c("long_2022__change", "long_2023__change"),
     outcome_round = c("hces_2022_23", "hces_2023_24"),
     second_stage_estimate = c(.12, .14),
@@ -1004,6 +1033,14 @@ iv_weak_fixture <- function() {
     ar_95_sign_identified = FALSE,
     n = c(524L, 522L),
     status = "estimated",
+    stringsAsFactors = FALSE
+  ), anderson_rubin_grid = data.frame(
+    beta = rep(c(-.20, -.07, 0, .03, .20), 2L),
+    accepted = rep(c(TRUE, TRUE, FALSE, TRUE, TRUE), 2L),
+    specification_id = rep(
+      c("consumption__long_2022__change", "consumption__long_2023__change"),
+      each = 5L
+    ),
     stringsAsFactors = FALSE
   ))
 
@@ -1103,8 +1140,11 @@ test_that("weak-IV appendix table renders through modelsummary", {
   )
 
   expect_match(tex, "EMI exposure", fixed = TRUE)
-  expect_match(tex, "MOP effective F", fixed = TRUE)
+  expect_match(tex, "MOP effective $F$", fixed = TRUE)
+  expect_match(tex, "\\cup", fixed = TRUE)
+  expect_match(tex, "\\left[-0.200,\\,-0.070\\right]", fixed = TRUE)
   expect_match(tex, "41.7\\%", fixed = TRUE)
+  expect_false(grepl("grid<=", tex, fixed = TRUE))
   expect_false(grepl("41.7%", tex, fixed = TRUE))
 })
 

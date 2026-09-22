@@ -530,7 +530,7 @@ make_paper_local_development_table <- function(
     nss66_labor, plfs_2017_18_labor
   )
   out <- data.frame(
-    Term = "Linguistic distance from Hindi",
+    Term = "Linguistic distance",
     stringsAsFactors = FALSE,
     check.names = FALSE
   )

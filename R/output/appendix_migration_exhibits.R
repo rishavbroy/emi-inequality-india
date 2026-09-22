@@ -108,7 +108,7 @@ appendix_migration_summary <- function(migration) {
       any(!is.finite(csv$p.value_for_stars)) || any(!is.finite(csv$n))) {
     stop("Migration summary requires finite estimates, inference, and sample sizes.", call. = FALSE)
   }
-  out <- data.frame(Term = "Linguistic distance from Hindi", stringsAsFactors = FALSE)
+  out <- data.frame(Term = "Linguistic distance", stringsAsFactors = FALSE)
   attr(out, "csv_data") <- csv
   out
 }

@@ -1,8 +1,8 @@
 # Final-paper Appendix A exhibit builders.
 #
-# Appendix A is prose-led. These helpers retain only the compact lineage-source
-# table and the adjacent-HCES consistency figure used by the manuscript; detailed
-# measurement and validation files remain available as machine-readable outputs.
+# Appendix A is prose-led. These helpers retain compact source/construction tables
+# and validation figures used by the manuscript; detailed measurement and
+# validation files remain available as machine-readable outputs.
 
 appendix_a3_lineage_source_hierarchy <- function(district_lineage) {
   if (!is.list(district_lineage)) {
@@ -65,6 +65,50 @@ appendix_a3_lineage_source_hierarchy <- function(district_lineage) {
   )
   attr(out, "csv_data") <- csv
   out
+}
+
+
+appendix_a6_linguistic_measures_table <- function() {
+  data.frame(
+    `Manuscript measure` = c(
+      "Speaker-weighted distance from Hindi",
+      "Top-three-language distance from Hindi",
+      "Share speaking languages distant from Hindi",
+      "Language-distance composition",
+      "Historical speaker-weighted distance from Hindi",
+      "Genealogical distance from Hindi",
+      "Lexical noncognacy with Hindi"
+    ),
+    Concept = c(
+      "Average relative separation from Hindi among distance-bearing local languages",
+      "Same Shastry concept using only the largest local languages",
+      "Population mass facing relatively large Hindi distance",
+      "Distribution of local speakers across the Shastry scale",
+      "Earlier analogue of the preferred measure",
+      "Separation in a modern language-family classification",
+      "Dissimilarity in basic vocabulary"
+    ),
+    Construction = c(
+      "Census-2001 mother-tongue speaker weights $\\times$ reviewed Shastry 0--5 degrees; Hindi/Urdu and native English do not enter the weighted mean",
+      "Speaker-weighted mean among the three largest mapped mother tongues",
+      "Share of all mother-tongue speakers assigned Shastry degree 3--5",
+      "All-speaker shares at degrees 1--5; degree 0 is the joint-model reference",
+      "1991 Language Atlas speaker counts $\\times$ the reviewed Shastry basis, subject to coverage and uncertainty thresholds",
+      "Census speaker weights $\\times$ reviewed Glottolog 5.3 genealogical edge distance",
+      "Census speaker weights $\\times$ (100 - Dyen cognate percentage with Hindi)"
+    ),
+    Purpose = c(
+      "Primary comparative language-cost measure",
+      "Comparison with the original analysis",
+      "Nonlinear alternative",
+      "Richer composition sensitivity",
+      "Persistence and historical validation",
+      "Genealogical robustness",
+      "Lexical robustness"
+    ),
+    check.names = FALSE,
+    stringsAsFactors = FALSE
+  )
 }
 
 appendix_historical_language_persistence_data <- function(persistence) {
@@ -181,6 +225,7 @@ make_appendix_data_construction_exhibits <- function(
     dise_iv_nss_validation) {
   list(
     appendix_a3_lineage_source_hierarchy = appendix_a3_lineage_source_hierarchy(district_lineage),
+    appendix_a6_linguistic_measures = appendix_a6_linguistic_measures_table(),
     appendix_consumption_hces_consistency = appendix_consumption_hces_consistency_plot(consumption_district_welfare),
     appendix_historical_language_persistence = appendix_historical_language_persistence_plot(
       historical_linguistic_persistence_validation
@@ -193,13 +238,16 @@ make_appendix_data_construction_exhibits <- function(
 
 save_appendix_data_construction_exhibits <- function(exhibits, cfg) {
   required <- c(
-    "appendix_a3_lineage_source_hierarchy", "appendix_consumption_hces_consistency",
+    "appendix_a3_lineage_source_hierarchy", "appendix_a6_linguistic_measures",
+    "appendix_consumption_hces_consistency",
     "appendix_historical_language_persistence", "appendix_nss_dise_agreement"
   )
   if (!is.list(exhibits) || !all(required %in% names(exhibits))) {
     stop("Data-construction exhibit bundle is incomplete.", call. = FALSE)
   }
-  written <- save_appendix_tables(exhibits, "appendix_a3_lineage_source_hierarchy", cfg)
+  written <- save_appendix_tables(
+    exhibits, c("appendix_a3_lineage_source_hierarchy", "appendix_a6_linguistic_measures"), cfg
+  )
   formats <- figure_formats(cfg)
   for (name in c(
     "appendix_consumption_hces_consistency",
