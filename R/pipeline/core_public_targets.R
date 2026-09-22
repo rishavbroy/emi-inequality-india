@@ -58,7 +58,8 @@ core_public_target_definitions <- function() {
         iv_models = revised_iv_models,
         map_geometry = lineage_geometry_2001,
         consumption_iv_dynamics = consumption_iv_dynamics,
-        schooling_access = nss64_schooling_social_group_diagnostic
+        schooling_access = nss64_schooling_social_group_diagnostic,
+        consumption_district_welfare = consumption_district_welfare
       )
     ),
     tar_target(figure_files, save_figures(figures, cfg), format = "file"),

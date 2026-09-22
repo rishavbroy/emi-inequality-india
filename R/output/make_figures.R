@@ -82,10 +82,58 @@ poster_residual_pair <- function(
 add_poster_residual_variables <- function(district_panel) {
   if (!nrow(as.data.frame(district_panel))) return(district_panel)
   out <- district_panel
-  residuals <- poster_residual_pair(out, fixed_effect = "region")
-  out$resid_emi_exposure_region_expanded <- residuals[, "emi_exposure_all_children_0708"]
-  out$resid_ling_distance_region_expanded <- residuals[, "ling_distance_nonzero_mean"]
+  region_residuals <- poster_residual_pair(out, fixed_effect = "region")
+  out$resid_emi_exposure_region_expanded <- region_residuals[, "emi_exposure_all_children_0708"]
+  out$resid_ling_distance_region_expanded <- region_residuals[, "ling_distance_nonzero_mean"]
+
+  state_main <- iv_adjustment_sets()[["state_main"]]
+  state_residuals <- poster_residual_pair(
+    out,
+    variables = "ling_distance_nonzero_mean",
+    fixed_effect = state_main$fixed_effect,
+    controls = state_main$controls
+  )
+  out$resid_ling_distance_state_main <- state_residuals[, "ling_distance_nonzero_mean"]
   out
+}
+
+add_paper_welfare_map_variables <- function(district_panel, consumption_district_welfare) {
+  panel <- district_panel
+  welfare <- safe_df(consumption_district_welfare)
+  if (!nrow(as.data.frame(panel)) || !nrow(welfare)) return(panel)
+  required <- c("district_2001", "round_id", "outcome_id", "estimate", "preferred_eligible")
+  if (length(setdiff(required, names(welfare)))) return(panel)
+
+  x <- welfare[
+    welfare$outcome_id == "real_mean_mpce" &
+      welfare$round_id %in% c("nss_2004_05", "hces_2022_23") &
+      welfare$preferred_eligible %in% TRUE,
+    required, drop = FALSE
+  ]
+  if (!nrow(x)) return(panel)
+  baseline <- x[x$round_id == "nss_2004_05", c("district_2001", "estimate"), drop = FALSE]
+  endpoint <- x[x$round_id == "hces_2022_23", c("district_2001", "estimate"), drop = FALSE]
+  names(baseline)[[2L]] <- "baseline"
+  names(endpoint)[[2L]] <- "endpoint"
+  common <- merge(baseline, endpoint, by = "district_2001", all = FALSE)
+  common <- common[
+    is.finite(common$baseline) & common$baseline > 0 &
+      is.finite(common$endpoint) & common$endpoint > 0,
+    , drop = FALSE
+  ]
+  if (!nrow(common)) return(panel)
+
+  key <- if ("target_unit_2001" %in% names(panel)) {
+    plain_chr(panel$target_unit_2001)
+  } else if ("district_2001" %in% names(panel)) {
+    plain_chr(panel$district_2001)
+  } else {
+    return(panel)
+  }
+  idx <- match(key, common$district_2001)
+  panel$paper_real_mean_mpce_2022_23 <- common$endpoint[idx]
+  panel$paper_real_log_mpce_change_2004_05_2022_23 <- log(common$endpoint[idx]) - log(common$baseline[idx])
+  panel
 }
 
 
@@ -94,8 +142,10 @@ add_poster_residual_variables <- function(district_panel) {
 #' @return A named list of figure specifications consumed by save_figures().
 make_figures <- function(
     district_panel, raw_ilo_figures, cfg, iv_models = NULL,
-    map_geometry = NULL, consumption_iv_dynamics = NULL, schooling_access = NULL) {
+    map_geometry = NULL, consumption_iv_dynamics = NULL, schooling_access = NULL,
+    consumption_district_welfare = NULL) {
   district_panel <- add_poster_residual_variables(district_panel)
+  district_panel <- add_paper_welfare_map_variables(district_panel, consumption_district_welfare)
 
   spec <- preferred_iv_variables()
   required_variables <- c(
@@ -107,8 +157,12 @@ make_figures <- function(
     "region",
     "resid_emi_exposure_region_expanded",
     "resid_ling_distance_region_expanded",
+    "resid_ling_distance_state_main",
+    "emi_share_enrolled_0708",
     "public_emi_exposure_all_children_0708",
-    "private_emi_exposure_all_children_0708"
+    "private_emi_exposure_all_children_0708",
+    "paper_real_mean_mpce_2022_23",
+    "paper_real_log_mpce_change_2004_05_2022_23"
   )
 
   out <- list(
@@ -180,6 +234,11 @@ make_figures <- function(
 
   map_specs <- list(
     map_emi_exposure = figure_spec("map_emi_exposure", "map_emi_exposure.png", "EMI Exposure", kind = if (maps_available) "map" else "status", variable = spec$treatment),
+    map_emi_share_enrolled = figure_spec(
+      "map_emi_share_enrolled", "map_emi_share_enrolled.png",
+      "EMI Share Among Enrolled", kind = if (maps_available) "map" else "status",
+      variable = "emi_share_enrolled_0708"
+    ),
     map_consumption_growth = figure_spec("map_consumption_growth", "map_consumption_growth.png", "Real Log Consumption Change", kind = if (maps_available) "map" else "status", variable = "real_log_consumption_change"),
     map_pucca = figure_spec("map_pucca", "map_pucca.png", "% Pucca Homes", kind = if (maps_available) "map" else "status", variable = "pct_pucca"),
     map_education = figure_spec("map_education", "map_education.png", "% HH Head w/ Sec.+", kind = if (maps_available) "map" else "status", variable = "pct_head_secondary_plus"),
@@ -209,6 +268,27 @@ make_figures <- function(
       kind = if (maps_available) "map" else "status",
       variable = "resid_ling_distance_region_expanded"
     ),
+    map_residual_linguistic_distance_state_main = figure_spec(
+      "map_residual_linguistic_distance_state_main",
+      "map_residual_linguistic_distance_state_main.png",
+      "Residual Linguistic Distance: State FE + Census Controls",
+      kind = if (maps_available) "map" else "status",
+      variable = "resid_ling_distance_state_main"
+    ),
+    map_paper_real_consumption_2022_23 = figure_spec(
+      "map_paper_real_consumption_2022_23",
+      "map_paper_real_consumption_2022_23.png",
+      "Real Consumption per Person, 2022-23",
+      kind = if (maps_available) "map" else "status",
+      variable = "paper_real_mean_mpce_2022_23"
+    ),
+    map_paper_real_consumption_change = figure_spec(
+      "map_paper_real_consumption_change",
+      "map_paper_real_consumption_change.png",
+      "Real Consumption Growth, 2004-05 to 2022-23",
+      kind = if (maps_available) "map" else "status",
+      variable = "paper_real_log_mpce_change_2004_05_2022_23"
+    ),
     collage_main_maps = figure_spec(
       "collage_main_maps",
       "collage_main_maps.png",
@@ -222,16 +302,6 @@ make_figures <- function(
       "Instrument and region map inputs",
       kind = "collage",
       inputs = c("map_region", "map_linguistic_distance", "map_residual_linguistic_distance", "map_residual_emi_exposure")
-    ),
-    paper_language_schooling_maps = figure_spec(
-      "paper_language_schooling_maps",
-      "paper_language_schooling_maps.png",
-      "Linguistic conditions and English-oriented schooling",
-      kind = "collage",
-      inputs = c(
-        "map_linguistic_distance", "map_emi_exposure",
-        "map_public_emi_exposure", "map_private_emi_exposure"
-      )
     )
   )
 

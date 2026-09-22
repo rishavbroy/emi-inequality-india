@@ -9,6 +9,7 @@ poster_map_fixture <- function(n = 2L) {
     region = rep("Northern", n),
     state_code_2001 = sprintf("%02d", seq_len(n)),
     wavg_ling_degrees = seq_len(n) + 4,
+    emi_share_enrolled_0708 = seq_len(n),
     public_emi_exposure_all_children_0708 = seq_len(n),
     private_emi_exposure_all_children_0708 = seq_len(n),
     stringsAsFactors = FALSE
@@ -150,18 +151,28 @@ test_that("continuous and diverging map styles keep numeric fills", {
 
 
 
-test_that("poster residual maps use one common complete-case sample", {
+test_that("figure residual variables use their registered adjustment sets", {
   panel <- poster_map_fixture(30L)
+  panel$region <- rep(panel_region_levels()[1:3], length.out = nrow(panel))
+  panel$state_code_2001 <- rep(sprintf("%02d", 1:6), each = 5L)
   panel$emi_exposure_all_children_0708[[2]] <- NA_real_
   panel$ling_distance_nonzero_mean[[3]] <- NA_real_
 
   out <- add_poster_residual_variables(panel)
-  emi_observed <- is.finite(out$resid_emi_exposure_region_expanded)
-  iv_observed <- is.finite(out$resid_ling_distance_region_expanded)
+  region_emi <- is.finite(out$resid_emi_exposure_region_expanded)
+  region_iv <- is.finite(out$resid_ling_distance_region_expanded)
+  expect_identical(region_emi, region_iv)
+  expect_false(region_emi[[2]])
+  expect_false(region_emi[[3]])
 
-  expect_identical(emi_observed, iv_observed)
-  expect_false(emi_observed[[2]])
-  expect_false(emi_observed[[3]])
+  state_main <- iv_adjustment_sets()[["state_main"]]
+  expected <- poster_residual_pair(
+    panel,
+    variables = "ling_distance_nonzero_mean",
+    fixed_effect = state_main$fixed_effect,
+    controls = state_main$controls
+  )[, "ling_distance_nonzero_mean"]
+  expect_equal(out$resid_ling_distance_state_main, expected)
 })
 
 
@@ -212,21 +223,26 @@ test_that("poster first-stage residualization omits one-level fixed effects", {
 })
 
 
-test_that("poster first-stage ribbons remain ordered for negative residualized values", {
+test_that("poster first-stage figure is a binned view of registered common-support specifications", {
   skip_if_not_installed("sandwich")
   set.seed(24)
-  panel <- poster_map_fixture(90L)
-  panel$state_code_2001 <- rep(sprintf("%02d", 1:9), each = 10L)
-  panel$region <- factor(rep(panel_region_levels()[1:6], length.out = 90L), levels = panel_region_levels())
-  panel$ling_distance_nonzero_mean <- stats::rnorm(90L)
-  panel$emi_exposure_all_children_0708 <- 4 * panel$ling_distance_nonzero_mean + stats::rnorm(90L)
-  for (v in census_2001_absorption_controls()) panel[[v]] <- stats::rnorm(90L)
+  panel <- poster_map_fixture(120L)
+  panel$state_code_2001 <- rep(sprintf("%02d", 1:12), each = 10L)
+  panel$region <- factor(rep(panel_region_levels(), length.out = 120L), levels = panel_region_levels())
+  panel$ling_distance_nonzero_mean <- stats::rnorm(120L)
+  panel$emi_exposure_all_children_0708 <- 4 * panel$ling_distance_nonzero_mean + stats::rnorm(120L)
+  for (v in census_2001_absorption_controls()) panel[[v]] <- stats::rnorm(120L)
 
-  plot_data <- poster_first_stage_spec_data(panel)
+  plot_data <- poster_first_stage_spec_data(panel, bins = 12L)
+  specs <- poster_first_stage_specs()
 
-  expect_true(any(plot_data$z_resid < 0))
-  expect_true(all(plot_data$conf.low <= plot_data$estimate))
-  expect_true(all(plot_data$estimate <= plot_data$conf.high))
+  expect_setequal(unique(plot_data$adjustment_id), c("unadjusted", "region_main", "state_main"))
+  expect_equal(length(unique(plot_data$n)), 1L)
+  expect_true(all(is.finite(plot_data$x)))
+  expect_true(all(is.finite(plot_data$y)))
+  expect_true(all(is.finite(plot_data$f_stat)))
+  expect_true(all(table(plot_data$specification_id) <= 12L))
+  expect_identical(vapply(specs, `[[`, character(1), "adjustment_id"), c(raw = "unadjusted", region = "region_main", state = "state_main"))
 })
 
 
@@ -361,6 +377,28 @@ test_that("poster second-stage specifications use preferred variables and one sa
   expect_setequal(unique(out$specification_id), c("raw", "region", "state"))
   expect_length(unique(out$n), 1L)
   expect_true(all(is.finite(out$estimate)))
+})
+
+test_that("paper welfare maps use preferred common support and the paper's long-run horizon", {
+  panel <- data.frame(target_unit_2001 = c("d1", "d2", "d3"), stringsAsFactors = FALSE)
+  welfare <- expand.grid(
+    district_2001 = c("d1", "d2", "d3"),
+    round_id = c("nss_2004_05", "hces_2022_23"),
+    outcome_id = "real_mean_mpce",
+    stringsAsFactors = FALSE
+  )
+  welfare$estimate <- c(100, 200, 300, 150, 400, 600)
+  welfare$preferred_eligible <- TRUE
+  welfare$preferred_eligible[welfare$district_2001 == "d3" & welfare$round_id == "nss_2004_05"] <- FALSE
+
+  out <- add_paper_welfare_map_variables(panel, welfare)
+
+  expect_equal(out$paper_real_mean_mpce_2022_23, c(150, 400, NA))
+  expect_equal(
+    out$paper_real_log_mpce_change_2004_05_2022_23[1:2],
+    log(c(150 / 100, 400 / 200))
+  )
+  expect_true(is.na(out$paper_real_log_mpce_change_2004_05_2022_23[[3L]]))
 })
 
 test_that("dynamic welfare figure compares registered reduced-form estimands only", {

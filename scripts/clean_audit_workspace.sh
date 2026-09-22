@@ -88,6 +88,8 @@ rm -f \
   "${root%/}/outputs/tables/main/paper_identification_boundary.tex" \
   "${root%/}/outputs/figures/main/paper_first_stage_absorption.pdf" \
   "${root%/}/outputs/figures/main/paper_first_stage_absorption.png" \
+  "${root%/}/outputs/figures/main/paper_language_schooling_maps.pdf" \
+  "${root%/}/outputs/figures/main/paper_language_schooling_maps.png" \
   "${root%/}/outputs/tables/appendix/appendix_e1_selection_sample.csv" \
   "${root%/}/outputs/tables/appendix/appendix_e1_selection_sample.tex" \
   "${root%/}/outputs/tables/appendix/appendix_e4_missingness.csv" \

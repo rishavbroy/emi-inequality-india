@@ -150,6 +150,7 @@ public_map_style <- function(variable) {
   switch(
     variable,
     emi_exposure_all_children_0708 = emi_exposure_map_style("All-child EMI exposure"),
+    emi_share_enrolled_0708 = emi_exposure_map_style("EMI share among enrolled"),
     public_emi_exposure_all_children_0708 = emi_exposure_map_style("Public EMI exposure"),
     private_emi_exposure_all_children_0708 = emi_exposure_map_style("Private EMI exposure"),
     real_log_consumption_change = list(
@@ -197,6 +198,27 @@ public_map_style <- function(variable) {
     resid_ling_distance_region_expanded = list(
       palette = "poster.diverging.iv",
       title = "Residual Linguistic Distance",
+      style = "diverging",
+      breaks = NULL,
+      labels = NULL
+    ),
+    resid_ling_distance_state_main = list(
+      palette = "poster.diverging.iv",
+      title = "Residual Linguistic Distance",
+      style = "diverging",
+      breaks = NULL,
+      labels = NULL
+    ),
+    paper_real_mean_mpce_2022_23 = list(
+      palette = "poster.consumption",
+      title = "Real consumption per person (2011-12 Rs.)",
+      style = "continuous",
+      breaks = NULL,
+      labels = NULL
+    ),
+    paper_real_log_mpce_change_2004_05_2022_23 = list(
+      palette = "poster.diverging.emi",
+      title = "Log real consumption change",
       style = "diverging",
       breaks = NULL,
       labels = NULL
@@ -601,11 +623,22 @@ poster_expected_value_predictions <- function(model, grid) {
 }
 
 poster_model_specs <- function() {
-  list(
-    raw = list(label = "Raw", fixed_effect = "none", controls = character()),
-    region = list(label = "Region FE + Census controls", fixed_effect = "region", controls = census_2001_absorption_controls()),
-    state = list(label = "State FE + Census controls", fixed_effect = "state", controls = census_2001_absorption_controls())
+  adjustments <- iv_adjustment_sets()
+  ids <- c(raw = "unadjusted", region = "region_main", state = "state_main")
+  labels <- c(
+    raw = "No geographic FE",
+    region = "Region FE + Census controls",
+    state = "State FE + Census controls"
   )
+  lapply(names(ids), function(id) {
+    spec <- adjustments[[ids[[id]]]]
+    list(
+      label = labels[[id]],
+      adjustment_id = ids[[id]],
+      fixed_effect = spec$fixed_effect,
+      controls = spec$controls
+    )
+  }) |> stats::setNames(names(ids))
 }
 
 poster_first_stage_specs <- poster_model_specs
@@ -623,7 +656,18 @@ poster_residualize_for_spec <- function(data, variable, fixed_effect, controls) 
   poster_residualize(data, variable, poster_residual_terms(fixed_effect, controls))
 }
 
-poster_first_stage_spec_data <- function(district_panel) {
+poster_first_stage_bins <- function(x, y, bins = 20L) {
+  bins <- max(2L, min(as.integer(bins), length(x)))
+  group <- dplyr::ntile(x, bins)
+  out <- stats::aggregate(
+    data.frame(x = x, y = y),
+    by = list(bin = group),
+    FUN = mean
+  )
+  out[order(out$bin), , drop = FALSE]
+}
+
+poster_first_stage_spec_data <- function(district_panel, bins = 20L) {
   need_pkg("sandwich", "poster first-stage specifications")
   df <- as.data.frame(district_panel)
   y <- "emi_exposure_all_children_0708"
@@ -634,22 +678,31 @@ poster_first_stage_spec_data <- function(district_panel) {
 
   out <- lapply(names(specs), function(id) {
     spec <- specs[[id]]
-    y_resid <- poster_residualize_for_spec(dat, y, spec$fixed_effect, spec$controls)
-    z_resid <- poster_residualize_for_spec(dat, z, spec$fixed_effect, spec$controls)
-    fit <- stats::lm(y_resid ~ 0 + z_resid)
+    if (identical(spec$fixed_effect, "none") && !length(spec$controls)) {
+      x <- dat[[z]]
+      response <- dat[[y]]
+      fit <- stats::lm(response ~ x)
+      intercept <- unname(stats::coef(fit)[[1L]])
+      slope_index <- 2L
+    } else {
+      response <- poster_residualize_for_spec(dat, y, spec$fixed_effect, spec$controls)
+      x <- poster_residualize_for_spec(dat, z, spec$fixed_effect, spec$controls)
+      fit <- stats::lm(response ~ 0 + x)
+      intercept <- 0
+      slope_index <- 1L
+    }
     vcov <- sandwich::vcovCL(fit, cluster = dat$state_code_2001, type = "HC1")
-    beta <- unname(stats::coef(fit)[[1]])
-    se <- sqrt(vcov[1, 1])
-    xs <- seq(stats::quantile(z_resid, 0.05, na.rm = TRUE), stats::quantile(z_resid, 0.95, na.rm = TRUE), length.out = 80L)
-    estimate <- beta * xs
-    margin <- 1.96 * abs(xs) * se
+    beta <- unname(stats::coef(fit)[[slope_index]])
+    se <- sqrt(vcov[slope_index, slope_index])
+    binned <- poster_first_stage_bins(x, response, bins = bins)
     data.frame(
       specification_id = id,
+      adjustment_id = spec$adjustment_id,
       specification = spec$label,
-      z_resid = xs,
-      estimate = estimate,
-      conf.low = estimate - margin,
-      conf.high = estimate + margin,
+      bin = binned$bin,
+      x = binned$x,
+      y = binned$y,
+      intercept = intercept,
       beta = beta,
       se = se,
       f_stat = (beta / se)^2,
@@ -663,27 +716,44 @@ poster_first_stage_spec_data <- function(district_panel) {
 save_poster_first_stage_specs <- function(spec, path_base, formats, district_panel) {
   need_pkg("ggplot2", "poster first-stage specification plot")
   plot_data <- poster_first_stage_spec_data(district_panel)
-  if (!nrow(plot_data)) stop("Poster first-stage figure could not build any specification lines.", call. = FALSE)
-  label_data <- plot_data[!duplicated(plot_data$specification), c("specification", "f_stat"), drop = FALSE]
-  label_data$label <- paste0(label_data$specification, " (F=", formatC(label_data$f_stat, format = "f", digits = 1), ")")
-  plot_data$label <- label_data$label[match(plot_data$specification, label_data$specification)]
-  p <- ggplot2::ggplot(plot_data, ggplot2::aes(x = z_resid, y = estimate)) +
-    ggplot2::geom_ribbon(ggplot2::aes(ymin = conf.low, ymax = conf.high), fill = "#c5050c", alpha = 0.14) +
-    ggplot2::geom_line(color = "#7a0019", linewidth = 1.05) +
-    ggplot2::facet_wrap(~ label, scales = "free", nrow = 1) +
-    ggplot2::labs(
-      x = "Residualized linguistic distance",
-      y = "Predicted residual EMI exposure",
-      caption = "Treatment is unconditional EMI exposure among children ages 5-19; controls are measured in Census 2001."
+  if (!nrow(plot_data)) stop("Poster first-stage figure could not build any specification panels.", call. = FALSE)
+  labels <- plot_data[!duplicated(plot_data$specification_id), c("specification_id", "specification", "f_stat"), drop = FALSE]
+  labels$panel_label <- paste0(
+    labels$specification, "
+$F$ = ",
+    formatC(labels$f_stat, format = "f", digits = 2)
+  )
+  plot_data$panel_label <- labels$panel_label[match(plot_data$specification_id, labels$specification_id)]
+  plot_data$panel_label <- factor(plot_data$panel_label, levels = labels$panel_label)
+
+  line_data <- plot_data[!duplicated(plot_data$specification_id), , drop = FALSE]
+  p <- ggplot2::ggplot(plot_data, ggplot2::aes(x = x, y = y)) +
+    ggplot2::geom_hline(yintercept = 0, linewidth = 0.3, color = "grey70") +
+    ggplot2::geom_vline(xintercept = 0, linewidth = 0.3, color = "grey70") +
+    ggplot2::geom_abline(
+      data = line_data,
+      ggplot2::aes(intercept = intercept, slope = beta),
+      inherit.aes = FALSE,
+      linewidth = 0.8
     ) +
-    ggplot2::theme_minimal(base_size = 14) +
+    ggplot2::geom_point(size = 2.6) +
+    ggplot2::facet_wrap(~ panel_label, scales = "free", nrow = 1) +
+    ggplot2::labs(
+      x = "Linguistic distance (raw or residualized)",
+      y = "EMI exposure (raw or residualized)",
+      caption = paste(
+        "Points are equal-frequency bin means on one common sample; lines are OLS first-stage fits.",
+        "$F$ statistics use state-clustered HC1 covariance. Census controls are measured in 2001."
+      )
+    ) +
+    ggplot2::theme_minimal(base_size = 13) +
     ggplot2::theme(
       panel.grid.minor = ggplot2::element_blank(),
-      strip.text = ggplot2::element_text(face = "bold", size = 11),
-      plot.caption = ggplot2::element_text(size = 9, hjust = 0),
+      strip.text = ggplot2::element_text(face = "bold", size = 10.5),
+      plot.caption = ggplot2::element_text(size = 8.5, hjust = 0),
       axis.title = ggplot2::element_text(face = "bold")
     )
-  save_plot_formats(p, path_base, formats, width = 9.6, height = 3.9, dpi = 300)
+  save_plot_formats(p, path_base, formats, width = 9.6, height = 4.0, dpi = 300)
 }
 
 
@@ -1004,7 +1074,7 @@ save_schooling_access_figure <- function(spec, path_base, formats, diagnostic) {
     ggplot2::aes(x = gap, y = outcome_label, shape = stratum, color = stratum)
   ) +
     ggplot2::geom_vline(xintercept = 0, linewidth = 0.45, linetype = 2) +
-    ggplot2::geom_point(size = 2.5, position = ggplot2::position_dodge(width = 0.45)) +
+    ggplot2::geom_point(size = 3.0, position = ggplot2::position_dodge(width = 0.45)) +
     ggplot2::scale_color_brewer(palette = "Dark2") +
     ggplot2::facet_grid(panel ~ group, scales = "free_y", space = "free_y") +
     ggplot2::labs(
