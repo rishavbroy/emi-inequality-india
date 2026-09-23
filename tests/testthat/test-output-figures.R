@@ -573,10 +573,10 @@ test_that("disputed-area registry selects only explicitly registered Natural Ear
   )
 })
 
-test_that("ordinary state boundaries contain only borders shared between states", {
+test_that("state boundaries are exactly shared interstate edges", {
   skip_if_not_installed("sf")
-  square <- function(x0, x1) sf::st_polygon(list(rbind(
-    c(x0, 0), c(x1, 0), c(x1, 1), c(x0, 1), c(x0, 0)
+  square <- function(x0, x1, y0 = 0, y1 = 1) sf::st_polygon(list(rbind(
+    c(x0, y0), c(x1, y0), c(x1, y1), c(x0, y1), c(x0, y0)
   )))
   districts <- sf::st_sf(
     target_unit_2001 = c("d1", "d2", "d3"),
@@ -587,19 +587,42 @@ test_that("ordinary state boundaries contain only borders shared between states"
   )
 
   states <- public_map_state_boundaries(districts)
-  outer <- public_map_outer_boundary(districts)
 
   expect_s3_class(states, "sf")
-  expect_equal(as.numeric(sf::st_length(sf::st_union(states))), 1, tolerance = 1e-8)
   expect_equal(
-    as.numeric(sf::st_length(sf::st_intersection(sf::st_union(states), sf::st_union(outer)))),
-    0,
+    as.numeric(sf::st_length(sf::st_union(states))),
+    1,
     tolerance = 1e-8
   )
-  expect_equal(as.numeric(sf::st_length(sf::st_union(outer))), 8, tolerance = 1e-8)
 })
 
-test_that("disputed masks change display geometry without changing analytical districts", {
+test_that("holes in state coverage do not erase unrelated shared state edges", {
+  skip_if_not_installed("sf")
+  polygon_with_hole <- function(x0, x1) sf::st_polygon(list(
+    rbind(c(x0, 0), c(x1, 0), c(x1, 2), c(x0, 2), c(x0, 0)),
+    rbind(c(x0 + 0.2, 0.6), c(x0 + 0.4, 0.6), c(x0 + 0.4, 0.8),
+          c(x0 + 0.2, 0.8), c(x0 + 0.2, 0.6))
+  ))
+  districts <- sf::st_sf(
+    target_unit_2001 = c("left", "right"),
+    state_code_2001 = c("01", "02"),
+    geometry = sf::st_sfc(
+      polygon_with_hole(0, 1),
+      sf::st_polygon(list(rbind(c(1, 0), c(2, 0), c(2, 2), c(1, 2), c(1, 0)))),
+      crs = 3857
+    )
+  )
+
+  states <- public_map_state_boundaries(districts)
+
+  expect_equal(
+    as.numeric(sf::st_length(sf::st_union(states))),
+    2,
+    tolerance = 1e-8
+  )
+})
+
+test_that("disputed display unions Natural Earth masks with the DataMeet scaffold", {
   skip_if_not_installed("sf")
   square <- function(x0, x1) sf::st_polygon(list(rbind(
     c(x0, 0), c(x1, 0), c(x1, 1), c(x0, 1), c(x0, 0)
@@ -613,19 +636,39 @@ test_that("disputed masks change display geometry without changing analytical di
     area_id = "registered_dispute",
     geometry = sf::st_sfc(square(1.5, 3.5), crs = 3857)
   )
+  scaffold <- sf::st_sf(
+    scaffold_id = "datameet_2001_99_99",
+    geometry = sf::st_sfc(square(3.5, 4.5), crs = 3857)
+  )
   before <- sf::st_geometry(districts)
+  reference <- list(disputed_areas = disputed, datameet_scaffold = scaffold)
 
-  display <- mask_public_map_disputed_areas(districts, disputed)
+  disputed_display <- public_map_disputed_display(districts, reference)
+  display <- mask_public_map_disputed_areas(districts, disputed_display)
 
   expect_true(isTRUE(all.equal(sf::st_geometry(districts), before)))
   expect_equal(nrow(display), nrow(districts))
-  expect_lt(
-    as.numeric(sf::st_area(sf::st_union(display))),
-    as.numeric(sf::st_area(sf::st_union(districts)))
+  expect_equal(
+    as.numeric(sf::st_area(sf::st_union(disputed_display))),
+    3,
+    tolerance = 1e-8
   )
   expect_equal(
     as.numeric(sf::st_area(sf::st_union(display))),
-    2,
+    1.5,
+    tolerance = 1e-8
+  )
+  restored <- sf::st_union(c(
+    sf::st_geometry(display),
+    sf::st_geometry(disputed_display)
+  ))
+  expected <- sf::st_union(c(
+    sf::st_geometry(districts),
+    sf::st_geometry(disputed_display)
+  ))
+  expect_equal(
+    as.numeric(sf::st_area(sf::st_sym_difference(restored, expected))),
+    0,
     tolerance = 1e-8
   )
 })
@@ -649,8 +692,13 @@ test_that("registered disputed areas are polygons with a distinct no-estimate tr
   )
   spec <- list(name = "fixture", variable = "ling_distance_nonzero_mean")
 
+  scaffold <- sf::st_sf(
+    scaffold_id = "datameet_2001_99_99",
+    geometry = sf::st_sfc(square(2.5, 3), crs = 3857)
+  )
   plot <- build_public_ggplot_map(
-    districts, spec, list(disputed_areas = disputed)
+    districts, spec,
+    list(disputed_areas = disputed, datameet_scaffold = scaffold)
   )
 
   district_layers <- Filter(
@@ -673,6 +721,26 @@ test_that("registered disputed areas are polygons with a distinct no-estimate tr
       c("POLYGON", "MULTIPOLYGON")
   ))
   expect_false(identical(map_disputed_no_data_colour(), map_no_data_colour()))
+})
+
+test_that("interstate lines are removed inside the disputed display mask", {
+  skip_if_not_installed("sf")
+  line <- sf::st_sf(
+    geometry = sf::st_sfc(sf::st_linestring(rbind(c(1, 0), c(1, 2))), crs = 3857)
+  )
+  mask <- sf::st_sf(
+    geometry = sf::st_sfc(sf::st_polygon(list(rbind(
+      c(0.5, 0.5), c(1.5, 0.5), c(1.5, 1.5), c(0.5, 1.5), c(0.5, 0.5)
+    ))), crs = 3857)
+  )
+
+  clipped <- mask_public_map_lines(line, mask)
+
+  expect_equal(
+    as.numeric(sf::st_length(sf::st_union(clipped))),
+    1,
+    tolerance = 1e-8
+  )
 })
 
 test_that("district boundaries stay thinner than state and disputed boundaries", {

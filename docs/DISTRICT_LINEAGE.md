@@ -39,7 +39,7 @@ The production lineage is ready only when all of the following hold:
 - duplicate registry keys are absent or identical; repeated source district keys created by documented split/merge allocations remain warning-severity review information rather than fatal panel errors;
 - every accepted identity has a conservative-panel disposition;
 - every accepted identity appears in the full reviewed crosswalk or has an explicit exclusion;
-- DataMeet Census-2001 geometry has no missing, unexpected, duplicate, empty, or invalid units after excluding its noncanonical 99/99 national aggregate.
+- DataMeet Census-2001 analytical geometry has no missing, unexpected, duplicate, empty, or invalid units after excluding its noncanonical 99/99 "Data Not Available" feature; that feature is retained separately as a display-only map scaffold and never enters lineage, estimation, or spatial-weight construction.
 
 These invariants are reported in `readiness.csv` and `completion_status.csv` under `outputs/diagnostics/extended/district_lineage/`.
 

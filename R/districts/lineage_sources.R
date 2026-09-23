@@ -108,12 +108,12 @@ datameet_census_2001_geometry_path <- function(paths = build_paths()) {
   )
 }
 
-#' Read DataMeet Census-2001 district boundaries
+#' Read the raw DataMeet Census-2001 district source
 #'
-#' The source contains one noncanonical 99/99 national aggregate. This reader
-#' keeps only units in the Census-2001 administrative registry and requires
-#' exact, one-to-one coverage of that registry.
-read_datameet_census_2001_geometry <- function(path, admin_2001) {
+#' The source contains one noncanonical 99/99 "Data Not Available" feature.
+#' Keep that feature available to cartography while canonical analytical readers
+#' continue to require the Census district registry.
+read_datameet_census_2001_source <- function(path) {
   need_pkg("sf", "DataMeet Census-2001 district geometry")
   if (!file.exists(path)) {
     stop("Missing DataMeet Census-2001 district shapefile: ", path, call. = FALSE)
@@ -130,6 +130,15 @@ read_datameet_census_2001_geometry <- function(path, admin_2001) {
       paste(missing, collapse = ", "), call. = FALSE
     )
   }
+  make_valid_sf(geometry)
+}
+
+#' Read DataMeet Census-2001 canonical district boundaries
+#'
+#' The 99/99 source feature is deliberately excluded here: analytical geography
+#' must remain exactly one row per Census-2001 district in the registry.
+read_datameet_census_2001_geometry <- function(path, admin_2001) {
+  geometry <- read_datameet_census_2001_source(path)
   admin <- safe_df(admin_2001)
   if (!all(c("unit_id", "state_code", "district_code") %in% names(admin))) {
     stop("Census-2001 registry lacks canonical unit codes.", call. = FALSE)
@@ -160,6 +169,56 @@ read_datameet_census_2001_geometry <- function(path, admin_2001) {
     stop("DataMeet Census-2001 geometry contains invalid or empty features.", call. = FALSE)
   }
   geometry["unit_id"]
+}
+
+#' Read the display-only DataMeet 99/99 scaffold
+#'
+#' This noncanonical feature is never an analytical district. It preserves
+#' DataMeet-native linework around the Jammu-and-Kashmir territory for map
+#' display, where it can bridge the independently digitized Natural Earth
+#' disputed-area polygons without altering district joins or spatial weights.
+read_datameet_census_2001_map_scaffold <- function(path) {
+  geometry <- read_datameet_census_2001_source(path)
+  state <- pad_admin_code(geometry$ST_CEN_CD, 2L)
+  district <- pad_admin_code(geometry$DT_CEN_CD, 2L)
+  keep <- !is.na(state) & !is.na(district) & state == "99" & district == "99"
+  if (sum(keep) != 1L) {
+    stop(
+      "DataMeet Census-2001 source must contain exactly one 99/99 map scaffold; found ",
+      sum(keep), ".", call. = FALSE
+    )
+  }
+  out <- geometry[keep, , drop = FALSE]
+  out$scaffold_id <- "datameet_2001_99_99"
+  if (any(sf::st_is_empty(out))) {
+    stop("DataMeet Census-2001 99/99 map scaffold is empty.", call. = FALSE)
+  }
+  out["scaffold_id"]
+}
+
+#' Path to the processed display-only DataMeet map scaffold
+lineage_map_scaffold_2001_path <- function(paths = build_paths()) {
+  path_project(
+    paths,
+    "data/processed/geography/district_2001_map_scaffold.gpkg"
+  )
+}
+
+#' Read the processed display-only DataMeet map scaffold
+read_lineage_map_scaffold_2001 <- function(path) {
+  need_pkg("sf", "Census 2001 map scaffold")
+  if (!file.exists(path)) {
+    stop("Missing Census-2001 map scaffold: ", path, call. = FALSE)
+  }
+  out <- sf::st_read(path, quiet = TRUE, stringsAsFactors = FALSE)
+  if (!inherits(out, "sf") || nrow(out) != 1L || !"scaffold_id" %in% names(out)) {
+    stop("Census-2001 map scaffold must contain exactly one identified sf feature.", call. = FALSE)
+  }
+  out <- make_valid_sf(out)
+  if (any(sf::st_is_empty(out))) {
+    stop("Census-2001 map scaffold contains empty geometry.", call. = FALSE)
+  }
+  out["scaffold_id"]
 }
 
 #' Path to the processed Census-2001 district geometry

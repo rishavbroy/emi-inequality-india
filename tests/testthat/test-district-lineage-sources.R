@@ -516,6 +516,34 @@ test_that("DataMeet Census-2001 geometry maps exactly to the registry", {
   expect_true(all(sf::st_is_valid(out)))
   expect_false(any(sf::st_is_empty(out)))
   expect_true(sf::st_crs(out) == sf::st_crs(source))
+
+  scaffold <- read_datameet_census_2001_map_scaffold(path)
+  expect_s3_class(scaffold, "sf")
+  expect_equal(nrow(scaffold), 1L)
+  expect_identical(scaffold$scaffold_id, "datameet_2001_99_99")
+  expect_equal(
+    as.numeric(sf::st_area(scaffold)),
+    as.numeric(sf::st_area(source[3, ])),
+    tolerance = 1e-8
+  )
+})
+
+test_that("DataMeet map scaffold fails closed unless 99/99 is unique", {
+  skip_if_not_installed("sf")
+  path <- tempfile(fileext = ".gpkg")
+  polygon <- sf::st_polygon(list(matrix(
+    c(0, 0, 1, 0, 1, 1, 0, 1, 0, 0), ncol = 2, byrow = TRUE
+  )))
+  sf::st_write(sf::st_sf(
+    ST_CEN_CD = "01", DT_CEN_CD = "01",
+    boundary = sf::st_sfc(polygon, crs = 4326),
+    sf_column_name = "boundary"
+  ), path, quiet = TRUE)
+
+  expect_error(
+    read_datameet_census_2001_map_scaffold(path),
+    "exactly one 99/99 map scaffold"
+  )
 })
 
 test_that("DataMeet geometry fails closed on incomplete registry coverage", {

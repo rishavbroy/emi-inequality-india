@@ -24,6 +24,22 @@ core_public_target_definitions <- function() {
       )
     ),
     tar_target(
+      lineage_map_scaffold_2001_file,
+      lineage_map_scaffold_2001_path(paths),
+      format = "file"
+    ),
+    tar_target(
+      lineage_map_scaffold_2001,
+      read_lineage_map_scaffold_2001(lineage_map_scaffold_2001_file)
+    ),
+    tar_target(
+      map_boundary_reference,
+      build_public_map_boundary_reference(
+        natural_earth_map_reference,
+        lineage_map_scaffold_2001
+      )
+    ),
+    tar_target(
       public_iv_specifications,
       public_iv_specification_registry(census_2001_control_registry)
     ),
@@ -78,7 +94,7 @@ core_public_target_definitions <- function() {
         district_panel, raw_ilo_figures, cfg,
         iv_models = revised_iv_models,
         map_geometry = lineage_geometry_2001,
-        map_boundary_reference = natural_earth_map_reference,
+        map_boundary_reference = map_boundary_reference,
         consumption_iv_dynamics = consumption_iv_dynamics,
         schooling_access = nss64_schooling_social_group_diagnostic,
         consumption_district_welfare = consumption_district_welfare

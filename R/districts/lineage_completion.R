@@ -490,6 +490,20 @@ save_lineage_geometry_2001 <- function(
   c(path, qa_path)
 }
 
+save_lineage_map_scaffold_2001 <- function(
+  scaffold,
+  path = "data/processed/geography/district_2001_map_scaffold.gpkg"
+) {
+  need_pkg("sf", "Census 2001 map scaffold output")
+  if (!inherits(scaffold, "sf") || nrow(scaffold) != 1L) {
+    stop("Census 2001 map scaffold must contain exactly one sf feature.", call. = FALSE)
+  }
+  dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
+  if (file.exists(path)) unlink(path)
+  sf::st_write(scaffold, path, quiet = TRUE)
+  path
+}
+
 make_valid_sf <- function(x) {
   need_pkg("sf", "district geometry validity repair")
   if (!inherits(x, "sf") || !nrow(x)) return(x)

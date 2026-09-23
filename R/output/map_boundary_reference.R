@@ -118,3 +118,22 @@ read_natural_earth_map_reference <- function(files, registry) {
   disputed_areas <- select_registered_disputed_areas(disputed_areas, registry)
   list(disputed_areas = sf::st_make_valid(disputed_areas))
 }
+
+# Compose public-map reference layers without changing analytical geography.
+#
+# Natural Earth classifies the five registered disputed areas; the DataMeet
+# 99/99 scaffold supplies source-native J&K coverage where canonical districts
+# are unavailable. Their union is a display class, not an analytical unit.
+build_public_map_boundary_reference <- function(natural_earth_reference, datameet_scaffold) {
+  disputed <- natural_earth_reference$disputed_areas
+  if (!inherits(disputed, "sf") || !nrow(disputed)) {
+    stop("Public map reference requires registered Natural Earth disputed polygons.", call. = FALSE)
+  }
+  if (!inherits(datameet_scaffold, "sf") || nrow(datameet_scaffold) != 1L) {
+    stop("Public map reference requires the one-feature DataMeet map scaffold.", call. = FALSE)
+  }
+  list(
+    disputed_areas = disputed,
+    datameet_scaffold = datameet_scaffold
+  )
+}

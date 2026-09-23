@@ -73,6 +73,7 @@ extended-diagnostics:
 LINEAGE_GEOMETRY_SOURCE := data/raw/datameet/Districts/Census_2001/2001_Dist.shp
 LINEAGE_GEOMETRY_OUTPUT := data/processed/geography/district_2001.gpkg
 LINEAGE_GEOMETRY_QA := data/processed/geography/district_2001_qa.csv
+LINEAGE_MAP_SCAFFOLD_OUTPUT := data/processed/geography/district_2001_map_scaffold.gpkg
 LEGACY_LINEAGE_GEOMETRY_OUTPUT := outputs/derived/district_lineage/district_2001.gpkg
 LEGACY_LINEAGE_GEOMETRY_QA := outputs/derived/district_lineage/district_2001_qa.csv
 LINEAGE_GEOMETRY_INPUTS := \
@@ -96,13 +97,15 @@ lineage-geometry-build:
 		rmdir "$(dir $(LEGACY_LINEAGE_GEOMETRY_OUTPUT))" 2>/dev/null || true; \
 		rmdir outputs/derived 2>/dev/null || true; \
 	fi
-	@if [[ ! -f "$(LINEAGE_GEOMETRY_OUTPUT)" && ! -f "$(LINEAGE_GEOMETRY_SOURCE)" ]]; then \
-		echo "Missing both $(LINEAGE_GEOMETRY_OUTPUT) and its DataMeet Census-2001 shapefile."; \
-		echo "Restore the raw DataMeet boundary files or the processed GeoPackage."; \
+	@if { [[ ! -f "$(LINEAGE_GEOMETRY_OUTPUT)" ]] || [[ ! -f "$(LINEAGE_MAP_SCAFFOLD_OUTPUT)" ]]; } && \
+		[[ ! -f "$(LINEAGE_GEOMETRY_SOURCE)" ]]; then \
+		echo "Missing required processed Census-2001 map geometry and its DataMeet source."; \
+		echo "Restore the raw DataMeet boundary files so the canonical geometry and display scaffold can be built."; \
 		exit 1; \
 	elif [[ -f "$(LINEAGE_GEOMETRY_SOURCE)" ]] && \
-		{ [[ ! -f "$(LINEAGE_GEOMETRY_OUTPUT)" ]] || \
-		find $(LINEAGE_GEOMETRY_INPUTS) -newer "$(LINEAGE_GEOMETRY_OUTPUT)" -print -quit | grep -q .; }; then \
+		{ [[ ! -f "$(LINEAGE_GEOMETRY_OUTPUT)" ]] || [[ ! -f "$(LINEAGE_MAP_SCAFFOLD_OUTPUT)" ]] || \
+		find $(LINEAGE_GEOMETRY_INPUTS) -newer "$(LINEAGE_GEOMETRY_OUTPUT)" -print -quit | grep -q . || \
+		find $(LINEAGE_GEOMETRY_INPUTS) -newer "$(LINEAGE_MAP_SCAFFOLD_OUTPUT)" -print -quit | grep -q .; }; then \
 		echo "=== LINEAGE GEOMETRY: building DataMeet Census 2001 GeoPackage ==="; \
 		EMI_CONFIG=config/final.yml EMI_RUN_EXTENDED_DIAGNOSTICS=false \
 			Rscript scripts/run_targets_checked.R --targets census_2001_languages; \
