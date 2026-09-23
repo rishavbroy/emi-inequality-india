@@ -474,7 +474,7 @@ test_that("paper EMI maps use one comparable percentage scale", {
   expect_true(all(vapply(styles, function(x) grepl("%", x$title, fixed = TRUE), logical(1))))
 })
 
-test_that("public maps dissolve district geometry to state boundaries", {
+test_that("a single-state map has no interstate boundary layer", {
   skip_if_not_installed("sf")
   geometry <- sf::st_sfc(
     sf::st_polygon(list(rbind(c(0, 0), c(1, 0), c(1, 1), c(0, 1), c(0, 0)))),
@@ -487,11 +487,7 @@ test_that("public maps dissolve district geometry to state boundaries", {
     geometry = geometry
   )
 
-  borders <- public_map_state_boundaries(panel)
-
-  expect_s3_class(borders, "sf")
-  expect_equal(nrow(borders), 1L)
-  expect_equal(as.character(borders$state), "01")
+  expect_null(public_map_state_boundaries(panel))
 })
 
 schooling_access_figure_fixture <- function() {
