@@ -14,7 +14,20 @@ processed_replication_welfare_path <- function(paths = build_paths()) {
 
 read_processed_replication_csv <- function(path, character_columns = character()) {
   if (!file.exists(path)) stop("Processed replication input is missing: ", path, call. = FALSE)
-  classes <- stats::setNames(rep("character", length(character_columns)), character_columns)
+
+  header <- names(utils::read.csv(
+    path,
+    nrows = 0L,
+    stringsAsFactors = FALSE,
+    check.names = FALSE
+  ))
+  character_columns <- intersect(character_columns, header)
+  classes <- if (length(character_columns)) {
+    stats::setNames(rep("character", length(character_columns)), character_columns)
+  } else {
+    NA
+  }
+
   utils::read.csv(
     path,
     stringsAsFactors = FALSE,
@@ -32,7 +45,7 @@ read_processed_replication_panel <- function(path, control_registry = NULL) {
     )
   )
   required <- c(
-    "target_unit_2001", "state_code_2001", "region",
+    "target_unit_2001", "state_code_2001", "district_code_2001", "region",
     "emi_exposure_all_children_0708", "ling_distance_nonzero_mean",
     census_2001_main_controls(control_registry)
   )

@@ -4,6 +4,7 @@ test_that("processed replication readers preserve district-level analysis inputs
   panel <- data.frame(
     target_unit_2001 = c("pc2001__01__01", "pc2001__01__02"),
     state_code_2001 = c("01", "01"),
+    district_code_2001 = c("01", "02"),
     region = c("North", "North"),
     emi_exposure_all_children_0708 = c(0.1, 0.2),
     ling_distance_nonzero_mean = c(2, 3),
@@ -25,8 +26,10 @@ test_that("processed replication readers preserve district-level analysis inputs
   )
   utils::write.csv(welfare, welfare_path, row.names = FALSE, na = "")
 
-  panel_read <- read_processed_replication_panel(panel_path)
-  welfare_read <- read_processed_replication_welfare(welfare_path)
+  expect_no_warning({
+    panel_read <- read_processed_replication_panel(panel_path)
+    welfare_read <- read_processed_replication_welfare(welfare_path)
+  })
 
   expect_identical(nrow(panel_read), 2L)
   expect_identical(nrow(welfare_read), 2L)
@@ -43,6 +46,7 @@ test_that("processed replication rejects duplicate empirical keys", {
   panel <- data.frame(
     target_unit_2001 = rep("pc2001__01__01", 2),
     state_code_2001 = "01",
+    district_code_2001 = "01",
     region = "North",
     emi_exposure_all_children_0708 = 0.1,
     ling_distance_nonzero_mean = 2,
