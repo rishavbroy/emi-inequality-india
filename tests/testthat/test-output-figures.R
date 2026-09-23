@@ -542,13 +542,13 @@ test_that("Natural Earth file inputs retain complete shapefile bundles without r
   }
 })
 
-test_that("Natural Earth reference clips only display geometry to de facto India", {
+test_that("Natural Earth reference extent retains disputes but removes geometry beyond the combined map", {
   skip_if_not_installed("sf")
   district <- sf::st_sf(
     target_unit_2001 = "d1",
     value = 1,
     geometry = sf::st_sfc(sf::st_polygon(list(rbind(
-      c(0, 0), c(2, 0), c(2, 1), c(0, 1), c(0, 0)
+      c(0, 0), c(3, 0), c(3, 1), c(0, 1), c(0, 0)
     ))), crs = 4326)
   )
   india <- sf::st_sf(
@@ -557,13 +557,49 @@ test_that("Natural Earth reference clips only display geometry to de facto India
       c(0, 0), c(1, 0), c(1, 1), c(0, 1), c(0, 0)
     ))), crs = 4326)
   )
+  dispute <- sf::st_sf(
+    BRK_A3 = "B01",
+    geometry = sf::st_sfc(sf::st_polygon(list(rbind(
+      c(1, 0), c(2, 0), c(2, 1), c(1, 1), c(1, 0)
+    ))), crs = 4326)
+  )
+  extent <- natural_earth_india_display_extent(india, dispute)
 
-  clipped <- clip_public_map_to_de_facto_india(district, list(india = india))
+  clipped <- clip_public_map_to_reference_extent(district, list(extent = extent))
 
   expect_identical(clipped$target_unit_2001, "d1")
-  expect_lt(
-    as.numeric(sf::st_area(sf::st_transform(clipped, 3857))),
-    as.numeric(sf::st_area(sf::st_transform(district, 3857)))
+  clipped_area <- as.numeric(sf::st_area(sf::st_transform(clipped, 3857)))
+  india_area <- as.numeric(sf::st_area(sf::st_transform(india, 3857)))
+  district_area <- as.numeric(sf::st_area(sf::st_transform(district, 3857)))
+  expect_gt(clipped_area, india_area)
+  expect_lt(clipped_area, district_area)
+})
+
+test_that("DataMeet and Natural Earth map geometry must agree outside disputed overlays", {
+  skip_if_not_installed("sf")
+  square <- function(x0, x1) sf::st_polygon(list(rbind(
+    c(x0, 0), c(x1, 0), c(x1, 1), c(x0, 1), c(x0, 0)
+  )))
+  districts <- sf::st_sf(
+    unit_id = c("d1", "d2"),
+    geometry = sf::st_sfc(square(0, 1), square(1, 2), crs = 4326)
+  )
+  india <- sf::st_sf(
+    ADM0_A3 = "IND",
+    geometry = sf::st_sfc(square(0, 2), crs = 4326)
+  )
+  extent <- natural_earth_india_display_extent(india, india[0, ])
+  reference <- list(india = india, extent = extent)
+
+  expect_no_error(validate_public_map_geometry_alignment(districts, reference))
+
+  shifted <- sf::st_sf(
+    unit_id = c("d1", "d2"),
+    geometry = sf::st_sfc(square(5, 6), square(6, 7), crs = 4326)
+  )
+  expect_error(
+    validate_public_map_geometry_alignment(shifted, reference),
+    "disagree materially"
   )
 })
 
@@ -593,6 +629,67 @@ test_that("Natural Earth dispute overlays select India-related claims by attribu
   expect_equal(nrow(selected_lines), 2L)
   expect_true("B07" %in% selected_lines$BRK_A3)
   expect_true(any(is.na(selected_lines$BRK_A3)))
+})
+
+test_that("district boundaries stay thinner than state and international boundaries", {
+  expect_gt(map_major_boundary_linewidth(), map_district_boundary_linewidth())
+})
+
+test_that("disputed fills do not replace available DataMeet district boundaries", {
+  skip_if_not_installed("sf")
+  skip_if_not_installed("ggplot2")
+  square <- function(x0, x1) sf::st_polygon(list(rbind(
+    c(x0, 0), c(x1, 0), c(x1, 1), c(x0, 1), c(x0, 0)
+  )))
+  districts <- sf::st_sf(
+    target_unit_2001 = c("d1", "d2"),
+    state_code_2001 = c("01", "01"),
+    ling_distance_nonzero_mean = c(1, 2),
+    geometry = sf::st_sfc(square(0, 1), square(1, 2), crs = 4326)
+  )
+  dispute <- sf::st_sf(
+    BRK_A3 = "B07",
+    geometry = sf::st_sfc(square(1, 2), crs = 4326)
+  )
+  india <- sf::st_sf(
+    ADM0_A3 = "IND",
+    geometry = sf::st_sfc(square(0, 2), crs = 4326)
+  )
+  reference <- list(
+    india = india,
+    disputed_areas = dispute,
+    disputed_lines = dispute[0, ],
+    extent = natural_earth_india_display_extent(india, dispute)
+  )
+  spec <- list(name = "fixture", variable = "ling_distance_nonzero_mean")
+
+  plot <- build_public_ggplot_map(districts, spec, reference)
+  dispute_index <- which(vapply(
+    plot$layers,
+    function(layer) "BRK_A3" %in% names(layer$data),
+    logical(1)
+  ))
+  outline_index <- which(vapply(
+    plot$layers,
+    function(layer) {
+      "target_unit_2001" %in% names(layer$data) &&
+        length(layer$aes_params$fill) == 1L &&
+        is.na(layer$aes_params$fill)
+    },
+    logical(1)
+  ))
+
+  expect_length(dispute_index, 1L)
+  expect_length(outline_index, 1L)
+  expect_gt(outline_index, dispute_index)
+  disputed_layer <- plot$layers[[dispute_index]]
+  district_outline <- plot$layers[[outline_index]]
+  expect_true(is.na(disputed_layer$aes_params$colour))
+  expect_identical(disputed_layer$aes_params$fill, map_no_data_colour())
+  expect_equal(
+    district_outline$aes_params$linewidth,
+    map_district_boundary_linewidth()
+  )
 })
 
 test_that("paper consumption level map uses the positive half of the change palette", {

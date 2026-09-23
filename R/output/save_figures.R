@@ -301,6 +301,10 @@ map_cut_labels <- function(breaks) {
 
 map_no_data_colour <- function() "#bdbdbd"
 
+map_district_boundary_linewidth <- function() 0.04
+
+map_major_boundary_linewidth <- function() 0.28
+
 map_squish <- function(x, limits) {
   if (is.null(limits) || length(limits) != 2L || !all(is.finite(limits))) return(x)
   pmax(pmin(x, limits[[2]]), limits[[1]])
@@ -427,28 +431,46 @@ build_public_ggplot_map <- function(plot_data, spec, boundary_reference = NULL) 
   }
 
   state_boundaries <- public_map_state_boundaries(plot_data)
-  base <- ggplot2::ggplot() +
-    ggplot2::geom_sf(data = plot_data, ggplot2::aes(fill = .data[[fill$fill]]), color = "grey55", linewidth = 0.04)
-  if (!is.null(state_boundaries) && nrow(state_boundaries)) {
+  base <- ggplot2::ggplot()
+  if (!is.null(boundary_reference$extent) && nrow(boundary_reference$extent)) {
     base <- base + ggplot2::geom_sf(
-      data = state_boundaries, fill = NA, color = "grey15", linewidth = 0.28
+      data = boundary_reference$extent, fill = map_no_data_colour(), color = NA
     )
   }
+  base <- base + ggplot2::geom_sf(
+    data = plot_data, ggplot2::aes(fill = .data[[fill$fill]]),
+    color = NA
+  )
   if (!is.null(boundary_reference$disputed_areas) && nrow(boundary_reference$disputed_areas)) {
     base <- base + ggplot2::geom_sf(
-      data = boundary_reference$disputed_areas, fill = NA, color = "grey25",
-      linewidth = 0.30, linetype = "22"
+      data = boundary_reference$disputed_areas,
+      fill = map_no_data_colour(), color = NA
+    )
+  }
+  # Disputed polygons determine fill only. Redraw Census-2001 district lines on
+  # top so DataMeet subdivisions remain visible wherever that source supplies
+  # them; Natural-Earth-only territory intentionally receives no invented
+  # district subdivisions.
+  base <- base + ggplot2::geom_sf(
+    data = plot_data, fill = NA, color = "grey55",
+    linewidth = map_district_boundary_linewidth()
+  )
+  if (!is.null(state_boundaries) && nrow(state_boundaries)) {
+    base <- base + ggplot2::geom_sf(
+      data = state_boundaries, fill = NA, color = "grey15",
+      linewidth = map_major_boundary_linewidth()
     )
   }
   if (!is.null(boundary_reference$disputed_lines) && nrow(boundary_reference$disputed_lines)) {
     base <- base + ggplot2::geom_sf(
-      data = boundary_reference$disputed_lines, color = "grey10",
-      linewidth = 0.36, linetype = "22"
+      data = boundary_reference$disputed_lines, color = "grey15",
+      linewidth = map_major_boundary_linewidth()
     )
   }
   if (!is.null(boundary_reference$india) && nrow(boundary_reference$india)) {
     base <- base + ggplot2::geom_sf(
-      data = boundary_reference$india, fill = NA, color = "grey10", linewidth = 0.38
+      data = boundary_reference$india, fill = NA, color = "grey15",
+      linewidth = map_major_boundary_linewidth()
     )
   }
   base <- base +
@@ -521,7 +543,7 @@ save_map_figure <- function(spec, path_base, district_panel, map_geometry, bound
   }
 
   plot_data <- complete_public_map_geometry(district_panel, map_geometry)
-  plot_data <- clip_public_map_to_de_facto_india(plot_data, boundary_reference)
+  plot_data <- clip_public_map_to_reference_extent(plot_data, boundary_reference)
   plot_data <- prepare_public_map_data(plot_data, spec$variable)
   p <- build_public_ggplot_map(plot_data, spec, boundary_reference = boundary_reference)
   save_map_plot_formats(p, path_base, formats, width = 7.2, height = 5.2, dpi = 300)
@@ -743,7 +765,7 @@ save_poster_first_stage_specs <- function(spec, path_base, formats, district_pan
   labels <- plot_data[!duplicated(plot_data$specification_id), c("specification_id", "specification", "f_stat"), drop = FALSE]
   labels$panel_label <- paste0(
     labels$specification, "
-$F$ = ",
+F = ",
     formatC(labels$f_stat, format = "f", digits = 2)
   )
   plot_data$panel_label <- labels$panel_label[match(plot_data$specification_id, labels$specification_id)]
@@ -759,14 +781,14 @@ $F$ = ",
       inherit.aes = FALSE,
       linewidth = 0.8
     ) +
-    ggplot2::geom_point(size = 2.6) +
+    ggplot2::geom_point(size = 2.6, alpha = 0.65) +
     ggplot2::facet_wrap(~ panel_label, scales = "free", nrow = 1) +
     ggplot2::labs(
       x = "Linguistic distance (raw or residualized)",
       y = "EMI exposure (raw or residualized)",
       caption = paste(
         "Points are equal-frequency bin means on one common sample; lines are OLS first-stage fits.",
-        "$F$ statistics use state-clustered HC1 covariance. Census controls are measured in 2001."
+        "F statistics use state-clustered HC1 covariance. Census controls are measured in 2001."
       )
     ) +
     ggplot2::theme_minimal(base_size = 13) +
