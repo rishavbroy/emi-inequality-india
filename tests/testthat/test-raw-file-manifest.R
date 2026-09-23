@@ -481,7 +481,7 @@ test_that("tracked metadata checksum inventory is complete and current", {
   )
 })
 
-test_that("registered SHA-256 source identities are well formed and Natural Earth claim lines are fully pinned", {
+test_that("registered SHA-256 source identities are well formed and Natural Earth disputed areas are fully pinned", {
   root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
   manifest <- read.csv(
     file.path(root, "data", "metadata", "file_manifest.csv"),
@@ -491,7 +491,7 @@ test_that("registered SHA-256 source identities are well formed and Natural Eart
   expect_true(all(is_sha256(manifest$sha256[pinned])))
 
   natural_earth <- manifest[
-    manifest$source_id == "natural_earth_disputed_lines_10m",
+    manifest$source_id == "natural_earth_disputed_areas_10m",
     , drop = FALSE
   ]
   expect_equal(nrow(natural_earth), 5L)

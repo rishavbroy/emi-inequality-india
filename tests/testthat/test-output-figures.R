@@ -520,17 +520,17 @@ schooling_access_figure_fixture <- function() {
   list(access_summary = access, access_crosscuts = cross)
 }
 
-test_that("Natural Earth map reference requires only the disputed-line shapefile bundle", {
+test_that("Natural Earth map reference requires only the disputed-area shapefile bundle", {
   spec <- natural_earth_map_reference_spec()
-  expect_identical(names(spec), "disputed_lines")
+  expect_identical(names(spec), "disputed_areas")
 
   files <- unname(paste0(
-    "/tmp/", spec[["disputed_lines"]],
+    "/tmp/", spec[["disputed_areas"]],
     c(".dbf", ".shp", ".prj", ".shx", ".cpg")
   ))
   layers <- natural_earth_reference_shapefiles(files)
 
-  expect_identical(names(layers), "disputed_lines")
+  expect_identical(names(layers), "disputed_areas")
   expect_identical(
     basename(unname(layers)),
     paste0(unname(spec), ".shp")
@@ -543,34 +543,41 @@ test_that("Natural Earth map reference requires only the disputed-line shapefile
   )
 })
 
-test_that("Natural Earth line selection retains India-related claims only", {
-  lines <- data.frame(
-    FEATURECLA = c(
-      "Claim boundary", "Claim boundary", "Claim boundary",
-      "International boundary", "Claim boundary"
+test_that("disputed-area registry selects only explicitly registered Natural Earth polygons", {
+  registry <- data.frame(
+    area_id = c("aksai", "azad", "gilgit", "trans", "siachen"),
+    natural_earth_brk_name = c(
+      "Aksai Chin", "Azad Kashmir", "Gilgit-Baltistan",
+      "Shaksam Valley", "Siachen Glacier"
     ),
-    NOTE = c(
-      "Admin. by China, Claimed by India",
-      "Admin. by India, Claimed by China",
-      "Admin. by Bhutan, Claimed by China",
-      "Admin. by India, Claimed by Pakistan",
-      NA
+    display_label = c(
+      "Aksai Chin", "Azad Kashmir", "Gilgit-Baltistan",
+      "Trans-Karakoram Tract", "Siachen Glacier"
     ),
-    ADM0_A3_L = c("CHN", "IND", "BTN", "IND", NA),
-    ADM0_A3_R = c("CHN", "IND", "BTN", "IND", NA),
-    SOV_A3_L = c("CH1", "IND", "BTN", "IND", NA),
-    SOV_A3_R = c("CH1", "IND", "BTN", "IND", NA),
+    include = TRUE,
+    stringsAsFactors = FALSE
+  )
+  source <- data.frame(
+    BRK_NAME = c(registry$natural_earth_brk_name, "Junagadh", "Demchok"),
     stringsAsFactors = FALSE
   )
 
-  selected <- natural_earth_india_disputed_lines(lines)
+  selected <- select_registered_disputed_areas(source, registry)
 
-  expect_equal(nrow(selected), 2L)
-  expect_true(all(tolower(selected$FEATURECLA) == "claim boundary"))
-  expect_true(all(grepl("India", selected$NOTE, fixed = TRUE)))
+  expect_identical(selected$area_id, registry$area_id)
+  expect_identical(selected$BRK_NAME, registry$natural_earth_brk_name)
+  expect_identical(selected$display_label, registry$display_label)
+  expect_false(any(selected$BRK_NAME %in% c("Junagadh", "Demchok")))
+  expect_error(
+    select_registered_disputed_areas(
+      source[source$BRK_NAME != "Aksai Chin", , drop = FALSE], registry
+    ),
+    "Aksai Chin",
+    fixed = TRUE
+  )
 })
 
-test_that("ordinary public-map boundaries are dissolved from the district geometry", {
+test_that("ordinary state boundaries contain only borders shared between states", {
   skip_if_not_installed("sf")
   square <- function(x0, x1) sf::st_polygon(list(rbind(
     c(x0, 0), c(x1, 0), c(x1, 1), c(x0, 1), c(x0, 0)
@@ -579,20 +586,55 @@ test_that("ordinary public-map boundaries are dissolved from the district geomet
     target_unit_2001 = c("d1", "d2", "d3"),
     state_code_2001 = c("01", "01", "02"),
     geometry = sf::st_sfc(
-      square(0, 1), square(1, 2), square(2, 3), crs = 4326
+      square(0, 1), square(1, 2), square(2, 3), crs = 3857
     )
   )
 
   states <- public_map_state_boundaries(districts)
   outer <- public_map_outer_boundary(districts)
-  district_union <- sf::st_union(sf::st_geometry(districts))
 
-  expect_setequal(states$state, c("01", "02"))
-  expect_true(isTRUE(sf::st_equals(sf::st_union(states), district_union, sparse = FALSE)[1, 1]))
-  expect_true(isTRUE(sf::st_equals(sf::st_geometry(outer), district_union, sparse = FALSE)[1, 1]))
+  expect_s3_class(states, "sf")
+  expect_equal(as.numeric(sf::st_length(sf::st_union(states))), 1, tolerance = 1e-8)
+  expect_equal(
+    as.numeric(sf::st_length(sf::st_intersection(sf::st_union(states), sf::st_union(outer)))),
+    0,
+    tolerance = 1e-8
+  )
+  expect_equal(as.numeric(sf::st_length(sf::st_union(outer))), 8, tolerance = 1e-8)
 })
 
-test_that("Natural Earth claim lines annotate maps without replacing district polygons", {
+test_that("disputed masks change display geometry without changing analytical districts", {
+  skip_if_not_installed("sf")
+  square <- function(x0, x1) sf::st_polygon(list(rbind(
+    c(x0, 0), c(x1, 0), c(x1, 1), c(x0, 1), c(x0, 0)
+  )))
+  districts <- sf::st_sf(
+    target_unit_2001 = c("d1", "d2"),
+    state_code_2001 = c("01", "01"),
+    geometry = sf::st_sfc(square(0, 2), square(2, 4), crs = 3857)
+  )
+  disputed <- sf::st_sf(
+    area_id = "registered_dispute",
+    geometry = sf::st_sfc(square(1.5, 3.5), crs = 3857)
+  )
+  before <- sf::st_geometry(districts)
+
+  display <- mask_public_map_disputed_areas(districts, disputed)
+
+  expect_true(isTRUE(all.equal(sf::st_geometry(districts), before)))
+  expect_equal(nrow(display), nrow(districts))
+  expect_lt(
+    as.numeric(sf::st_area(sf::st_union(display))),
+    as.numeric(sf::st_area(sf::st_union(districts)))
+  )
+  expect_equal(
+    as.numeric(sf::st_area(sf::st_union(display))),
+    2,
+    tolerance = 1e-8
+  )
+})
+
+test_that("registered disputed areas are polygons with a distinct no-estimate treatment", {
   skip_if_not_installed("sf")
   skip_if_not_installed("ggplot2")
   square <- function(x0, x1) sf::st_polygon(list(rbind(
@@ -602,47 +644,45 @@ test_that("Natural Earth claim lines annotate maps without replacing district po
     target_unit_2001 = c("d1", "d2"),
     state_code_2001 = c("01", "01"),
     ling_distance_nonzero_mean = c(1, 2),
-    geometry = sf::st_sfc(square(0, 1), square(1, 2), crs = 4326)
+    geometry = sf::st_sfc(square(0, 1), square(1, 2), crs = 3857)
   )
-  claims <- sf::st_sf(
-    FEATURECLA = "Claim boundary",
-    NOTE = "Admin. by India, Claimed by another state",
-    geometry = sf::st_sfc(
-      sf::st_linestring(rbind(c(1, 0), c(1, 1))),
-      crs = 4326
-    )
+  disputed <- sf::st_sf(
+    area_id = "aksai_chin",
+    display_label = "Aksai Chin",
+    geometry = sf::st_sfc(square(1.5, 2.5), crs = 3857)
   )
   spec <- list(name = "fixture", variable = "ling_distance_nonzero_mean")
 
   plot <- build_public_ggplot_map(
-    districts, spec, list(disputed_lines = claims)
+    districts, spec, list(disputed_areas = disputed)
   )
 
   district_layers <- Filter(
     function(layer) "target_unit_2001" %in% names(layer$data),
     plot$layers
   )
-  natural_earth_layers <- Filter(
-    function(layer) "NOTE" %in% names(layer$data),
+  disputed_layers <- Filter(
+    function(layer) "area_id" %in% names(layer$data),
     plot$layers
   )
 
   expect_length(district_layers, 1L)
-  expect_equal(nrow(district_layers[[1]]$data), nrow(districts))
-  expect_length(natural_earth_layers, 1L)
+  expect_length(disputed_layers, 1L)
+  expect_lt(
+    as.numeric(sf::st_area(sf::st_union(district_layers[[1]]$data))),
+    as.numeric(sf::st_area(sf::st_union(districts)))
+  )
   expect_true(all(
-    as.character(sf::st_geometry_type(natural_earth_layers[[1]]$data)) %in%
-      c("LINESTRING", "MULTILINESTRING")
+    as.character(sf::st_geometry_type(disputed_layers[[1]]$data)) %in%
+      c("POLYGON", "MULTIPOLYGON")
   ))
-  expect_false(any(vapply(
-    plot$layers,
-    function(layer) "BRK_A3" %in% names(layer$data),
-    logical(1)
-  )))
+  expect_false(identical(map_disputed_no_data_colour(), map_no_data_colour()))
 })
 
-test_that("district boundaries stay thinner than state and outer boundaries", {
+test_that("district boundaries stay thinner than state and disputed boundaries", {
   expect_gt(map_major_boundary_linewidth(), map_district_boundary_linewidth())
+  expect_gt(map_disputed_boundary_linewidth(), map_district_boundary_linewidth())
+  expect_lt(map_disputed_boundary_linewidth(), map_major_boundary_linewidth())
 })
 
 test_that("paper consumption level map uses the positive half of the change palette", {

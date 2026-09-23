@@ -1,0 +1,6 @@
+area_id,natural_earth_brk_name,display_label,include,notes
+aksai_chin,Aksai Chin,Aksai Chin,true,"Display-only disputed/no-district-estimate mask. Natural Earth 5.1.1 identifies the polygon separately from the surrounding Census-2001 district geometry."
+azad_kashmir,Azad Kashmir,Azad Kashmir,true,"Display-only disputed/no-district-estimate polygon."
+gilgit_baltistan,Gilgit-Baltistan,Gilgit-Baltistan,true,"Display-only disputed/no-district-estimate polygon."
+trans_karakoram_tract,Shaksam Valley,Trans-Karakoram Tract,true,"Natural Earth 5.1.1 names this polygon Shaksam Valley; the paper-facing label uses Trans-Karakoram Tract."
+siachen_glacier,Siachen Glacier,Siachen Glacier,true,"Display-only disputed/no-district-estimate polygon; territorial status is not used analytically."

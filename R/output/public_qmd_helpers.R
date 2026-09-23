@@ -47,8 +47,9 @@ initialize_public_qmd_helpers <- function(env = parent.frame()) {
 
 paper_map_boundary_note <- function() {
   paste(
-    "District, state, and outer map geometry follows the DataMeet Census-2001 reference geography.",
-    "Natural Earth 1:10m claim lines are shown only as cartographic context for disputed boundaries and do not alter district data or geometry."
+    "District geometry follows the DataMeet Census-2001 reference geography; gray districts have no estimate.",
+    "A lighter gray identifies five registered disputed areas without district estimates—Aksai Chin, Azad Kashmir, Gilgit-Baltistan, the Trans-Karakoram Tract, and Siachen Glacier—using Natural Earth 1:10m polygons.",
+    "These masks affect display geometry only and do not alter analytical district joins, samples, or spatial weights; the depiction does not imply a position on territorial claims."
   )
 }
 

@@ -8,8 +8,20 @@ core_public_target_definitions <- function() {
       format = "file"
     ),
     tar_target(
+      map_disputed_area_registry_file,
+      map_disputed_area_registry_path(paths),
+      format = "file"
+    ),
+    tar_target(
+      map_disputed_area_registry,
+      read_map_disputed_area_registry(map_disputed_area_registry_file)
+    ),
+    tar_target(
       natural_earth_map_reference,
-      read_natural_earth_map_reference(natural_earth_map_reference_files)
+      read_natural_earth_map_reference(
+        natural_earth_map_reference_files,
+        map_disputed_area_registry
+      )
     ),
     tar_target(
       public_iv_specifications,

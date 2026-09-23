@@ -1,9 +1,10 @@
-# Display-only political boundary annotations for manuscript maps.
-# Census-2001 DataMeet geometry is the sole authority for district fills,
-# ordinary state boundaries, and the empirical map exterior.
+# Display-only disputed-area masks for manuscript maps.
+# Census-2001 DataMeet geometry remains the analytical authority. Natural Earth
+# polygons are used only to separate five registered disputed areas for which
+# the project has no district estimate from ordinary district-level missingness.
 
 natural_earth_map_reference_spec <- function() {
-  c(disputed_lines = "ne_10m_admin_0_boundary_lines_disputed_areas")
+  c(disputed_areas = "ne_10m_admin_0_disputed_areas")
 }
 
 natural_earth_map_reference_paths <- function(paths = build_paths()) {
@@ -15,6 +16,38 @@ natural_earth_map_reference_paths <- function(paths = build_paths()) {
     extensions,
     function(stem, ext) file.path(base, paste0(stem, ".", ext))
   ))
+}
+
+map_disputed_area_registry_path <- function(paths = build_paths()) {
+  path_project(paths, "data/metadata/map_disputed_areas.csv")
+}
+
+read_map_disputed_area_registry <- function(path = map_disputed_area_registry_path()) {
+  if (!file.exists(path)) {
+    stop("Missing disputed-area registry: ", path, call. = FALSE)
+  }
+  out <- utils::read.csv(path, stringsAsFactors = FALSE, check.names = FALSE)
+  required <- c("area_id", "natural_earth_brk_name", "display_label", "include")
+  missing <- setdiff(required, names(out))
+  if (length(missing)) {
+    stop(
+      "Disputed-area registry lacks column(s): ",
+      paste(missing, collapse = ", "), ".",
+      call. = FALSE
+    )
+  }
+  include <- tolower(trimws(as.character(out$include))) %in% c("true", "1", "yes")
+  out <- out[include, , drop = FALSE]
+  out$area_id <- trimws(as.character(out$area_id))
+  out$natural_earth_brk_name <- trimws(as.character(out$natural_earth_brk_name))
+  out$display_label <- trimws(as.character(out$display_label))
+  if (!nrow(out) || any(!nzchar(out$area_id)) || any(!nzchar(out$natural_earth_brk_name))) {
+    stop("Disputed-area registry must contain non-empty included area IDs and Natural Earth names.", call. = FALSE)
+  }
+  if (anyDuplicated(out$area_id) || anyDuplicated(out$natural_earth_brk_name)) {
+    stop("Included disputed-area registry rows must have unique IDs and Natural Earth names.", call. = FALSE)
+  }
+  out
 }
 
 natural_earth_reference_shapefiles <- function(files) {
@@ -36,36 +69,39 @@ natural_earth_reference_shapefiles <- function(files) {
   out
 }
 
-natural_earth_india_disputed_lines <- function(x) {
-  if (!nrow(x)) return(x)
-  required <- c("FEATURECLA", "NOTE")
-  missing <- setdiff(required, names(x))
-  actor_fields <- intersect(
-    c("ADM0_A3_L", "ADM0_A3_R", "SOV_A3_L", "SOV_A3_R"),
-    names(x)
+select_registered_disputed_areas <- function(x, registry) {
+  if (!"BRK_NAME" %in% names(x)) {
+    stop("Natural Earth disputed-area layer lacks BRK_NAME.", call. = FALSE)
+  }
+  source_names <- trimws(as.character(x$BRK_NAME))
+  counts <- vapply(
+    registry$natural_earth_brk_name,
+    function(name) sum(!is.na(source_names) & source_names == name),
+    integer(1)
   )
-  if (length(missing) || !length(actor_fields)) {
-    missing <- c(missing, if (!length(actor_fields)) "India actor fields" else character())
+  if (any(counts == 0L)) {
     stop(
-      "Natural Earth disputed-line layer lacks field(s): ",
-      paste(missing, collapse = ", "), ".",
+      "Natural Earth disputed-area layer is missing registered polygon(s): ",
+      paste(registry$natural_earth_brk_name[counts == 0L], collapse = ", "), ".",
       call. = FALSE
     )
   }
-
-  feature <- trimws(as.character(x$FEATURECLA))
-  note <- as.character(x$NOTE)
-  claim <- !is.na(feature) & tolower(feature) == "claim boundary"
-  india <- !is.na(note) & grepl("India", note, ignore.case = TRUE)
-  for (field in actor_fields) {
-    actor <- trimws(as.character(x[[field]]))
-    india <- india | (!is.na(actor) & actor == "IND")
+  if (any(counts > 1L)) {
+    stop(
+      "Registered Natural Earth disputed-area name(s) are not unique: ",
+      paste(registry$natural_earth_brk_name[counts > 1L], collapse = ", "), ".",
+      call. = FALSE
+    )
   }
-  x[claim & india, , drop = FALSE]
+  index <- match(registry$natural_earth_brk_name, source_names)
+  out <- x[index, , drop = FALSE]
+  out$area_id <- registry$area_id
+  out$display_label <- registry$display_label
+  out
 }
 
-read_natural_earth_map_reference <- function(files) {
-  need_pkg("sf", "Natural Earth boundary reference")
+read_natural_earth_map_reference <- function(files, registry) {
+  need_pkg("sf", "Natural Earth disputed-area reference")
   missing <- files[!file.exists(files)]
   if (length(missing)) {
     stop(
@@ -76,9 +112,9 @@ read_natural_earth_map_reference <- function(files) {
     )
   }
   layers <- natural_earth_reference_shapefiles(files)
-  disputed_lines <- sf::st_read(
-    layers[["disputed_lines"]], quiet = TRUE, stringsAsFactors = FALSE
+  disputed_areas <- sf::st_read(
+    layers[["disputed_areas"]], quiet = TRUE, stringsAsFactors = FALSE
   )
-  disputed_lines <- natural_earth_india_disputed_lines(disputed_lines)
-  list(disputed_lines = sf::st_make_valid(disputed_lines))
+  disputed_areas <- select_registered_disputed_areas(disputed_areas, registry)
+  list(disputed_areas = sf::st_make_valid(disputed_areas))
 }

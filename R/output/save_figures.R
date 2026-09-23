@@ -301,9 +301,13 @@ map_cut_labels <- function(breaks) {
 
 map_no_data_colour <- function() "#bdbdbd"
 
+map_disputed_no_data_colour <- function() "#eeeeee"
+
 map_district_boundary_linewidth <- function() 0.04
 
-map_major_boundary_linewidth <- function() 0.28
+map_major_boundary_linewidth <- function() 0.18
+
+map_disputed_boundary_linewidth <- function() 0.10
 
 map_squish <- function(x, limits) {
   if (is.null(limits) || length(limits) != 2L || !all(is.finite(limits))) return(x)
@@ -405,6 +409,27 @@ map_legend_override <- function(colors) {
   )
 }
 
+public_map_disputed_areas <- function(plot_data, boundary_reference = NULL) {
+  disputed <- boundary_reference$disputed_areas
+  if (!inherits(plot_data, "sf") || !inherits(disputed, "sf") || !nrow(disputed)) {
+    return(NULL)
+  }
+  if (is.na(sf::st_crs(plot_data)) || is.na(sf::st_crs(disputed))) {
+    stop("Public map and disputed-area geometries must have defined coordinate reference systems.", call. = FALSE)
+  }
+  sf::st_transform(disputed, sf::st_crs(plot_data))
+}
+
+mask_public_map_disputed_areas <- function(plot_data, disputed_areas = NULL) {
+  if (!inherits(plot_data, "sf") || !inherits(disputed_areas, "sf") || !nrow(disputed_areas)) {
+    return(plot_data)
+  }
+  mask <- sf::st_union(sf::st_geometry(disputed_areas))
+  out <- plot_data
+  sf::st_geometry(out) <- sf::st_difference(sf::st_geometry(plot_data), mask)
+  out
+}
+
 public_map_state_boundaries <- function(plot_data) {
   if (!inherits(plot_data, "sf")) return(NULL)
   state_col <- intersect(
@@ -417,12 +442,27 @@ public_map_state_boundaries <- function(plot_data) {
   keep <- !is.na(state) & nzchar(state)
   if (!any(keep)) return(NULL)
   data <- plot_data[keep, c(state_col, attr(plot_data, "sf_column")), drop = FALSE]
-  stats::aggregate(data, by = list(state = state[keep]), FUN = length)
+  states <- stats::aggregate(data, by = list(state = state[keep]), FUN = length)
+  if (nrow(states) < 2L) return(NULL)
+
+  state_edges <- sf::st_union(sf::st_boundary(sf::st_geometry(states)))
+  exterior <- sf::st_boundary(sf::st_union(sf::st_geometry(plot_data[keep, , drop = FALSE])))
+  internal <- sf::st_difference(state_edges, exterior)
+  if (length(internal) == 0L || all(sf::st_is_empty(internal))) return(NULL)
+  sf::st_sf(geometry = internal)
 }
 
-public_map_outer_boundary <- function(plot_data) {
+public_map_outer_boundary <- function(plot_data, disputed_areas = NULL) {
   if (!inherits(plot_data, "sf") || !nrow(plot_data)) return(NULL)
-  sf::st_sf(geometry = sf::st_union(sf::st_geometry(plot_data)))
+  boundary <- sf::st_boundary(sf::st_union(sf::st_geometry(plot_data)))
+  if (inherits(disputed_areas, "sf") && nrow(disputed_areas)) {
+    boundary <- sf::st_difference(
+      boundary,
+      sf::st_union(sf::st_geometry(disputed_areas))
+    )
+  }
+  if (length(boundary) == 0L || all(sf::st_is_empty(boundary))) return(NULL)
+  sf::st_sf(geometry = boundary)
 }
 
 build_public_ggplot_map <- function(plot_data, spec, boundary_reference = NULL) {
@@ -435,29 +475,31 @@ build_public_ggplot_map <- function(plot_data, spec, boundary_reference = NULL) 
     stop("Map figure '", spec$name, "' has no non-missing overlay districts for variable '", spec$variable, "'.", call. = FALSE)
   }
 
-  state_boundaries <- public_map_state_boundaries(plot_data)
-  outer_boundary <- public_map_outer_boundary(plot_data)
+  disputed_areas <- public_map_disputed_areas(plot_data, boundary_reference)
+  display_data <- mask_public_map_disputed_areas(plot_data, disputed_areas)
+  state_boundaries <- public_map_state_boundaries(display_data)
+  outer_boundary <- public_map_outer_boundary(plot_data, disputed_areas)
   base <- ggplot2::ggplot() +
     ggplot2::geom_sf(
-      data = plot_data, ggplot2::aes(fill = .data[[fill$fill]]),
+      data = display_data, ggplot2::aes(fill = .data[[fill$fill]]),
       color = "grey55", linewidth = map_district_boundary_linewidth()
     )
+  if (!is.null(disputed_areas) && nrow(disputed_areas)) {
+    base <- base + ggplot2::geom_sf(
+      data = disputed_areas, fill = map_disputed_no_data_colour(),
+      color = "grey45", linewidth = map_disputed_boundary_linewidth()
+    )
+  }
   if (!is.null(state_boundaries) && nrow(state_boundaries)) {
     base <- base + ggplot2::geom_sf(
-      data = state_boundaries, fill = NA, color = "grey15",
+      data = state_boundaries, color = "grey15",
       linewidth = map_major_boundary_linewidth()
     )
   }
   if (!is.null(outer_boundary) && nrow(outer_boundary)) {
     base <- base + ggplot2::geom_sf(
-      data = outer_boundary, fill = NA, color = "grey15",
+      data = outer_boundary, color = "grey15",
       linewidth = map_major_boundary_linewidth()
-    )
-  }
-  if (!is.null(boundary_reference$disputed_lines) && nrow(boundary_reference$disputed_lines)) {
-    base <- base + ggplot2::geom_sf(
-      data = boundary_reference$disputed_lines, color = "grey15",
-      linewidth = map_major_boundary_linewidth(), linetype = "22"
     )
   }
   base <- base +
