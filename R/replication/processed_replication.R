@@ -12,18 +12,25 @@ processed_replication_welfare_path <- function(paths = build_paths()) {
   path_project(paths, "data", "processed", "consumption_district_welfare.csv")
 }
 
-read_processed_replication_csv <- function(path) {
+read_processed_replication_csv <- function(path, character_columns = character()) {
   if (!file.exists(path)) stop("Processed replication input is missing: ", path, call. = FALSE)
+  classes <- stats::setNames(rep("character", length(character_columns)), character_columns)
   utils::read.csv(
     path,
     stringsAsFactors = FALSE,
     check.names = FALSE,
-    na.strings = c("", "NA")
+    na.strings = c("", "NA"),
+    colClasses = classes
   )
 }
 
 read_processed_replication_panel <- function(path, control_registry = NULL) {
-  x <- read_processed_replication_csv(path)
+  x <- read_processed_replication_csv(
+    path,
+    character_columns = c(
+      "target_unit_2001", "state_code_2001", "district_code_2001", "region"
+    )
+  )
   required <- c(
     "target_unit_2001", "state_code_2001", "region",
     "emi_exposure_all_children_0708", "ling_distance_nonzero_mean",
@@ -44,7 +51,13 @@ read_processed_replication_panel <- function(path, control_registry = NULL) {
 }
 
 read_processed_replication_welfare <- function(path) {
-  x <- read_processed_replication_csv(path)
+  x <- read_processed_replication_csv(
+    path,
+    character_columns = c(
+      "district_2001", "round_id", "outcome_id",
+      "status", "reason", "support_reason"
+    )
+  )
   required <- c(
     "district_2001", "round_id", "outcome_id", "estimate",
     "preferred_eligible", "analysis_eligible"
@@ -213,11 +226,15 @@ verify_processed_replication <- function(
   dir.create(dirname(output_path), recursive = TRUE, showWarnings = FALSE)
   utils::write.csv(report, output_path, row.names = FALSE, na = "")
 
-  failures <- report$target[report$status != "match"]
-  if (length(failures)) {
+  failures <- report[report$status != "match", , drop = FALSE]
+  if (nrow(failures)) {
+    detail <- paste0(
+      failures$target, " [", failures$status, "]",
+      ifelse(nzchar(failures$detail), paste0(": ", failures$detail), "")
+    )
     stop(
-      "Processed replication differs from the full-source build for: ",
-      paste(failures, collapse = ", "),
+      "Processed replication differs from the full-source build: ",
+      paste(detail, collapse = "; "),
       ". See ", output_path, ".",
       call. = FALSE
     )

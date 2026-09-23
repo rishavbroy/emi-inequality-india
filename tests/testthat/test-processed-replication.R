@@ -30,6 +30,10 @@ test_that("processed replication readers preserve district-level analysis inputs
 
   expect_identical(nrow(panel_read), 2L)
   expect_identical(nrow(welfare_read), 2L)
+  expect_identical(panel_read$state_code_2001, c("01", "01"))
+  expect_identical(panel_read$district_code_2001, c("01", "02"))
+  expect_identical(panel_read$target_unit_2001, panel$target_unit_2001)
+  expect_identical(welfare_read$district_2001, welfare$district_2001)
   expect_setequal(controls, intersect(controls, names(panel_read)))
 })
 

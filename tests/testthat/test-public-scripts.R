@@ -181,6 +181,7 @@ test_that("debug review archives retain intermediate diagnostics but exclude raw
     recursive = TRUE
   )
   dir.create(file.path(root, "outputs", "benchmarking"), recursive = TRUE)
+  dir.create(file.path(root, "outputs", "replication", "processed"), recursive = TRUE)
   dir.create(file.path(root, "data", "processed"), recursive = TRUE)
   dir.create(file.path(root, "data", "raw"), recursive = TRUE)
   file.copy(
@@ -195,6 +196,10 @@ test_that("debug review archives retain intermediate diagnostics but exclude raw
   writeLines(
     "benchmark",
     file.path(root, "outputs", "benchmarking", "runtime.csv")
+  )
+  writeLines(
+    "target,status,detail\nexample,value_mismatch,example detail",
+    file.path(root, "outputs", "replication", "processed", "verification.csv")
   )
   writeLines("processed", file.path(root, "data", "processed", "panel.csv"))
   writeLines("raw", file.path(root, "data", "raw", "private.csv"))
@@ -226,6 +231,7 @@ test_that("debug review archives retain intermediate diagnostics but exclude raw
     "outputs/diagnostics/extended/intermediate.csv" %in% listing
   )
   expect_true("outputs/benchmarking/runtime.csv" %in% listing)
+  expect_true("outputs/replication/processed/verification.csv" %in% listing)
   expect_true("data/processed/panel.csv" %in% listing)
   expect_false("data/raw/private.csv" %in% listing)
 })

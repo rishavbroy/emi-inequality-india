@@ -113,6 +113,7 @@ fi
 cp -R outputs/figures "$tmpdir/outputs/" 2>/dev/null || true
 cp -R outputs/tables "$tmpdir/outputs/" 2>/dev/null || true
 cp -R outputs/diagnostics "$tmpdir/outputs/" 2>/dev/null || true
+cp -R outputs/replication "$tmpdir/outputs/" 2>/dev/null || true
 mkdir -p "$tmpdir/outputs/build"
 if [[ ! -s "$tmpdir/outputs/build/build_status.json" ]]; then
   ARCHIVE_ALLOW_INCOMPLETE="$allow_incomplete" ARCHIVE_INCLUDE_SAMPLES="$include_samples" ARCHIVE_INCLUDE_ANALYSIS="$include_analysis" ARCHIVE_INCLUDE_POSTER="$include_poster" python3 - "$tmpdir/outputs/build/build_status.json" <<'PY_STATUS'
