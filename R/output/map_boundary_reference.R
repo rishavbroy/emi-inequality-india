@@ -119,11 +119,12 @@ read_natural_earth_map_reference <- function(files, registry) {
   list(disputed_areas = sf::st_make_valid(disputed_areas))
 }
 
-# Compose public-map reference layers without changing analytical geography.
+# Compose the display-only disputed/no-estimate mask once.
 #
 # Natural Earth classifies the five registered disputed areas; the DataMeet
 # 99/99 scaffold supplies source-native J&K coverage where canonical districts
-# are unavailable. Their union is a display class, not an analytical unit.
+# are unavailable. The union is a cartographic class only: analytical district
+# geometry, joins, samples, and spatial weights remain unchanged.
 build_public_map_boundary_reference <- function(natural_earth_reference, datameet_scaffold) {
   disputed <- natural_earth_reference$disputed_areas
   if (!inherits(disputed, "sf") || !nrow(disputed)) {
@@ -132,8 +133,24 @@ build_public_map_boundary_reference <- function(natural_earth_reference, datamee
   if (!inherits(datameet_scaffold, "sf") || nrow(datameet_scaffold) != 1L) {
     stop("Public map reference requires the one-feature DataMeet map scaffold.", call. = FALSE)
   }
+  if (is.na(sf::st_crs(disputed)) || is.na(sf::st_crs(datameet_scaffold))) {
+    stop("Public map reference geometries must have defined coordinate reference systems.", call. = FALSE)
+  }
+
+  disputed <- sf::st_transform(disputed, sf::st_crs(datameet_scaffold))
+  geometry <- sf::st_union(c(
+    sf::st_geometry(datameet_scaffold),
+    sf::st_geometry(disputed)
+  ))
+  geometry <- sf::st_make_valid(geometry)
+  if (length(geometry) == 0L || all(sf::st_is_empty(geometry))) {
+    stop("Public map disputed/no-estimate mask is empty.", call. = FALSE)
+  }
+
   list(
-    disputed_areas = disputed,
-    datameet_scaffold = datameet_scaffold
+    disputed_display = sf::st_sf(
+      area_id = "registered_disputed_no_estimate",
+      geometry = geometry
+    )
   )
 }

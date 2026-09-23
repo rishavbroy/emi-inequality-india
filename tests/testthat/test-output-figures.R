@@ -641,13 +641,20 @@ test_that("disputed display unions Natural Earth masks with the DataMeet scaffol
     geometry = sf::st_sfc(square(3.5, 4.5), crs = 3857)
   )
   before <- sf::st_geometry(districts)
-  reference <- list(disputed_areas = disputed, datameet_scaffold = scaffold)
+  reference <- build_public_map_boundary_reference(
+    list(disputed_areas = disputed),
+    scaffold
+  )
 
+  expect_identical(names(reference), "disputed_display")
   disputed_display <- public_map_disputed_display(districts, reference)
-  display <- mask_public_map_disputed_areas(districts, disputed_display)
+  expect_silent(
+    display <- mask_public_map_disputed_areas(districts, disputed_display)
+  )
 
   expect_true(isTRUE(all.equal(sf::st_geometry(districts), before)))
-  expect_equal(nrow(display), nrow(districts))
+  expect_equal(nrow(display), 1L)
+  expect_identical(display$target_unit_2001, "d1")
   expect_equal(
     as.numeric(sf::st_area(sf::st_union(disputed_display))),
     3,
@@ -696,10 +703,11 @@ test_that("registered disputed areas are polygons with a distinct no-estimate tr
     scaffold_id = "datameet_2001_99_99",
     geometry = sf::st_sfc(square(2.5, 3), crs = 3857)
   )
-  plot <- build_public_ggplot_map(
-    districts, spec,
-    list(disputed_areas = disputed, datameet_scaffold = scaffold)
+  reference <- build_public_map_boundary_reference(
+    list(disputed_areas = disputed),
+    scaffold
   )
+  plot <- build_public_ggplot_map(districts, spec, reference)
 
   district_layers <- Filter(
     function(layer) "target_unit_2001" %in% names(layer$data),

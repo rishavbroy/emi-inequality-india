@@ -420,29 +420,8 @@ public_map_reference_layer <- function(plot_data, boundary_reference, name) {
   sf::st_transform(layer, sf::st_crs(plot_data))
 }
 
-public_map_disputed_areas <- function(plot_data, boundary_reference = NULL) {
-  public_map_reference_layer(plot_data, boundary_reference, "disputed_areas")
-}
-
-public_map_datameet_scaffold <- function(plot_data, boundary_reference = NULL) {
-  public_map_reference_layer(plot_data, boundary_reference, "datameet_scaffold")
-}
-
 public_map_disputed_display <- function(plot_data, boundary_reference = NULL) {
-  disputed <- public_map_disputed_areas(plot_data, boundary_reference)
-  scaffold <- public_map_datameet_scaffold(plot_data, boundary_reference)
-  parts <- Filter(
-    function(x) inherits(x, "sf") && nrow(x),
-    list(disputed, scaffold)
-  )
-  if (!length(parts)) return(NULL)
-  geometry <- do.call(c, lapply(parts, sf::st_geometry))
-  union <- sf::st_union(geometry)
-  if (length(union) == 0L || all(sf::st_is_empty(union))) return(NULL)
-  sf::st_sf(
-    area_id = "registered_disputed_no_estimate",
-    geometry = union
-  )
+  public_map_reference_layer(plot_data, boundary_reference, "disputed_display")
 }
 
 mask_public_map_disputed_areas <- function(plot_data, disputed_areas = NULL) {
@@ -450,9 +429,13 @@ mask_public_map_disputed_areas <- function(plot_data, disputed_areas = NULL) {
     return(plot_data)
   }
   mask <- sf::st_union(sf::st_geometry(disputed_areas))
+  # Use sf's binary-operation method rather than replacing the geometry column
+  # manually. A mask may erase a district completely; st_difference.sf() then
+  # drops that empty feature while preserving the attributes of surviving pieces.
+  # District attributes are constant over each display polygon by construction.
   out <- plot_data
-  sf::st_geometry(out) <- sf::st_difference(sf::st_geometry(plot_data), mask)
-  out
+  sf::st_agr(out) <- "constant"
+  sf::st_difference(out, mask)
 }
 
 public_map_state_boundaries <- function(plot_data) {
