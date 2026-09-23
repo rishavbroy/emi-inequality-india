@@ -673,11 +673,9 @@ test_that("disputed display unions Natural Earth masks with the DataMeet scaffol
     sf::st_geometry(districts),
     sf::st_geometry(disputed_display)
   ))
-  expect_equal(
-    as.numeric(sf::st_area(sf::st_sym_difference(restored, expected))),
-    0,
-    tolerance = 1e-8
-  )
+  expect_true(all(sf::st_is_empty(
+    sf::st_sym_difference(restored, expected)
+  )))
 })
 
 test_that("registered disputed areas are polygons with a distinct no-estimate treatment", {
