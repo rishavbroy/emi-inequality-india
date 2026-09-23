@@ -146,7 +146,6 @@ make_figures <- function(
     consumption_district_welfare = NULL) {
   district_panel <- add_poster_residual_variables(district_panel)
   district_panel <- add_paper_welfare_map_variables(district_panel, consumption_district_welfare)
-
   spec <- preferred_iv_variables()
   required_variables <- c(
     spec$treatment,

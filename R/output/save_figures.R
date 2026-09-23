@@ -420,6 +420,11 @@ public_map_state_boundaries <- function(plot_data) {
   stats::aggregate(data, by = list(state = state[keep]), FUN = length)
 }
 
+public_map_outer_boundary <- function(plot_data) {
+  if (!inherits(plot_data, "sf") || !nrow(plot_data)) return(NULL)
+  sf::st_sf(geometry = sf::st_union(sf::st_geometry(plot_data)))
+}
+
 build_public_ggplot_map <- function(plot_data, spec, boundary_reference = NULL) {
   need_pkg("ggplot2", "classified choropleth maps")
   style <- public_map_style(spec$variable)
@@ -431,46 +436,28 @@ build_public_ggplot_map <- function(plot_data, spec, boundary_reference = NULL) 
   }
 
   state_boundaries <- public_map_state_boundaries(plot_data)
-  base <- ggplot2::ggplot()
-  if (!is.null(boundary_reference$extent) && nrow(boundary_reference$extent)) {
-    base <- base + ggplot2::geom_sf(
-      data = boundary_reference$extent, fill = map_no_data_colour(), color = NA
+  outer_boundary <- public_map_outer_boundary(plot_data)
+  base <- ggplot2::ggplot() +
+    ggplot2::geom_sf(
+      data = plot_data, ggplot2::aes(fill = .data[[fill$fill]]),
+      color = "grey55", linewidth = map_district_boundary_linewidth()
     )
-  }
-  base <- base + ggplot2::geom_sf(
-    data = plot_data, ggplot2::aes(fill = .data[[fill$fill]]),
-    color = NA
-  )
-  if (!is.null(boundary_reference$disputed_areas) && nrow(boundary_reference$disputed_areas)) {
-    base <- base + ggplot2::geom_sf(
-      data = boundary_reference$disputed_areas,
-      fill = map_no_data_colour(), color = NA
-    )
-  }
-  # Disputed polygons determine fill only. Redraw Census-2001 district lines on
-  # top so DataMeet subdivisions remain visible wherever that source supplies
-  # them; Natural-Earth-only territory intentionally receives no invented
-  # district subdivisions.
-  base <- base + ggplot2::geom_sf(
-    data = plot_data, fill = NA, color = "grey55",
-    linewidth = map_district_boundary_linewidth()
-  )
   if (!is.null(state_boundaries) && nrow(state_boundaries)) {
     base <- base + ggplot2::geom_sf(
       data = state_boundaries, fill = NA, color = "grey15",
       linewidth = map_major_boundary_linewidth()
     )
   }
-  if (!is.null(boundary_reference$disputed_lines) && nrow(boundary_reference$disputed_lines)) {
+  if (!is.null(outer_boundary) && nrow(outer_boundary)) {
     base <- base + ggplot2::geom_sf(
-      data = boundary_reference$disputed_lines, color = "grey15",
+      data = outer_boundary, fill = NA, color = "grey15",
       linewidth = map_major_boundary_linewidth()
     )
   }
-  if (!is.null(boundary_reference$india) && nrow(boundary_reference$india)) {
+  if (!is.null(boundary_reference$disputed_lines) && nrow(boundary_reference$disputed_lines)) {
     base <- base + ggplot2::geom_sf(
-      data = boundary_reference$india, fill = NA, color = "grey15",
-      linewidth = map_major_boundary_linewidth()
+      data = boundary_reference$disputed_lines, color = "grey15",
+      linewidth = map_major_boundary_linewidth(), linetype = "22"
     )
   }
   base <- base +
@@ -543,7 +530,6 @@ save_map_figure <- function(spec, path_base, district_panel, map_geometry, bound
   }
 
   plot_data <- complete_public_map_geometry(district_panel, map_geometry)
-  plot_data <- clip_public_map_to_reference_extent(plot_data, boundary_reference)
   plot_data <- prepare_public_map_data(plot_data, spec$variable)
   p <- build_public_ggplot_map(plot_data, spec, boundary_reference = boundary_reference)
   save_map_plot_formats(p, path_base, formats, width = 7.2, height = 5.2, dpi = 300)

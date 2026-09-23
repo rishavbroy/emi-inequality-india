@@ -520,122 +520,79 @@ schooling_access_figure_fixture <- function() {
   list(access_summary = access, access_crosscuts = cross)
 }
 
-test_that("Natural Earth file inputs retain complete shapefile bundles without relying on vector names", {
+test_that("Natural Earth map reference requires only the disputed-line shapefile bundle", {
   spec <- natural_earth_map_reference_spec()
-  files <- unname(c(
-    paste0("/tmp/", spec[["disputed_lines"]], c(".dbf", ".shp", ".prj", ".shx")),
-    paste0("/tmp/", spec[["countries"]], c(".prj", ".shx", ".dbf", ".shp")),
-    paste0("/tmp/", spec[["disputed_areas"]], c(".shx", ".dbf", ".shp", ".prj"))
-  ))
+  expect_identical(names(spec), "disputed_lines")
 
+  files <- unname(paste0(
+    "/tmp/", spec[["disputed_lines"]],
+    c(".dbf", ".shp", ".prj", ".shx", ".cpg")
+  ))
   layers <- natural_earth_reference_shapefiles(files)
 
-  expect_identical(names(layers), names(spec))
-  expect_identical(basename(unname(layers)), paste0(unname(spec), ".shp"))
+  expect_identical(names(layers), "disputed_lines")
+  expect_identical(
+    basename(unname(layers)),
+    paste0(unname(spec), ".shp")
+  )
 
   tracked <- natural_earth_map_reference_paths()
-  expected_extensions <- c("shp", "dbf", "shx", "prj", "cpg")
-  expect_identical(length(tracked), length(spec) * length(expected_extensions))
-  for (stem in unname(spec)) {
-    bundle <- tracked[startsWith(basename(tracked), paste0(stem, "."))]
-    expect_setequal(tools::file_ext(bundle), expected_extensions)
-  }
+  expect_setequal(
+    tools::file_ext(tracked),
+    c("shp", "dbf", "shx", "prj", "cpg")
+  )
 })
 
-test_that("Natural Earth reference extent retains disputes but removes geometry beyond the combined map", {
-  skip_if_not_installed("sf")
-  district <- sf::st_sf(
-    target_unit_2001 = "d1",
-    value = 1,
-    geometry = sf::st_sfc(sf::st_polygon(list(rbind(
-      c(0, 0), c(3, 0), c(3, 1), c(0, 1), c(0, 0)
-    ))), crs = 4326)
+test_that("Natural Earth line selection retains India-related claims only", {
+  lines <- data.frame(
+    FEATURECLA = c(
+      "Claim boundary", "Claim boundary", "Claim boundary",
+      "International boundary", "Claim boundary"
+    ),
+    NOTE = c(
+      "Admin. by China, Claimed by India",
+      "Admin. by India, Claimed by China",
+      "Admin. by Bhutan, Claimed by China",
+      "Admin. by India, Claimed by Pakistan",
+      NA
+    ),
+    ADM0_A3_L = c("CHN", "IND", "BTN", "IND", NA),
+    ADM0_A3_R = c("CHN", "IND", "BTN", "IND", NA),
+    SOV_A3_L = c("CH1", "IND", "BTN", "IND", NA),
+    SOV_A3_R = c("CH1", "IND", "BTN", "IND", NA),
+    stringsAsFactors = FALSE
   )
-  india <- sf::st_sf(
-    ADM0_A3 = "IND",
-    geometry = sf::st_sfc(sf::st_polygon(list(rbind(
-      c(0, 0), c(1, 0), c(1, 1), c(0, 1), c(0, 0)
-    ))), crs = 4326)
-  )
-  dispute <- sf::st_sf(
-    BRK_A3 = "B01",
-    geometry = sf::st_sfc(sf::st_polygon(list(rbind(
-      c(1, 0), c(2, 0), c(2, 1), c(1, 1), c(1, 0)
-    ))), crs = 4326)
-  )
-  extent <- natural_earth_india_display_extent(india, dispute)
 
-  clipped <- clip_public_map_to_reference_extent(district, list(extent = extent))
+  selected <- natural_earth_india_disputed_lines(lines)
 
-  expect_identical(clipped$target_unit_2001, "d1")
-  clipped_area <- as.numeric(sf::st_area(sf::st_transform(clipped, 3857)))
-  india_area <- as.numeric(sf::st_area(sf::st_transform(india, 3857)))
-  district_area <- as.numeric(sf::st_area(sf::st_transform(district, 3857)))
-  expect_gt(clipped_area, india_area)
-  expect_lt(clipped_area, district_area)
+  expect_equal(nrow(selected), 2L)
+  expect_true(all(tolower(selected$FEATURECLA) == "claim boundary"))
+  expect_true(all(grepl("India", selected$NOTE, fixed = TRUE)))
 })
 
-test_that("DataMeet and Natural Earth map geometry must agree outside disputed overlays", {
+test_that("ordinary public-map boundaries are dissolved from the district geometry", {
   skip_if_not_installed("sf")
   square <- function(x0, x1) sf::st_polygon(list(rbind(
     c(x0, 0), c(x1, 0), c(x1, 1), c(x0, 1), c(x0, 0)
   )))
   districts <- sf::st_sf(
-    unit_id = c("d1", "d2"),
-    geometry = sf::st_sfc(square(0, 1), square(1, 2), crs = 4326)
+    target_unit_2001 = c("d1", "d2", "d3"),
+    state_code_2001 = c("01", "01", "02"),
+    geometry = sf::st_sfc(
+      square(0, 1), square(1, 2), square(2, 3), crs = 4326
+    )
   )
-  india <- sf::st_sf(
-    ADM0_A3 = "IND",
-    geometry = sf::st_sfc(square(0, 2), crs = 4326)
-  )
-  extent <- natural_earth_india_display_extent(india, india[0, ])
-  reference <- list(india = india, extent = extent)
 
-  expect_no_error(validate_public_map_geometry_alignment(districts, reference))
+  states <- public_map_state_boundaries(districts)
+  outer <- public_map_outer_boundary(districts)
+  district_union <- sf::st_union(sf::st_geometry(districts))
 
-  shifted <- sf::st_sf(
-    unit_id = c("d1", "d2"),
-    geometry = sf::st_sfc(square(5, 6), square(6, 7), crs = 4326)
-  )
-  expect_error(
-    validate_public_map_geometry_alignment(shifted, reference),
-    "disagree materially"
-  )
+  expect_setequal(states$state, c("01", "02"))
+  expect_true(isTRUE(sf::st_equals(sf::st_union(states), district_union, sparse = FALSE)[1, 1]))
+  expect_true(isTRUE(sf::st_equals(sf::st_geometry(outer), district_union, sparse = FALSE)[1, 1]))
 })
 
-test_that("Natural Earth dispute overlays select India-related claims by attributes", {
-  areas <- data.frame(
-    BRK_A3 = c("B07", "B75", "B45"),
-    NOTE_BRK = c(
-      "Admin. by China; Claimed by India",
-      "Admin. by Bhutan; Claimed by China",
-      "Claimed by Pakistan and India"
-    ),
-    stringsAsFactors = FALSE
-  )
-  selected_areas <- natural_earth_india_disputed_areas(areas)
-  expect_setequal(selected_areas$BRK_A3, c("B07", "B45"))
-
-  lines <- data.frame(
-    FEATURECLA = rep("Claim boundary", 4),
-    BRK_A3 = c("B07", "B75", NA, "other"),
-    ADM0_A3_L = c("CHN", "BTN", "IND", "NPL"),
-    ADM0_A3_R = c("CHN", "BTN", "IND", "NPL"),
-    SOV_A3_L = c("CH1", "BTN", "IND", "NPL"),
-    SOV_A3_R = c("CH1", "BTN", "IND", "NPL"),
-    stringsAsFactors = FALSE
-  )
-  selected_lines <- natural_earth_india_disputed_lines(lines, selected_areas)
-  expect_equal(nrow(selected_lines), 2L)
-  expect_true("B07" %in% selected_lines$BRK_A3)
-  expect_true(any(is.na(selected_lines$BRK_A3)))
-})
-
-test_that("district boundaries stay thinner than state and international boundaries", {
-  expect_gt(map_major_boundary_linewidth(), map_district_boundary_linewidth())
-})
-
-test_that("disputed fills do not replace available DataMeet district boundaries", {
+test_that("Natural Earth claim lines annotate maps without replacing district polygons", {
   skip_if_not_installed("sf")
   skip_if_not_installed("ggplot2")
   square <- function(x0, x1) sf::st_polygon(list(rbind(
@@ -647,49 +604,45 @@ test_that("disputed fills do not replace available DataMeet district boundaries"
     ling_distance_nonzero_mean = c(1, 2),
     geometry = sf::st_sfc(square(0, 1), square(1, 2), crs = 4326)
   )
-  dispute <- sf::st_sf(
-    BRK_A3 = "B07",
-    geometry = sf::st_sfc(square(1, 2), crs = 4326)
-  )
-  india <- sf::st_sf(
-    ADM0_A3 = "IND",
-    geometry = sf::st_sfc(square(0, 2), crs = 4326)
-  )
-  reference <- list(
-    india = india,
-    disputed_areas = dispute,
-    disputed_lines = dispute[0, ],
-    extent = natural_earth_india_display_extent(india, dispute)
+  claims <- sf::st_sf(
+    FEATURECLA = "Claim boundary",
+    NOTE = "Admin. by India, Claimed by another state",
+    geometry = sf::st_sfc(
+      sf::st_linestring(rbind(c(1, 0), c(1, 1))),
+      crs = 4326
+    )
   )
   spec <- list(name = "fixture", variable = "ling_distance_nonzero_mean")
 
-  plot <- build_public_ggplot_map(districts, spec, reference)
-  dispute_index <- which(vapply(
+  plot <- build_public_ggplot_map(
+    districts, spec, list(disputed_lines = claims)
+  )
+
+  district_layers <- Filter(
+    function(layer) "target_unit_2001" %in% names(layer$data),
+    plot$layers
+  )
+  natural_earth_layers <- Filter(
+    function(layer) "NOTE" %in% names(layer$data),
+    plot$layers
+  )
+
+  expect_length(district_layers, 1L)
+  expect_equal(nrow(district_layers[[1]]$data), nrow(districts))
+  expect_length(natural_earth_layers, 1L)
+  expect_true(all(
+    as.character(sf::st_geometry_type(natural_earth_layers[[1]]$data)) %in%
+      c("LINESTRING", "MULTILINESTRING")
+  ))
+  expect_false(any(vapply(
     plot$layers,
     function(layer) "BRK_A3" %in% names(layer$data),
     logical(1)
-  ))
-  outline_index <- which(vapply(
-    plot$layers,
-    function(layer) {
-      "target_unit_2001" %in% names(layer$data) &&
-        length(layer$aes_params$fill) == 1L &&
-        is.na(layer$aes_params$fill)
-    },
-    logical(1)
-  ))
+  )))
+})
 
-  expect_length(dispute_index, 1L)
-  expect_length(outline_index, 1L)
-  expect_gt(outline_index, dispute_index)
-  disputed_layer <- plot$layers[[dispute_index]]
-  district_outline <- plot$layers[[outline_index]]
-  expect_true(is.na(disputed_layer$aes_params$colour))
-  expect_identical(disputed_layer$aes_params$fill, map_no_data_colour())
-  expect_equal(
-    district_outline$aes_params$linewidth,
-    map_district_boundary_linewidth()
-  )
+test_that("district boundaries stay thinner than state and outer boundaries", {
+  expect_gt(map_major_boundary_linewidth(), map_district_boundary_linewidth())
 })
 
 test_that("paper consumption level map uses the positive half of the change palette", {
@@ -701,23 +654,4 @@ test_that("paper consumption level map uses the positive half of the change pale
     public_map_style("paper_real_mean_mpce_2022_23")$palette,
     "poster.consumption.positive"
   )
-})
-
-test_that("Natural Earth India selection is based on stable country identifiers", {
-  skip_if_not_installed("sf")
-  polygons <- sf::st_sfc(
-    sf::st_polygon(list(rbind(c(0, 0), c(1, 0), c(1, 1), c(0, 1), c(0, 0)))),
-    sf::st_polygon(list(rbind(c(2, 0), c(3, 0), c(3, 1), c(2, 1), c(2, 0)))),
-    crs = 4326
-  )
-  countries <- sf::st_sf(
-    ADM0_A3 = c("IND", "PAK"),
-    ADMIN = c("India", "Pakistan"),
-    geometry = polygons
-  )
-
-  india <- natural_earth_india_row(countries)
-
-  expect_equal(nrow(india), 1L)
-  expect_identical(india$ADM0_A3, "IND")
 })

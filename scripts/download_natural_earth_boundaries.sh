@@ -18,8 +18,6 @@ base="data/raw/natural-earth/10m"
 mkdir -p "$base"
 
 names=(
-  ne_10m_admin_0_countries
-  ne_10m_admin_0_disputed_areas
   ne_10m_admin_0_boundary_lines_disputed_areas
 )
 base_url="https://naturalearth.s3.amazonaws.com/10m_cultural"

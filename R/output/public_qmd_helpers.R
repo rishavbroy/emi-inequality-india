@@ -47,9 +47,8 @@ initialize_public_qmd_helpers <- function(env = parent.frame()) {
 
 paper_map_boundary_note <- function() {
   paste(
-    "Boundary note: district shading follows the Census-2001 geographic units used in the analysis.",
-    "International boundaries and disputed areas use Natural Earth’s de facto/disputed-boundary representation;",
-    "their depiction does not express a position on sovereignty or territorial claims."
+    "District, state, and outer map geometry follows the DataMeet Census-2001 reference geography.",
+    "Natural Earth 1:10m claim lines are shown only as cartographic context for disputed boundaries and do not alter district data or geometry."
   )
 }
 
