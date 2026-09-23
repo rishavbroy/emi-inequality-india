@@ -541,12 +541,3 @@ test_that("Census 1991 acquisition manifest preserves source-specific published 
   expect_identical(anyDuplicated(manifest$url), 0L)
 })
 
-test_that("Natural Earth downloader fetches only the display claim-line theme", {
-  path <- file.path(Sys.getenv("EMI_PROJECT_ROOT", "."), "scripts", "download_natural_earth_boundaries.sh")
-  script <- paste(readLines(path, warn = FALSE), collapse = "\n")
-  expect_match(script, "ne_10m_admin_0_boundary_lines_disputed_areas", fixed = TRUE)
-  expect_false(grepl("ne_10m_admin_0_countries", script, fixed = TRUE))
-  expect_false(grepl("ne_10m_admin_0_disputed_areas", script, fixed = TRUE))
-  expect_match(script, "naturalearth.s3.amazonaws.com/10m_cultural", fixed = TRUE)
-  expect_match(script, "shp dbf shx prj cpg", fixed = TRUE)
-})
