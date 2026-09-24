@@ -40,11 +40,10 @@ I believe the [current paper](paper/paper-new.pdf) displays multiple traits that
 
 This repository, on the other hand, is intended to signal more than just one PDF. Its current state contains the following:
 
-- **Completed refactor proof.** The legacy-to-Quarto migration and parity machinery has been frozen under `archive/refactoring/` and the `archive/refactoring-complete` branch/tag workflow. Active paper and analysis sources are now edited directly.
+- **Completed refactor proof.** The legacy-to-Quarto migration and parity machinery has been frozen under `archive/refactoring/` and the `archive/refactoring-complete` branch/tag workflow. Active paper and research modules are now edited directly.
 - **Targets-based research build.** [`_targets.R`](_targets.R) organizes raw-data readers, district tracking, measure construction, IV/probit models, figures, tables, diagnostics, report rendering, and application samples.
 - **Verified final outputs.** [`scripts/run_full_build.sh`](scripts/run_full_build.sh) checks source whitespace without modifying the working tree, runs tests and final checks, optionally runs extended research checks and benchmarks, records machine-readable build status, and packages `review.zip`.
 - **Review archives without raw data.** [`scripts/make_review_archive.sh`](scripts/make_review_archive.sh) packages source, rendered outputs, and selected research checks into `review.zip` while omitting local raw data and caches.
-- **Explicit optional-analysis policy.** Build metadata are short-lived; extended research checks and benchmark outputs are preserved unless intentionally removed.
 - **Application-sample automation.** Writing and coding samples are generated from the same source and target build used for the paper rather than hand-maintained as separate PDFs.
 
 ## Repository map
