@@ -169,6 +169,18 @@ test_that("lineage evidence registry requires stable unique source IDs", {
   expect_error(read_lineage_source_registry(registry), "unique source_id")
 })
 
+test_that("empty lineage review outputs retain stable schemas", {
+  expect_named(empty_candidate_admin_events(), c(
+    "event_id", "effective_date", "reported_year", "source_year",
+    "target_year", "date_precision", "event_type", "from_state",
+    "from_district", "to_state", "to_district", "source_id", "status", "note"
+  ))
+  expect_named(empty_evidence_requests(), c(
+    "request_id", "state", "affected_units", "period",
+    "unresolved_question", "sources_checked", "requested_document"
+  ))
+})
+
 test_that("candidate event years are not promoted to fabricated exact dates", {
   tracker <- data.frame(
     source_file_id = "district_splits", .row_in_source = 1L,

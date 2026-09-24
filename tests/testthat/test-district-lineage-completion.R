@@ -1395,3 +1395,18 @@ test_that("lineage geometry attachment preserves sf class and panel order", {
   expect_false(any(sf::st_is_empty(sf::st_geometry(out)[c(1, 3)])))
   expect_true(sf::st_is_empty(sf::st_geometry(out)[2]))
 })
+
+
+test_that("empty downstream lineage queues retain review schemas", {
+  identity <- build_lineage_unmapped_identity_queue(data.frame(), data.frame())
+  terminal <- build_lineage_unmapped_terminal_queue(data.frame(), data.frame())
+
+  expect_equal(nrow(identity), 0L)
+  expect_true(all(c(
+    "source_row_id", "terminal_unit", "review_scope", "next_action"
+  ) %in% names(identity)))
+  expect_equal(nrow(terminal), 0L)
+  expect_true(all(c(
+    "terminal_unit", "evidence_class", "review_priority", "next_action"
+  ) %in% names(terminal)))
+})

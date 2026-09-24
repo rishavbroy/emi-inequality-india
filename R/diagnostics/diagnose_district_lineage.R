@@ -53,6 +53,26 @@ build_isded_candidate_events <- function(raw_sources) {
   )
 }
 
+empty_candidate_admin_events <- function() {
+  data.frame(
+    event_id = character(), effective_date = character(),
+    reported_year = integer(), source_year = integer(), target_year = integer(),
+    date_precision = character(), event_type = character(),
+    from_state = character(), from_district = character(),
+    to_state = character(), to_district = character(), source_id = character(),
+    status = character(), note = character(), stringsAsFactors = FALSE
+  )
+}
+
+empty_evidence_requests <- function() {
+  data.frame(
+    request_id = character(), state = character(), affected_units = character(),
+    period = character(), unresolved_question = character(),
+    sources_checked = character(), requested_document = character(),
+    stringsAsFactors = FALSE
+  )
+}
+
 build_candidate_admin_events <- function(district_tracker, raw_sources) {
   required <- c(
     "source_file_id", ".row_in_source", "source_state_raw", "source_district_raw",
@@ -89,7 +109,7 @@ build_candidate_admin_events <- function(district_tracker, raw_sources) {
       note = "Tracker relation is candidate evidence only; verify the date and territorial content before acceptance.",
       stringsAsFactors = FALSE
     )
-  } else data.frame()
+  } else empty_candidate_admin_events()
 
   district_mod <- safe_df(raw_sources$lgd_mod_districts %||% data.frame())
   lgd_events <- if (nrow(district_mod)) {
@@ -111,7 +131,7 @@ build_candidate_admin_events <- function(district_tracker, raw_sources) {
       note = "LGD identifies a district modified during 2011-01-01 to 2018-06-30 but this export does not encode its action, predecessor, or effective date.",
       stringsAsFactors = FALSE
     )
-  } else data.frame()
+  } else empty_candidate_admin_events()
 
   isded_events <- build_isded_candidate_events(raw_sources)
   unique(safe_bind_rows(list(tracker_events, lgd_events, isded_events)))
@@ -391,7 +411,8 @@ build_evidence_requests <- function(
     stringsAsFactors = FALSE
   ) else data.frame()
 
-  unique(safe_bind_rows(list(event_out, source_out, lineage_out)))
+  out <- unique(safe_bind_rows(list(event_out, source_out, lineage_out)))
+  if (nrow(out)) out else empty_evidence_requests()
 }
 
 lineage_gate_actions <- function() {
@@ -624,7 +645,7 @@ build_district_lineage <- function(
   conservative_crosswalk <- build_conservative_source_crosswalk(eligibility)
   excluded_sources <- build_excluded_source_rows(eligibility)
 
-  candidate_events <- data.frame()
+  candidate_events <- empty_candidate_admin_events()
   current_components <- build_current_component_registry(raw_sources)
   urban_coverage <- build_current_urban_coverage(raw_sources)
   changed_components <- build_changed_component_roster(raw_sources)

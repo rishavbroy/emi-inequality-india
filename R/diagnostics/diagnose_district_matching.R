@@ -46,6 +46,14 @@ diagnose_district_matching <- function(district_panel, district_join_map, cfg) {
   base
 }
 
+empty_source_key_inventory <- function() {
+  data.frame(
+    state_std = character(), district_std = character(), source_year = integer(),
+    match_status = character(), diagnostic_role = character(),
+    legacy_note = character(), stringsAsFactors = FALSE
+  )
+}
+
 is_source_key_inventory <- function(x) {
   x <- as.data.frame(x, stringsAsFactors = FALSE)
   if (!nrow(x) || !"match_status" %in% names(x)) return(FALSE)
@@ -67,7 +75,7 @@ extract_source_key_inventory <- function(join_map) {
     join_map$legacy_note <- "These rows are a fallback source-key inventory, not a row-level ledger of production source-attachment failures."
     return(join_map)
   }
-  data.frame()
+  empty_source_key_inventory()
 }
 
 extract_unmatched_districts <- function(join_map, ...) {
@@ -75,7 +83,9 @@ extract_unmatched_districts <- function(join_map, ...) {
   if (!is.null(out)) {
     out <- as.data.frame(out, stringsAsFactors = FALSE)
     if (is_source_key_inventory(out)) return(out[0, , drop = FALSE])
-    return(out)
+    if (ncol(out)) return(out)
+    join_map <- as.data.frame(join_map, stringsAsFactors = FALSE)
+    return(join_map[0, , drop = FALSE])
   }
 
   join_map <- as.data.frame(join_map, stringsAsFactors = FALSE)
@@ -91,7 +101,7 @@ extract_unmatched_districts <- function(join_map, ...) {
 
 extract_manual_matches <- function(join_map, ...) {
   join_map <- as.data.frame(join_map, stringsAsFactors = FALSE)
-  if (!nrow(join_map)) return(data.frame())
+  if (!nrow(join_map)) return(join_map[0, , drop = FALSE])
   cols <- names(join_map)
   keep <- rep(FALSE, nrow(join_map))
   if ("match_status" %in% cols) keep <- keep | grepl("manual|correct", join_map$match_status, ignore.case = TRUE)
@@ -101,10 +111,13 @@ extract_manual_matches <- function(join_map, ...) {
 
 extract_many_to_many_cases <- function(join_map, ...) {
   out <- attr(join_map, "many_to_many_cases", exact = TRUE)
-  if (!is.null(out)) return(as.data.frame(out, stringsAsFactors = FALSE))
+  if (!is.null(out)) {
+    out <- as.data.frame(out, stringsAsFactors = FALSE)
+    if (ncol(out)) return(out)
+  }
 
   join_map <- as.data.frame(join_map, stringsAsFactors = FALSE)
-  if (!nrow(join_map)) return(data.frame())
+  if (!nrow(join_map)) return(join_map[0, , drop = FALSE])
   if (!"many_to_many" %in% names(join_map) && exists("flag_many_to_many_matches", mode = "function")) {
     join_map <- flag_many_to_many_matches(join_map)
   }

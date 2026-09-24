@@ -568,12 +568,39 @@ build_lineage_nonoverlap_queue <- function(
   ]
 }
 
+empty_lineage_unmapped_identity_queue <- function() {
+  data.frame(
+    source_row_id = character(), wave = character(), source_code = character(),
+    raw_state = character(), raw_district = character(),
+    state_std = character(), district_std = character(),
+    terminal_unit = character(), terminal_vintage = character(),
+    resolution_status = character(), lineage_path = character(),
+    mapping_class = character(), exclusion_reason = character(),
+    review_scope = character(), next_action = character(),
+    stringsAsFactors = FALSE
+  )
+}
+
+empty_lineage_unmapped_terminal_queue <- function() {
+  data.frame(
+    terminal_unit = character(), wave = character(), state_std = character(),
+    district_std = character(), identity_count = integer(),
+    source_codes = character(), source_row_ids = character(),
+    allocation_record_count = integer(), allocation_statuses = character(),
+    proposed_targets = character(), allocation_basis = character(),
+    allocation_source_ids = character(), allocation_notes = character(),
+    evidence_class = character(), review_priority = integer(),
+    review_scope = character(), next_action = character(),
+    stringsAsFactors = FALSE
+  )
+}
+
 build_lineage_unmapped_identity_queue <- function(
   conservative_eligibility, full_reviewed_crosswalk
 ) {
   eligibility <- safe_df(conservative_eligibility)
   crosswalk <- safe_df(full_reviewed_crosswalk)
-  if (!nrow(eligibility)) return(data.frame())
+  if (!nrow(eligibility)) return(empty_lineage_unmapped_identity_queue())
 
   mapped_ids <- unique(stats::na.omit(crosswalk$source_row_id))
   queue <- eligibility[
@@ -582,7 +609,7 @@ build_lineage_unmapped_identity_queue <- function(
     ,
     drop = FALSE
   ]
-  if (!nrow(queue)) return(data.frame())
+  if (!nrow(queue)) return(empty_lineage_unmapped_identity_queue())
 
   keep <- intersect(
     c(
@@ -698,7 +725,7 @@ build_lineage_unmapped_terminal_queue <- function(
 ) {
   identities <- safe_df(identity_queue)
   allocations <- safe_df(allocation_weights)
-  if (!nrow(identities)) return(data.frame())
+  if (!nrow(identities)) return(empty_lineage_unmapped_terminal_queue())
 
   for (nm in setdiff(
     c(
@@ -715,7 +742,7 @@ build_lineage_unmapped_terminal_queue <- function(
     ,
     drop = FALSE
   ]
-  if (!nrow(identities)) return(data.frame())
+  if (!nrow(identities)) return(empty_lineage_unmapped_terminal_queue())
 
   for (nm in setdiff(
     c(
