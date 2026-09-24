@@ -138,7 +138,6 @@ public_table_caption_text <- function(name) {
   name
 }
 
-regression_caption <- function(cap) cap
 
 table_caption <- function(name) public_table_caption_text(name)
 

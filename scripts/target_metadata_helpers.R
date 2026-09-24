@@ -60,11 +60,6 @@ target_run_metadata_scope <- function(selected_target_names, progress) {
   unique(c(as.character(selected_target_names), executed))
 }
 
-select_target_metadata <- function(meta, target_names = NULL) {
-  meta <- normalize_target_metadata(meta)
-  if (!nrow(meta) || is.null(target_names)) return(meta)
-  meta[as.character(meta$name) %in% as.character(target_names), , drop = FALSE]
-}
 
 target_metadata_issue_rows <- function(meta, field) {
   meta <- normalize_target_metadata(meta)

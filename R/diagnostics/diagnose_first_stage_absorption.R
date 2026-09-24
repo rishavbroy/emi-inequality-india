@@ -2,7 +2,6 @@
 
 first_stage_control_blocks <- function(control_registry = NULL) iv_control_blocks(control_registry)
 
-first_stage_control_block_membership <- function(control_registry = NULL) iv_control_block_membership(control_registry)
 
 first_stage_included_control_blocks <- function(controls, control_registry = NULL) iv_included_control_blocks(controls, control_registry)
 
@@ -10,7 +9,6 @@ order_first_stage_controls <- function(controls, canonical = census_2001_diagnos
   order_iv_controls(controls, canonical)
 }
 
-first_stage_without_human_capital <- function(controls, control_registry = NULL) iv_without_human_capital(controls, control_registry)
 
 first_stage_absorption_registry <- function(control_registry = NULL) {
   registry <- iv_absorption_specification_registry(control_registry = control_registry)

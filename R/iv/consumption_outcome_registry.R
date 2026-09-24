@@ -765,14 +765,6 @@ save_consumption_iv_outcome_coverage <- function(
   write_diagnostic_csv(safe_df(coverage), path)
 }
 
-consumption_iv_formula_list <- function(specifications) {
-  specs <- as_iv_specifications(specifications)
-  formulas <- lapply(seq_len(nrow(specs)), function(i) {
-    iv_specification_formula(specs[i, , drop = FALSE])
-  })
-  stats::setNames(formulas, plain_chr(specs$specification_id))
-}
-
 
 consumption_iv_second_stage_rows <- function(models, specifications, data) {
   specs <- as_iv_specifications(specifications)

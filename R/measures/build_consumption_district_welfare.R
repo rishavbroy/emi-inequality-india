@@ -83,9 +83,6 @@ consumption_survey_design_from_rows <- function(rows) {
   )
 }
 
-build_consumption_survey_design <- function(lineaged_households) {
-  consumption_survey_design_from_rows(consumption_design_rows(lineaged_households))
-}
 
 with_consumption_quantile_adjustment <- function(expr) {
   with_survey_lonely_psu_adjustment(

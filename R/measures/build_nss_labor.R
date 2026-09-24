@@ -235,9 +235,7 @@ nss64_survey_design_from_rows <- nss_labor_survey_design_from_rows
 nss64_target_support_classification <- nss_labor_target_support_classification
 nss64_outcome_domain <- nss_labor_outcome_domain
 nss64_domain_support <- nss_labor_domain_support
-nss64_design_rows <- function(lineaged_usual_activity, migration) {
-  nss_labor_design_rows(lineaged_usual_activity, migration, "NSS64")
-}
+
 estimate_nss64_district_outcome <- estimate_nss_labor_district_outcome
 estimate_nss64_district_outcomes <- function(
     lineaged_usual_activity, migration, target_support,
