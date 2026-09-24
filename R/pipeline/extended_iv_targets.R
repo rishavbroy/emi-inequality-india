@@ -139,6 +139,11 @@ extended_iv_target_definitions <- function() {
       format = "file"
     ),
     tar_target(
+      iv_candidate_design_metadata_file,
+      candidate_design_metadata_path(),
+      format = "file"
+    ),
+    tar_target(
       iv_candidate_design_ledger,
       build_iv_candidate_design_ledger(
         public_iv_specifications,
@@ -154,7 +159,8 @@ extended_iv_target_definitions <- function() {
         consumption_historical_adjustment_specifications,
         consumption_historical_concept_matched_specifications,
         consumption_exclusion_sensitivity_specs,
-        iv_falsification_adaptive_specs
+        iv_falsification_adaptive_specs,
+        metadata_path = iv_candidate_design_metadata_file
       )
     ),
     tar_target(

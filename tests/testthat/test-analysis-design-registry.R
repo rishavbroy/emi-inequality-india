@@ -592,6 +592,20 @@ test_that("candidate-design ledger records bounded robustness choices without Ca
   expect_true(all(ledger$execution_cells[finite_counts] <= ledger$implemented_cells[finite_counts]))
   expect_true(all(ledger$implemented_cells[finite_counts] <= ledger$candidate_cells[finite_counts]))
 
+  declarations <- read_iv_candidate_design_declarations(
+    file.path(root, "data", "metadata", "iv_candidate_designs.csv")
+  )
+  declaration_columns <- setdiff(
+    candidate_design_columns(),
+    c("implementation_status", "candidate_cells", "implemented_cells", "execution_cells")
+  )
+  declaration_order <- match(declarations$candidate_id, ledger$candidate_id)
+  expect_false(anyNA(declaration_order))
+  expect_identical(
+    ledger[declaration_order, declaration_columns, drop = FALSE],
+    declarations[, declaration_columns, drop = FALSE]
+  )
+
   absorption <- ledger[
     ledger$candidate_id == "relevance_geography_control_absorption",
     , drop = FALSE
