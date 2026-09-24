@@ -310,6 +310,22 @@ test_that("new-machine setup restores the tracked renv lockfile without rewritin
   expect_false(any(grepl("make init-renv", guidance, fixed = TRUE)))
 })
 
+test_that("Makefile cache roots honor TMPDIR instead of assuming macOS paths", {
+  skip_if(Sys.which("make") == "")
+  temp_root <- tempdir()
+  output <- system2(
+    "make",
+    c("-n", "-f", shQuote(repo_file("Makefile")), "pipeline"),
+    stdout = TRUE,
+    stderr = TRUE,
+    env = paste0("TMPDIR=", temp_root)
+  )
+
+  expect_identical(attr(output, "status") %||% 0L, 0L)
+  expect_true(any(grepl(temp_root, output, fixed = TRUE)))
+  expect_false(any(grepl("/private/tmp", output, fixed = TRUE)))
+})
+
 test_that("target issue printer selects columns without data-frame drop warnings", {
   env <- new.env(parent = globalenv())
   sys.source(repo_file("scripts", "target_metadata_helpers.R"), envir = env)

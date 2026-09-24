@@ -1,7 +1,8 @@
 .PHONY: all prepare-data init-renv restore snapshot download-census-tables download-natural-earth-boundaries pipeline pipeline-fast replicate-processed verify-processed-replication clean-processed-replication diagnostics public-diagnostics extended-diagnostics lineage-geometry-build lineage-geometry benchmarking rerun-extended-diagnostics rerun-benchmarks rerun-analysis analysis analysis-fast render-analysis qmd-renders clean clean-all clean-analysis clean-public-diagnostics clean-extended-diagnostics clean-benchmarking paper paper-new poster samples check-report-values check-report-values-final audit-crossrefs audit-crossrefs-final audit-outputs-final output-manifest check-public check-public-fast check-public-final check-public-final-no-samples check-public-text check-rendered-text check-sample-specs test tests test-affected test-inventory clean-targets clean-renders clean-renders-core clean-renders-no-samples
 
-TEXCACHE_ROOT ?= /private/tmp/emi-inequality-india-texcache
-QUARTO_CACHE_ROOT ?= /private/tmp/emi-inequality-india-quarto-cache
+TMP_ROOT ?= $(if $(strip $(TMPDIR)),$(patsubst %/,%,$(TMPDIR)),/tmp)
+TEXCACHE_ROOT ?= $(TMP_ROOT)/emi-inequality-india-texcache
+QUARTO_CACHE_ROOT ?= $(TMP_ROOT)/emi-inequality-india-quarto-cache
 QUARTO_HOME := $(QUARTO_CACHE_ROOT)/home
 CONFIG ?= config/final.yml
 RENDER_SAMPLES ?= false
