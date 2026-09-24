@@ -495,6 +495,7 @@ test_that("state outlines dissolve intrastate district edges", {
   outlines <- public_map_state_outlines(panel)
 
   expect_s3_class(outlines, "sf")
+  expect_true(all(sf::st_dimension(outlines) == 1L))
   expect_equal(as.numeric(sf::st_length(sf::st_union(outlines))), 6, tolerance = 1e-8)
   expect_true(all(sf::st_is_empty(
     sf::st_intersection(sf::st_union(outlines), intrastate_edge)

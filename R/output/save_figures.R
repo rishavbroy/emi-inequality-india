@@ -489,9 +489,12 @@ public_map_state_outlines <- function(plot_data, disputed_display = NULL) {
   if (!nrow(states)) return(NULL)
 
   # State outlines serve both interstate and ordinary external boundaries.
-  # Exterior rings intentionally discard holes in dissolved source polygons so
-  # topology gaps/slivers cannot be promoted into thick black map boundaries.
-  outlines <- sf::st_exterior_ring(states)
+  # st_exterior_ring() removes holes but deliberately returns polygon shells;
+  # convert those shells to one-dimensional boundary geometry before plotting.
+  # This keeps topology gaps/slivers out of the major-boundary layer without
+  # mistaking polygon interiors for state linework.
+  shells <- sf::st_exterior_ring(states)
+  outlines <- sf::st_boundary(shells)
   outlines <- outlines[!sf::st_is_empty(outlines), , drop = FALSE]
   if (!nrow(outlines)) return(NULL)
   outlines
