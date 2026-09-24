@@ -9,7 +9,7 @@ This repository builds the EMI and inequality paper, diagnostics, application sa
 - `R/io/` — raw-data readers and path handling.
 - `R/districts/` — district identities, lineage, crosswalks, and panel construction contracts.
 - `R/measures/` — analysis measures and survey-weighted aggregation.
-- `R/iv/` and `R/selection/` — estimation logic; `R/iv/specification_registry.R` remains the execution contract for IV specifications, while `R/iv/analysis_design_registry.R` projects specialized registries onto one cross-family design ontology without generating a Cartesian specification search.
+- `R/iv/` and `R/selection/` — estimation logic; `R/iv/specification_registry.R` remains the execution contract for IV specifications, `R/iv/analysis_design_registry.R` projects specialized registries onto one cross-family design ontology, and `R/iv/candidate_design_ledger.R` combines declarative candidate metadata with live registry counts without generating a Cartesian specification search.
 - `R/diagnostics/` — public and extended diagnostics.
 - `R/benchmarking/` — optional benchmarks.
 - `R/output/` — figures, tables, shared table contracts, report values, and render helpers.
@@ -46,7 +46,11 @@ rather than reconstructing neighboring specifications independently. Public head
 legacy model-interface boundary, so there is no second headline formula authority.
 The separate candidate-design ledger records bounded robustness families,
 unimplemented but theoretically admissible extensions, and explicit non-goals
-without manufacturing or estimating an indiscriminate Cartesian product. Its
+without manufacturing or estimating an indiscriminate Cartesian product.
+Scientific declarations live in `data/metadata/iv_candidate_designs.csv`;
+`R/iv/candidate_design_ledger.R` adds only counts and implementation status that
+depend on the live execution registries. The metadata file is tracked as a
+`format = "file"` target so edits invalidate the derived ledger. Its
 `admissibility_reason` and `execution_policy` fields are a decision contract:
 inadmissible rows must be `do_not_estimate`, while admissible rows cannot use
 that policy.

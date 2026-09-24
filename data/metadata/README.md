@@ -54,6 +54,14 @@ their vectors from it rather than maintaining parallel hard-coded lists. The
 construction rules are described in `docs/CONSUMPTION_AND_PRICES.md` and
 `docs/CENSUS_2001_CONTROLS.md`.
 
+`iv_candidate_designs.csv` stores the scientific declarations behind the
+candidate-design ledger: the question, design axis, scope, admissibility,
+execution policy, and rationale for each bounded robustness family, future
+extension, or explicit non-goal. Counts that depend on currently registered
+specifications are intentionally left blank in metadata and are filled by
+`R/iv/candidate_design_ledger.R`; fixed methodological bounds remain declared
+in the table. The extended IV targets track this file explicitly.
+
 - `cpi_iw_centres_2001.csv`: the 78 Labour Bureau CPI-IW centres and their
   All-India weights on the 2001=100 base. The three centres later assigned to
   Telangana are assigned to undivided Andhra Pradesh for the 2007-08 price
