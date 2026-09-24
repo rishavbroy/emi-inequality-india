@@ -407,7 +407,6 @@ test_that("shared figure registry carries validated dynamic welfare diagnostics"
 
   figures <- make_figures(
     panel, character(), cfg,
-    iv_models = list(),
     consumption_iv_dynamics = dynamics
   )
   expect_identical(
