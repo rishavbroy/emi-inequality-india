@@ -36,7 +36,8 @@ core_public_target_definitions <- function() {
       map_boundary_reference,
       build_public_map_boundary_reference(
         natural_earth_map_reference,
-        lineage_map_scaffold_2001
+        lineage_map_scaffold_2001,
+        lineage_geometry_2001
       )
     ),
     tar_target(

@@ -438,18 +438,6 @@ mask_public_map_disputed_areas <- function(plot_data, disputed_areas = NULL) {
   sf::st_difference(out, mask)
 }
 
-public_map_state_code_2001 <- function(unit_id) {
-  unit_id <- plain_chr(unit_id)
-  valid <- !is.na(unit_id) & grepl("^pc2001__[0-9]{2}__[0-9]{2}$", unit_id)
-  if (any(!valid)) {
-    stop(
-      "Public map geometry contains invalid canonical Census-2001 district IDs.",
-      call. = FALSE
-    )
-  }
-  sub("^pc2001__([0-9]{2})__[0-9]{2}$", "\\1", unit_id)
-}
-
 public_map_state_polygons <- function(plot_data) {
   if (!inherits(plot_data, "sf") || !nrow(plot_data)) return(NULL)
   if (!"state_code_2001" %in% names(plot_data)) {
@@ -482,29 +470,9 @@ public_map_exterior_lines <- function(polygons) {
   outlines
 }
 
-public_map_state_outlines <- function(plot_data, disputed_display = NULL) {
+public_map_state_outlines <- function(plot_data) {
   states <- public_map_state_polygons(plot_data)
   if (is.null(states)) return(NULL)
-
-  # Disputed/no-estimate polygons own their perimeter. Do not attempt to
-  # reconstruct a second black seam from independently digitized Census and
-  # Natural Earth boundaries: near-coincident edges create slivers and doubled
-  # strokes. Instead, suppress the exterior ring of any state whose interior is
-  # covered by the disputed display class. Unaffected neighboring states still
-  # draw their shared interstate boundary from the same Census geometry.
-  if (inherits(disputed_display, "sf") && nrow(disputed_display)) {
-    if (is.na(sf::st_crs(states)) || is.na(sf::st_crs(disputed_display))) {
-      stop("Public map state and disputed geometries require defined CRSs.", call. = FALSE)
-    }
-    if (sf::st_crs(states) != sf::st_crs(disputed_display)) {
-      disputed_display <- sf::st_transform(disputed_display, sf::st_crs(states))
-    }
-    mask <- sf::st_union(sf::st_geometry(disputed_display))
-    intersects <- lengths(sf::st_intersects(states, mask)) > 0L
-    touches_only <- lengths(sf::st_touches(states, mask)) > 0L
-    states <- states[!(intersects & !touches_only), , drop = FALSE]
-    if (!nrow(states)) return(NULL)
-  }
 
   outlines <- public_map_exterior_lines(states)
   if (!is.null(outlines)) outlines$boundary_role <- "state_outline"
@@ -523,24 +491,24 @@ build_public_ggplot_map <- function(plot_data, spec, boundary_reference = NULL) 
 
   disputed_display <- public_map_disputed_display(plot_data, boundary_reference)
   display_data <- mask_public_map_disputed_areas(plot_data, disputed_display)
-  state_outlines <- public_map_state_outlines(plot_data, disputed_display)
+  state_outlines <- public_map_state_outlines(display_data)
   base <- ggplot2::ggplot() +
     ggplot2::geom_sf(
       data = display_data, ggplot2::aes(fill = .data[[fill$fill]]),
       color = "grey55", linewidth = map_district_boundary_linewidth(),
       linetype = "solid"
     )
-  if (!is.null(state_outlines) && nrow(state_outlines)) {
-    base <- base + ggplot2::geom_sf(
-      data = state_outlines, color = "grey15",
-      linewidth = map_major_boundary_linewidth(), linetype = "solid"
-    )
-  }
   if (!is.null(disputed_display) && nrow(disputed_display)) {
     base <- base + ggplot2::geom_sf(
       data = disputed_display, fill = map_disputed_no_data_colour(),
       color = "grey45", linewidth = map_disputed_boundary_linewidth(),
       linetype = "solid"
+    )
+  }
+  if (!is.null(state_outlines) && nrow(state_outlines)) {
+    base <- base + ggplot2::geom_sf(
+      data = state_outlines, color = "grey15",
+      linewidth = map_major_boundary_linewidth(), linetype = "solid"
     )
   }
   base <- base +

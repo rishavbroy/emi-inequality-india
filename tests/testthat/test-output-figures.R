@@ -560,17 +560,18 @@ test_that("Natural Earth map reference requires only the disputed-area shapefile
   )
 })
 
-test_that("disputed-area registry selects only explicitly registered Natural Earth polygons", {
+test_that("map registry separates rendered disputes from the J&K classification reference", {
   registry <- data.frame(
-    area_id = c("aksai", "azad", "gilgit", "trans", "siachen"),
+    area_id = c("aksai", "azad", "gilgit", "trans", "siachen", "jk_admin"),
     natural_earth_brk_name = c(
       "Aksai Chin", "Azad Kashmir", "Gilgit-Baltistan",
-      "Shaksam Valley", "Siachen Glacier"
+      "Shaksam Valley", "Siachen Glacier", "Jammu and Kashmir"
     ),
     display_label = c(
       "Aksai Chin", "Azad Kashmir", "Gilgit-Baltistan",
-      "Trans-Karakoram Tract", "Siachen Glacier"
+      "Trans-Karakoram Tract", "Siachen Glacier", "Jammu and Kashmir"
     ),
+    role = c(rep("display_disputed", 5L), "administered_reference"),
     include = TRUE,
     stringsAsFactors = FALSE
   )
@@ -583,7 +584,7 @@ test_that("disputed-area registry selects only explicitly registered Natural Ear
 
   expect_identical(selected$area_id, registry$area_id)
   expect_identical(selected$BRK_NAME, registry$natural_earth_brk_name)
-  expect_identical(selected$display_label, registry$display_label)
+  expect_identical(selected$role, registry$role)
   expect_false(any(selected$BRK_NAME %in% c("Junagadh", "Demchok")))
   expect_error(
     select_registered_disputed_areas(
@@ -643,19 +644,58 @@ test_that("state outlines omit holes in dissolved source geometry", {
   )))
 })
 
-test_that("disputed display unions Natural Earth masks with the DataMeet scaffold", {
+test_that("J&K residual classification keeps only components that share another-state sides", {
   skip_if_not_installed("sf")
-  square <- function(x0, x1) sf::st_polygon(list(rbind(
-    c(x0, 0), c(x1, 0), c(x1, 1), c(x0, 1), c(x0, 0)
+  square <- function(x0, x1, y0 = 0, y1 = 1) sf::st_polygon(list(rbind(
+    c(x0, y0), c(x1, y0), c(x1, y1), c(x0, y1), c(x0, y0)
+  )))
+  canonical <- sf::st_sf(
+    unit_id = c("pc2001__01__01", "pc2001__02__01"),
+    geometry = sf::st_sfc(
+      square(0, 2),
+      square(0, 1, -1, 0),
+      crs = 3857
+    )
+  )
+  administered <- sf::st_sf(
+    role = "administered_reference",
+    geometry = sf::st_sfc(square(0, 1), crs = 3857)
+  )
+  disputed <- sf::st_sf(
+    role = "display_disputed",
+    geometry = sf::st_sfc(square(0, 0.25, 0, 0.25), crs = 3857)
+  )
+
+  residual <- public_map_jk_disputed_residual(canonical, administered, disputed)
+
+  # The residual x=[1,2] touches the other state only at (1,0), not along a
+  # side, so it belongs to the disputed/no-estimate display class.
+  expect_equal(sum(as.numeric(sf::st_area(residual))), 1, tolerance = 1e-8)
+
+  canonical$geometry[[2L]] <- square(1, 2, -1, 0)
+  retained <- public_map_jk_disputed_residual(canonical, administered, disputed)
+  expect_true(length(retained) == 0L || all(sf::st_is_empty(retained)))
+})
+
+test_that("disputed display combines Natural Earth, scaffold, and reconciled J&K residual", {
+  skip_if_not_installed("sf")
+  square <- function(x0, x1, y0 = 0, y1 = 1) sf::st_polygon(list(rbind(
+    c(x0, y0), c(x1, y0), c(x1, y1), c(x0, y1), c(x0, y0)
   )))
   districts <- sf::st_sf(
-    target_unit_2001 = c("d1", "d2"),
-    state_code_2001 = c("01", "01"),
+    target_unit_2001 = c("pc2001__01__01", "pc2001__02__01"),
+    state_code_2001 = c("01", "02"),
     geometry = sf::st_sfc(square(0, 2), square(2, 4), crs = 3857)
   )
   disputed <- sf::st_sf(
     area_id = "registered_dispute",
+    role = "display_disputed",
     geometry = sf::st_sfc(square(1.5, 3.5), crs = 3857)
+  )
+  administered <- sf::st_sf(
+    area_id = "jk_admin",
+    role = "administered_reference",
+    geometry = sf::st_sfc(square(0, 1.5), crs = 3857)
   )
   scaffold <- sf::st_sf(
     scaffold_id = "datameet_2001_99_99",
@@ -663,8 +703,9 @@ test_that("disputed display unions Natural Earth masks with the DataMeet scaffol
   )
   before <- sf::st_geometry(districts)
   reference <- build_public_map_boundary_reference(
-    list(disputed_areas = disputed),
-    scaffold
+    list(disputed_areas = disputed, administered_reference = administered),
+    scaffold,
+    districts
   )
 
   expect_identical(names(reference), "disputed_display")
@@ -675,7 +716,7 @@ test_that("disputed display unions Natural Earth masks with the DataMeet scaffol
 
   expect_true(isTRUE(all.equal(sf::st_geometry(districts), before)))
   expect_equal(nrow(display), 1L)
-  expect_identical(display$target_unit_2001, "d1")
+  expect_identical(display$target_unit_2001, "pc2001__01__01")
   expect_equal(
     as.numeric(sf::st_area(sf::st_union(disputed_display))),
     3,
@@ -706,8 +747,8 @@ test_that("registered disputed areas are polygons with a distinct no-estimate tr
     c(x0, 0), c(x1, 0), c(x1, 1), c(x0, 1), c(x0, 0)
   )))
   districts <- sf::st_sf(
-    target_unit_2001 = c("d1", "d2"),
-    state_code_2001 = c("01", "01"),
+    target_unit_2001 = c("pc2001__01__01", "pc2001__02__01"),
+    state_code_2001 = c("01", "02"),
     ling_distance_nonzero_mean = c(1, 2),
     geometry = sf::st_sfc(square(0, 1), square(1, 2), crs = 3857)
   )
@@ -722,9 +763,15 @@ test_that("registered disputed areas are polygons with a distinct no-estimate tr
     scaffold_id = "datameet_2001_99_99",
     geometry = sf::st_sfc(square(2.5, 3), crs = 3857)
   )
+  administered <- sf::st_sf(
+    area_id = "jk_admin",
+    role = "administered_reference",
+    geometry = sf::st_sfc(square(0, 1.5), crs = 3857)
+  )
   reference <- build_public_map_boundary_reference(
-    list(disputed_areas = disputed),
-    scaffold
+    list(disputed_areas = disputed, administered_reference = administered),
+    scaffold,
+    districts
   )
   plot <- build_public_ggplot_map(districts, spec, reference)
 
@@ -750,38 +797,37 @@ test_that("registered disputed areas are polygons with a distinct no-estimate tr
   expect_false(identical(map_disputed_no_data_colour(), map_no_data_colour()))
 })
 
-test_that("disputed areas own the outline of states they overlap", {
+test_that("state outlines are derived from already-clipped district geometry", {
   skip_if_not_installed("sf")
   square <- function(x0, x1) sf::st_polygon(list(rbind(
     c(x0, 0), c(x1, 0), c(x1, 1), c(x0, 1), c(x0, 0)
   )))
-  states <- sf::st_sf(
-    target_unit_2001 = c("left", "right"),
-    state_code_2001 = c("02", "01"),
-    geometry = sf::st_sfc(square(0, 1), square(1, 3), crs = 3857)
+  districts <- sf::st_sf(
+    target_unit_2001 = c("pc2001__01__01", "pc2001__02__01"),
+    state_code_2001 = c("01", "02"),
+    geometry = sf::st_sfc(square(0, 3), square(3, 4), crs = 3857)
   )
-  mask <- sf::st_sf(
+  disputed <- sf::st_sf(
     area_id = "aksai_chin",
-    geometry = sf::st_sfc(square(1, 4), crs = 3857)
+    geometry = sf::st_sfc(square(2, 4), crs = 3857)
   )
-  shared_edge <- sf::st_sfc(
-    sf::st_linestring(rbind(c(1, 0), c(1, 1))), crs = 3857
+  cut_edge <- sf::st_sfc(
+    sf::st_linestring(rbind(c(2, 0), c(2, 1))), crs = 3857
   )
 
-  outlines <- public_map_state_outlines(states, mask)
+  display <- mask_public_map_disputed_areas(districts, disputed)
+  outlines <- public_map_state_outlines(display)
 
-  expect_s3_class(outlines, "sf")
-  expect_identical(unique(outlines$state_code_2001), "02")
   expect_equal(
     as.numeric(sf::st_length(sf::st_intersection(
-      sf::st_union(outlines), shared_edge
+      sf::st_union(outlines), cut_edge
     ))),
     1,
     tolerance = 1e-8
   )
 })
 
-test_that("disputed polygons render after ordinary state outlines without a seam layer", {
+test_that("disputed polygons render before state outlines derived from clipped geometry", {
   skip_if_not_installed("sf")
   skip_if_not_installed("ggplot2")
   square <- function(x0, x1) sf::st_polygon(list(rbind(
@@ -811,18 +857,10 @@ test_that("disputed polygons render after ordinary state outlines without a seam
     function(layer) identical(unique(layer$data$boundary_role), "state_outline"),
     logical(1)
   ))
-  boundary_roles <- unique(unlist(lapply(
-    plot$layers,
-    function(layer) {
-      if (!"boundary_role" %in% names(layer$data)) return(character())
-      as.character(layer$data$boundary_role)
-    }
-  )))
 
   expect_length(disputed_index, 1L)
   expect_length(outline_index, 1L)
-  expect_identical(boundary_roles, "state_outline")
-  expect_lt(outline_index, disputed_index)
+  expect_lt(disputed_index, outline_index)
 })
 
 test_that("district boundaries stay thinner than state and disputed boundaries", {

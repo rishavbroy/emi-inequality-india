@@ -1,7 +1,8 @@
 # Display-only disputed-area masks for manuscript maps.
 # Census-2001 DataMeet geometry remains the analytical authority. Natural Earth
-# polygons are used only to separate five registered disputed areas for which
-# the project has no district estimate from ordinary district-level missingness.
+# polygons classify the five registered disputed/no-estimate areas plus one
+# administered Jammu-and-Kashmir reference used only to reconcile display
+# coverage where the two source geometries disagree.
 
 natural_earth_map_reference_spec <- function() {
   c(disputed_areas = "ne_10m_admin_0_disputed_areas")
@@ -27,7 +28,7 @@ read_map_disputed_area_registry <- function(path = map_disputed_area_registry_pa
     stop("Missing disputed-area registry: ", path, call. = FALSE)
   }
   out <- utils::read.csv(path, stringsAsFactors = FALSE, check.names = FALSE)
-  required <- c("area_id", "natural_earth_brk_name", "display_label", "include")
+  required <- c("area_id", "natural_earth_brk_name", "display_label", "role", "include")
   missing <- setdiff(required, names(out))
   if (length(missing)) {
     stop(
@@ -41,11 +42,26 @@ read_map_disputed_area_registry <- function(path = map_disputed_area_registry_pa
   out$area_id <- trimws(as.character(out$area_id))
   out$natural_earth_brk_name <- trimws(as.character(out$natural_earth_brk_name))
   out$display_label <- trimws(as.character(out$display_label))
+  out$role <- trimws(as.character(out$role))
   if (!nrow(out) || any(!nzchar(out$area_id)) || any(!nzchar(out$natural_earth_brk_name))) {
     stop("Disputed-area registry must contain non-empty included area IDs and Natural Earth names.", call. = FALSE)
   }
   if (anyDuplicated(out$area_id) || anyDuplicated(out$natural_earth_brk_name)) {
     stop("Included disputed-area registry rows must have unique IDs and Natural Earth names.", call. = FALSE)
+  }
+  allowed_roles <- c("display_disputed", "administered_reference")
+  if (any(!out$role %in% allowed_roles)) {
+    stop(
+      "Disputed-area registry contains unsupported role(s): ",
+      paste(unique(out$role[!out$role %in% allowed_roles]), collapse = ", "), ".",
+      call. = FALSE
+    )
+  }
+  if (sum(out$role == "administered_reference") != 1L) {
+    stop("Disputed-area registry must contain exactly one administered_reference row.", call. = FALSE)
+  }
+  if (!any(out$role == "display_disputed")) {
+    stop("Disputed-area registry must contain at least one display_disputed row.", call. = FALSE)
   }
   out
 }
@@ -97,6 +113,7 @@ select_registered_disputed_areas <- function(x, registry) {
   out <- x[index, , drop = FALSE]
   out$area_id <- registry$area_id
   out$display_label <- registry$display_label
+  out$role <- registry$role
   out
 }
 
@@ -112,35 +129,140 @@ read_natural_earth_map_reference <- function(files, registry) {
     )
   }
   layers <- natural_earth_reference_shapefiles(files)
-  disputed_areas <- sf::st_read(
+  source <- sf::st_read(
     layers[["disputed_areas"]], quiet = TRUE, stringsAsFactors = FALSE
   )
-  disputed_areas <- select_registered_disputed_areas(disputed_areas, registry)
-  list(disputed_areas = sf::st_make_valid(disputed_areas))
+  selected <- sf::st_make_valid(select_registered_disputed_areas(source, registry))
+  display <- selected[selected$role == "display_disputed", , drop = FALSE]
+  administered <- selected[selected$role == "administered_reference", , drop = FALSE]
+  if (!nrow(display) || nrow(administered) != 1L) {
+    stop("Natural Earth map reference roles did not resolve to the required polygons.", call. = FALSE)
+  }
+  list(
+    disputed_areas = display,
+    administered_reference = administered
+  )
+}
+
+public_map_state_code_2001 <- function(unit_id) {
+  unit_id <- plain_chr(unit_id)
+  valid <- !is.na(unit_id) & grepl("^pc2001__[0-9]{2}__[0-9]{2}$", unit_id)
+  if (any(!valid)) {
+    stop(
+      "Public map geometry contains invalid canonical Census-2001 district IDs.",
+      call. = FALSE
+    )
+  }
+  sub("^pc2001__([0-9]{2})__[0-9]{2}$", "\\1", unit_id)
+}
+
+# Classify DataMeet J&K pieces left unresolved after Natural Earth partitions the
+# state into an administered reference and the registered disputed polygons.
+# Pieces that share a one-dimensional boundary with another DataMeet state stay
+# ordinary Census geography; the remainder join the disputed/no-estimate class.
+public_map_jk_disputed_residual <- function(canonical_geometry, administered_reference, disputed_areas) {
+  if (!inherits(canonical_geometry, "sf") || !nrow(canonical_geometry)) {
+    stop("Public map reconciliation requires complete canonical Census-2001 geometry.", call. = FALSE)
+  }
+  key <- if ("unit_id" %in% names(canonical_geometry)) "unit_id" else if ("target_unit_2001" %in% names(canonical_geometry)) "target_unit_2001" else NA_character_
+  if (is.na(key) || anyDuplicated(canonical_geometry[[key]])) {
+    stop("Canonical public map geometry must contain one unique Census-2001 district ID per feature.", call. = FALSE)
+  }
+  if (!inherits(administered_reference, "sf") || nrow(administered_reference) != 1L ||
+      !inherits(disputed_areas, "sf") || !nrow(disputed_areas)) {
+    stop("Jammu-and-Kashmir display reconciliation requires one administered reference and registered disputed polygons.", call. = FALSE)
+  }
+
+  state_code <- public_map_state_code_2001(canonical_geometry[[key]])
+  jk <- canonical_geometry[state_code == "01", , drop = FALSE]
+  other_states <- canonical_geometry[state_code != "01", , drop = FALSE]
+  if (!nrow(jk) || !nrow(other_states)) {
+    stop("Canonical public map geometry lacks Jammu and Kashmir or comparison-state coverage.", call. = FALSE)
+  }
+  if (is.na(sf::st_crs(jk)) || is.na(sf::st_crs(administered_reference)) || is.na(sf::st_crs(disputed_areas))) {
+    stop("Public map reconciliation geometries must have defined coordinate reference systems.", call. = FALSE)
+  }
+
+  administered_reference <- sf::st_transform(administered_reference, sf::st_crs(jk))
+  disputed_areas <- sf::st_transform(disputed_areas, sf::st_crs(jk))
+  classified <- sf::st_union(c(
+    sf::st_geometry(administered_reference),
+    sf::st_geometry(disputed_areas)
+  ))
+  residual <- sf::st_difference(
+    sf::st_union(sf::st_geometry(jk)),
+    classified
+  )
+  residual <- sf::st_make_valid(residual)
+  residual <- residual[!sf::st_is_empty(residual)]
+  if (!length(residual)) return(sf::st_sfc(crs = sf::st_crs(jk)))
+
+  components <- suppressWarnings(sf::st_cast(residual, "POLYGON"))
+  components <- components[!sf::st_is_empty(components)]
+  if (!length(components)) return(sf::st_sfc(crs = sf::st_crs(jk)))
+
+  # DE-9IM side adjacency is a topological question. Use a projected copy so
+  # st_relate() follows its documented planar semantics without relying on an
+  # arbitrary distance or snapping tolerance. EPSG:6933 is a global projected
+  # CRS; only the relation result, not the transformed geometry, is retained.
+  components_planar <- sf::st_transform(components, 6933)
+  others_planar <- sf::st_transform(
+    sf::st_union(sf::st_geometry(other_states)),
+    6933
+  )
+  shares_state_side <- lengths(sf::st_relate(
+    components_planar,
+    others_planar,
+    pattern = "****1****"
+  )) > 0L
+
+  disputed_residual <- components[!shares_state_side]
+  if (!length(disputed_residual)) return(sf::st_sfc(crs = sf::st_crs(jk)))
+  sf::st_union(disputed_residual)
 }
 
 # Compose the display-only disputed/no-estimate mask once.
 #
-# Natural Earth classifies the five registered disputed areas; the DataMeet
-# 99/99 scaffold supplies source-native J&K coverage where canonical districts
-# are unavailable. The union is a cartographic class only: analytical district
-# geometry, joins, samples, and spatial weights remain unchanged.
-build_public_map_boundary_reference <- function(natural_earth_reference, datameet_scaffold) {
+# Natural Earth explicitly classifies five disputed areas and supplies one
+# administered-J&K reference. DataMeet contributes the canonical 593-district
+# geometry plus its noncanonical 99/99 scaffold. Residual DataMeet J&K pieces
+# not covered by either Natural Earth class are resolved topologically: pieces
+# sharing a side with another DataMeet state stay ordinary geography; the rest
+# join the disputed/no-estimate mask. Analytical geometry is never modified.
+build_public_map_boundary_reference <- function(
+  natural_earth_reference,
+  datameet_scaffold,
+  canonical_geometry
+) {
   disputed <- natural_earth_reference$disputed_areas
-  if (!inherits(disputed, "sf") || !nrow(disputed)) {
-    stop("Public map reference requires registered Natural Earth disputed polygons.", call. = FALSE)
+  administered <- natural_earth_reference$administered_reference
+  if (!inherits(disputed, "sf") || !nrow(disputed) ||
+      !inherits(administered, "sf") || nrow(administered) != 1L) {
+    stop("Public map reference requires registered Natural Earth display and administered-reference polygons.", call. = FALSE)
   }
   if (!inherits(datameet_scaffold, "sf") || nrow(datameet_scaffold) != 1L) {
     stop("Public map reference requires the one-feature DataMeet map scaffold.", call. = FALSE)
   }
-  if (is.na(sf::st_crs(disputed)) || is.na(sf::st_crs(datameet_scaffold))) {
+  if (!inherits(canonical_geometry, "sf") || !nrow(canonical_geometry)) {
+    stop("Public map reference requires complete canonical Census-2001 geometry.", call. = FALSE)
+  }
+  if (is.na(sf::st_crs(disputed)) || is.na(sf::st_crs(datameet_scaffold)) || is.na(sf::st_crs(canonical_geometry))) {
     stop("Public map reference geometries must have defined coordinate reference systems.", call. = FALSE)
   }
 
-  disputed <- sf::st_transform(disputed, sf::st_crs(datameet_scaffold))
+  disputed <- sf::st_transform(disputed, sf::st_crs(canonical_geometry))
+  administered <- sf::st_transform(administered, sf::st_crs(canonical_geometry))
+  datameet_scaffold <- sf::st_transform(datameet_scaffold, sf::st_crs(canonical_geometry))
+  residual <- public_map_jk_disputed_residual(
+    canonical_geometry,
+    administered,
+    disputed
+  )
+
   geometry <- sf::st_union(c(
     sf::st_geometry(datameet_scaffold),
-    sf::st_geometry(disputed)
+    sf::st_geometry(disputed),
+    residual
   ))
   geometry <- sf::st_make_valid(geometry)
   if (length(geometry) == 0L || all(sf::st_is_empty(geometry))) {
