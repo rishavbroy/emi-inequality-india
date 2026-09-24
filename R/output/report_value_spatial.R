@@ -29,10 +29,3 @@ spatial_diagnostic_value <- function(
   out <- first_available_number(x, field)
   if (is.finite(out)) signif(out, digits) else NA_real_
 }
-
-spatial_p_value <- function(diag, legacy_name = NULL, pattern = NULL, contiguity = "rook") {
-  spatial_diagnostic_value(
-    diag, legacy_name = legacy_name, pattern = pattern,
-    field = "p.value", contiguity = contiguity, digits = 3L
-  )
-}

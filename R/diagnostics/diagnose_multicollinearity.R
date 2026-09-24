@@ -7,13 +7,6 @@
 #' For `ivreg` models, multicollinearity is diagnosed on the stage-two
 #' structural regressors, not on the instrument matrix. The `ivreg` package
 #' exposes this component through its formula/model-matrix methods.
-multicollinearity_formula <- function(model) {
-  if (inherits(model, "ivreg")) {
-    return(stats::formula(model, component = "regressors"))
-  }
-  stats::formula(model)
-}
-
 #' Structural-regressor design matrix
 multicollinearity_design_matrix <- function(model) {
   iv_structural_model_matrix(model)

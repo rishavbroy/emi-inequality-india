@@ -1395,19 +1395,6 @@ historical_linguistic_first_stage_base_panel <- function(
   )
 }
 
-historical_linguistic_first_stage_panel <- function(
-    historical_distance, distance_2001, geography, district_panel,
-    treatment = preferred_iv_variables()$treatment) {
-  out <- historical_linguistic_first_stage_base_panel(
-    historical_distance, distance_2001, geography, district_panel, treatment
-  )
-  prepare_first_stage_absorption_panel(
-    out,
-    treatment = treatment,
-    instrument = c("ling_distance_nonzero_mean_1991", "ling_distance_nonzero_mean_2001")
-  )
-}
-
 historical_linguistic_first_stage_estimates <- function(
     data, registry, treatment, exact_only = FALSE) {
   sample_name <- if (exact_only) "exact_one_to_one" else "preferred_geography"

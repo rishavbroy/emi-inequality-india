@@ -332,11 +332,3 @@ attach_registered_consumption_deflator <- function(
   }
   stop("Unsupported registered consumption price timing: ", timing, call. = FALSE)
 }
-
-attach_nss_subround_deflator <- function(households, deflators, wave, state_col, sector_col, subround_col,
-                                         registry = read_consumption_survey_registry()) {
-  attach_survey_subround_deflator(
-    households, deflators, consumption_survey_spec_for_wave(registry, wave),
-    state_col, sector_col, subround_col
-  )
-}

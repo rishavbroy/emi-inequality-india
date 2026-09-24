@@ -339,24 +339,6 @@ estimate_dise_first_stage_suite <- function(panel, construct) {
   )
 }
 
-diagnose_dise_iv_permutations <- function(
-  panel,
-  constructs = dise_construct_registry(),
-  outcome = "real_log_consumption_change"
-) {
-  data <- prepare_dise_iv_diagnostic_panel(panel, constructs, outcome)
-  branches <- lapply(seq_len(nrow(constructs)), function(i) {
-    diagnose_dise_iv_construct(
-      data, constructs[i, , drop = FALSE], outcome = outcome
-    )
-  })
-  assemble_dise_iv_permutations(
-    constructs,
-    diagnose_dise_nss_validation(data),
-    branches
-  )
-}
-
 save_dise_diagnostics <- function(
   archive_diagnostics,
   permutations,

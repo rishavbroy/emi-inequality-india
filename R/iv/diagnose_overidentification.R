@@ -40,68 +40,6 @@ ivreg_sargan_diagnostic <- function(model) {
   )
 }
 
-estimate_overidentification_spec <- function(data, specification) {
-  if (specification$n_excluded_instruments[[1]] <= specification$n_endogenous[[1]]) {
-    return(data.frame(
-      specification_id = specification$specification_id,
-      test = "sargan",
-      status = "not_applicable",
-      n_endogenous = specification$n_endogenous[[1]],
-      n_excluded_instruments = specification$n_excluded_instruments[[1]],
-      statistic = NA_real_,
-      df = NA_real_,
-      p.value = NA_real_,
-      reason = "Excluded instruments do not outnumber endogenous variables.",
-      stringsAsFactors = FALSE
-    ))
-  }
-  needed <- iv_specification_variables(specification)
-  missing <- setdiff(needed, names(data))
-  if (length(missing)) {
-    return(data.frame(
-      specification_id = specification$specification_id,
-      test = "sargan",
-      status = "not_estimated",
-      n_endogenous = specification$n_endogenous[[1]],
-      n_excluded_instruments = specification$n_excluded_instruments[[1]],
-      statistic = NA_real_,
-      df = NA_real_,
-      p.value = NA_real_,
-      reason = paste0("Missing columns: ", paste(missing, collapse = ", ")),
-      stringsAsFactors = FALSE
-    ))
-  }
-  x <- data[stats::complete.cases(data[needed]), , drop = FALSE]
-  fit <- ivreg::ivreg(iv_specification_formula(specification), data = x)
-  result <- ivreg_sargan_diagnostic(fit)
-  cbind(
-    data.frame(
-      specification_id = specification$specification_id,
-      n_endogenous = specification$n_endogenous[[1]],
-      n_excluded_instruments = specification$n_excluded_instruments[[1]],
-      stringsAsFactors = FALSE
-    ),
-    result
-  )
-}
-
-run_iv_overidentification_diagnostics <- function(
-  panel,
-  specifications = iv_diagnostic_specification_registry(),
-  analysis_family = NULL
-) {
-  data <- if (inherits(panel, "sf")) sf::st_drop_geometry(panel) else as.data.frame(panel, stringsAsFactors = FALSE)
-  applicable <- iv_diagnostic_applicability(specifications)
-  ids <- applicable$specification_id[
-    applicable$diagnostic_id == "overidentification" & applicable$will_run
-  ]
-  specs <- specifications[specifications$specification_id %in% ids, , drop = FALSE]
-  out <- safe_bind_rows(lapply(seq_len(nrow(specs)), function(i) {
-    estimate_overidentification_spec(data, specs[i, , drop = FALSE])
-  }))
-  attach_iv_analysis_id(out, specs, analysis_family)
-}
-
 #' Diagnose whether active IV specifications are overidentified
 #'
 #' @param iv_models A fitted model or named list of fitted models. Retained for

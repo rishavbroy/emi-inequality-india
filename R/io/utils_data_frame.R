@@ -128,20 +128,6 @@ kish_effective_n <- function(weight) {
   sum(w)^2 / denom
 }
 
-bydist <- function(df, value, weight = NULL, name = "value", fun = wmean) {
-  g <- intersect(c("state_std", "district_std"), names(df))
-  if (length(g) < 2 || is.null(value) || !nrow(df)) {
-    return(data.frame(state_std = character(), district_std = character()))
-  }
-  split_i <- split(seq_len(nrow(df)), interaction(df[g], drop = TRUE))
-  safe_bind_rows(lapply(split_i, function(i) {
-    z <- df[i[1], g, drop = FALSE]
-    z[[name]] <- fun(df[[value]][i], if (!is.null(weight)) df[[weight]][i] else NULL)
-    z$n <- length(i)
-    z
-  }))
-}
-
 wgini <- function(x, w = NULL) {
   x <- num(x)
   if (is.null(w)) w <- rep(1, length(x)) else w <- num(w)

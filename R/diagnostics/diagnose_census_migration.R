@@ -267,12 +267,6 @@ prepare_census_migration_mechanism_panel <- function(
   )
 }
 
-add_census_migration_holm <- function(results, p_column, output_column) {
-  add_posttreatment_mechanism_holm(
-    results, p_column, output_column, label = "Census migration"
-  )
-}
-
 estimate_census_migration_mechanism_models <- function(
     mechanism_panel,
     registry = census_migration_mechanism_registry(),

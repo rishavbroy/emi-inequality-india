@@ -678,12 +678,3 @@ build_population_interpolated_vanneman_baseline_1991_from_counts <- function(
   if (anyDuplicated(out[census_2001_keys()])) stop("Interpolated Vanneman controls duplicate Census-2001 targets.", call. = FALSE)
   out
 }
-
-build_population_interpolated_vanneman_baseline_1991 <- function(
-    path, population_crosswalk, coverage_threshold = .99) {
-  build_population_interpolated_vanneman_baseline_1991_from_counts(
-    build_vanneman_1991_control_sufficient_statistics(path),
-    population_crosswalk,
-    coverage_threshold = coverage_threshold
-  )
-}

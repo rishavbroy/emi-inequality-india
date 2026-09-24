@@ -139,14 +139,6 @@ first_stage_absorption_formula <- function(treatment, instrument, controls = cha
   )
 }
 
-first_stage_nuisance_terms <- function(controls = character(), fixed_effect = "none") {
-  iv_nuisance_terms(controls, fixed_effect)
-}
-
-residualize_first_stage_variable <- function(data, variable, controls = character(), fixed_effect = "none") {
-  residualize_iv_variable(data, variable, controls, fixed_effect)
-}
-
 clustered_lm_term_inference <- function(fit, term, cluster, inference = NULL) {
   if (is.null(inference)) {
     inference <- tryCatch(iv_clustered_inference(fit, cluster), error = function(e) NULL)

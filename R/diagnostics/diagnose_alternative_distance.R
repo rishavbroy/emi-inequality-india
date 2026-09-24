@@ -245,20 +245,6 @@ assemble_alternative_distance_first_stages <- function(
   )
 }
 
-diagnose_alternative_distance_first_stages <- function(
-  panel,
-  treatment = "emi_exposure_all_children_0708"
-) {
-  data <- prepare_alternative_distance_panel(panel, treatment)
-  registry <- alternative_distance_registry(treatment = treatment)
-  branches <- lapply(seq_len(nrow(registry)), function(i) {
-    diagnose_alternative_distance_specification(
-      data, registry[i, , drop = FALSE], treatment
-    )
-  })
-  assemble_alternative_distance_first_stages(data, registry, branches, treatment)
-}
-
 save_alternative_distance_first_stages <- function(
   diagnostics,
   dir = "outputs/diagnostics/extended/instrument_relevance"
@@ -794,18 +780,4 @@ augment_alternative_distance_inference_diagnostics <- function(
   )
   diagnostics$design_comparison <- design$comparison
   diagnostics
-}
-
-augment_alternative_distance_diagnostics <- function(
-  diagnostics,
-  panel,
-  census_2001_languages,
-  outcome = "real_log_consumption_change",
-  glottolog = NULL,
-  glottolog_crosswalk = NULL
-) {
-  diagnostics <- augment_alternative_distance_measurement_diagnostics(
-    diagnostics, panel, census_2001_languages, glottolog, glottolog_crosswalk
-  )
-  augment_alternative_distance_inference_diagnostics(diagnostics, panel, outcome)
 }

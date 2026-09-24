@@ -451,28 +451,6 @@ apply_geometry_carrybacks <- function(
   out
 }
 
-read_zipped_gpkg <- function(path) {
-  need_pkg("sf", "zipped SHRID geometry")
-  if (!file.exists(path)) {
-    stop("Missing SHRID geometry archive: ", path, call. = FALSE)
-  }
-  extract_dir <- tempfile("shrid-geometry-")
-  dir.create(extract_dir, recursive = TRUE)
-  on.exit(unlink(extract_dir, recursive = TRUE, force = TRUE), add = TRUE)
-  utils::unzip(path, exdir = extract_dir)
-  gpkg <- list.files(
-    extract_dir, pattern = "\\.gpkg$", recursive = TRUE,
-    full.names = TRUE, ignore.case = TRUE
-  )
-  if (length(gpkg) != 1L) {
-    stop(
-      "Expected exactly one GeoPackage in SHRID archive; found ",
-      length(gpkg), ".", call. = FALSE
-    )
-  }
-  sf::st_read(gpkg, quiet = TRUE)
-}
-
 save_lineage_geometry_2001 <- function(
   geometry_2001, admin_2001,
   path = "data/processed/geography/district_2001.gpkg"

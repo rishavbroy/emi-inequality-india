@@ -468,13 +468,6 @@ public_modelsummary_table <- function(model, name, vcov_matrix = NULL, add_rows 
   add_public_longtable_notes(tex, name)
 }
 
-regression_standard_error_rows <- function(df) {
-  if (!"Term" %in% names(df) || ncol(df) < 2L) return(integer())
-  terms <- table_contract_column_strings(df$Term)
-  vals <- table_contract_column_strings(df[[2]])
-  which((is.na(terms) | !nzchar(terms)) & grepl("^\\(", vals))
-}
-
 sanitize_table_for_kable <- function(df) {
   df <- as.data.frame(df, check.names = FALSE, stringsAsFactors = FALSE)
   if (!nrow(df)) df <- data.frame(Note = "No rows to display.", stringsAsFactors = FALSE)
