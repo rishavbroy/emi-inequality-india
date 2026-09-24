@@ -159,7 +159,6 @@ test_that("output artifact manifest scopes are semantic rather than filename-spe
     "paper/paper.pdf",
     "docs/a.md",
     "posters/p/poster.pdf",
-    "analysis/a.md",
     "application-samples/output/a.pdf"
   )
   expect_identical(
@@ -167,7 +166,7 @@ test_that("output artifact manifest scopes are semantic rather than filename-spe
     c(
       "build_diagnostic", "public_diagnostic", "extended_diagnostic",
       "benchmark", "public_table", "public_figure", "paper",
-      "documentation", "poster", "analysis_note", "application_sample"
+      "documentation", "poster", "application_sample"
     )
   )
 })
@@ -175,8 +174,6 @@ test_that("output artifact manifest scopes are semantic rather than filename-spe
 
 test_that("output artifact roots keep optional render families opt-in", {
   expect_false("posters" %in% output_artifact_roots())
-  expect_false("analysis" %in% output_artifact_roots())
   expect_true("posters" %in% output_artifact_roots(include_poster = TRUE))
-  expect_true("analysis" %in% output_artifact_roots(include_analysis = TRUE))
   expect_true("application-samples/output" %in% output_artifact_roots(include_samples = TRUE))
 })

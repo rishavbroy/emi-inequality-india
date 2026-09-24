@@ -9,7 +9,6 @@ fast_mode="false"
 skip_tests="false"
 with_extended_diagnostics="false"
 with_benchmarks="false"
-with_analysis="false"
 with_poster="false"
 current_stage="argument-parsing"
 build_completed="false"
@@ -21,13 +20,11 @@ Usage: bash scripts/run_full_build.sh [options]
 
 Builds and validates the project using the final research configuration by default.
 The ordinary run preserves the {targets} store and existing generated files, includes
-application samples, omits analysis reports and the conference poster, and writes
+application samples, omits the conference poster, and writes
 review.zip on both success and failure.
 
 Options:
   --no-samples              Omit application-sample rendering and checks.
-  --with-analysis           Render analysis reports and their required extended
-                            results and benchmarks.
   --with-poster             Render and require the conference poster.
   --with-extended-diagnostics
                             Run the opt-in extended diagnostic target family.
@@ -49,12 +46,6 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --no-samples|--without-samples) render_samples="false"; shift ;;
     --with-samples) render_samples="true"; shift ;;
-    --with-analysis)
-      with_analysis="true"
-      with_extended_diagnostics="true"
-      with_benchmarks="true"
-      shift
-      ;;
     --with-poster) with_poster="true"; shift ;;
     --with-extended-diagnostics) with_extended_diagnostics="true"; shift ;;
     --with-benchmarks) with_benchmarks="true"; shift ;;
@@ -86,7 +77,6 @@ if [[ "$render_samples" == "true" ]]; then
 else
   archive_args+=(--no-samples)
 fi
-if [[ "$with_analysis" == "true" ]]; then archive_args+=(--with-analysis); fi
 if [[ "$with_poster" == "true" ]]; then archive_args+=(--with-poster); fi
 
 write_build_status() {
@@ -109,7 +99,6 @@ write_build_status() {
   BUILD_SKIP_TESTS="$skip_tests" \
   BUILD_EXTENDED="$with_extended_diagnostics" \
   BUILD_BENCHMARKS="$with_benchmarks" \
-  BUILD_ANALYSIS="$with_analysis" \
   BUILD_POSTER="$with_poster" \
   python3 - <<'PY'
 import json
@@ -145,7 +134,6 @@ status = {
         "skip_tests": flag("BUILD_SKIP_TESTS"),
         "with_extended_diagnostics": flag("BUILD_EXTENDED"),
         "with_benchmarks": flag("BUILD_BENCHMARKS"),
-        "with_analysis": flag("BUILD_ANALYSIS"),
         "with_poster": flag("BUILD_POSTER"),
     },
     "git": {
@@ -247,7 +235,6 @@ printf '  application samples: %s\n' "$render_samples"
 printf '  conference poster: %s\n' "$with_poster"
 printf '  extended diagnostics: %s\n' "$with_extended_diagnostics"
 printf '  benchmarks: %s\n' "$with_benchmarks"
-printf '  analysis reports: %s\n' "$with_analysis"
 printf '  from clean slate: %s\n' "$from_clean_slate"
 printf '  review archive: %s\n' "$archive_enabled"
 
@@ -352,11 +339,6 @@ if [[ "$with_benchmarks" == "true" ]]; then
   make benchmarking CONFIG="$config_path"
 fi
 
-if [[ "$with_analysis" == "true" ]]; then
-  current_stage="analysis"
-  echo "=== ANALYSIS REPORTS ==="
-  make render-analysis CONFIG="$config_path"
-fi
 
 current_stage="strict-target-warning-check"
 echo "=== TARGET WARNING CHECK ==="
@@ -370,7 +352,6 @@ current_stage="output-manifest"
 echo "=== OUTPUT MANIFEST ==="
 manifest_args=(scripts/write_output_manifest.R)
 if [[ "$render_samples" == "true" ]]; then manifest_args+=(--with-samples); fi
-if [[ "$with_analysis" == "true" ]]; then manifest_args+=(--with-analysis); fi
 if [[ "$with_poster" == "true" ]]; then manifest_args+=(--with-poster); fi
 Rscript "${manifest_args[@]}"
 if [[ ! -s outputs/build/output_manifest.csv ]]; then

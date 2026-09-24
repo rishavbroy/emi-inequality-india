@@ -16,7 +16,7 @@ source_health_r_files <- function() {
 }
 
 source_health_qmd_files <- function() {
-  roots <- c("paper", "docs", "analysis", "application-samples", "posters")
+  roots <- c("paper", "docs", "application-samples", "posters")
   sort(unique(unlist(lapply(roots[dir.exists(roots)], function(root) {
     list.files(root, "\\.qmd$", recursive = TRUE, full.names = TRUE)
   }), use.names = FALSE)))
@@ -55,18 +55,47 @@ source_health_function_definitions <- function(paths = list.files(
   do.call(rbind, rows)
 }
 
+source_health_expression_names <- function(expr) {
+  if (!is.call(expr)) return(all.names(expr, functions = TRUE))
+  if (identical(expr[[1L]], as.name("function"))) {
+    defaults <- as.list(expr[[2L]])
+    defaults <- defaults[vapply(defaults, length, integer(1)) > 0L]
+    return(c(
+      unlist(lapply(defaults, all.names, functions = TRUE), use.names = FALSE),
+      all.names(expr[[3L]], functions = TRUE)
+    ))
+  }
+  all.names(expr, functions = TRUE)
+}
+
+source_health_code_names <- function(code) {
+  unlist(lapply(code, function(expr) {
+    if (is.call(expr) && length(expr) >= 3L &&
+        as.character(expr[[1L]]) %in% c("<-", "=") &&
+        is.call(expr[[3L]]) && identical(expr[[3L]][[1L]], as.name("function"))) {
+      source_health_expression_names(expr[[3L]])
+    } else {
+      all.names(expr, functions = TRUE)
+    }
+  }), use.names = FALSE)
+}
+
 source_health_symbol_counts <- function(
     r_paths = source_health_r_files(), qmd_paths = source_health_qmd_files()) {
   names_seen <- character()
   for (path in r_paths[file.exists(r_paths)]) {
-    names_seen <- c(names_seen, all.names(parse(path), functions = TRUE))
+    names_seen <- c(names_seen, source_health_code_names(parse(path)))
   }
   for (path in qmd_paths[file.exists(qmd_paths)]) {
     output <- tempfile(fileext = ".R")
+    old_options <- options(knitr.purl.inline = TRUE)
     tryCatch({
       knitr::purl(path, output = output, quiet = TRUE)
-      names_seen <- c(names_seen, all.names(parse(output), functions = TRUE))
-    }, finally = unlink(output))
+      names_seen <- c(names_seen, source_health_code_names(parse(output)))
+    }, finally = {
+      options(old_options)
+      unlink(output)
+    })
   }
   table(names_seen)
 }
@@ -105,8 +134,7 @@ source_health_report <- function(
   definitions$symbol_occurrences[is.na(definitions$symbol_occurrences)] <- 0L
   definitions$metadata_reference <- definitions$function_name %in% dynamic
   duplicate_definition <- definition_counts[definitions$function_name] > 1L
-  symbolic_reference <- definitions$symbol_occurrences >
-    unname(as.integer(definition_counts[definitions$function_name]))
+  symbolic_reference <- definitions$symbol_occurrences > 0L
   definitions$status <- ifelse(
     duplicate_definition, "multiple_definitions",
     ifelse(

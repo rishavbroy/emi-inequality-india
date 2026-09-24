@@ -69,10 +69,6 @@ benchmarks_enabled <- function() {
   env_flag_enabled("EMI_RUN_BENCHMARKS", default = FALSE)
 }
 
-analysis_notes_enabled <- function() {
-  env_flag_enabled("EMI_RENDER_ANALYSIS_NOTES", default = FALSE)
-}
-
 
 core_pipeline_targets <- c(
   list(
@@ -189,7 +185,6 @@ benchmark_targets <- list(
 )
 
 
-analysis_note_targets <- analysis_markdown_target_definitions("analysis")
 
 application_sample_targets <- list(
   tar_target(application_sample_inputs, application_sample_input_files(), format = "file"),
@@ -213,9 +208,6 @@ if (benchmarks_enabled()) {
   selected_targets <- c(selected_targets, benchmark_targets)
 }
 
-if (analysis_notes_enabled()) {
-  selected_targets <- c(selected_targets, analysis_note_targets)
-}
 
 if (render_application_samples_enabled()) {
   selected_targets <- c(selected_targets, application_sample_targets)

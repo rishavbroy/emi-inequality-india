@@ -3,20 +3,19 @@ set -euo pipefail
 
 out="review.zip"
 include_samples="true"
-include_analysis="false"
 include_poster="false"
 allow_incomplete="false"
 
 usage() {
   cat <<'USAGE'
-Usage: bash scripts/make_review_archive.sh [--with-samples|--no-samples] [--with-analysis] [--with-poster] [--allow-incomplete] [-o OUT.zip]
+Usage: bash scripts/make_review_archive.sh [--with-samples|--no-samples] [--with-poster] [--allow-incomplete] [-o OUT.zip]
        bash scripts/make_review_archive.sh OUT.zip
 
 Creates a public review archive from the current working tree. By default the
-archive is written to review.zip and includes application-sample PDFs. Analysis
-report renders and conference-poster renders are included only when explicitly
-requested. Use --allow-incomplete only for debugging failed builds; it packages
-the current state without requiring final deliverables.
+archive is written to review.zip and includes application-sample PDFs. Conference
+poster renders are included only when explicitly requested. Use --allow-incomplete
+only for debugging failed builds; it packages the current state without requiring
+final deliverables.
 USAGE
 }
 
@@ -28,10 +27,6 @@ while [[ $# -gt 0 ]]; do
       ;;
     --without-samples|--no-samples)
       include_samples="false"
-      shift
-      ;;
-    --with-analysis)
-      include_analysis="true"
       shift
       ;;
     --with-poster)
@@ -116,7 +111,7 @@ cp -R outputs/diagnostics "$tmpdir/outputs/" 2>/dev/null || true
 cp -R outputs/replication "$tmpdir/outputs/" 2>/dev/null || true
 mkdir -p "$tmpdir/outputs/build"
 if [[ ! -s "$tmpdir/outputs/build/build_status.json" ]]; then
-  ARCHIVE_ALLOW_INCOMPLETE="$allow_incomplete" ARCHIVE_INCLUDE_SAMPLES="$include_samples" ARCHIVE_INCLUDE_ANALYSIS="$include_analysis" ARCHIVE_INCLUDE_POSTER="$include_poster" python3 - "$tmpdir/outputs/build/build_status.json" <<'PY_STATUS'
+  ARCHIVE_ALLOW_INCOMPLETE="$allow_incomplete" ARCHIVE_INCLUDE_SAMPLES="$include_samples" ARCHIVE_INCLUDE_POSTER="$include_poster" python3 - "$tmpdir/outputs/build/build_status.json" <<'PY_STATUS'
 import json
 import os
 import sys
@@ -133,7 +128,6 @@ status = {
     "updated_at_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
     "options": {
         "with_samples": os.environ["ARCHIVE_INCLUDE_SAMPLES"] == "true",
-        "with_analysis": os.environ["ARCHIVE_INCLUDE_ANALYSIS"] == "true",
         "with_poster": os.environ["ARCHIVE_INCLUDE_POSTER"] == "true"
     },
     "note": "The archive was created outside scripts/run_full_build.sh; no build result is asserted."
@@ -148,15 +142,6 @@ if [[ -d "$tmpdir/outputs/diagnostics" ]]; then
   find "$tmpdir/outputs/diagnostics" -maxdepth 1 -type f -name '*.csv' -delete
 fi
 cp -R outputs/benchmarking "$tmpdir/outputs/" 2>/dev/null || true
-# Analysis source files may be tracked, but generated Markdown is included only
-# when this archive corresponds to a build that rendered analysis reports.
-cp -R analysis "$tmpdir/" 2>/dev/null || true
-if [[ -d "$tmpdir/analysis" ]]; then
-  find "$tmpdir/analysis" -type f \( -name '*.html' -o -name '*.pdf' -o -name '*.tex' -o -name '*.log' \) -delete
-  if [[ "$include_analysis" != "true" ]]; then
-    find "$tmpdir/analysis" -type f -name '*.md' -delete
-  fi
-fi
 rm -rf "$tmpdir/data/processed"
 if [[ -d data/processed ]]; then
   mkdir -p "$tmpdir/data"
@@ -241,9 +226,6 @@ if [[ "$allow_incomplete" == "true" ]]; then
 fi
 if [[ "$include_samples" != "true" ]]; then
   echo "Application-sample outputs were omitted; rerun with --with-samples to include them."
-fi
-if [[ "$include_analysis" != "true" ]]; then
-  echo "Rendered analysis reports were omitted; rerun with --with-analysis to include them."
 fi
 if [[ "$include_poster" != "true" ]]; then
   echo "Conference-poster renders were omitted; rerun with --with-poster to include them."

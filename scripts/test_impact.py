@@ -287,7 +287,7 @@ def path_tests(path):
         tests.update({"test-output-tables.R", "test-public-scripts.R"})
     if path.startswith("paper/"):
         tests.update({"test-public-scripts.R", "test-output-tables.R", "test-output-figures.R"})
-    if path.startswith(("docs/", "analysis/")):
+    if path.startswith("docs/"):
         tests.update({"test-public-scripts.R", "test-diagnostics.R"})
     if path.startswith("application-samples/"):
         tests.add("test-public-scripts.R")

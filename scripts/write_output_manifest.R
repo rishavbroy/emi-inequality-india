@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 
 args <- commandArgs(trailingOnly = TRUE)
-allowed <- c("--with-samples", "--with-analysis", "--with-poster")
+allowed <- c("--with-samples", "--with-poster")
 if (length(setdiff(args, allowed))) stop("Unknown output-manifest argument.", call. = FALSE)
 source("R/output/output_artifact_manifest.R", local = TRUE)
 
@@ -17,7 +17,6 @@ manifest <- build_output_artifact_manifest(
   design_registry = design_registry,
   roots = output_artifact_roots(
     include_samples = "--with-samples" %in% args,
-    include_analysis = "--with-analysis" %in% args,
     include_poster = "--with-poster" %in% args
   )
 )

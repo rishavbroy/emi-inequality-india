@@ -1,4 +1,4 @@
-.PHONY: all prepare-data init-renv restore snapshot download-census-tables download-natural-earth-boundaries pipeline pipeline-fast replicate-processed verify-processed-replication clean-processed-replication diagnostics public-diagnostics extended-diagnostics lineage-geometry-build lineage-geometry benchmarking rerun-extended-diagnostics rerun-benchmarks rerun-analysis analysis analysis-fast render-analysis qmd-renders clean clean-all clean-analysis clean-public-diagnostics clean-extended-diagnostics clean-benchmarking paper paper-new poster samples check-report-values check-report-values-final audit-crossrefs audit-crossrefs-final audit-outputs-final output-manifest check-public check-public-fast check-public-final check-public-final-no-samples check-public-text check-rendered-text check-sample-specs test tests test-affected test-inventory clean-targets clean-renders clean-renders-core clean-renders-no-samples
+.PHONY: all prepare-data init-renv restore snapshot download-census-tables download-natural-earth-boundaries pipeline pipeline-fast replicate-processed verify-processed-replication clean-processed-replication diagnostics public-diagnostics extended-diagnostics lineage-geometry-build lineage-geometry benchmarking rerun-extended-diagnostics rerun-benchmarks qmd-renders clean clean-all clean-public-diagnostics clean-extended-diagnostics clean-benchmarking paper paper-new poster samples check-report-values check-report-values-final audit-crossrefs audit-crossrefs-final audit-outputs-final output-manifest check-public check-public-fast check-public-final check-public-final-no-samples check-public-text check-rendered-text check-sample-specs test tests test-affected test-inventory clean-targets clean-renders clean-renders-core clean-renders-no-samples
 
 TMP_ROOT ?= $(if $(strip $(TMPDIR)),$(patsubst %/,%,$(TMPDIR)),/tmp)
 TEXCACHE_ROOT ?= $(TMP_ROOT)/emi-inequality-india-texcache
@@ -91,27 +91,6 @@ rerun-benchmarks:
 	$(MAKE) benchmarking
 
 
-
-analysis:
-	$(MAKE) public-diagnostics CONFIG=$(CONFIG)
-	$(MAKE) extended-diagnostics CONFIG=$(CONFIG)
-	$(MAKE) benchmarking CONFIG=$(CONFIG)
-	$(MAKE) render-analysis CONFIG=$(CONFIG)
-
-analysis-fast:
-	$(MAKE) analysis CONFIG=config/fast.yml
-
-render-analysis: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
-	HOME=$(QUARTO_HOME) EMI_CONFIG=$(CONFIG) EMI_RUN_EXTENDED_DIAGNOSTICS=true EMI_RUN_BENCHMARKS=true EMI_RENDER_ANALYSIS_NOTES=true EMI_RENDER_APPLICATION_SAMPLES=false Rscript scripts/run_targets_checked.R --targets analysis_markdown_files
-
-rerun-analysis:
-	EMI_CONFIG=$(CONFIG) EMI_RUN_EXTENDED_DIAGNOSTICS=true EMI_RUN_BENCHMARKS=true EMI_RENDER_ANALYSIS_NOTES=true EMI_RENDER_APPLICATION_SAMPLES=false Rscript -e 'targets::tar_invalidate(starts_with("analysis_md_")); targets::tar_invalidate("analysis_markdown_files")'
-	$(MAKE) render-analysis
-
-clean-analysis:
-	find analysis -type f \( -name '*.html' -o -name '*.pdf' -o -name '*.tex' -o -name '*.log' \) -delete
-	find analysis -type f -name '*.qmd' -exec sh -c 'for qmd do rm -f "$${qmd%.qmd}.md"; done' sh {} +
-
 clean-public-diagnostics:
 	rm -rf outputs/build outputs/diagnostics/public
 	rm -f outputs/diagnostics/*.csv
@@ -140,7 +119,6 @@ qmd-renders:
 	$(MAKE) paper
 	$(MAKE) samples CONFIG=$(CONFIG)
 	$(MAKE) poster CONFIG=$(CONFIG)
-	$(MAKE) render-analysis CONFIG=$(CONFIG)
 
 check-report-values:
 	Rscript scripts/check_report_values.R
@@ -214,7 +192,6 @@ test-inventory:
 
 clean:
 	$(MAKE) clean-renders
-	$(MAKE) clean-analysis
 	$(MAKE) clean-extended-diagnostics
 	$(MAKE) clean-benchmarking
 

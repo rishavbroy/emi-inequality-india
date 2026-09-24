@@ -2,11 +2,10 @@
 # the {targets} graph: estimation metadata stays authoritative in its registries,
 # while target/file provenance comes from targets::tar_meta().
 
-output_artifact_roots <- function(include_samples = FALSE, include_analysis = FALSE, include_poster = FALSE) {
+output_artifact_roots <- function(include_samples = FALSE, include_poster = FALSE) {
   roots <- c("paper", "outputs", "docs")
   if (isTRUE(include_poster)) roots <- c(roots, "posters")
   if (isTRUE(include_samples)) roots <- c(roots, "application-samples/output")
-  if (isTRUE(include_analysis)) roots <- c(roots, "analysis")
   roots
 }
 
@@ -21,7 +20,6 @@ output_artifact_scope <- function(path) {
     "^paper/" = "paper",
     "^posters/" = "poster",
     "^docs/" = "documentation",
-    "^analysis/" = "analysis_note",
     "^application-samples/output/" = "application_sample"
   )
   unname(vapply(as.character(path), function(x) {
