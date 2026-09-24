@@ -591,5 +591,9 @@ test_that("duplicate-output warnings ignore cross-directory and replication equa
 
 test_that("full build scopes output hygiene to diagnostics generated in that run", {
   script <- paste(readLines(repo_file("scripts", "run_full_build.sh"), warn = FALSE), collapse = "\n")
-  expect_match(script, "EMI_AUDIT_EXTENDED_DIAGNOSTICS=\"\$with_extended_diagnostics\"")
+  expect_match(
+    script,
+    'EMI_AUDIT_EXTENDED_DIAGNOSTICS="$with_extended_diagnostics"',
+    fixed = TRUE
+  )
 })
