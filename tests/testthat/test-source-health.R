@@ -6,6 +6,7 @@ test_that("source health distinguishes referenced, metadata-dispatched, and orph
 
   source_file <- file.path(root, "R", "functions.R")
   writeLines(c(
+    "base::options(width = 80, digits = 3)",
     "used <- function(x) x + 1",
     "default_helper <- function() 1",
     "higher_order <- function(fun = used) fun()",

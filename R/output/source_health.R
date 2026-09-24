@@ -22,6 +22,16 @@ source_health_qmd_files <- function() {
   }), use.names = FALSE)))
 }
 
+source_health_is_function_definition <- function(expr) {
+  is.call(expr) &&
+    length(expr) >= 3L &&
+    (identical(expr[[1L]], as.name("<-")) ||
+      identical(expr[[1L]], as.name("="))) &&
+    is.symbol(expr[[2L]]) &&
+    is.call(expr[[3L]]) &&
+    identical(expr[[3L]][[1L]], as.name("function"))
+}
+
 source_health_function_definitions <- function(paths = list.files(
     "R", "\\.[Rr]$", recursive = TRUE, full.names = TRUE)) {
   rows <- list()
@@ -30,10 +40,7 @@ source_health_function_definitions <- function(paths = list.files(
     refs <- attr(code, "srcref")
     for (i in seq_along(code)) {
       expr <- code[[i]]
-      if (!is.call(expr) || length(expr) < 3L ||
-          !as.character(expr[[1L]]) %in% c("<-", "=") ||
-          !is.symbol(expr[[2L]]) || !is.call(expr[[3L]]) ||
-          !identical(expr[[3L]][[1L]], as.name("function"))) next
+      if (!source_health_is_function_definition(expr)) next
       line <- NA_integer_
       if (length(refs) >= i && !is.null(refs[[i]])) {
         line <- as.integer(refs[[i]][[1L]])
@@ -70,9 +77,7 @@ source_health_expression_names <- function(expr) {
 
 source_health_code_names <- function(code) {
   unlist(lapply(code, function(expr) {
-    if (is.call(expr) && length(expr) >= 3L &&
-        as.character(expr[[1L]]) %in% c("<-", "=") &&
-        is.call(expr[[3L]]) && identical(expr[[3L]][[1L]], as.name("function"))) {
+    if (source_health_is_function_definition(expr)) {
       source_health_expression_names(expr[[3L]])
     } else {
       all.names(expr, functions = TRUE)
