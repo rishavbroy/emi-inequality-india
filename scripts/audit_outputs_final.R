@@ -2,6 +2,7 @@
 
 source("scripts/public_output_contract.R", local = TRUE)
 source("R/output/output_hygiene.R", local = TRUE)
+source("R/output/source_health.R", local = TRUE)
 
 if (!file.exists(".pipeline-final-ok")) {
   stop("Final output audit requires a successful current final pipeline run. Run `make pipeline` with the final configuration first.", call. = FALSE)
@@ -149,6 +150,34 @@ if (file.exists(anderson_rubin_path)) {
 }
 
 
+
+
+cat("=== SOURCE HEALTH ===\n")
+source_health <- source_health_report()
+write_source_health_report(source_health)
+possible_orphans <- source_health[source_health$status == "possible_orphan", , drop = FALSE]
+multiple_definitions <- source_health[source_health$status == "multiple_definitions", , drop = FALSE]
+if (nrow(possible_orphans)) {
+  for (i in seq_len(nrow(possible_orphans))) {
+    cat(
+      "SOURCE HEALTH WARNING: possible unreferenced function: ",
+      possible_orphans$function_name[[i]], " (", possible_orphans$file[[i]],
+      ":", possible_orphans$line[[i]], ")\n", sep = ""
+    )
+  }
+} else {
+  cat("Possible unreferenced production functions: 0\n")
+}
+if (nrow(multiple_definitions)) {
+  for (i in seq_len(nrow(multiple_definitions))) {
+    cat(
+      "SOURCE HEALTH WARNING: multiple top-level definitions: ",
+      multiple_definitions$function_name[[i]], " (",
+      multiple_definitions$file[[i]], ":", multiple_definitions$line[[i]], ")\n",
+      sep = ""
+    )
+  }
+}
 
 cat("=== OUTPUT HYGIENE ===\n")
 hygiene_roots <- c(

@@ -623,3 +623,53 @@ test_that("full build scopes output hygiene to diagnostics generated in that run
     fixed = TRUE
   )
 })
+
+test_that("source health distinguishes referenced, metadata-dispatched, and orphan functions", {
+  root <- tempfile("source-health-")
+  dir.create(file.path(root, "R"), recursive = TRUE)
+  dir.create(file.path(root, "data", "metadata"), recursive = TRUE)
+  on.exit(unlink(root, recursive = TRUE, force = TRUE), add = TRUE)
+
+  source_file <- file.path(root, "R", "functions.R")
+  writeLines(c(
+    "used <- function(x) x + 1",
+    "caller <- function(x) used(x)",
+    "metadata_reader <- function(x) x",
+    "orphan <- function(x) x"
+  ), source_file)
+  metadata <- file.path(root, "data", "metadata", "file_manifest.csv")
+  utils::write.csv(
+    data.frame(reader_function = "metadata_reader", stringsAsFactors = FALSE),
+    metadata, row.names = FALSE
+  )
+
+  report <- source_health_report(
+    definition_paths = source_file,
+    reference_paths = source_file,
+    qmd_paths = character(),
+    metadata_path = metadata
+  )
+  status <- setNames(report$status, report$function_name)
+  expect_identical(status[["used"]], "referenced")
+  expect_identical(status[["caller"]], "possible_orphan")
+  expect_identical(status[["metadata_reader"]], "metadata_reference")
+  expect_identical(status[["orphan"]], "possible_orphan")
+})
+
+test_that("source health reports duplicate top-level function definitions", {
+  root <- tempfile("source-health-duplicates-")
+  dir.create(root)
+  on.exit(unlink(root, recursive = TRUE, force = TRUE), add = TRUE)
+  one <- file.path(root, "one.R")
+  two <- file.path(root, "two.R")
+  writeLines("same_name <- function() 1", one)
+  writeLines("same_name <- function() 2", two)
+
+  report <- source_health_report(
+    definition_paths = c(one, two),
+    reference_paths = c(one, two),
+    qmd_paths = character(),
+    metadata_path = file.path(root, "missing.csv")
+  )
+  expect_true(all(report$status == "multiple_definitions"))
+})
