@@ -251,7 +251,7 @@ test_that("district matching saver preserves empty table schemas", {
     "district_matching_many_to_many_cases.csv"
   )) {
     header <- names(utils::read.csv(file.path(dir, file), nrows = 0L, check.names = FALSE))
-    expect_setequal(header, names(join_map), info = file)
+    expect_setequal(header, names(join_map))
   }
   inventory <- names(utils::read.csv(
     file.path(dir, "district_matching_source_key_inventory.csv"),
