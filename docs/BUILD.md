@@ -49,6 +49,8 @@ Useful options are:
 
 The default preserves cached target values because `{targets}` already reruns only work that is out of date. `--from-clean-slate` is therefore an exceptional reconstruction check, not the ordinary development mode. A fresh clone already starts without a target store.
 
+Final checks also write advisory maintenance reports under `outputs/build/`. `source_health.csv` lists top-level production functions and flags definitions with no symbolic or registered metadata reference for manual review; it does not fail the build because dynamic R dispatch can defeat static reachability analysis. `schema_less_csvs.csv` remains a hard output-structure check, while `duplicate_generated_csvs.csv` is advisory because independent analyses may legitimately serialize identical results.
+
 ## Optional target families
 
 The maintained build switches `EMI_RUN_EXTENDED_DIAGNOSTICS`, `EMI_RUN_BENCHMARKS`, `EMI_RENDER_APPLICATION_SAMPLES`, and `EMI_RENDER_POSTER` determine which optional target definitions `_targets.R` includes. They do not select a different YAML configuration.
