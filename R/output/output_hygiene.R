@@ -43,6 +43,16 @@ output_hygiene_duplicate_candidates <- function(roots = "outputs") {
   normalized <- normalized[keep]
   if (length(files) < 2L) return(empty)
 
+  # Header-only tables are valid zero-row results. Equal headers do not imply
+  # duplicated analytical output, so duplicate warnings require at least one
+  # serialized data row.
+  has_data_row <- vapply(files, function(path) {
+    length(readLines(path, n = 2L, warn = FALSE)) > 1L
+  }, logical(1))
+  files <- files[has_data_row]
+  normalized <- normalized[has_data_row]
+  if (length(files) < 2L) return(empty)
+
   size <- file.info(files)$size
   md5 <- unname(tools::md5sum(files))
   # Restrict warnings to files in the same generated directory. Cross-directory

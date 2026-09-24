@@ -589,6 +589,16 @@ test_that("duplicate-output warnings ignore cross-directory and replication equa
 })
 
 
+test_that("output hygiene ignores byte-identical header-only tables", {
+  root <- tempfile("output-hygiene-empty-duplicates-")
+  dir.create(root, recursive = TRUE)
+  on.exit(unlink(root, recursive = TRUE, force = TRUE), add = TRUE)
+  utils::write.csv(data.frame(id = character()), file.path(root, "a.csv"), row.names = FALSE)
+  utils::write.csv(data.frame(id = character()), file.path(root, "b.csv"), row.names = FALSE)
+
+  expect_equal(nrow(output_hygiene_duplicate_candidates(root)), 0L)
+})
+
 test_that("full build scopes output hygiene to diagnostics generated in that run", {
   script <- paste(readLines(repo_file("scripts", "run_full_build.sh"), warn = FALSE), collapse = "\n")
   expect_match(
