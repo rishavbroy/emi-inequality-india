@@ -108,6 +108,10 @@ The final-paper rewrite is implemented in `paper/paper-new.qmd`: the introductio
 
 The district-level processed replication tier is implemented. `_targets_processed.R` reruns the registered district consumption/IV, schooling-conversion, alternative-distance first-stage, and first-stage-absorption analyses from tracked processed inputs without raw survey files. The full build now verifies that the five result objects shared with `_targets.R` agree on their reported empirical components, so divergence between analysis replication and full reconstruction fails the build instead of remaining a manual check. Individual-level education selection remains outside this tier until redistribution rights for its NSS source inputs are established. Full source reconstruction and source-validation analyses continue to use `_targets.R`.
 
+## Release hygiene deferred until the manuscript stabilizes
+
+- Before the final public release, remove machine-local Zotero `file = {...}` fields from `paper/references.bib`. Keep this deferred while citations are still being actively edited so bibliography cleanup is done once rather than repeatedly.
+
 ## Explicit non-goals
 
 - Do not force unresolved district lineage to 100 percent.
