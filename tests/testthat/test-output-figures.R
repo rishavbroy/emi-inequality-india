@@ -492,7 +492,7 @@ test_that("state outlines dissolve intrastate district edges", {
     sf::st_linestring(rbind(c(1, 0), c(1, 1))), crs = 3857
   )
 
-  outlines <- public_map_state_linework(panel)$outlines
+  outlines <- public_map_state_outlines(panel)
 
   expect_s3_class(outlines, "sf")
   expect_true(all(sf::st_dimension(outlines) == 1L))
@@ -610,7 +610,7 @@ test_that("state outlines retain complete interstate seams", {
     sf::st_linestring(rbind(c(2, 0), c(2, 1))), crs = 3857
   )
 
-  outlines <- public_map_state_linework(districts)$outlines
+  outlines <- public_map_state_outlines(districts)
 
   expect_s3_class(outlines, "sf")
   expect_equal(
@@ -635,7 +635,7 @@ test_that("state outlines omit holes in dissolved source geometry", {
     c(0.5, 0.5), c(1, 0.5), c(1, 1), c(0.5, 1), c(0.5, 0.5)
   )), crs = 3857)
 
-  outlines <- public_map_state_linework(districts)$outlines
+  outlines <- public_map_state_outlines(districts)
 
   expect_equal(as.numeric(sf::st_length(sf::st_union(outlines))), 8, tolerance = 1e-8)
   expect_true(all(sf::st_is_empty(
@@ -750,59 +750,52 @@ test_that("registered disputed areas are polygons with a distinct no-estimate tr
   expect_false(identical(map_disputed_no_data_colour(), map_no_data_colour()))
 })
 
-test_that("disputed masks cut state polygons before ordinary outlines are derived", {
+test_that("disputed areas own the outline of states they overlap", {
   skip_if_not_installed("sf")
-  state <- sf::st_sf(
-    target_unit_2001 = "d1",
-    state_code_2001 = "01",
-    geometry = sf::st_sfc(sf::st_polygon(list(rbind(
-      c(0, 0), c(2, 0), c(2, 1), c(0, 1), c(0, 0)
-    ))), crs = 3857)
+  square <- function(x0, x1) sf::st_polygon(list(rbind(
+    c(x0, 0), c(x1, 0), c(x1, 1), c(x0, 1), c(x0, 0)
+  )))
+  states <- sf::st_sf(
+    target_unit_2001 = c("left", "right"),
+    state_code_2001 = c("02", "01"),
+    geometry = sf::st_sfc(square(0, 1), square(1, 3), crs = 3857)
   )
   mask <- sf::st_sf(
     area_id = "aksai_chin",
-    geometry = sf::st_sfc(sf::st_polygon(list(rbind(
-      c(1.5, 0), c(2.5, 0), c(2.5, 1), c(1.5, 1), c(1.5, 0)
-    ))), crs = 3857)
+    geometry = sf::st_sfc(square(1, 4), crs = 3857)
   )
-  expected_seam <- sf::st_sfc(
-    sf::st_linestring(rbind(c(1.5, 0), c(1.5, 1))), crs = 3857
+  shared_edge <- sf::st_sfc(
+    sf::st_linestring(rbind(c(1, 0), c(1, 1))), crs = 3857
   )
 
-  linework <- public_map_state_linework(state, mask)
+  outlines <- public_map_state_outlines(states, mask)
 
+  expect_s3_class(outlines, "sf")
+  expect_identical(unique(outlines$state_code_2001), "02")
   expect_equal(
     as.numeric(sf::st_length(sf::st_intersection(
-      sf::st_union(linework$disputed_seams), expected_seam
+      sf::st_union(outlines), shared_edge
     ))),
     1,
     tolerance = 1e-8
   )
-  expect_equal(
-    sum(as.numeric(sf::st_length(sf::st_intersection(
-      sf::st_union(linework$disputed_seams),
-      sf::st_union(linework$outlines)
-    )))),
-    0,
-    tolerance = 1e-8
-  )
 })
 
-test_that("disputed polygons cover pre-existing state outlines except for the cut seam", {
+test_that("disputed polygons render after ordinary state outlines without a seam layer", {
   skip_if_not_installed("sf")
   skip_if_not_installed("ggplot2")
   square <- function(x0, x1) sf::st_polygon(list(rbind(
     c(x0, 0), c(x1, 0), c(x1, 1), c(x0, 1), c(x0, 0)
   )))
   districts <- sf::st_sf(
-    target_unit_2001 = "pc2001__01__01",
-    state_code_2001 = "01",
-    ling_distance_nonzero_mean = 1,
-    geometry = sf::st_sfc(square(0, 2), crs = 3857)
+    target_unit_2001 = c("pc2001__02__01", "pc2001__01__01"),
+    state_code_2001 = c("02", "01"),
+    ling_distance_nonzero_mean = c(1, 2),
+    geometry = sf::st_sfc(square(0, 1), square(1, 3), crs = 3857)
   )
   disputed <- sf::st_sf(
     area_id = "aksai_chin",
-    geometry = sf::st_sfc(square(1.5, 2.5), crs = 3857)
+    geometry = sf::st_sfc(square(2, 4), crs = 3857)
   )
   reference <- list(disputed_display = disputed)
   spec <- list(name = "fixture", variable = "ling_distance_nonzero_mean")
@@ -818,17 +811,18 @@ test_that("disputed polygons cover pre-existing state outlines except for the cu
     function(layer) identical(unique(layer$data$boundary_role), "state_outline"),
     logical(1)
   ))
-  seam_index <- which(vapply(
+  boundary_roles <- unique(unlist(lapply(
     plot$layers,
-    function(layer) identical(unique(layer$data$boundary_role), "disputed_state_seam"),
-    logical(1)
-  ))
+    function(layer) {
+      if (!"boundary_role" %in% names(layer$data)) return(character())
+      as.character(layer$data$boundary_role)
+    }
+  )))
 
   expect_length(disputed_index, 1L)
   expect_length(outline_index, 1L)
-  expect_length(seam_index, 1L)
+  expect_identical(boundary_roles, "state_outline")
   expect_lt(outline_index, disputed_index)
-  expect_gt(seam_index, disputed_index)
 })
 
 test_that("district boundaries stay thinner than state and disputed boundaries", {

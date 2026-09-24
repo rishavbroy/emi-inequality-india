@@ -482,13 +482,16 @@ public_map_exterior_lines <- function(polygons) {
   outlines
 }
 
-public_map_state_linework <- function(plot_data, disputed_display = NULL) {
+public_map_state_outlines <- function(plot_data, disputed_display = NULL) {
   states <- public_map_state_polygons(plot_data)
-  if (is.null(states)) return(list(outlines = NULL, disputed_seams = NULL))
+  if (is.null(states)) return(NULL)
 
-  outlines <- public_map_exterior_lines(states)
-  if (!is.null(outlines)) outlines$boundary_role <- "state_outline"
-  seams <- NULL
+  # Disputed/no-estimate polygons own their perimeter. Do not attempt to
+  # reconstruct a second black seam from independently digitized Census and
+  # Natural Earth boundaries: near-coincident edges create slivers and doubled
+  # strokes. Instead, suppress the exterior ring of any state whose interior is
+  # covered by the disputed display class. Unaffected neighboring states still
+  # draw their shared interstate boundary from the same Census geometry.
   if (inherits(disputed_display, "sf") && nrow(disputed_display)) {
     if (is.na(sf::st_crs(states)) || is.na(sf::st_crs(disputed_display))) {
       stop("Public map state and disputed geometries require defined CRSs.", call. = FALSE)
@@ -496,35 +499,16 @@ public_map_state_linework <- function(plot_data, disputed_display = NULL) {
     if (sf::st_crs(states) != sf::st_crs(disputed_display)) {
       disputed_display <- sf::st_transform(disputed_display, sf::st_crs(states))
     }
-
-    sf::st_agr(states) <- "constant"
-    masked_states <- sf::st_difference(
-      states,
-      sf::st_union(sf::st_geometry(disputed_display))
-    )
-    masked_outlines <- public_map_exterior_lines(masked_states)
-
-    # Draw ordinary state outlines below the disputed polygon. Only the new
-    # boundary introduced by subtracting the disputed mask is redrawn above it.
-    # Because masked_states is produced from states itself, subtracting the
-    # original state linework removes pre-existing exterior borders exactly and
-    # leaves the state/dispute seam created by the cartographic cut.
-    if (!is.null(masked_outlines) && !is.null(outlines)) {
-      sf::st_agr(masked_outlines) <- "constant"
-      seams <- sf::st_difference(
-        masked_outlines,
-        sf::st_union(sf::st_geometry(outlines))
-      )
-      seams <- seams[!sf::st_is_empty(seams), , drop = FALSE]
-      if (!nrow(seams)) {
-        seams <- NULL
-      } else {
-        seams$boundary_role <- "disputed_state_seam"
-      }
-    }
+    mask <- sf::st_union(sf::st_geometry(disputed_display))
+    intersects <- lengths(sf::st_intersects(states, mask)) > 0L
+    touches_only <- lengths(sf::st_touches(states, mask)) > 0L
+    states <- states[!(intersects & !touches_only), , drop = FALSE]
+    if (!nrow(states)) return(NULL)
   }
 
-  list(outlines = outlines, disputed_seams = seams)
+  outlines <- public_map_exterior_lines(states)
+  if (!is.null(outlines)) outlines$boundary_role <- "state_outline"
+  outlines
 }
 
 build_public_ggplot_map <- function(plot_data, spec, boundary_reference = NULL) {
@@ -539,16 +523,16 @@ build_public_ggplot_map <- function(plot_data, spec, boundary_reference = NULL) 
 
   disputed_display <- public_map_disputed_display(plot_data, boundary_reference)
   display_data <- mask_public_map_disputed_areas(plot_data, disputed_display)
-  state_linework <- public_map_state_linework(plot_data, disputed_display)
+  state_outlines <- public_map_state_outlines(plot_data, disputed_display)
   base <- ggplot2::ggplot() +
     ggplot2::geom_sf(
       data = display_data, ggplot2::aes(fill = .data[[fill$fill]]),
       color = "grey55", linewidth = map_district_boundary_linewidth(),
       linetype = "solid"
     )
-  if (!is.null(state_linework$outlines) && nrow(state_linework$outlines)) {
+  if (!is.null(state_outlines) && nrow(state_outlines)) {
     base <- base + ggplot2::geom_sf(
-      data = state_linework$outlines, color = "grey15",
+      data = state_outlines, color = "grey15",
       linewidth = map_major_boundary_linewidth(), linetype = "solid"
     )
   }
@@ -557,12 +541,6 @@ build_public_ggplot_map <- function(plot_data, spec, boundary_reference = NULL) 
       data = disputed_display, fill = map_disputed_no_data_colour(),
       color = "grey45", linewidth = map_disputed_boundary_linewidth(),
       linetype = "solid"
-    )
-  }
-  if (!is.null(state_linework$disputed_seams) && nrow(state_linework$disputed_seams)) {
-    base <- base + ggplot2::geom_sf(
-      data = state_linework$disputed_seams, color = "grey15",
-      linewidth = map_major_boundary_linewidth(), linetype = "solid"
     )
   }
   base <- base +
