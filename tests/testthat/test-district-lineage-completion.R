@@ -545,6 +545,24 @@ test_that("an empty Gini queue writes a header-only diagnostic", {
   expect_equal(length(readLines(path)), 1L)
 })
 
+test_that("empty downstream lineage queues serialize their declared schemas", {
+  dir <- tempfile("district-lineage-empty-queues-")
+  on.exit(unlink(dir, recursive = TRUE, force = TRUE), add = TRUE)
+
+  save_lineage_downstream_review(list(), dir = dir)
+
+  identity <- utils::read.csv(
+    file.path(dir, "downstream_unmapped_identity_queue.csv"),
+    nrows = 0L, check.names = FALSE
+  )
+  terminal <- utils::read.csv(
+    file.path(dir, "downstream_unmapped_terminal_queue.csv"),
+    nrows = 0L, check.names = FALSE
+  )
+  expect_setequal(names(identity), names(empty_lineage_unmapped_identity_queue()))
+  expect_setequal(names(terminal), names(empty_lineage_unmapped_terminal_queue()))
+})
+
 test_that("full-reviewed allocations remain linked to NSS source identities", {
   conservative <- data.frame(
     source_row_id = "nss_2007_08__a",

@@ -1390,11 +1390,19 @@ save_lineage_downstream_review <- function(
       file.path(dir, "downstream_panel_membership_adjudication.csv")
     ),
     downstream_unmapped_identity_queue = write_diagnostic_csv(
-      review$unmapped_identity_queue %||% data.frame(),
+      if (is.null(review$unmapped_identity_queue)) {
+        empty_lineage_unmapped_identity_queue()
+      } else {
+        review$unmapped_identity_queue
+      },
       file.path(dir, "downstream_unmapped_identity_queue.csv")
     ),
     downstream_unmapped_terminal_queue = write_diagnostic_csv(
-      review$unmapped_terminal_queue %||% data.frame(),
+      if (is.null(review$unmapped_terminal_queue)) {
+        empty_lineage_unmapped_terminal_queue()
+      } else {
+        review$unmapped_terminal_queue
+      },
       file.path(dir, "downstream_unmapped_terminal_queue.csv")
     ),
     downstream_coefficient_comparison = write_diagnostic_csv(

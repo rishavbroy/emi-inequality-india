@@ -96,7 +96,7 @@ extract_unmatched_districts <- function(join_map, ...) {
       !grepl("source_key_unmatched|harmonization_crosswalk_row|matched|exact_name|fuzzy_name", status, ignore.case = TRUE)
     return(join_map[keep, , drop = FALSE])
   }
-  data.frame()
+  join_map[0, , drop = FALSE]
 }
 
 extract_manual_matches <- function(join_map, ...) {
@@ -126,7 +126,7 @@ extract_many_to_many_cases <- function(join_map, ...) {
     if ("many_to_many_type" %in% names(join_map)) keep <- keep | grepl("many|one_source|many_source", join_map$many_to_many_type, ignore.case = TRUE)
     return(join_map[keep, , drop = FALSE])
   }
-  data.frame()
+  join_map[0, , drop = FALSE]
 }
 
 compare_tracker_to_matched_panel <- function(district_panel, district_join_map, unmatched_rows = NULL, many_to_many_cases = NULL, source_key_inventory = NULL, ...) {
@@ -243,15 +243,15 @@ save_district_matching_diagnostics <- function(diagnostics, dir = "outputs/diagn
   dir.create(dir, recursive = TRUE, showWarnings = FALSE)
   paths <- c(
     summary = write_diagnostic_csv(as.data.frame(diagnostics), file.path(dir, "district_matching_summary.csv")),
-    unmatched_rows = write_diagnostic_csv(attr(diagnostics, "unmatched_rows") %||% data.frame(), file.path(dir, "district_matching_unmatched_rows.csv")),
-    source_key_inventory = write_diagnostic_csv(attr(diagnostics, "source_key_inventory") %||% data.frame(), file.path(dir, "district_matching_source_key_inventory.csv")),
-    manual_matches = write_diagnostic_csv(attr(diagnostics, "manual_matches") %||% data.frame(), file.path(dir, "district_matching_manual_matches.csv")),
-    many_to_many = write_diagnostic_csv(attr(diagnostics, "many_to_many_cases") %||% data.frame(), file.path(dir, "district_matching_many_to_many_cases.csv")),
-    tracker_panel_comparison = write_diagnostic_csv(attr(diagnostics, "tracker_panel_comparison") %||% data.frame(), file.path(dir, "district_matching_tracker_panel_comparison.csv")),
-    key_comparison = write_diagnostic_csv(attr(diagnostics, "key_comparison") %||% data.frame(), file.path(dir, "district_matching_key_comparison.csv")),
-    key_role_counts = write_diagnostic_csv(attr(diagnostics, "key_role_counts") %||% data.frame(), file.path(dir, "district_matching_key_role_counts.csv")),
-    all_rows_search = write_diagnostic_csv(attr(diagnostics, "all_rows_search") %||% data.frame(), file.path(dir, "district_matching_all_rows_search.csv")),
-    legacy_reference = write_diagnostic_csv(attr(diagnostics, "legacy_reference") %||% data.frame(), file.path(dir, "district_matching_legacy_reference.csv"))
+    unmatched_rows = write_diagnostic_csv(attr(diagnostics, "unmatched_rows"), file.path(dir, "district_matching_unmatched_rows.csv")),
+    source_key_inventory = write_diagnostic_csv(attr(diagnostics, "source_key_inventory"), file.path(dir, "district_matching_source_key_inventory.csv")),
+    manual_matches = write_diagnostic_csv(attr(diagnostics, "manual_matches"), file.path(dir, "district_matching_manual_matches.csv")),
+    many_to_many = write_diagnostic_csv(attr(diagnostics, "many_to_many_cases"), file.path(dir, "district_matching_many_to_many_cases.csv")),
+    tracker_panel_comparison = write_diagnostic_csv(attr(diagnostics, "tracker_panel_comparison"), file.path(dir, "district_matching_tracker_panel_comparison.csv")),
+    key_comparison = write_diagnostic_csv(attr(diagnostics, "key_comparison"), file.path(dir, "district_matching_key_comparison.csv")),
+    key_role_counts = write_diagnostic_csv(attr(diagnostics, "key_role_counts"), file.path(dir, "district_matching_key_role_counts.csv")),
+    all_rows_search = write_diagnostic_csv(attr(diagnostics, "all_rows_search"), file.path(dir, "district_matching_all_rows_search.csv")),
+    legacy_reference = write_diagnostic_csv(attr(diagnostics, "legacy_reference"), file.path(dir, "district_matching_legacy_reference.csv"))
   )
   output_manifest(paths)
 }

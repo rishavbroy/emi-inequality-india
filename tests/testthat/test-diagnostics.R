@@ -231,6 +231,35 @@ test_that("district matching diagnostics separate source-key inventory from true
   expect_true(nrow(attr(out, "all_rows_search")) >= 1L)
 })
 
+test_that("district matching saver preserves empty table schemas", {
+  join_map <- data.frame(
+    state_20 = character(), district_20 = character(),
+    match_status = character(), stringsAsFactors = FALSE
+  )
+  out <- diagnose_district_matching(
+    data.frame(state_20 = character(), district_20 = character()),
+    join_map, list()
+  )
+  dir <- tempfile("district-matching-empty-")
+  on.exit(unlink(dir, recursive = TRUE, force = TRUE), add = TRUE)
+
+  save_district_matching_diagnostics(out, dir)
+
+  for (file in c(
+    "district_matching_unmatched_rows.csv",
+    "district_matching_manual_matches.csv",
+    "district_matching_many_to_many_cases.csv"
+  )) {
+    header <- names(utils::read.csv(file.path(dir, file), nrows = 0L, check.names = FALSE))
+    expect_setequal(header, names(join_map), info = file)
+  }
+  inventory <- names(utils::read.csv(
+    file.path(dir, "district_matching_source_key_inventory.csv"),
+    nrows = 0L, check.names = FALSE
+  ))
+  expect_setequal(inventory, names(empty_source_key_inventory()))
+})
+
 test_that("fuzzy diagnostics expose configured methods and candidate pairs", {
   testthat::skip_if_not_installed("stringdist")
   out <- diagnose_fuzzy_matching(data.frame(id = 1), data.frame(match_status = "harmonization_crosswalk_row"), list())
