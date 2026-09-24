@@ -20,6 +20,13 @@ FUNCTION_DEF = re.compile(
     r"(?m)^([A-Za-z.][A-Za-z0-9._]*)\s*(?:<-|=)\s*function\s*\("
 )
 TEST_DESC = re.compile(r'test_that\(\s*"([^"]+)"')
+DIAGNOSTIC_TESTS = {
+    "test-diagnostics.R",
+    "test-first-stage-absorption.R",
+    "test-alternative-distance-diagnostics.R",
+    "test-consumption-iv-diagnostics.R",
+    "test-consumption-robustness-diagnostics.R",
+}
 
 
 def git(*args, check=True):
@@ -291,6 +298,8 @@ def path_tests(path):
         tests.update({"test-public-scripts.R", "test-diagnostics.R"})
     if path.startswith("application-samples/"):
         tests.add("test-public-scripts.R")
+    if "test-diagnostics.R" in tests:
+        tests.update(DIAGNOSTIC_TESTS)
     return tests
 
 
