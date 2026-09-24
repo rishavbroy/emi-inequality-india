@@ -497,9 +497,18 @@ test_that("state outlines dissolve intrastate district edges", {
   expect_s3_class(outlines, "sf")
   expect_true(all(sf::st_dimension(outlines) == 1L))
   expect_equal(as.numeric(sf::st_length(sf::st_union(outlines))), 6, tolerance = 1e-8)
-  expect_true(all(sf::st_is_empty(
-    sf::st_intersection(sf::st_union(outlines), intrastate_edge)
-  )))
+  # The dissolved state outline may touch the former district edge at its
+  # endpoints where that edge meets the state exterior. What must disappear is
+  # one-dimensional overlap: an intrastate district segment must never be
+  # promoted into the major-boundary layer.
+  intrastate_overlap <- sf::st_intersection(
+    sf::st_union(outlines), intrastate_edge
+  )
+  expect_equal(
+    sum(as.numeric(sf::st_length(intrastate_overlap))),
+    0,
+    tolerance = 1e-8
+  )
 })
 
 schooling_access_figure_fixture <- function() {
