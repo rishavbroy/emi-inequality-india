@@ -70,49 +70,8 @@ public-diagnostics:
 extended-diagnostics:
 	EMI_CONFIG=$(CONFIG) EMI_RUN_EXTENDED_DIAGNOSTICS=true Rscript scripts/run_targets_checked.R --starts-with diag_ext_
 
-LINEAGE_GEOMETRY_SOURCE := data/raw/datameet/Districts/Census_2001/2001_Dist.shp
-LINEAGE_GEOMETRY_OUTPUT := data/processed/geography/district_2001.gpkg
-LINEAGE_GEOMETRY_QA := data/processed/geography/district_2001_qa.csv
-LINEAGE_MAP_SCAFFOLD_OUTPUT := data/processed/geography/district_2001_map_scaffold.gpkg
-LEGACY_LINEAGE_GEOMETRY_OUTPUT := outputs/derived/district_lineage/district_2001.gpkg
-LEGACY_LINEAGE_GEOMETRY_QA := outputs/derived/district_lineage/district_2001_qa.csv
-LINEAGE_GEOMETRY_INPUTS := \
-	$(LINEAGE_GEOMETRY_SOURCE) \
-	data/raw/datameet/Districts/Census_2001/2001_Dist.dbf \
-	data/raw/datameet/Districts/Census_2001/2001_Dist.shx \
-	data/raw/datameet/Districts/Census_2001/2001_Dist.prj \
-	$(wildcard data/raw/census_2001/languages/C16/PC01_C16_*.xls) \
-	R/clean/clean_census_2001_languages.R \
-	R/districts/lineage_completion.R \
-	R/districts/lineage_sources.R \
-	scripts/build_lineage_geometry.R
-
 lineage-geometry-build:
-	@if [[ -f "$(LEGACY_LINEAGE_GEOMETRY_OUTPUT)" || -f "$(LEGACY_LINEAGE_GEOMETRY_QA)" ]]; then \
-		echo "=== LINEAGE GEOMETRY: relocating legacy processed geography ==="; \
-		mkdir -p "$(dir $(LINEAGE_GEOMETRY_OUTPUT))"; \
-		if [[ ! -f "$(LINEAGE_GEOMETRY_OUTPUT)" && -f "$(LEGACY_LINEAGE_GEOMETRY_OUTPUT)" ]]; then mv "$(LEGACY_LINEAGE_GEOMETRY_OUTPUT)" "$(LINEAGE_GEOMETRY_OUTPUT)"; fi; \
-		if [[ ! -f "$(LINEAGE_GEOMETRY_QA)" && -f "$(LEGACY_LINEAGE_GEOMETRY_QA)" ]]; then mv "$(LEGACY_LINEAGE_GEOMETRY_QA)" "$(LINEAGE_GEOMETRY_QA)"; fi; \
-		rm -f "$(LEGACY_LINEAGE_GEOMETRY_OUTPUT)" "$(LEGACY_LINEAGE_GEOMETRY_QA)"; \
-		rmdir "$(dir $(LEGACY_LINEAGE_GEOMETRY_OUTPUT))" 2>/dev/null || true; \
-		rmdir outputs/derived 2>/dev/null || true; \
-	fi
-	@if { [[ ! -f "$(LINEAGE_GEOMETRY_OUTPUT)" ]] || [[ ! -f "$(LINEAGE_MAP_SCAFFOLD_OUTPUT)" ]]; } && \
-		[[ ! -f "$(LINEAGE_GEOMETRY_SOURCE)" ]]; then \
-		echo "Missing required processed Census-2001 map geometry and its DataMeet source."; \
-		echo "Restore the raw DataMeet boundary files so the canonical geometry and display scaffold can be built."; \
-		exit 1; \
-	elif [[ -f "$(LINEAGE_GEOMETRY_SOURCE)" ]] && \
-		{ [[ ! -f "$(LINEAGE_GEOMETRY_OUTPUT)" ]] || [[ ! -f "$(LINEAGE_MAP_SCAFFOLD_OUTPUT)" ]] || \
-		find $(LINEAGE_GEOMETRY_INPUTS) -newer "$(LINEAGE_GEOMETRY_OUTPUT)" -print -quit | grep -q . || \
-		find $(LINEAGE_GEOMETRY_INPUTS) -newer "$(LINEAGE_MAP_SCAFFOLD_OUTPUT)" -print -quit | grep -q .; }; then \
-		echo "=== LINEAGE GEOMETRY: building DataMeet Census 2001 GeoPackage ==="; \
-		EMI_CONFIG=config/final.yml EMI_RUN_EXTENDED_DIAGNOSTICS=false \
-			Rscript scripts/run_targets_checked.R --targets census_2001_languages; \
-		Rscript scripts/build_lineage_geometry.R; \
-	else \
-		echo "=== LINEAGE GEOMETRY: up to date ==="; \
-	fi
+	bash scripts/build_lineage_geometry.sh
 
 lineage-geometry:
 	$(MAKE) lineage-geometry-build
@@ -268,6 +227,7 @@ clean-renders-core:
 	rm -f outputs/diagnostics/*.csv
 	mkdir -p outputs/build outputs/diagnostics/public
 	rm -f paper/paper.pdf paper/paper.html paper/paper.tex paper/paper-new.pdf paper/paper-new.html paper/paper-new.tex paper/appendix.pdf paper/appendix.html paper/appendix.tex
+	rm -rf posters/2026_predoc_conference/generated
 	rm -f posters/2026_predoc_conference/poster.pdf posters/2026_predoc_conference/poster.png posters/2026_predoc_conference/RishavRoy-Education.png posters/2026_predoc_conference/poster.typ
 	rm -f docs/district-matching.html docs/district-matching.pdf docs/district-matching.tex
 	rm -f docs/long-paths-and-8-3-filenames.html docs/long-paths-and-8-3-filenames.pdf docs/long-paths-and-8-3-filenames.tex

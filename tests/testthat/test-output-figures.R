@@ -18,13 +18,30 @@ poster_map_fixture <- function(n = 2L) {
   out
 }
 
-test_that("poster residualization resolves factor terms to source columns", {
+test_that("figure saving prunes stale generated images but preserves unrelated files", {
+  dir <- tempfile("figure-prune-")
+  dir.create(dir)
+  keep <- file.path(dir, "keep.pdf")
+  stale <- file.path(dir, "stale.png")
+  note <- file.path(dir, "README.txt")
+  file.create(keep, stale, note)
+
+  removed <- prune_stale_figure_files(dir, keep)
+
+  expect_identical(removed, stale)
+  expect_true(file.exists(keep))
+  expect_false(file.exists(stale))
+  expect_true(file.exists(note))
+})
+
+
+test_that("map adjustment resolves factor terms to source columns", {
   panel <- poster_map_fixture(20L)
   panel$region <- rep(panel_region_levels()[1:2], each = 10L)
   panel$emi_exposure_all_children_0708 <- seq_len(20L)
   panel$ling_distance_nonzero_mean <- rev(seq_len(20L))
 
-  residuals <- poster_residual_pair(panel, fixed_effect = "region")
+  residuals <- adjusted_variable_pair(panel, fixed_effect = "region")
 
   expect_equal(dim(residuals), c(20L, 2L))
   expect_true(all(is.finite(residuals)))
@@ -151,14 +168,14 @@ test_that("continuous and diverging map styles keep numeric fills", {
 
 
 
-test_that("figure residual variables use their registered adjustment sets", {
+test_that("adjusted map variables use their registered adjustment sets", {
   panel <- poster_map_fixture(30L)
   panel$region <- rep(panel_region_levels()[1:3], length.out = nrow(panel))
   panel$state_code_2001 <- rep(sprintf("%02d", 1:6), each = 5L)
   panel$emi_exposure_all_children_0708[[2]] <- NA_real_
   panel$ling_distance_nonzero_mean[[3]] <- NA_real_
 
-  out <- add_poster_residual_variables(panel)
+  out <- add_adjusted_map_variables(panel)
   region_emi <- is.finite(out$resid_emi_exposure_region_expanded)
   region_iv <- is.finite(out$resid_ling_distance_region_expanded)
   expect_identical(region_emi, region_iv)
@@ -166,7 +183,7 @@ test_that("figure residual variables use their registered adjustment sets", {
   expect_false(region_emi[[3]])
 
   state_main <- iv_adjustment_sets()[["state_main"]]
-  expected <- poster_residual_pair(
+  expected <- adjusted_variable_pair(
     panel,
     variables = "ling_distance_nonzero_mean",
     fixed_effect = state_main$fixed_effect,
@@ -176,11 +193,11 @@ test_that("figure residual variables use their registered adjustment sets", {
 })
 
 
-test_that("poster residualization omits fixed effects with one observed level", {
+test_that("map adjustment omits fixed effects with one observed level", {
   panel <- poster_map_fixture(30L)
   panel$region <- factor(rep(panel_region_levels()[[1]], nrow(panel)), levels = panel_region_levels())
 
-  residuals <- poster_residual_pair(panel, fixed_effect = "region")
+  residuals <- adjusted_variable_pair(panel, fixed_effect = "region")
 
   expect_equal(nrow(residuals), nrow(panel))
   expect_true(all(is.finite(residuals)))
@@ -188,7 +205,7 @@ test_that("poster residualization omits fixed effects with one observed level", 
 })
 
 
-test_that("poster first-stage specifications use one common sample", {
+test_that("first-stage absorption specifications use one common sample", {
   skip_if_not_installed("sandwich")
   set.seed(23)
   panel <- poster_map_fixture(90L)
@@ -196,22 +213,22 @@ test_that("poster first-stage specifications use one common sample", {
   panel$region <- factor(rep(panel_region_levels()[1:6], length.out = 90L), levels = panel_region_levels())
   panel$ling_distance_nonzero_mean <- stats::rnorm(90L)
   panel$emi_exposure_all_children_0708 <- 3 * panel$ling_distance_nonzero_mean + stats::rnorm(90L)
-  controls <- poster_spec_controls(poster_first_stage_specs())
+  controls <- adjustment_spec_controls(first_stage_absorption_specs())
   for (v in controls) panel[[v]] <- stats::rnorm(90L)
   panel[[controls[[1L]]]][[1L]] <- NA_real_
 
-  plot_data <- poster_first_stage_spec_data(panel)
+  plot_data <- first_stage_absorption_data(panel)
 
   expect_equal(unique(plot_data$n), 89L)
-  expect_equal(length(unique(plot_data$specification_id)), length(poster_first_stage_specs()))
+  expect_equal(length(unique(plot_data$specification_id)), length(first_stage_absorption_specs()))
 })
 
 
-test_that("poster first-stage residualization omits one-level fixed effects", {
+test_that("first-stage absorption residualization omits one-level fixed effects", {
   panel <- poster_map_fixture(30L)
   panel$region <- factor(rep(panel_region_levels()[[1]], nrow(panel)), levels = panel_region_levels())
 
-  residuals <- poster_residualize_for_spec(
+  residuals <- residualize_for_adjustment(
     panel,
     "ling_distance_nonzero_mean",
     fixed_effect = "region",
@@ -224,7 +241,7 @@ test_that("poster first-stage residualization omits one-level fixed effects", {
 })
 
 
-test_that("poster first-stage figure is a binned view of registered common-support specifications", {
+test_that("first-stage absorption figure is a binned view of registered common-support specifications", {
   skip_if_not_installed("sandwich")
   set.seed(24)
   panel <- poster_map_fixture(120L)
@@ -232,11 +249,11 @@ test_that("poster first-stage figure is a binned view of registered common-suppo
   panel$region <- factor(rep(panel_region_levels(), length.out = 120L), levels = panel_region_levels())
   panel$ling_distance_nonzero_mean <- stats::rnorm(120L)
   panel$emi_exposure_all_children_0708 <- 4 * panel$ling_distance_nonzero_mean + stats::rnorm(120L)
-  controls <- poster_spec_controls(poster_first_stage_specs())
+  controls <- adjustment_spec_controls(first_stage_absorption_specs())
   for (v in controls) panel[[v]] <- stats::rnorm(120L)
 
-  plot_data <- poster_first_stage_spec_data(panel, bins = 12L)
-  specs <- poster_first_stage_specs()
+  plot_data <- first_stage_absorption_data(panel, bins = 12L)
+  specs <- first_stage_absorption_specs()
 
   expect_setequal(unique(plot_data$adjustment_id), c("unadjusted", "region_main", "state_main"))
   expect_equal(length(unique(plot_data$n)), 1L)
@@ -255,64 +272,6 @@ test_that("continuous map limits use rounded central quantiles rather than extre
   expect_true(limits[[2]] < 1000)
   expect_true(limits[[1]] <= stats::quantile(values, 0.02))
   expect_true(limits[[2]] >= stats::quantile(values, 0.98))
-})
-
-test_that("poster inference restores ivreg sandwich methods for serialized models", {
-  skip_if_not_installed("ivreg")
-  skip_if_not_installed("sandwich")
-
-  dat <- data.frame(
-    y = c(1.0, 2.2, 2.8, 4.1, 5.2, 5.9, 7.1, 8.2),
-    x = c(0.7, 1.3, 1.8, 2.5, 3.2, 3.7, 4.5, 5.1),
-    z = 1:8,
-    state = rep(c("a", "b"), each = 4)
-  )
-  model <- ivreg::ivreg(y ~ x | z, data = dat, model = TRUE, x = TRUE, y = TRUE)
-  attr(model, "cluster_state") <- dat$state
-  path <- tempfile(fileext = ".rds")
-  saveRDS(model, path)
-
-  try(unloadNamespace("ivreg"), silent = TRUE)
-  restored <- readRDS(path)
-  covariance <- poster_prediction_vcov(restored)
-
-  expect_true("ivreg" %in% loadedNamespaces())
-  expect_equal(dim(covariance), c(length(stats::coef(restored)), length(stats::coef(restored))))
-  expect_true(all(is.finite(covariance)))
-  expect_equal(covariance, t(covariance), tolerance = 1e-12)
-})
-
-test_that("poster expected-value predictions preserve serialized state fixed-effect levels", {
-  skip_if_not_installed("ivreg")
-  skip_if_not_installed("sandwich")
-  skip_if_not_installed("marginaleffects")
-
-  set.seed(27)
-  n <- 36L
-  state_code_2001 <- rep(c("01", "02", "10"), each = 12L)
-  z <- stats::rnorm(n)
-  exposure <- 15 + 4 * z + stats::rnorm(n)
-  y <- 2 + 0.3 * exposure + as.numeric(factor(state_code_2001)) + stats::rnorm(n)
-  panel <- data.frame(
-    y = y, emi_exposure_all_children_0708 = exposure, z = z, state_code_2001 = state_code_2001,
-    state_2001_cluster = state_code_2001, stringsAsFactors = FALSE
-  )
-  formula <- stats::as.formula(
-    "y ~ emi_exposure_all_children_0708 + factor(state_code_2001) | z + factor(state_code_2001)"
-  )
-  model <- estimate_2sls(panel, list(model = formula), list())$model
-  restored <- unserialize(serialize(model, NULL))
-  grid <- data.frame(emi_exposure_all_children_0708 = stats::quantile(panel$emi_exposure_all_children_0708, c(0.25, 0.75), names = FALSE))
-
-  predictions <- poster_expected_value_predictions(restored, grid)
-
-  expect_equal(nrow(predictions), 2L)
-  expect_equal(as.numeric(predictions$emi_exposure_all_children_0708), grid$emi_exposure_all_children_0708)
-  expect_true(all(is.finite(predictions$estimate)))
-  expect_identical(
-    unique(attr(restored, "prediction_data")$state_code_2001),
-    c("01", "02", "10")
-  )
 })
 
 test_that("complete Census-2001 map geometry keeps state identity for districts absent from the panel", {
@@ -348,14 +307,13 @@ test_that("complete Census-2001 map geometry keeps state identity for districts 
 })
 
 
-test_that("poster model specifications share fixed-effect definitions", {
-  specs <- poster_model_specs()
-  expect_identical(poster_first_stage_specs(), specs)
-  expect_identical(poster_second_stage_specs(), specs)
-  expect_identical(poster_fixed_effect_term("none"), character())
-  expect_identical(poster_fixed_effect_term("region"), "factor(region)")
-  expect_identical(poster_fixed_effect_term("state"), "factor(state_code_2001)")
-  expect_error(poster_fixed_effect_term("district"), "Unknown poster fixed-effect")
+test_that("geographic adjustment specifications share fixed-effect definitions", {
+  specs <- geographic_adjustment_specs()
+  expect_identical(first_stage_absorption_specs(), specs)
+  expect_identical(adjustment_fixed_effect_term("none"), character())
+  expect_identical(adjustment_fixed_effect_term("region"), "factor(region)")
+  expect_identical(adjustment_fixed_effect_term("state"), "factor(state_code_2001)")
+  expect_error(adjustment_fixed_effect_term("district"), "Unknown geographic fixed-effect")
 })
 
 test_that("poster second-stage specifications use preferred variables and one sample", {
@@ -367,7 +325,7 @@ test_that("poster second-stage specifications use preferred variables and one sa
   panel <- poster_map_fixture(120L)
   panel$state_code_2001 <- rep(sprintf("%02d", 1:12), each = 10)
   panel$region <- rep(panel_region_levels(), length.out = nrow(panel))
-  controls <- poster_spec_controls(poster_second_stage_specs())
+  controls <- adjustment_spec_controls(geographic_adjustment_specs())
   for (control in controls) panel[[control]] <- stats::rnorm(nrow(panel))
   panel$ling_distance_nonzero_mean <- stats::rnorm(nrow(panel))
   panel$emi_exposure_all_children_0708 <-
@@ -377,7 +335,7 @@ test_that("poster second-stage specifications use preferred variables and one sa
     0.02 * panel$emi_exposure_all_children_0708 + 0.1 * panel[[controls[[2]]]] +
     stats::rnorm(nrow(panel), sd = 0.2)
 
-  expect_warning(out <- poster_second_stage_spec_data(panel), NA)
+  expect_warning(out <- poster_second_stage_data(panel), NA)
   expect_setequal(unique(out$specification_id), c("raw", "region", "state"))
   expect_length(unique(out$n), 1L)
   expect_true(all(is.finite(out$estimate)))

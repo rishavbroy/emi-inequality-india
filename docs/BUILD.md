@@ -41,7 +41,7 @@ Useful options are:
 
 - `--no-samples`: omit application-sample rendering and checks.
 - `--with-analysis`: render analysis reports and run the extended results and benchmarks they read.
-- `--with-poster`: render and require the conference poster.
+- `--with-poster`: construct poster-only figure dependencies, render the conference poster, and require its outputs.
 - `--with-extended-diagnostics`: run extended research checks without rendering analysis reports.
 - `--with-benchmarks`: run benchmarks without rendering analysis reports.
 - `--fast`: use `config/fast.yml`.

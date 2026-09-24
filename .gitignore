@@ -93,6 +93,7 @@ autorun.inf
 
 # Quarto Typst render intermediates
 posters/2026_predoc_conference/poster.typ
+posters/2026_predoc_conference/generated/
 
 # Generated processed-data replication results
 outputs/replication/

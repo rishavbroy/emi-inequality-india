@@ -93,7 +93,6 @@ core_public_target_definitions <- function() {
       figures,
       make_figures(
         district_panel, raw_ilo_figures, cfg,
-        iv_models = revised_iv_models,
         map_geometry = lineage_geometry_2001,
         map_boundary_reference = map_boundary_reference,
         consumption_iv_dynamics = consumption_iv_dynamics,
@@ -219,11 +218,21 @@ core_public_target_definitions <- function() {
 
 poster_target_definitions <- function() {
   list(
+    tar_target(
+      poster_second_stage_figure_files,
+      save_poster_second_stage_figure(district_panel, cfg),
+      format = "file"
+    ),
     tar_target(poster_qmd, "posters/2026_predoc_conference/poster.qmd", format = "file"),
     tar_target(poster_assets, poster_required_assets(), format = "file"),
     tar_target(
       poster,
-      render_poster_pdf(poster_qmd, figure_files, poster_assets, paths$root),
+      render_poster_pdf(
+        poster_qmd,
+        c(figure_files, poster_second_stage_figure_files),
+        poster_assets,
+        paths$root
+      ),
       format = "file"
     )
   )

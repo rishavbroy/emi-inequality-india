@@ -28,9 +28,8 @@ paper_new_appendix_render_inputs <- function() {
 
 poster_render_inputs <- function() {
   c(
-    "outputs/figures/main/poster_emie_expected_values.pdf",
     "outputs/figures/main/poster_first_stage_specs.pdf",
-    "outputs/figures/main/poster_second_stage_specs.pdf",
+    "posters/2026_predoc_conference/generated/poster_second_stage_specs.pdf",
     "assets/uw-logo-horizontal-full-color-print.pdf",
     "assets/repo-qr.svg"
   )

@@ -25,21 +25,21 @@ sf_geometry_coverage <- function(x) {
   mean(!sf::st_is_empty(sf::st_geometry(x)))
 }
 
-poster_fixed_effect_term <- function(fixed_effect) {
+adjustment_fixed_effect_term <- function(fixed_effect) {
   switch(
     fixed_effect,
     none = character(),
     region = "factor(region)",
     state = "factor(state_code_2001)",
-    stop("Unknown poster fixed-effect specification: ", fixed_effect, call. = FALSE)
+    stop("Unknown geographic fixed-effect specification: ", fixed_effect, call. = FALSE)
   )
 }
 
-poster_residual_terms <- function(fixed_effect = "region", controls = census_2001_absorption_controls()) {
-  c(poster_fixed_effect_term(fixed_effect), controls)
+adjustment_residual_terms <- function(fixed_effect = "region", controls = census_2001_absorption_controls()) {
+  c(adjustment_fixed_effect_term(fixed_effect), controls)
 }
 
-poster_estimable_residual_terms <- function(data, terms) {
+estimable_residual_terms <- function(data, terms) {
   keep <- vapply(terms, function(term) {
     variable <- sub("^factor\\((.*)\\)$", "\\1", term)
     if (!variable %in% names(data)) return(FALSE)
@@ -52,20 +52,20 @@ poster_estimable_residual_terms <- function(data, terms) {
   terms[keep]
 }
 
-poster_residualize <- function(data, variable, terms) {
-  estimable_terms <- poster_estimable_residual_terms(data, terms)
+residualize_variable <- function(data, variable, terms) {
+  estimable_terms <- estimable_residual_terms(data, terms)
   fit <- stats::lm(stats::reformulate(estimable_terms, response = variable), data = data)
   stats::residuals(fit)
 }
 
-poster_residual_pair <- function(
+adjusted_variable_pair <- function(
   panel,
   variables = c("emi_exposure_all_children_0708", "ling_distance_nonzero_mean"),
   fixed_effect = "region",
   controls = census_2001_absorption_controls()
 ) {
   df <- as.data.frame(panel)
-  terms <- poster_residual_terms(fixed_effect, controls)
+  terms <- adjustment_residual_terms(fixed_effect, controls)
   required <- unique(c(variables, gsub("^factor\\((.*)\\)$", "\\1", terms)))
   out <- matrix(NA_real_, nrow = nrow(df), ncol = length(variables), dimnames = list(NULL, variables))
   if (length(setdiff(required, names(df)))) return(out)
@@ -74,20 +74,20 @@ poster_residual_pair <- function(
   if (!any(keep)) return(out)
   dat <- df[keep, , drop = FALSE]
   for (variable in variables) {
-    out[keep, variable] <- poster_residualize(dat, variable, terms)
+    out[keep, variable] <- residualize_variable(dat, variable, terms)
   }
   out
 }
 
-add_poster_residual_variables <- function(district_panel) {
+add_adjusted_map_variables <- function(district_panel) {
   if (!nrow(as.data.frame(district_panel))) return(district_panel)
   out <- district_panel
-  region_residuals <- poster_residual_pair(out, fixed_effect = "region")
+  region_residuals <- adjusted_variable_pair(out, fixed_effect = "region")
   out$resid_emi_exposure_region_expanded <- region_residuals[, "emi_exposure_all_children_0708"]
   out$resid_ling_distance_region_expanded <- region_residuals[, "ling_distance_nonzero_mean"]
 
   state_main <- iv_adjustment_sets()[["state_main"]]
-  state_residuals <- poster_residual_pair(
+  state_residuals <- adjusted_variable_pair(
     out,
     variables = "ling_distance_nonzero_mean",
     fixed_effect = state_main$fixed_effect,
@@ -141,10 +141,10 @@ add_paper_welfare_map_variables <- function(district_panel, consumption_district
 #'
 #' @return A named list of figure specifications consumed by save_figures().
 make_figures <- function(
-    district_panel, raw_ilo_figures, cfg, iv_models = NULL,
+    district_panel, raw_ilo_figures, cfg,
     map_geometry = NULL, map_boundary_reference = NULL, consumption_iv_dynamics = NULL, schooling_access = NULL,
     consumption_district_welfare = NULL) {
-  district_panel <- add_poster_residual_variables(district_panel)
+  district_panel <- add_adjusted_map_variables(district_panel)
   district_panel <- add_paper_welfare_map_variables(district_panel, consumption_district_welfare)
   spec <- preferred_iv_variables()
   required_variables <- c(
@@ -179,26 +179,12 @@ make_figures <- function(
       "District carve-outs and shifts",
       kind = "district_carveouts_shifts"
     ),
-    poster_emie_expected_values = figure_spec(
-      "poster_emie_expected_values",
-      "poster_emie_expected_values.png",
-      "Adjusted real consumption growth across EMI exposure",
-      "Average counterfactual predictions at observed EMI-exposure percentiles.",
-      kind = "emie_expected_values"
-    ),
     poster_first_stage_specs = figure_spec(
       "poster_first_stage_specs",
       "poster_first_stage_specs.png",
       "First-stage relationship across specifications",
       "Residualized EMI exposure on residualized linguistic distance.",
-      kind = "poster_first_stage_specs"
-    ),
-    poster_second_stage_specs = figure_spec(
-      "poster_second_stage_specs",
-      "poster_second_stage_specs.png",
-      "Consumption response across IV specifications",
-      "Preferred EMI exposure instrumented with preferred linguistic distance.",
-      kind = "poster_second_stage_specs"
+      kind = "first_stage_absorption"
     ),
     consumption_iv_dynamics = figure_spec(
       "consumption_iv_dynamics",
@@ -326,7 +312,6 @@ make_figures <- function(
   attr(out, "district_panel") <- district_panel
   attr(out, "map_geometry") <- map_geometry
   attr(out, "map_boundary_reference") <- map_boundary_reference
-  attr(out, "iv_models") <- iv_models
   attr(out, "consumption_iv_dynamics") <- consumption_iv_dynamics
   attr(out, "schooling_access") <- schooling_access
   out

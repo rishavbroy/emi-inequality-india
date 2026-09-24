@@ -94,7 +94,7 @@ Greater distance from Hindi can raise the relative appeal of English over Hindi 
 
 # Second Stage
 
-![Estimated consumption response across three IV specifications.](../../outputs/figures/main/poster_second_stage_specs.pdf){width=96%}
+![Estimated consumption response across three IV specifications.](generated/poster_second_stage_specs.pdf){width=96%}
 
 The second stage tests if more EMI exposure raises local consumption growth.
 

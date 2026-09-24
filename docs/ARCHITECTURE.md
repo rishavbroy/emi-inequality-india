@@ -94,7 +94,7 @@ The production lineage does not load `data/metadata/district_legacy_mapping_revi
 The repository follows an **objects first, artifacts last** retention rule. Cached target objects are the default home for intermediate calculations. A persisted diagnostic should have one of three roles: scientific summary, public/report input, or independently useful forensic QA ledger. Benchmark targets persist benchmark-specific results and reuse canonical diagnostic inputs instead of copying them. Comparison savers should likewise avoid re-serializing unchanged shared inputs under multiple prefixes.
 Post-treatment mechanism inference follows the same retention rule through `save_posttreatment_mechanism_outputs()`: registered source/sample summaries, reduced forms, and compact weak-IV/Anderson--Rubin summaries are persisted, while pointwise Anderson--Rubin inversion grids remain cached target objects. `outputs/diagnostics/extended/mechanisms/` contains the cross-family evidence grid and family summary assembled from the common inference contract; source-specific modules remain authoritative for measurement.
 
-All public models, tables, maps, diagnostics, processed data, paper outputs, poster outputs, and application samples depend on the generic production targets rather than an implementation-specific comparison target.
+Public models, tables, maps, diagnostics, processed data, and paper outputs depend on the generic production targets rather than an implementation-specific comparison target. Consumer-specific derivations stay with their optional target family: the conference poster reuses shared paper figures but constructs its second-stage specification figure only when poster rendering is enabled. Application samples likewise remain optional rendered derivatives.
 
 ## Census mechanism diagnostics
 
@@ -116,6 +116,7 @@ The household-capacity branch follows the same boundary: `R/io/read_census_house
 - `extended_diagnostic_targets` — extended diagnostic target objects composed from the five domain-oriented factories under `R/pipeline/`; target names and dependency commands remain unchanged when orchestration is moved out of `_targets.R`.
 - `benchmark_targets` — optional benchmarks.
 - `analysis_note_targets` and `application_sample_targets` — optional rendered derivatives.
+- `poster_targets` — optional poster-only derivations and rendering; shared manuscript figures remain core targets.
 
 Legacy geography is appended once when either extended diagnostics or benchmarks are enabled.
 

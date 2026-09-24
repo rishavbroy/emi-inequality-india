@@ -85,6 +85,12 @@ test_that("conference poster requirements are opt-in", {
   expect_false(any(grepl("posters/", ordinary, fixed = TRUE)))
   expect_true("posters/2026_predoc_conference/poster.pdf" %in% with_poster)
   expect_true("posters/2026_predoc_conference/RishavRoy-Education.png" %in% with_poster)
+
+  ordinary_inputs <- env$required_public_render_inputs(require_poster = FALSE)
+  poster_inputs <- env$required_public_render_inputs(require_poster = TRUE)
+  expect_false("posters/2026_predoc_conference/generated/poster_second_stage_specs.pdf" %in% ordinary_inputs)
+  expect_true("posters/2026_predoc_conference/generated/poster_second_stage_specs.pdf" %in% poster_inputs)
+  expect_false(any(grepl("poster_emie_expected_values", c(ordinary_inputs, poster_inputs), fixed = TRUE)))
 })
 
 test_that("public QMD helper loads its table-formatting dependencies", {

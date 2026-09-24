@@ -648,73 +648,7 @@ save_collage <- function(spec, path_base, written, formats) {
 }
 
 
-poster_emie_percentiles <- function(district_panel, probs = seq(0.05, 0.95, by = 0.10)) {
-  treatment <- preferred_iv_variables()$treatment
-  values <- suppressWarnings(as.numeric(as.data.frame(district_panel)[[treatment]]))
-  values <- values[is.finite(values)]
-  if (!length(values)) return(data.frame())
-  out <- data.frame(
-    percentile = probs,
-    value = unname(stats::quantile(values, probs = probs, na.rm = TRUE, names = FALSE)),
-    stringsAsFactors = FALSE
-  )
-  names(out)[names(out) == "value"] <- treatment
-  out
-}
-
-first_estimable_iv_model <- function(iv_models) {
-  if (inherits(iv_models, "ivreg")) return(iv_models)
-  if (!is.list(iv_models)) return(NULL)
-  hits <- Filter(function(x) inherits(x, "ivreg"), iv_models)
-  if (length(hits)) hits[[1]] else NULL
-}
-
-poster_prediction_vcov <- function(model) {
-  if (!inherits(model, "ivreg")) {
-    stop("Poster prediction covariance requires an ivreg model.", call. = FALSE)
-  }
-
-  # targets restores fitted models from RDS without loading the package that
-  # registered their S3 methods. Load both namespaces before sandwich dispatch.
-  need_pkg("ivreg", "poster expected-values inference")
-  need_pkg("sandwich", "poster expected-values inference")
-
-  cluster <- attr(model, "cluster_state", exact = TRUE)
-  if (!is.null(cluster) && length(cluster) == stats::nobs(model) && !anyNA(cluster)) {
-    return(sandwich::vcovCL(model, cluster = cluster, type = "HC1"))
-  }
-  sandwich::vcovHC(model, type = "HC1")
-}
-
-poster_prediction_data <- function(model) {
-  data <- attr(model, "prediction_data", exact = TRUE)
-  if (is.null(data)) {
-    stop(
-      "Poster expected-values inference requires fitted-sample prediction data stored with the IV model.",
-      call. = FALSE
-    )
-  }
-  data <- as.data.frame(data)
-  treatment <- preferred_iv_variables()$treatment
-  if (!nrow(data) || !treatment %in% names(data)) {
-    stop("Stored IV prediction data are empty or missing the preferred EMI exposure.", call. = FALSE)
-  }
-  data
-}
-
-poster_expected_value_predictions <- function(model, grid) {
-  need_pkg("marginaleffects", "poster expected-values figure")
-  treatment <- preferred_iv_variables()$treatment
-  marginaleffects::avg_predictions(
-    model,
-    newdata = poster_prediction_data(model),
-    variables = stats::setNames(list(grid[[treatment]]), treatment),
-    vcov = poster_prediction_vcov(model),
-    type = "response"
-  )
-}
-
-poster_model_specs <- function() {
+geographic_adjustment_specs <- function() {
   adjustments <- iv_adjustment_sets()
   ids <- c(raw = "unadjusted", region = "region_main", state = "state_main")
   labels <- c(
@@ -733,14 +667,14 @@ poster_model_specs <- function() {
   }) |> stats::setNames(names(ids))
 }
 
-poster_first_stage_specs <- poster_model_specs
+first_stage_absorption_specs <- geographic_adjustment_specs
 
-poster_spec_controls <- function(specs = poster_model_specs()) {
+adjustment_spec_controls <- function(specs = geographic_adjustment_specs()) {
   unique(unlist(lapply(specs, `[[`, "controls"), use.names = FALSE))
 }
 
-poster_first_stage_common_sample <- function(data, specs, treatment, instrument) {
-  controls <- poster_spec_controls(specs)
+first_stage_absorption_common_sample <- function(data, specs, treatment, instrument) {
+  controls <- adjustment_spec_controls(specs)
   required <- unique(c(treatment, instrument, "state_code_2001", "region", controls))
   if (length(setdiff(required, names(data)))) return(data.frame())
   out <- data[stats::complete.cases(data[, required, drop = FALSE]), required, drop = FALSE]
@@ -748,11 +682,11 @@ poster_first_stage_common_sample <- function(data, specs, treatment, instrument)
   out
 }
 
-poster_residualize_for_spec <- function(data, variable, fixed_effect, controls) {
-  poster_residualize(data, variable, poster_residual_terms(fixed_effect, controls))
+residualize_for_adjustment <- function(data, variable, fixed_effect, controls) {
+  residualize_variable(data, variable, adjustment_residual_terms(fixed_effect, controls))
 }
 
-poster_first_stage_bins <- function(x, y, bins = 20L) {
+first_stage_absorption_bins <- function(x, y, bins = 20L) {
   bins <- max(2L, min(as.integer(bins), length(x)))
   group <- dplyr::ntile(x, bins)
   out <- stats::aggregate(
@@ -763,13 +697,13 @@ poster_first_stage_bins <- function(x, y, bins = 20L) {
   out[order(out$bin), , drop = FALSE]
 }
 
-poster_first_stage_spec_data <- function(district_panel, bins = 20L) {
-  need_pkg("sandwich", "poster first-stage specifications")
+first_stage_absorption_data <- function(district_panel, bins = 20L) {
+  need_pkg("sandwich", "first-stage absorption figure")
   df <- as.data.frame(district_panel)
   y <- "emi_exposure_all_children_0708"
   z <- "ling_distance_nonzero_mean"
-  specs <- poster_first_stage_specs()
-  dat <- poster_first_stage_common_sample(df, specs, y, z)
+  specs <- first_stage_absorption_specs()
+  dat <- first_stage_absorption_common_sample(df, specs, y, z)
   if (nrow(dat) < 25L || length(unique(dat$state_code_2001)) < 2L) return(data.frame())
 
   out <- lapply(names(specs), function(id) {
@@ -781,8 +715,8 @@ poster_first_stage_spec_data <- function(district_panel, bins = 20L) {
       intercept <- unname(stats::coef(fit)[[1L]])
       slope_index <- 2L
     } else {
-      response <- poster_residualize_for_spec(dat, y, spec$fixed_effect, spec$controls)
-      x <- poster_residualize_for_spec(dat, z, spec$fixed_effect, spec$controls)
+      response <- residualize_for_adjustment(dat, y, spec$fixed_effect, spec$controls)
+      x <- residualize_for_adjustment(dat, z, spec$fixed_effect, spec$controls)
       fit <- stats::lm(response ~ 0 + x)
       intercept <- 0
       slope_index <- 1L
@@ -790,7 +724,7 @@ poster_first_stage_spec_data <- function(district_panel, bins = 20L) {
     vcov <- sandwich::vcovCL(fit, cluster = dat$state_code_2001, type = "HC1")
     beta <- unname(stats::coef(fit)[[slope_index]])
     se <- sqrt(vcov[slope_index, slope_index])
-    binned <- poster_first_stage_bins(x, response, bins = bins)
+    binned <- first_stage_absorption_bins(x, response, bins = bins)
     data.frame(
       specification_id = id,
       adjustment_id = spec$adjustment_id,
@@ -809,10 +743,10 @@ poster_first_stage_spec_data <- function(district_panel, bins = 20L) {
   safe_bind_rows(out)
 }
 
-save_poster_first_stage_specs <- function(spec, path_base, formats, district_panel) {
-  need_pkg("ggplot2", "poster first-stage specification plot")
-  plot_data <- poster_first_stage_spec_data(district_panel)
-  if (!nrow(plot_data)) stop("Poster first-stage figure could not build any specification panels.", call. = FALSE)
+save_first_stage_absorption <- function(spec, path_base, formats, district_panel) {
+  need_pkg("ggplot2", "first-stage absorption figure")
+  plot_data <- first_stage_absorption_data(district_panel)
+  if (!nrow(plot_data)) stop("First-stage absorption figure could not build any specification panels.", call. = FALSE)
   labels <- plot_data[!duplicated(plot_data$specification_id), c("specification_id", "specification", "f_stat"), drop = FALSE]
   labels$panel_label <- paste0(
     labels$specification, "
@@ -852,115 +786,6 @@ F = ",
   save_plot_formats(p, path_base, formats, width = 9.6, height = 4.0, dpi = 300)
 }
 
-
-poster_second_stage_specs <- poster_model_specs
-
-poster_second_stage_spec_data <- function(district_panel) {
-  need_pkg("ivreg", "poster second-stage specifications")
-  need_pkg("marginaleffects", "poster second-stage predictions")
-  need_pkg("sandwich", "poster second-stage clustered covariance")
-  data <- as.data.frame(district_panel)
-  outcome <- "real_log_consumption_change"
-  treatment <- "emi_exposure_all_children_0708"
-  instrument <- "ling_distance_nonzero_mean"
-  specs <- poster_second_stage_specs()
-  controls <- poster_spec_controls(specs)
-  required <- unique(c(outcome, treatment, instrument, "state_code_2001", "region", controls))
-  if (length(setdiff(required, names(data)))) return(data.frame())
-  data <- data[stats::complete.cases(data[, required, drop = FALSE]), required, drop = FALSE]
-  if (nrow(data) < 25L || length(unique(data$state_code_2001)) < 2L) return(data.frame())
-  grid <- data.frame(
-    emi_exposure_all_children_0708 = unname(stats::quantile(
-      data[[treatment]], probs = seq(0.05, 0.95, by = 0.10), names = FALSE
-    ))
-  )
-
-  out <- lapply(names(specs), function(id) {
-    spec <- specs[[id]]
-    fe <- poster_fixed_effect_term(spec$fixed_effect)
-    rhs <- c(treatment, spec$controls, fe)
-    iv_rhs <- c(instrument, spec$controls, fe)
-    fit <- ivreg::ivreg(
-      stats::as.formula(paste(outcome, "~", paste(rhs, collapse = " + "), "|", paste(iv_rhs, collapse = " + "))),
-      data = data,
-      model = TRUE,
-      x = TRUE,
-      y = TRUE
-    )
-    vcov <- sandwich::vcovCL(fit, cluster = data$state_code_2001, type = "HC1")
-    pred <- marginaleffects::avg_predictions(
-      fit,
-      newdata = data,
-      variables = stats::setNames(list(grid[[treatment]]), treatment),
-      vcov = vcov,
-      type = "response"
-    )
-    pred <- as.data.frame(pred)
-    if (!treatment %in% names(pred)) pred[[treatment]] <- grid[[treatment]]
-    pred$specification <- spec$label
-    pred$specification_id <- id
-    pred$n <- stats::nobs(fit)
-    pred
-  })
-  safe_bind_rows(out)
-}
-
-save_poster_second_stage_specs <- function(spec, path_base, formats, district_panel) {
-  need_pkg("ggplot2", "poster second-stage specification plot")
-  plot_data <- poster_second_stage_spec_data(district_panel)
-  if (!nrow(plot_data)) stop("Poster second-stage figure could not build any specification ribbons.", call. = FALSE)
-  treatment <- "emi_exposure_all_children_0708"
-  p <- ggplot2::ggplot(plot_data, ggplot2::aes(x = .data[[treatment]], y = estimate)) +
-    ggplot2::geom_ribbon(ggplot2::aes(ymin = conf.low, ymax = conf.high), fill = "#9b59b6", alpha = 0.16) +
-    ggplot2::geom_line(color = "#6a3d9a", linewidth = 1.05) +
-    ggplot2::facet_wrap(~ specification, scales = "free_y", nrow = 1) +
-    ggplot2::scale_x_continuous(labels = function(x) paste0(x, "%")) +
-    ggplot2::labs(
-      x = "District EMI exposure",
-      y = "Predicted real log consumption change",
-      caption = "Ribbons show 95% confidence intervals; all specifications use the same complete district sample."
-    ) +
-    ggplot2::theme_minimal(base_size = 14) +
-    ggplot2::theme(
-      panel.grid.minor = ggplot2::element_blank(),
-      strip.text = ggplot2::element_text(face = "bold", size = 11),
-      plot.caption = ggplot2::element_text(size = 9, hjust = 0),
-      axis.title = ggplot2::element_text(face = "bold")
-    )
-  save_plot_formats(p, path_base, formats, width = 9.6, height = 3.9, dpi = 300)
-}
-
-save_emie_expected_values <- function(spec, path_base, formats, district_panel, iv_models) {
-  need_pkg("ggplot2", "poster expected-values figure")
-  model <- first_estimable_iv_model(iv_models)
-  grid <- poster_emie_percentiles(district_panel)
-  if (is.null(model) || !nrow(grid)) {
-    stop("Poster expected-values figure requires an estimated ivreg model and observed preferred EMI exposure.", call. = FALSE)
-  }
-
-  treatment <- preferred_iv_variables()$treatment
-  predictions <- poster_expected_value_predictions(model, grid)
-  plot_data <- as.data.frame(predictions)
-  if (!treatment %in% names(plot_data)) plot_data[[treatment]] <- grid[[treatment]]
-
-  p <- ggplot2::ggplot(plot_data, ggplot2::aes(x = .data[[treatment]], y = estimate)) +
-    ggplot2::geom_ribbon(ggplot2::aes(ymin = conf.low, ymax = conf.high), fill = "#c5050c", alpha = 0.14) +
-    ggplot2::geom_line(color = "#7a0019", linewidth = 1.15) +
-    ggplot2::geom_point(color = "#7a0019", size = 2.5) +
-    ggplot2::scale_x_continuous(labels = function(x) paste0(x, "%")) +
-    ggplot2::labs(
-      x = "District EMI exposure",
-      y = "Adjusted consumption growth (%)",
-      caption = "Points mark the 5th through 95th percentiles; ribbon shows 95% confidence intervals."
-    ) +
-    ggplot2::theme_minimal(base_size = 16) +
-    ggplot2::theme(
-      panel.grid.minor = ggplot2::element_blank(),
-      plot.caption = ggplot2::element_text(size = 10, hjust = 0),
-      axis.title = ggplot2::element_text(face = "bold")
-    )
-  save_plot_formats(p, path_base, formats, width = 7.4, height = 4.8, dpi = 300)
-}
 
 consumption_dynamic_round_label <- function(round_id) {
   labels <- c(
@@ -1192,6 +1017,16 @@ save_schooling_access_figure <- function(spec, path_base, formats, diagnostic) {
 }
 
 
+prune_stale_figure_files <- function(dir, expected_paths) {
+  existing <- list.files(
+    dir, pattern = "\\.(pdf|png)$", full.names = TRUE, ignore.case = TRUE
+  )
+  stale <- setdiff(existing, expected_paths)
+  if (length(stale)) unlink(stale)
+  invisible(stale)
+}
+
+
 save_figures <- function(figures, cfg) {
   dir <- figure_output_dir(cfg)
   dir.create(dir, recursive = TRUE, showWarnings = FALSE)
@@ -1215,9 +1050,7 @@ save_figures <- function(figures, cfg) {
         formats
       ),
       district_carveouts_shifts = save_district_carveouts_shifts(spec, path_base, formats),
-      emie_expected_values = save_emie_expected_values(spec, path_base, formats, attr(figures, "district_panel") %||% data.frame(), attr(figures, "iv_models")),
-      poster_first_stage_specs = save_poster_first_stage_specs(spec, path_base, formats, attr(figures, "district_panel") %||% data.frame()),
-      poster_second_stage_specs = save_poster_second_stage_specs(spec, path_base, formats, attr(figures, "district_panel") %||% data.frame()),
+      first_stage_absorption = save_first_stage_absorption(spec, path_base, formats, attr(figures, "district_panel") %||% data.frame()),
       consumption_iv_dynamics = save_consumption_iv_dynamic_figure(
         spec, path_base, formats,
         attr(figures, "consumption_iv_dynamics")
@@ -1241,6 +1074,8 @@ save_figures <- function(figures, cfg) {
     primary[[name]] <- primary_figure_path(paths)
     all_written <- c(all_written, paths)
   }
+
+  prune_stale_figure_files(dir, unname(all_written))
 
   manifest <- data.frame(
     path = unname(all_written),
