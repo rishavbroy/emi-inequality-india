@@ -48,6 +48,7 @@ test_that("current public build helper scripts parse", {
   expect_silent(parse(repo_file("scripts", "run_targets_strict.R")))
   expect_silent(parse(repo_file("scripts", "target_metadata_helpers.R")))
   expect_silent(parse(repo_file("R", "output", "render_analysis_notes.R")))
+  expect_silent(parse(repo_file("R", "output", "output_hygiene.R")))
   expect_silent(parse(repo_file("scripts", "check_rendered_text.R")))
   expect_silent(parse(repo_file("scripts", "audit_outputs_final.R")))
   expect_silent(parse(repo_file("scripts", "public_output_contract.R")))
@@ -547,3 +548,48 @@ test_that("Census 1991 acquisition manifest preserves source-specific published 
   expect_identical(anyDuplicated(manifest$url), 0L)
 })
 
+
+
+test_that("output hygiene distinguishes malformed empties from typed empties", {
+  root <- tempfile("output-hygiene-")
+  dir.create(root, recursive = TRUE)
+  on.exit(unlink(root, recursive = TRUE, force = TRUE), add = TRUE)
+
+  utils::write.csv(
+    data.frame(value = character()), file.path(root, "typed.csv"), row.names = FALSE
+  )
+  writeLines('""', file.path(root, "schema-less.csv"))
+
+  empty_root <- tempfile("output-hygiene-empty-")
+  dir.create(empty_root)
+  expect_identical(
+    basename(schema_less_csv_files(c(root, empty_root))),
+    "schema-less.csv"
+  )
+})
+
+test_that("duplicate-output warnings ignore cross-directory and replication equality", {
+  root <- tempfile("output-duplicates-")
+  dir.create(file.path(root, "diagnostics", "a"), recursive = TRUE)
+  dir.create(file.path(root, "diagnostics", "b"), recursive = TRUE)
+  dir.create(file.path(root, "replication", "processed"), recursive = TRUE)
+  on.exit(unlink(root, recursive = TRUE, force = TRUE), add = TRUE)
+
+  x <- data.frame(value = 1)
+  utils::write.csv(x, file.path(root, "diagnostics", "a", "one.csv"), row.names = FALSE)
+  utils::write.csv(x, file.path(root, "diagnostics", "a", "two.csv"), row.names = FALSE)
+  utils::write.csv(x, file.path(root, "diagnostics", "b", "three.csv"), row.names = FALSE)
+  utils::write.csv(x, file.path(root, "replication", "processed", "copy.csv"), row.names = FALSE)
+
+  duplicates <- output_hygiene_duplicate_candidates(root)
+  expect_equal(nrow(duplicates), 1L)
+  expect_setequal(
+    basename(c(duplicates$path_a, duplicates$path_b)), c("one.csv", "two.csv")
+  )
+})
+
+
+test_that("full build scopes output hygiene to diagnostics generated in that run", {
+  script <- paste(readLines(repo_file("scripts", "run_full_build.sh"), warn = FALSE), collapse = "\n")
+  expect_match(script, "EMI_AUDIT_EXTENDED_DIAGNOSTICS=\"\$with_extended_diagnostics\"")
+})

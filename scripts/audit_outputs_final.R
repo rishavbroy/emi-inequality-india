@@ -1,6 +1,7 @@
 # Audit final-mode public output artifacts for required files and diagnostic leftovers.
 
 source("scripts/public_output_contract.R", local = TRUE)
+source("R/output/output_hygiene.R", local = TRUE)
 
 if (!file.exists(".pipeline-final-ok")) {
   stop("Final output audit requires a successful current final pipeline run. Run `make pipeline` with the final configuration first.", call. = FALSE)
@@ -147,6 +148,42 @@ if (file.exists(anderson_rubin_path)) {
   }
 }
 
+
+
+cat("=== OUTPUT HYGIENE ===\n")
+hygiene_roots <- c(
+  "outputs/diagnostics/public", "outputs/figures", "outputs/tables"
+)
+if (!is_false_env("EMI_AUDIT_EXTENDED_DIAGNOSTICS", "false")) {
+  hygiene_roots <- c(hygiene_roots, "outputs/diagnostics/extended")
+}
+schema_less_csvs <- schema_less_csv_files(hygiene_roots)
+duplicate_csvs <- output_hygiene_duplicate_candidates(hygiene_roots)
+write_output_hygiene_reports(schema_less_csvs, duplicate_csvs)
+
+if (length(schema_less_csvs)) {
+  for (path in schema_less_csvs) {
+    cat("OUTPUT HYGIENE WARNING: schema-less CSV: ", path, "\n", sep = "")
+  }
+  add_failure(
+    "Generated CSV files must retain a named schema when they contain zero rows: ",
+    paste(schema_less_csvs, collapse = ", ")
+  )
+} else {
+  cat("Schema-less generated CSVs: 0\n")
+}
+
+if (nrow(duplicate_csvs)) {
+  for (i in seq_len(nrow(duplicate_csvs))) {
+    cat(
+      "OUTPUT HYGIENE WARNING: byte-identical CSVs in one output directory: ",
+      duplicate_csvs$path_a[[i]], " <=> ", duplicate_csvs$path_b[[i]], "\n",
+      sep = ""
+    )
+  }
+} else {
+  cat("Unreviewed same-directory byte-identical CSV pairs: 0\n")
+}
 
 
 if (length(failures)) {

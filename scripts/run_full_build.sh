@@ -337,6 +337,7 @@ else
     Rscript scripts/check_rendered_text.R --final
   EMI_REQUIRE_APPLICATION_SAMPLES="$render_samples" \
     EMI_REQUIRE_POSTER="$with_poster" \
+    EMI_AUDIT_EXTENDED_DIAGNOSTICS="$with_extended_diagnostics" \
     Rscript scripts/check_public_final.R
   touch .public-final-ok
 
