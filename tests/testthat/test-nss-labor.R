@@ -557,6 +557,31 @@ test_that("PLFS long-run registry reuses the shared usual-status estimands", {
   expect_false("migrant_from_last_upr_share_age15plus" %in% plfs$outcome_id)
 })
 
+test_that("lineage variants share the PLFS outcome registry output", {
+  dir <- tempfile("plfs-shared-registry-")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE, force = TRUE), add = TRUE)
+  diagnostics <- list(
+    source_validation = data.frame(status = "ok"),
+    lineage_support = data.frame(status = "ok"),
+    target_support = data.frame(status = "ok")
+  )
+  outcomes <- list(
+    registry = plfs_2017_18_outcome_registry(),
+    estimates = data.frame(outcome_id = "labor_force_participation_age15plus")
+  )
+  stale <- file.path(dir, "plfs_variant_outcome_registry.csv")
+  writeLines("stale", stale)
+
+  paths <- save_nss_labor_diagnostics(
+    diagnostics, "plfs_variant", outcomes, dir, include_registry = FALSE
+  )
+
+  expect_false(file.exists(stale))
+  expect_false(any(grepl("outcome_registry\\.csv$", basename(paths))))
+  expect_true(any(grepl("district_outcomes\\.csv$", basename(paths))))
+})
+
 test_that("PLFS source package validates DDI and weighting documentation before materialization", {
   root <- tempfile("plfs1718-package-")
   dir.create(root)

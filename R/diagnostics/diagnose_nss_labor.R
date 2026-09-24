@@ -437,7 +437,8 @@ build_nss66_diagnostics <- function(canonical_persons, lineaged_persons) {
 }
 
 save_nss_labor_diagnostics <- function(
-    x, prefix, district_outcomes = NULL, root = "outputs/diagnostics/extended/labor") {
+    x, prefix, district_outcomes = NULL, root = "outputs/diagnostics/extended/labor",
+    include_registry = TRUE) {
   if (!nzchar(prefix) || !grepl("^[a-z0-9_]+$", prefix)) {
     stop("NSS labor diagnostic prefix must be a non-empty file-safe identifier.", call. = FALSE)
   }
@@ -446,15 +447,20 @@ save_nss_labor_diagnostics <- function(
     lineage_support = x$lineage_support,
     target_support = if (is.null(district_outcomes)) x$target_support else district_outcomes$target_support
   )
+  stale <- character()
   if (!is.null(district_outcomes)) {
-    names_and_objects$outcome_registry <- district_outcomes$registry
+    if (isTRUE(include_registry)) {
+      names_and_objects$outcome_registry <- district_outcomes$registry
+    } else {
+      stale <- file.path(root, paste0(prefix, "_outcome_registry.csv"))
+    }
     names_and_objects$district_outcomes <- district_outcomes$estimates
   }
   filenames <- stats::setNames(
     paste0(prefix, "_", names(names_and_objects), ".csv"),
     names(names_and_objects)
   )
-  write_diagnostic_bundle(names_and_objects, root, filenames)
+  write_diagnostic_bundle(names_and_objects, root, filenames, stale = stale)
 }
 
 save_nss64_diagnostics <- function(
@@ -612,11 +618,13 @@ build_labor_mechanism_inference <- function(
 }
 
 save_labor_mechanism_inference <- function(
-    x, prefix, root = "outputs/diagnostics/extended/labor") {
+    x, prefix, root = "outputs/diagnostics/extended/labor",
+    include_registry = TRUE) {
   if (!nzchar(prefix) || !grepl("^[a-z0-9_]+$", prefix)) {
     stop("Labor mechanism diagnostic prefix must be a file-safe identifier.", call. = FALSE)
   }
   save_posttreatment_mechanism_outputs(
-    x, root, prefix = paste0(prefix, "_mechanism_")
+    x, root, prefix = paste0(prefix, "_mechanism_"),
+    include_registry = include_registry
   )
 }

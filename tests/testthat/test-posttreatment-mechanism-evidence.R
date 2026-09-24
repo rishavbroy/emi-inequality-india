@@ -65,6 +65,23 @@ test_that("post-treatment mechanism saver retains AR grids only as cached object
   )
 })
 
+test_that("post-treatment saver can share a registry across analysis variants", {
+  result <- mechanism_result_fixture()
+  dir <- tempfile("mechanism-shared-registry-")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE, force = TRUE), add = TRUE)
+  stale <- file.path(dir, "variant_registry.csv")
+  writeLines("stale", stale)
+
+  paths <- save_posttreatment_mechanism_outputs(
+    result, dir, prefix = "variant_", include_registry = FALSE
+  )
+
+  expect_false(file.exists(stale))
+  expect_false(any(grepl("registry\\.csv$", basename(paths))))
+  expect_equal(length(paths), length(posttreatment_mechanism_persisted_components()) - 1L)
+})
+
 test_that("cross-family mechanism evidence distinguishes identification from robust signal", {
   result <- mechanism_result_fixture()
   evidence <- build_posttreatment_mechanism_evidence(list(

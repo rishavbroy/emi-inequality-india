@@ -9,10 +9,14 @@ extended_labor_target_definitions <- function() {
       save_labor_mechanism_inference(plfs_2017_18_labor_mechanism, "plfs_2017_18"),
       format = "file"
     ),
+    # Outcome and mechanism registries define estimands, not lineage support.
+    # Persist them once with the primary PLFS variant; conservative outputs
+    # retain only the variant-specific samples and estimates.
     tar_target(
       diag_ext_plfs_2017_18_conservative_labor_mechanism_files,
       save_labor_mechanism_inference(
-        plfs_2017_18_conservative_labor_mechanism, "plfs_2017_18_conservative"
+        plfs_2017_18_conservative_labor_mechanism, "plfs_2017_18_conservative",
+        include_registry = FALSE
       ),
       format = "file"
     ),
@@ -32,7 +36,8 @@ extended_labor_target_definitions <- function() {
         save_nss_labor_diagnostics(
           plfs_2017_18_conservative_diagnostics,
           "plfs_2017_18_conservative",
-          plfs_2017_18_conservative_district_outcomes
+          plfs_2017_18_conservative_district_outcomes,
+          include_registry = FALSE
         )
       ),
       format = "file"

@@ -376,16 +376,20 @@ extract_posttreatment_mechanism_result <- function(x) {
 }
 
 save_posttreatment_mechanism_outputs <- function(
-    x, directory, prefix = "mechanism_") {
+    x, directory, prefix = "mechanism_", include_registry = TRUE) {
   result <- extract_posttreatment_mechanism_result(x)
   components <- posttreatment_mechanism_persisted_components()
+  if (!isTRUE(include_registry)) components <- setdiff(components, "registry")
   objects <- result[components]
   filenames <- stats::setNames(
     paste0(prefix, components, ".csv"),
     components
   )
-  stale_grid <- file.path(directory, paste0(prefix, "anderson_rubin_grid.csv"))
-  write_diagnostic_bundle(objects, directory, filenames, stale = stale_grid)
+  stale <- file.path(directory, paste0(prefix, "anderson_rubin_grid.csv"))
+  if (!isTRUE(include_registry)) {
+    stale <- c(stale, file.path(directory, paste0(prefix, "registry.csv")))
+  }
+  write_diagnostic_bundle(objects, directory, filenames, stale = stale)
 }
 
 summarize_posttreatment_mechanism_result <- function(
