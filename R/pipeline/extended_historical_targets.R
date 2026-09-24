@@ -370,17 +370,6 @@ extended_historical_target_definitions <- function() {
       ))
     ),
     tar_target(
-      historical_vanneman_pretrend_support_comparison,
-      historical_vanneman_pretrend_geography_comparison$support
-    ),
-    tar_target(
-      diag_ext_historical_vanneman_pretrend_support_comparison,
-      save_vanneman_pretrend_support_comparison(
-        historical_vanneman_pretrend_support_comparison
-      ),
-      format = "file"
-    ),
-    tar_target(
       diag_ext_historical_vanneman_pretrend_geography_comparison,
       save_vanneman_pretrend_geography_comparison(
         historical_vanneman_pretrend_geography_comparison

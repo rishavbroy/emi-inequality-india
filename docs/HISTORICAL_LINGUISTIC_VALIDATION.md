@@ -973,11 +973,13 @@ Census-2001 LD, and the Atlas source-quality gate. Helms-Lim is then evaluated
 where observed inside that fixed sample. An optional robustness source therefore
 cannot silently redefine the project's preferred historical comparison.
 
-`vanneman_pretrend_support_comparison.csv` compares strict one-to-one and
-historical-parent coverage for the full sample and each distance-support layer.
-It is the decision gate for any further constant-boundary amalgamation: merger
-components should only be implemented if the realized support gain after
-historical-parent aggregation and broad Helms-Lim coverage remains material.
+The support rows in `vanneman_pretrend_geography_support.csv` compare strict
+one-to-one and broader historical geographies for the full sample and each
+distance-support layer. They are the decision gate for any further
+constant-boundary amalgamation: merger components should only be implemented if
+the realized support gain after historical-parent aggregation and broad
+Helms-Lim coverage remains material. Keeping this information in the aligned
+geography comparison avoids persisting the same support table twice.
 
 
 ### Broad-source 1991 baseline comparison

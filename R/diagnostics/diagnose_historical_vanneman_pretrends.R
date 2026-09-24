@@ -1243,12 +1243,6 @@ build_vanneman_pretrend_support_comparison <- function(validations) {
 }
 
 
-save_vanneman_pretrend_support_comparison <- function(
-    x,
-    path = "outputs/diagnostics/extended/instrument_relevance/vanneman_pretrend_support_comparison.csv") {
-  write_diagnostic_csv(x, path)
-}
-
 
 validate_vanneman_pretrend_comparison_inputs <- function(validations) {
   if (!is.list(validations) || is.null(names(validations)) ||
@@ -1380,6 +1374,8 @@ save_vanneman_pretrend_geography_comparison <- function(
     )
   }
   dir.create(directory, recursive = TRUE, showWarnings = FALSE)
+  stale_support <- file.path(directory, "vanneman_pretrend_support_comparison.csv")
+  if (file.exists(stale_support)) unlink(stale_support)
   paths <- c(
     support = file.path(
       directory, "vanneman_pretrend_geography_support.csv"

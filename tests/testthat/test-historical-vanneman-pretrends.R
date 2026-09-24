@@ -1250,10 +1250,14 @@ test_that("Vanneman geography comparison saver emits aligned robustness artifact
     joint_balance = data.frame(geography_variant_id = "strict_one_to_one")
   )
   dir <- tempfile()
+  dir.create(dir, recursive = TRUE)
+  stale <- file.path(dir, "vanneman_pretrend_support_comparison.csv")
+  writeLines("stale", stale)
   paths <- save_vanneman_pretrend_geography_comparison(
     x, directory = dir
   )
 
+  expect_false(file.exists(stale))
   expect_setequal(
     basename(paths),
     c(
