@@ -13,7 +13,7 @@ This repository builds the EMI and inequality paper, diagnostics, application sa
 - `R/diagnostics/` — public and extended diagnostics.
 - `R/benchmarking/` — optional benchmarks.
 - `R/output/` — figures, tables, shared table contracts, report values, and render helpers.
-- `paper/`, `docs/`, `analysis/` — current prose and rendering sources.
+- `paper/`, `docs/` — current manuscript and methodological documentation sources.
 - `tests/testthat/` — behavioral and output-contract tests.
 - `archive/refactoring/` — historical proof only.
 

@@ -117,15 +117,12 @@ make paper
 # Application samples only.
 make samples
 
-# Extended analyses, benchmarks, and their rendered reports.
-make analysis
-
 # Complete repository build. Equivalent to the script below.
 make all
 bash scripts/run_full_build.sh
 ```
 
-`run_full_build.sh` uses [`config/final.yml`](config/final.yml), includes application samples, writes `review.zip`, and leaves analysis reports and the conference poster out unless requested. Useful options are:
+`run_full_build.sh` uses [`config/final.yml`](config/final.yml), includes application samples, writes `review.zip`, and leaves the conference poster out unless requested. Useful options are:
 
 ```bash
 # The command used for routine development review after source changes.
@@ -134,10 +131,6 @@ caffeinate -dimsu bash scripts/run_full_build.sh \
   --with-extended-diagnostics \
   --with-benchmarks \
   2>&1 | tee full_output.txt
-
-# Also render the analysis reports. Their required extended results and
-# benchmarks are enabled automatically.
-bash scripts/run_full_build.sh --with-analysis
 
 # Include the conference poster.
 bash scripts/run_full_build.sh --with-poster
@@ -153,7 +146,7 @@ The ordinary build keeps the `{targets}` store and existing generated files. `{t
 
 The main target build requests up to four parallel consumption-domain workers for expensive design-based distributional welfare statistics. Set `EMI_CONSUMPTION_DOMAIN_CORES=1` for serial execution or a smaller value on a memory-constrained machine; the R helper clamps the request to detected physical cores and Windows remains serial.
 
-`make pipeline-fast` changes the scientific configuration to [`config/fast.yml`](config/fast.yml). It does not select a different set of optional target families. Extended diagnostics, benchmarks, analysis reports, application samples, and the poster are selected separately by the build command. See [`docs/BUILD.md`](docs/BUILD.md) for the distinction.
+`make pipeline-fast` changes the scientific configuration to [`config/fast.yml`](config/fast.yml). It does not select a different set of optional target families. Extended diagnostics, benchmarks, application samples, and the poster are selected separately by the build command. See [`docs/BUILD.md`](docs/BUILD.md) for the distinction.
 
 On Windows, run the shell entry point through WSL or Git Bash. From PowerShell, replace `tee` with `Tee-Object -FilePath full_output.txt`; from `cmd.exe`, redirect with `> full_output.txt 2>&1`.
 
@@ -161,7 +154,7 @@ On Windows, run the shell entry point through WSL or Git Bash. From PowerShell, 
 
 [`scripts/make_review_archive.sh`](scripts/make_review_archive.sh) writes `review.zip`. Outside failure/debug mode it requires `.public-final-ok`, which is written only after a verified final build. `run_full_build.sh` replaces the archive on every run and can package the current failed state with `--allow-incomplete` when a build stops early. Use `--no-archive` on the full build when no archive should be created.
 
-Archive contents follow the selected build profile. Application-sample PDFs are included by default; analysis-report renders and conference-poster renders are included only when their corresponding build options were requested. Raw data, dependency libraries, target caches, and other local caches are excluded.
+Archive contents follow the selected build profile. Application-sample PDFs are included by default; conference-poster renders are included only when requested. Raw data, dependency libraries, target caches, and other local caches are excluded.
 
 ### Lineage-source execution
 

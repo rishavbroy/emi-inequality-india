@@ -19,7 +19,6 @@ There is no separate diagnostic configuration. Extended checks and benchmarks ar
 | Render and validate the papers | `make paper` |
 | Render application samples | `make samples` |
 | Render the conference poster | `make poster` |
-| Run extended checks, benchmarks, and analysis reports | `make analysis` |
 | Re-render all QMD families | `make qmd-renders` |
 | Run the ordinary full build | `make` or `make all` |
 | Remove generated renders and optional outputs | `make clean` |
@@ -35,15 +34,14 @@ The ordinary command is:
 bash scripts/run_full_build.sh
 ```
 
-It uses `config/final.yml`, includes application samples, omits analysis reports and the conference poster, preserves the `{targets}` store, and writes `review.zip` on success or failure.
+It uses `config/final.yml`, includes application samples, omits the conference poster, preserves the `{targets}` store, and writes `review.zip` on success or failure.
 
 Useful options are:
 
 - `--no-samples`: omit application-sample rendering and checks.
-- `--with-analysis`: render analysis reports and run the extended results and benchmarks they read.
 - `--with-poster`: construct poster-only figure dependencies, render the conference poster, and require its outputs.
-- `--with-extended-diagnostics`: run extended research checks without rendering analysis reports.
-- `--with-benchmarks`: run benchmarks without rendering analysis reports.
+- `--with-extended-diagnostics`: run extended research checks.
+- `--with-benchmarks`: run benchmarks.
 - `--fast`: use `config/fast.yml`.
 - `--from-clean-slate`: remove generated outputs and destroy `_targets/` before rebuilding.
 - `--no-archive`: do not create `review.zip`.
@@ -53,7 +51,7 @@ The default preserves cached target values because `{targets}` already reruns on
 
 ## Optional target families
 
-The environment switches `EMI_RUN_EXTENDED_DIAGNOSTICS`, `EMI_RUN_BENCHMARKS`, `EMI_RENDER_ANALYSIS_NOTES`, `EMI_RENDER_APPLICATION_SAMPLES`, and `EMI_RENDER_POSTER` determine which optional target definitions `_targets.R` includes. They do not select a different YAML configuration.
+The maintained build switches `EMI_RUN_EXTENDED_DIAGNOSTICS`, `EMI_RUN_BENCHMARKS`, `EMI_RENDER_APPLICATION_SAMPLES`, and `EMI_RENDER_POSTER` determine which optional target definitions `_targets.R` includes. They do not select a different YAML configuration.
 
 The full-build script is the intended human interface to those switches. `_targets.R` does not print a message every time an omitted family is encountered; the script prints one build-profile summary instead.
 
