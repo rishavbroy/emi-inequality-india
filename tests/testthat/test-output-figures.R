@@ -315,7 +315,7 @@ test_that("poster expected-value predictions preserve serialized state fixed-eff
   )
 })
 
-test_that("complete Census-2001 map geometry shows missing panel districts as grey polygons", {
+test_that("complete Census-2001 map geometry keeps state identity for districts absent from the panel", {
   skip_if_not_installed("sf")
   geometry <- sf::st_sfc(
     sf::st_polygon(list(rbind(c(0, 0), c(1, 0), c(1, 1), c(0, 1), c(0, 0)))),
@@ -323,11 +323,12 @@ test_that("complete Census-2001 map geometry shows missing panel districts as gr
     crs = 4326
   )
   universe <- sf::st_sf(
-    target_unit_2001 = c("pc2001__01__01", "pc2001__01__02"),
+    target_unit_2001 = c("pc2001__01__01", "pc2001__02__01"),
     geometry = geometry
   )
   panel <- sf::st_sf(
     target_unit_2001 = "pc2001__01__01",
+    state_code_2001 = "01",
     emi_exposure_all_children_0708 = 10,
     geometry = geometry[1]
   )
@@ -339,6 +340,7 @@ test_that("complete Census-2001 map geometry shows missing panel districts as gr
     public_map_style("emi_exposure_all_children_0708")
   )
 
+  expect_identical(complete$state_code_2001, c("01", "02"))
   expect_equal(nrow(fill$data), 2L)
   expect_equal(as.character(fill$data$.map_fill), c("2.5-10", "No data"))
   expect_equal(unname(fill$colors[["No data"]]), map_no_data_colour())
@@ -474,20 +476,29 @@ test_that("paper EMI maps use one comparable percentage scale", {
   expect_true(all(vapply(styles, function(x) grepl("%", x$title, fixed = TRUE), logical(1))))
 })
 
-test_that("a single-state map has no interstate boundary layer", {
+test_that("state outlines dissolve intrastate district edges", {
   skip_if_not_installed("sf")
   geometry <- sf::st_sfc(
     sf::st_polygon(list(rbind(c(0, 0), c(1, 0), c(1, 1), c(0, 1), c(0, 0)))),
     sf::st_polygon(list(rbind(c(1, 0), c(2, 0), c(2, 1), c(1, 1), c(1, 0)))),
-    crs = 4326
+    crs = 3857
   )
   panel <- sf::st_sf(
     state_code_2001 = c("01", "01"),
     target_unit_2001 = c("a", "b"),
     geometry = geometry
   )
+  intrastate_edge <- sf::st_sfc(
+    sf::st_linestring(rbind(c(1, 0), c(1, 1))), crs = 3857
+  )
 
-  expect_null(public_map_state_boundaries(panel))
+  outlines <- public_map_state_outlines(panel)
+
+  expect_s3_class(outlines, "sf")
+  expect_equal(as.numeric(sf::st_length(sf::st_union(outlines))), 6, tolerance = 1e-8)
+  expect_true(all(sf::st_is_empty(
+    sf::st_intersection(sf::st_union(outlines), intrastate_edge)
+  )))
 })
 
 schooling_access_figure_fixture <- function() {
@@ -573,7 +584,7 @@ test_that("disputed-area registry selects only explicitly registered Natural Ear
   )
 })
 
-test_that("state boundaries are exactly shared interstate edges", {
+test_that("state outlines retain complete interstate seams", {
   skip_if_not_installed("sf")
   square <- function(x0, x1, y0 = 0, y1 = 1) sf::st_polygon(list(rbind(
     c(x0, y0), c(x1, y0), c(x1, y1), c(x0, y1), c(x0, y0)
@@ -585,41 +596,41 @@ test_that("state boundaries are exactly shared interstate edges", {
       square(0, 1), square(1, 2), square(2, 3), crs = 3857
     )
   )
+  interstate_edge <- sf::st_sfc(
+    sf::st_linestring(rbind(c(2, 0), c(2, 1))), crs = 3857
+  )
 
-  states <- public_map_state_boundaries(districts)
+  outlines <- public_map_state_outlines(districts)
 
-  expect_s3_class(states, "sf")
+  expect_s3_class(outlines, "sf")
   expect_equal(
-    as.numeric(sf::st_length(sf::st_union(states))),
+    as.numeric(sf::st_length(sf::st_intersection(sf::st_union(outlines), interstate_edge))),
     1,
     tolerance = 1e-8
   )
 })
 
-test_that("holes in state coverage do not erase unrelated shared state edges", {
+test_that("state outlines omit holes in dissolved source geometry", {
   skip_if_not_installed("sf")
-  polygon_with_hole <- function(x0, x1) sf::st_polygon(list(
-    rbind(c(x0, 0), c(x1, 0), c(x1, 2), c(x0, 2), c(x0, 0)),
-    rbind(c(x0 + 0.2, 0.6), c(x0 + 0.4, 0.6), c(x0 + 0.4, 0.8),
-          c(x0 + 0.2, 0.8), c(x0 + 0.2, 0.6))
+  polygon_with_hole <- sf::st_polygon(list(
+    rbind(c(0, 0), c(2, 0), c(2, 2), c(0, 2), c(0, 0)),
+    rbind(c(0.5, 0.5), c(1, 0.5), c(1, 1), c(0.5, 1), c(0.5, 0.5))
   ))
   districts <- sf::st_sf(
-    target_unit_2001 = c("left", "right"),
-    state_code_2001 = c("01", "02"),
-    geometry = sf::st_sfc(
-      polygon_with_hole(0, 1),
-      sf::st_polygon(list(rbind(c(1, 0), c(2, 0), c(2, 2), c(1, 2), c(1, 0)))),
-      crs = 3857
-    )
+    target_unit_2001 = "d1",
+    state_code_2001 = "01",
+    geometry = sf::st_sfc(polygon_with_hole, crs = 3857)
   )
+  hole_boundary <- sf::st_sfc(sf::st_linestring(rbind(
+    c(0.5, 0.5), c(1, 0.5), c(1, 1), c(0.5, 1), c(0.5, 0.5)
+  )), crs = 3857)
 
-  states <- public_map_state_boundaries(districts)
+  outlines <- public_map_state_outlines(districts)
 
-  expect_equal(
-    as.numeric(sf::st_length(sf::st_union(states))),
-    2,
-    tolerance = 1e-8
-  )
+  expect_equal(as.numeric(sf::st_length(sf::st_union(outlines))), 8, tolerance = 1e-8)
+  expect_true(all(sf::st_is_empty(
+    sf::st_intersection(sf::st_union(outlines), hole_boundary)
+  )))
 })
 
 test_that("disputed display unions Natural Earth masks with the DataMeet scaffold", {
@@ -729,21 +740,29 @@ test_that("registered disputed areas are polygons with a distinct no-estimate tr
   expect_false(identical(map_disputed_no_data_colour(), map_no_data_colour()))
 })
 
-test_that("interstate lines are removed inside the disputed display mask", {
+test_that("disputed masks cut state polygons before ordinary outlines are derived", {
   skip_if_not_installed("sf")
-  line <- sf::st_sf(
-    geometry = sf::st_sfc(sf::st_linestring(rbind(c(1, 0), c(1, 2))), crs = 3857)
-  )
-  mask <- sf::st_sf(
+  state <- sf::st_sf(
+    target_unit_2001 = "d1",
+    state_code_2001 = "01",
     geometry = sf::st_sfc(sf::st_polygon(list(rbind(
-      c(0.5, 0.5), c(1.5, 0.5), c(1.5, 1.5), c(0.5, 1.5), c(0.5, 0.5)
+      c(0, 0), c(2, 0), c(2, 1), c(0, 1), c(0, 0)
     ))), crs = 3857)
   )
+  mask <- sf::st_sf(
+    area_id = "aksai_chin",
+    geometry = sf::st_sfc(sf::st_polygon(list(rbind(
+      c(1.5, 0), c(2.5, 0), c(2.5, 1), c(1.5, 1), c(1.5, 0)
+    ))), crs = 3857)
+  )
+  expected_seam <- sf::st_sfc(
+    sf::st_linestring(rbind(c(1.5, 0), c(1.5, 1))), crs = 3857
+  )
 
-  clipped <- mask_public_map_lines(line, mask)
+  outlines <- public_map_state_outlines(state, mask)
 
   expect_equal(
-    as.numeric(sf::st_length(sf::st_union(clipped))),
+    as.numeric(sf::st_length(sf::st_intersection(sf::st_union(outlines), expected_seam))),
     1,
     tolerance = 1e-8
   )

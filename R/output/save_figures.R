@@ -438,60 +438,63 @@ mask_public_map_disputed_areas <- function(plot_data, disputed_areas = NULL) {
   sf::st_difference(out, mask)
 }
 
-public_map_state_boundaries <- function(plot_data) {
-  if (!inherits(plot_data, "sf")) return(NULL)
-  state_col <- intersect(
-    c("state_code_2001", "state_01", "state_std"),
-    names(plot_data)
-  )
-  if (!length(state_col)) return(NULL)
-  state_col <- state_col[[1]]
-  state <- plain_chr(plot_data[[state_col]])
+public_map_state_code_2001 <- function(unit_id) {
+  unit_id <- plain_chr(unit_id)
+  valid <- !is.na(unit_id) & grepl("^pc2001__[0-9]{2}__[0-9]{2}$", unit_id)
+  if (any(!valid)) {
+    stop(
+      "Public map geometry contains invalid canonical Census-2001 district IDs.",
+      call. = FALSE
+    )
+  }
+  sub("^pc2001__([0-9]{2})__[0-9]{2}$", "\\1", unit_id)
+}
+
+public_map_state_outlines <- function(plot_data, disputed_display = NULL) {
+  if (!inherits(plot_data, "sf") || !nrow(plot_data)) return(NULL)
+  if (!"state_code_2001" %in% names(plot_data)) {
+    stop("Public map geometry is missing canonical Census-2001 state codes.", call. = FALSE)
+  }
+  state <- plain_chr(plot_data$state_code_2001)
   keep <- !is.na(state) & nzchar(state)
   if (!any(keep)) return(NULL)
-  data <- plot_data[keep, c(state_col, attr(plot_data, "sf_column")), drop = FALSE]
-  states <- stats::aggregate(data, by = list(state = state[keep]), FUN = length)
-  if (nrow(states) < 2L) return(NULL)
 
-  # Shared interstate edges are the one-dimensional overlaps of independently
-  # dissolved state boundaries. Unlike subtracting a national exterior, this
-  # definition is unaffected by holes, coastlines, or missing-value districts.
-  boundaries <- sf::st_sf(
-    state = states$state,
-    geometry = sf::st_boundary(sf::st_geometry(states))
+  data <- plot_data[keep, attr(plot_data, "sf_column"), drop = FALSE]
+  states <- stats::aggregate(
+    data,
+    by = list(state_code_2001 = state[keep]),
+    FUN = length
   )
-  shared <- suppressWarnings(sf::st_intersection(boundaries))
-  if (!nrow(shared) || !"n.overlaps" %in% names(shared)) return(NULL)
-  keep_shared <- shared$n.overlaps >= 2L & sf::st_dimension(shared) == 1L
-  shared <- shared[keep_shared, , drop = FALSE]
-  if (!nrow(shared)) return(NULL)
-  geometry <- sf::st_union(sf::st_geometry(shared))
-  if (length(geometry) == 0L || all(sf::st_is_empty(geometry))) return(NULL)
-  sf::st_sf(geometry = geometry)
-}
+  states <- sf::st_make_valid(states)
 
-mask_public_map_lines <- function(lines, mask = NULL) {
-  if (!inherits(lines, "sf") || !nrow(lines) ||
-      !inherits(mask, "sf") || !nrow(mask)) {
-    return(lines)
-  }
-  geometry <- sf::st_difference(
-    sf::st_geometry(lines),
-    sf::st_union(sf::st_geometry(mask))
-  )
-  if (length(geometry) == 0L || all(sf::st_is_empty(geometry))) return(NULL)
-  sf::st_sf(geometry = geometry)
-}
-
-public_map_outer_boundary <- function(display_data, disputed_display = NULL) {
-  if (!inherits(display_data, "sf") || !nrow(display_data)) return(NULL)
-  geometry <- sf::st_geometry(display_data)
+  # Apply political display masks to polygons before deriving linework. This
+  # makes the ordinary J&K/Aksai-Chin seam the exact boundary created by the
+  # same disputed geometry that is rendered below, rather than clipping an
+  # already-created line and leaving small coincident fragments.
   if (inherits(disputed_display, "sf") && nrow(disputed_display)) {
-    geometry <- c(geometry, sf::st_geometry(disputed_display))
+    if (is.na(sf::st_crs(states)) || is.na(sf::st_crs(disputed_display))) {
+      stop("Public map state and disputed geometries require defined CRSs.", call. = FALSE)
+    }
+    if (sf::st_crs(states) != sf::st_crs(disputed_display)) {
+      disputed_display <- sf::st_transform(disputed_display, sf::st_crs(states))
+    }
+    sf::st_agr(states) <- "constant"
+    states <- sf::st_difference(
+      states,
+      sf::st_union(sf::st_geometry(disputed_display))
+    )
   }
-  boundary <- sf::st_boundary(sf::st_union(geometry))
-  if (length(boundary) == 0L || all(sf::st_is_empty(boundary))) return(NULL)
-  sf::st_sf(geometry = boundary)
+  if (!nrow(states)) return(NULL)
+  states <- states[!sf::st_is_empty(states), , drop = FALSE]
+  if (!nrow(states)) return(NULL)
+
+  # State outlines serve both interstate and ordinary external boundaries.
+  # Exterior rings intentionally discard holes in dissolved source polygons so
+  # topology gaps/slivers cannot be promoted into thick black map boundaries.
+  outlines <- sf::st_exterior_ring(states)
+  outlines <- outlines[!sf::st_is_empty(outlines), , drop = FALSE]
+  if (!nrow(outlines)) return(NULL)
+  outlines
 }
 
 build_public_ggplot_map <- function(plot_data, spec, boundary_reference = NULL) {
@@ -506,32 +509,24 @@ build_public_ggplot_map <- function(plot_data, spec, boundary_reference = NULL) 
 
   disputed_display <- public_map_disputed_display(plot_data, boundary_reference)
   display_data <- mask_public_map_disputed_areas(plot_data, disputed_display)
-  state_boundaries <- mask_public_map_lines(
-    public_map_state_boundaries(plot_data),
-    disputed_display
-  )
-  outer_boundary <- public_map_outer_boundary(display_data, disputed_display)
+  state_outlines <- public_map_state_outlines(plot_data, disputed_display)
   base <- ggplot2::ggplot() +
     ggplot2::geom_sf(
       data = display_data, ggplot2::aes(fill = .data[[fill$fill]]),
-      color = "grey55", linewidth = map_district_boundary_linewidth()
+      color = "grey55", linewidth = map_district_boundary_linewidth(),
+      linetype = "solid"
     )
   if (!is.null(disputed_display) && nrow(disputed_display)) {
     base <- base + ggplot2::geom_sf(
       data = disputed_display, fill = map_disputed_no_data_colour(),
-      color = "grey45", linewidth = map_disputed_boundary_linewidth()
+      color = "grey45", linewidth = map_disputed_boundary_linewidth(),
+      linetype = "solid"
     )
   }
-  if (!is.null(state_boundaries) && nrow(state_boundaries)) {
+  if (!is.null(state_outlines) && nrow(state_outlines)) {
     base <- base + ggplot2::geom_sf(
-      data = state_boundaries, color = "grey15",
-      linewidth = map_major_boundary_linewidth()
-    )
-  }
-  if (!is.null(outer_boundary) && nrow(outer_boundary)) {
-    base <- base + ggplot2::geom_sf(
-      data = outer_boundary, color = "grey15",
-      linewidth = map_major_boundary_linewidth()
+      data = state_outlines, color = "grey15",
+      linewidth = map_major_boundary_linewidth(), linetype = "solid"
     )
   }
   base <- base +
@@ -588,7 +583,21 @@ complete_public_map_geometry <- function(district_panel, map_geometry) {
   }
   attributes <- if (inherits(district_panel, "sf")) sf::st_drop_geometry(district_panel) else safe_df(district_panel)
   attributes <- attributes[!duplicated(attributes[[key]]), , drop = FALSE]
-  merge(map_geometry, attributes, by = key, all.x = TRUE, sort = FALSE)
+  out <- merge(map_geometry, attributes, by = key, all.x = TRUE, sort = FALSE)
+
+  # State identity belongs to the complete Census geometry, not to the analysis
+  # panel: districts absent from a particular estimand must still participate in
+  # state/exterior linework. Canonical IDs encode the 2001 state code directly.
+  canonical_state <- public_map_state_code_2001(out[[key]])
+  if ("state_code_2001" %in% names(out)) {
+    panel_state <- plain_chr(out$state_code_2001)
+    mismatch <- !is.na(panel_state) & nzchar(panel_state) & panel_state != canonical_state
+    if (any(mismatch)) {
+      stop("Public map panel state codes disagree with canonical district IDs.", call. = FALSE)
+    }
+  }
+  out$state_code_2001 <- canonical_state
+  out
 }
 
 save_map_plot_formats <- function(map_plot, path_base, formats, width = 8, height = 6, dpi = 300) {
