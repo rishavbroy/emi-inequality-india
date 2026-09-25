@@ -441,8 +441,7 @@ test_that("native marginaleffects tables preserve metadata and stack uncertainty
 })
 
 
-test_that("saved appendix AME tables stack standard errors without native model metadata", {
-  skip_if_not_installed("modelsummary")
+test_that("saved appendix AME tables retain regression-table structure without native model metadata", {
   skip_if_not_installed("kableExtra")
 
   table <- data.frame(
@@ -464,13 +463,12 @@ test_that("saved appendix AME tables stack standard errors without native model 
   expect_length(estimate_row, 1L)
   expect_equal(se_row, estimate_row + 1L)
   expect_true(any(grepl("Enrolled (1 = yes)", tex_lines, fixed = TRUE)))
-})
-
-
-test_that("modelsummary datasummary alignment is a single string", {
-  df <- data.frame(Term = c("Urban", ""), `Enrolled (1 = yes)` = c("0.001", "(0.002)"), check.names = FALSE)
-  expect_equal(table_alignments(df, "probit_mfx"), c("l", "c"))
-  expect_equal(modelsummary_align_string(df, "probit_mfx"), "lc")
+  expect_true(any(grepl("\\begin{longtable}", tex_lines, fixed = TRUE)))
+  expect_true(any(grepl("\\toprule", tex_lines, fixed = TRUE)))
+  expect_true(any(grepl("\\midrule", tex_lines, fixed = TRUE)))
+  expect_true(any(grepl("\\cellcolor{gray!10}", tex_lines, fixed = TRUE)))
+  expect_true(any(grepl("\\fontsize{9}", tex_lines, fixed = TRUE)))
+  expect_true(any(grepl("\\begingroup\\singlespacing", tex_lines, fixed = TRUE)))
 })
 
 

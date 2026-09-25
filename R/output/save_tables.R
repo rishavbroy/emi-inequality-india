@@ -180,10 +180,6 @@ table_alignments <- function(df, name) {
   c("l", rep("c", ncol(df) - 1L))
 }
 
-modelsummary_align_string <- function(df, name) {
-  paste(table_alignments(df, name), collapse = "")
-}
-
 stack_estimate_se_rows <- function(df, estimate_col = "Estimate", se_col = "Std. Error") {
   df <- as.data.frame(df, check.names = FALSE, stringsAsFactors = FALSE)
   if (!all(c("Term", estimate_col, se_col) %in% names(df))) return(df)
@@ -201,50 +197,6 @@ stack_estimate_se_rows <- function(df, estimate_col = "Estimate", se_col = "Std.
   out <- out[nzchar(out$Estimate), , drop = FALSE]
   rownames(out) <- NULL
   out
-}
-
-
-regression_rows_for_modelsummary <- function(df) {
-  df <- sanitize_table_for_kable(df)
-  if (ncol(df) < 2L) return(df)
-  model_col <- names(df)[[2]]
-  out <- data.frame(
-    Term = latex_escape_text(df[[1]]),
-    stringsAsFactors = FALSE,
-    check.names = FALSE
-  )
-  out[[model_col]] <- latex_escape_text(df[[2]])
-  out$Term[!nzchar(out$Term)] <- " "
-  out
-}
-
-
-public_datasummary_table_tex <- function(df, name) {
-  body <- suppress_modelsummary_latex_preamble_warning(
-    modelsummary::datasummary_df(
-      df,
-      output = "latex_tabular",
-      fmt = identity,
-      align = modelsummary_align_string(df, name)
-    )
-  )
-  body <- paste(as.character(body), collapse = "\n")
-  note <- public_table_note(name)
-  note_tex <- if (!is.null(note)) {
-    paste0("\n\\begin{tablenotes}[flushleft]\n\\footnotesize\n\\item ", note, "\n\\end{tablenotes}")
-  } else {
-    ""
-  }
-  paste0(
-    "\\begin{table}[!h]\n",
-    "\\centering\n",
-    "\\caption{\\label{", quarto_table_label(name), "}", table_caption(name), "}\n",
-    "\\begin{threeparttable}\n",
-    body,
-    note_tex,
-    "\n\\end{threeparttable}\n",
-    "\\end{table}"
-  )
 }
 
 
@@ -344,24 +296,38 @@ ame_modelsummary_table <- function(table, name) {
   single_space_longtable_tex(tex)
 }
 
-modelsummary_regression_table <- function(df, name) {
-  need_pkg("modelsummary", "standard regression table rendering")
-  df <- regression_rows_for_modelsummary(df)
+formatted_ame_regression_table <- function(df, name) {
+  need_pkg("kableExtra", "formatted AME regression table rendering")
+  df <- sanitize_table_for_kable(df)
   if (ncol(df) < 2L) return(NULL)
-  model_col <- switch(name,
-    probit_mfx = "Enrolled (1 = yes)",
-    appendix_selection_ame = "Enrolled (1 = yes)",
-    fs_cons = "EMI Exposure",
-    cons_iv = "Real Log Consumption Growth",
-    names(df)[[2]]
-  )
-  names(df) <- c("Term", model_col)
-  old_opt <- getOption("modelsummary_format_numeric_latex")
-  on.exit(options(modelsummary_format_numeric_latex = old_opt), add = TRUE)
-  options(modelsummary_format_numeric_latex = "plain")
-  public_datasummary_table_tex(df, name)
-}
 
+  names(df) <- c("Term", "Enrolled (1 = yes)")
+  df <- escape_table_for_latex(df)
+  estimate_rows <- seq.int(1L, nrow(df), by = 2L)
+
+  tex <- kableExtra::kbl(
+    df,
+    format = "latex",
+    booktabs = TRUE,
+    longtable = TRUE,
+    label = table_label(name),
+    caption = caption_for_latex(name),
+    escape = FALSE,
+    linesep = "",
+    align = c("l", "c"),
+    row.names = FALSE
+  )
+  tex <- kableExtra::kable_styling(
+    tex,
+    latex_options = c("repeat_header", "striped"),
+    stripe_index = estimate_rows,
+    position = "center",
+    full_width = FALSE,
+    font_size = 9
+  )
+  tex <- add_public_longtable_notes(tex, name)
+  single_space_longtable_tex(tex)
+}
 public_regression_coef_map <- function() {
   control_meta <- census_2001_control_metadata()
   c(
@@ -1457,7 +1423,7 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   if (name %in% c("probit_mfx", "appendix_selection_ame") &&
       !is_formatted_status_table(df_render)) {
     df_render <- stack_estimate_se_rows(df_render)
-    tex <- modelsummary_regression_table(df_render, name)
+    tex <- formatted_ame_regression_table(df_render, name)
     return(write_table_tex(tex, path, name))
   }
 
