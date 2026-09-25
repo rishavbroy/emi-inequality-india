@@ -441,6 +441,32 @@ test_that("native marginaleffects tables preserve metadata and stack uncertainty
 })
 
 
+test_that("saved appendix AME tables stack standard errors without native model metadata", {
+  skip_if_not_installed("modelsummary")
+  skip_if_not_installed("kableExtra")
+
+  table <- data.frame(
+    Term = c("Age (years)", "Female (ref: Male)"),
+    Estimate = c("-0.028***", "0.044***"),
+    `Std. Error` = c("(0.001)", "(0.009)"),
+    check.names = FALSE,
+    stringsAsFactors = FALSE
+  )
+  path <- tempfile(fileext = ".tex")
+  on.exit(unlink(path), add = TRUE)
+
+  expect_no_warning(save_table_tex(table, path, "appendix_selection_ame", public = TRUE))
+  tex_lines <- readLines(path, warn = FALSE)
+
+  expect_false(any(grepl("Std. Error", tex_lines, fixed = TRUE)))
+  estimate_row <- grep("-0.028***", tex_lines, fixed = TRUE)
+  se_row <- grep("(0.001)", tex_lines, fixed = TRUE)
+  expect_length(estimate_row, 1L)
+  expect_equal(se_row, estimate_row + 1L)
+  expect_true(any(grepl("Enrolled (1 = yes)", tex_lines, fixed = TRUE)))
+})
+
+
 test_that("modelsummary datasummary alignment is a single string", {
   df <- data.frame(Term = c("Urban", ""), `Enrolled (1 = yes)` = c("0.001", "(0.002)"), check.names = FALSE)
   expect_equal(table_alignments(df, "probit_mfx"), c("l", "c"))

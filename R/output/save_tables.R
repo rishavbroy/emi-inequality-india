@@ -350,6 +350,7 @@ modelsummary_regression_table <- function(df, name) {
   if (ncol(df) < 2L) return(NULL)
   model_col <- switch(name,
     probit_mfx = "Enrolled (1 = yes)",
+    appendix_selection_ame = "Enrolled (1 = yes)",
     fs_cons = "EMI Exposure",
     cons_iv = "Real Log Consumption Growth",
     names(df)[[2]]
@@ -1423,7 +1424,7 @@ save_table_tex <- function(table, path, name, public = TRUE) {
     )
     return(write_table_tex(tex, path, name))
   }
-  if (name %in% c("probit_mfx", "appendix_selection_ame") &&
+  if (identical(name, "probit_mfx") &&
       !is_formatted_status_table(as.data.frame(table, check.names = FALSE))) {
     tex <- ame_modelsummary_table(table, name)
     if (!is.null(tex)) return(write_table_tex(tex, path, name))
@@ -1453,7 +1454,8 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   if (!regression_table) {
     names(df_render) <- table_header_labels(df_render, name)
   }
-  if (identical(name, "probit_mfx") && !is_formatted_status_table(df_render)) {
+  if (name %in% c("probit_mfx", "appendix_selection_ame") &&
+      !is_formatted_status_table(df_render)) {
     df_render <- stack_estimate_se_rows(df_render)
     tex <- modelsummary_regression_table(df_render, name)
     return(write_table_tex(tex, path, name))
