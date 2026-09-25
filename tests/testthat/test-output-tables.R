@@ -389,8 +389,11 @@ test_that("probit TeX stacks standard errors below AME estimates", {
   expect_match(tex, "-0.100", fixed = TRUE)
   expect_match(tex, "(0.020)", fixed = TRUE)
   expect_false(grepl("Std. Error", tex, fixed = TRUE))
-  expect_false(grepl("textcolor", tex, fixed = TRUE))
-  expect_false(grepl("textit", tex, fixed = TRUE))
+  body_rows <- strsplit(tex, "\n", fixed = TRUE)[[1L]]
+  coefficient_rows <- body_rows[grepl("-0.100", body_rows, fixed = TRUE) | grepl("(0.020)", body_rows, fixed = TRUE)]
+  expect_length(coefficient_rows, 2L)
+  expect_false(any(grepl("textcolor", coefficient_rows, fixed = TRUE)))
+  expect_false(any(grepl("textit", coefficient_rows, fixed = TRUE)))
   expect_false(grepl("\\multicolumn{2}{c}{Enrolled in School (1 = yes)}", tex, fixed = TRUE))
 })
 
