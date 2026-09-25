@@ -120,11 +120,11 @@ public_table_caption_text <- function(name) {
     paper_schooling_market_geography = "Linguistic Distance and English-Medium Schooling across Geographic Specifications",
     paper_language_behavior = "Linguistic Distance and Reported Language Choice",
     paper_economic_conversion = "English-Medium Schooling, Later Consumption, and Predetermined Complements",
-    paper_local_development = "Linguistic Conditions and Selective Local Development",
+    paper_local_development = "Linguistic Conditions and Local Development Outcomes",
     appendix_iv_relevance_summary = "First-Stage Relevance Across Linguistic Measures",
     appendix_iv_weak_inference = "Weak-IV-Robust Long-Run Inference",
     appendix_migration_summary = "Linguistic Distance and Migration Composition",
-    appendix_selection_ame = "Correlates of School Enrollment: Average Slopes and Discrete Comparisons from a Survey-Weighted Probit",
+    appendix_selection_ame = "Correlates of School Enrollment",
     appendix_selection_missingness = "Missingness in Child-Enrollment Model Covariates",
     fs_cons = "First-Stage Regression: EMI Exposure on Linguistic Distance",
     cons_iv = "Second-Stage Regression: Real Log Consumption Growth on EMI Exposure (Fitted)",
@@ -146,65 +146,65 @@ public_table_note <- function(name) {
     sum_tbl_probit_quant = "Min. = minimum; 1Q = first quartile; Med. = median; 3Q = third quartile; Max. = maximum; Mean = arithmetic mean; SD = standard deviation; $N$ = number of observations.",
     sum_tbl_iv = "Min. = minimum; 1Q = first quartile; Med. = median; 3Q = third quartile; Max. = maximum; Mean = arithmetic mean; SD = standard deviation; $N$ = number of observations.",
     paper_core_summary = paste(
-      "District rows are unweighted descriptive statistics; $N$ is the number of districts with finite values.",
-      "Schooling measures use NSS 2007-08 children age 5-19; linguistic distance and the ten baseline district covariates use Census-2001 geography.",
-      "The language-behavior controls are summarized separately across Census-2001 state-by-native-language cells for persons because those regressions use a different unit of observation; native-language share is displayed in percentage points.",
-      "Modern consumption rows summarize districts meeting the survey-design, price, and district-lineage requirements used for the preferred estimates.",
-      "$p_{10}$ and $p_{90}$ are the 10th and 90th percentiles. Construction details are documented in the data appendix."
+      "District rows are unweighted descriptive statistics; $N$ is the number of districts with nonmissing values.",
+      "Schooling rows summarize NSS 2007-08 children ages 5-19. Linguistic distance and the ten baseline district covariates are aligned to Census-2001 districts.",
+      "The language-behavior controls are summarized separately across Census-2001 state-by-native-language cells because those regressions use a different unit of observation; native-language share is displayed in percentage points.",
+      "Modern consumption rows use the district samples retained for the corresponding consumption regressions.",
+      "$p_{10}$ and $p_{90}$ are the 10th and 90th percentiles."
     ),
     paper_schooling_market_geography = paste(
       "Each outcome block reports standardized coefficients from district regressions on speaker-weighted linguistic distance from Hindi. State-clustered standard errors are in parentheses.",
-      "Columns (1)-(3) are unadjusted, region fixed effects plus predetermined Census-2001 controls, and state fixed effects plus the same controls, respectively; the rows below each coefficient indicate these specification choices explicitly.",
-      "Each outcome uses one fixed complete-case sample across its three specifications. State-membership $R^2$ is calculated from state indicators alone on the available state-coded support for each schooling measure, including DISE, and is descriptive rather than causal.",
+      "Columns (1)-(3) are unadjusted, region fixed effects plus baseline Census-2001 covariates, and state fixed effects plus the same covariates, respectively.",
+      "Each outcome uses one fixed complete-case sample across its three specifications. State-membership $R^2$ comes from a regression of each outcome on state indicators alone, using the districts available for that outcome.",
       regression_star_note()
     ),
     paper_language_behavior = paste(
-      "Each column is a weighted state-by-language regression. Standard errors in parentheses use HC1 heteroskedasticity-robust inference.",
-      "All specifications include state fixed effects, native-language state share, an indicator for the state's most common native language, and a Hindi/Urdu reference indicator where required by the registered specification.",
+      "Each column is a weighted state-by-native-language regression. Standard errors in parentheses use HC1 heteroskedasticity-robust inference.",
+      "All specifications include state fixed effects, native-language state share, an indicator for the state's most common native language, and a Hindi/Urdu reference indicator.",
       "Continuous-distance coefficients are percentage-point changes per one Shastry distance degree; the distant-language indicator equals one for languages at least three degrees from Hindi.",
-      "Partial $R^2$ is the one-degree-of-freedom model-based partial $R^2$ for the reported linguistic-distance coefficient.",
-      "Columns (5)-(7) apply the predeclared Hindi-belt sample restriction. The coefficients describe associations with reported subsidiary-language outcomes. Instrumental-variable first stages are reported separately.",
+      "Partial $R^2$ reports the incremental explanatory power of the displayed linguistic-distance term.",
+      "Columns (5)-(7) use the prespecified Hindi-belt sample. The coefficients describe associations with reported subsidiary-language outcomes.",
       regression_star_note()
     ),
     paper_economic_conversion = paste(
-      "Each schooling-margin coefficient comes from a separate district regression and reports the percent difference in real mean MPCE associated with a 10 percentage-point increase in that schooling margin; coefficients shown in the same column are assembled for comparison rather than jointly estimated.",
-      "Columns use state fixed effects, predetermined Census-2001 controls, and common schooling support within each endpoint/estimand. State-clustered standard errors are in parentheses; stars use Holm-adjusted $p$-values within the predeclared schooling-welfare family.",
-      "The six interaction rows appear only for the 2004-05 to 2022-23 long change and report how the all-child or private-EMI association differs with a one-standard-deviation increase in predetermined human capital, urbanization, or ST concentration. Those rows also come from separate registered regressions and use state-clustered standard errors and Holm-adjusted $p$-values within the predeclared complement family.",
+      "Each schooling-margin row comes from a separate district regression and reports the percent difference in real mean MPCE associated with a 10 percentage-point increase in that schooling margin. Rows sharing a column are displayed together for comparison.",
+      "Columns include state fixed effects, baseline Census-2001 covariates, and a common district sample within each outcome specification. State-clustered standard errors are in parentheses; stars use Holm-adjusted $p$-values within the prespecified schooling-welfare family.",
+      "The six interaction rows apply only to the 2004-05 to 2022-23 long-change specification and report the change in the all-child or private-EMI coefficient associated with a one-standard-deviation increase in baseline human capital, urbanization, or ST concentration. Each interaction comes from a separate regression; stars use Holm-adjusted $p$-values within the prespecified complement family.",
       regression_star_note(),
-      "The table reports descriptive conditional associations. It does not estimate causal returns or treatment-effect heterogeneity."
+      "The coefficients are descriptive district associations; the interaction rows describe slope heterogeneity across baseline district characteristics."
     ),
     paper_local_development = paste(
-      "Each column is a separate district regression. The coefficient reports the association of one Shastry linguistic-distance degree with the listed outcome in its native unit; state-clustered standard errors are in parentheses and stars use Holm-adjusted $p$-values within the registered outcome/specification family.",
-      "Household-capacity, migration, finance, asset, and labor regressions use state fixed effects plus predetermined controls; Economic Census regressions use region fixed effects plus the same controls, as reported in the table.",
+      "Each column is a separate district regression. The coefficient reports the association of one Shastry linguistic-distance degree with the listed outcome in its native unit; state-clustered standard errors are in parentheses and stars use Holm-adjusted $p$-values within the corresponding outcome family.",
+      "Census household, migration, finance, asset, and labor regressions use state fixed effects plus baseline Census-2001 covariates. Economic Census regressions use region fixed effects plus the same covariates, as reported in the table.",
       regression_star_note(),
-      "The 2001-11 Census and 2005-13 Economic Census windows overlap the 2007 schooling measurement. The table therefore treats these outcomes as co-evolving development margins and does not order them as post-treatment EMI mechanisms.",
-      "PLFS 2017-18 supplies the displayed labor endpoint; the semantic CSV retains the raw and Holm-adjusted $p$-values and matched NSS66 adjusted $p$-values. Heterogeneous outcomes remain in native units, and null outcomes are retained by design."
+      "The 2001-11 Census and 2005-13 Economic Census windows overlap the 2007 schooling measurement, so I interpret them as contemporaneous dimensions of district development.",
+      "PLFS 2017-18 supplies the displayed labor outcomes. Outcomes remain in their native units."
     ),
     appendix_iv_relevance_summary = paste(
-      "The first three columns report the state-clustered joint excluded-instrument $F$ statistic for the unadjusted specification (no fixed effects or controls), six-region fixed effects plus the main Census-2001 controls, and state fixed effects plus the same controls.",
-      "The final relevance column is the state-FE partial $R^2$. The historical row uses its validated 1991 common support and is estimated separately from the modern district sample.",
-      "These conventional first-stage statistics describe relevance across geographic adjustments. The preferred IV specifications use the Montiel Olea--Pflueger effective $F$ statistic for weak-identification assessment."
+      "The first three columns report the state-clustered joint excluded-instrument $F$ statistic for the unadjusted specification, six-region fixed effects plus baseline Census-2001 covariates, and state fixed effects plus the same covariates.",
+      "The final relevance column is the state-FE partial $R^2$. The historical row uses districts available for the validated 1991 reconstruction and is estimated separately from the modern district sample.",
+      "These conventional first-stage statistics describe relevance across geographic adjustments. The consumption IV specifications use the Montiel Olea--Pflueger effective $F$ statistic for weak-identification assessment."
     ),
     appendix_iv_weak_inference = paste(
-      "The table reports conventional 2SLS coefficients without significance stars; standard errors are state-clustered. Weak-identification assessment uses the Montiel Olea--Pflueger effective $F$ statistic and Anderson--Rubin inference.",
-      "The 95\\% AR accepted sets are displayed as unions of intervals on the registered inversion grid, and both reported sets reach the grid boundaries.",
+      "The table reports conventional 2SLS coefficients; standard errors are state-clustered. Weak-identification assessment uses the Montiel Olea--Pflueger effective $F$ statistic and Anderson--Rubin inference.",
+      "The 95\\% AR accepted sets are displayed as unions of intervals on the evaluated inversion grid, and both reported sets reach the grid boundaries.",
       "The direct-effect row gives the smallest permitted direct effect, as a share of the absolute reduced form, for which the AR set includes $\\beta = 0$."
     ),
     appendix_migration_summary = paste(
-      "Each column is a separate district regression using speaker-weighted linguistic distance from Hindi, predetermined Census-2001 controls, state fixed effects, and state-clustered standard errors.",
-      "National significance stars use Holm-adjusted $p$-values across all eight registered migration outcomes; three registered outcomes are omitted from this compact table. The prespecified Hindi-belt restriction uses its single raw $p$-value.",
+      "Each column is a separate district regression using speaker-weighted linguistic distance from Hindi, baseline Census-2001 covariates, state fixed effects, and state-clustered standard errors.",
+      "National significance stars use Holm-adjusted $p$-values across the eight prespecified migration outcomes, five of which appear here. The prespecified Hindi-belt restriction uses its single raw $p$-value.",
       regression_star_note(),
-      "The dependent variables are shares, so coefficients are changes in shares associated with a one-degree increase in linguistic distance. The table reports conditional district associations. The regressions do not identify causal effects of linguistic distance on migration."
+      "The dependent variables are shares, so coefficients are changes in shares associated with a one-degree increase in linguistic distance. The coefficients are conditional district associations between linguistic distance and migration composition."
     ),
     appendix_selection_ame = paste(
       "Entries are average changes in predicted enrollment probability.",
       "Continuous covariates are average slopes; categorical covariates are average discrete comparisons against the stated reference category, evaluated over the observed covariate distribution.",
       "Standard errors use the declared NSS survey design, including household weights, primary sampling units, and strata formed from state, stratum, and substratum identifiers.",
-      "The fitted model includes district-level schooling-context variables constructed among enrolled children. Their coefficients are omitted because those variables combine local provision with the composition of enrolled children."
+      "The fitted model includes district averages of schooling costs and benefits among enrolled children. Their coefficients are omitted because those variables combine local provision with the composition of enrolled children."
     ),
     appendix_selection_missingness = paste(
       "The final row reports children missing at least one covariate required by the probit.",
-      "Pseudo-$R^2$ values come from separate logits for whether each listed covariate is missing; the aggregate row has no corresponding missingness regression.",
+      "Pseudo-$R^2$ values come from separate logits for whether each listed covariate is missing. The final row for any required covariate summarizes overall missingness and has no separate logit.",
       "No missing-value imputation is used."
     ),
     sum_tbl_probit_cat = "Values = all possible values; Mode = most frequent value; Pct. Mode = percent of observations taking the modal value; Least Freq. = least frequent value; Pct. Least Freq. = percent of observations taking the least frequent value; $N$ = number of observations.",

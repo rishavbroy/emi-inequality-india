@@ -773,7 +773,7 @@ F = ",
       y = "EMI exposure (raw or residualized)",
       caption = paste(
         "Points are equal-frequency bin means on one common sample; lines are OLS first-stage fits.",
-        "F statistics use state-clustered HC1 covariance. Census controls are measured in 2001."
+        "F statistics use state-clustered covariance. Baseline covariates are from Census 2001."
       )
     ) +
     ggplot2::theme_minimal(base_size = 13) +

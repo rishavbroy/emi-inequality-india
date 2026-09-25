@@ -256,7 +256,7 @@ make_figures <- function(
     map_residual_linguistic_distance_state_main = figure_spec(
       "map_residual_linguistic_distance_state_main",
       "map_residual_linguistic_distance_state_main.png",
-      "Residual Linguistic Distance: State FE + Census Controls",
+      "Residual Linguistic Distance: State FE + Baseline Covariates",
       kind = if (maps_available) "map" else "status",
       variable = "resid_ling_distance_state_main"
     ),
