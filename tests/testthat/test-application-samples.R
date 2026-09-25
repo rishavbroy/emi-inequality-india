@@ -126,7 +126,9 @@ test_that("coding sample assembly uses static code blocks", {
   expect_match(rendered, "```r", fixed = TRUE)
   expect_match(rendered, "answer <- 42", fixed = TRUE)
   expect_false(grepl("```{r}", rendered, fixed = TRUE))
-  expect_false(grepl("DefineVerbatimEnvironment", rendered, fixed = TRUE))
+  meta <- env$read_qmd_metadata(readLines(out, warn = FALSE))
+  expect_identical(meta$format$pdf$`syntax-highlighting`, "idiomatic")
+  expect_true(any(grepl("breaklines=true", unlist(meta$`header-includes`), fixed = TRUE)))
 })
 
 test_that("coding sample selected outputs come from the manifest registry", {
@@ -150,21 +152,17 @@ test_that("coding sample selected outputs come from the manifest registry", {
   expect_match(text, "1.000", fixed = TRUE)
 })
 
-test_that("section-selection Lua filter retains preamble and requested sections", {
+test_that("section-selection Lua filter retains selected subsections and ancestor headings", {
   skip_if(!nzchar(Sys.which("pandoc")), "pandoc is unavailable")
   input <- tempfile(fileext = ".md")
   output <- tempfile(fileext = ".md")
   writeLines(c(
     "---",
     "sample-sections:",
-    "  - sec-a",
-    "  - sec-b",
+    "  - sec-b-one",
+    "  - sec-b-three",
     "---",
     "Preamble.",
-    "",
-    "## Abstract {-}",
-    "",
-    "Abstract text.",
     "",
     "# A {#sec-a}",
     "",
@@ -172,15 +170,23 @@ test_that("section-selection Lua filter retains preamble and requested sections"
     "",
     "# B {#sec-b}",
     "",
-    "Bravo.",
+    "Parent body should be omitted.",
     "",
-    "## B child {#sec-b-child}",
+    "## B one {#sec-b-one}",
     "",
-    "Charlie.",
+    "Bravo one.",
+    "",
+    "## B two {#sec-b-two}",
+    "",
+    "Bravo two should be omitted.",
+    "",
+    "## B three {#sec-b-three}",
+    "",
+    "Bravo three.",
     "",
     "# C {#sec-c}",
     "",
-    "Delta."
+    "Charlie."
   ), input)
   status <- system2(
     Sys.which("pandoc"),
@@ -194,14 +200,16 @@ test_that("section-selection Lua filter retains preamble and requested sections"
   expect_identical(status, 0L)
   rendered <- paste(readLines(output, warn = FALSE), collapse = "\n")
   expect_match(rendered, "Preamble.", fixed = TRUE)
-  expect_match(rendered, "Abstract text.", fixed = TRUE)
-  expect_match(rendered, "Alpha.", fixed = TRUE)
-  expect_match(rendered, "Bravo.", fixed = TRUE)
-  expect_match(rendered, "Charlie.", fixed = TRUE)
-  expect_false(grepl("Delta.", rendered, fixed = TRUE))
+  expect_match(rendered, "# B", fixed = TRUE)
+  expect_match(rendered, "Bravo one.", fixed = TRUE)
+  expect_match(rendered, "Bravo three.", fixed = TRUE)
+  expect_false(grepl("Parent body should be omitted.", rendered, fixed = TRUE))
+  expect_false(grepl("Bravo two should be omitted.", rendered, fixed = TRUE))
+  expect_false(grepl("Alpha.", rendered, fixed = TRUE))
+  expect_false(grepl("Charlie.", rendered, fixed = TRUE))
 })
 
-test_that("writing page-count validation enforces declared deliverable length", {
+test_that("writing page-count validation reports all mismatched deliverables together", {
   skip_if(!nzchar(Sys.which("pdfinfo")), "pdfinfo is unavailable")
   pdf <- tempfile(fileext = ".pdf")
   grDevices::pdf(pdf, width = 4, height = 4)
@@ -210,8 +218,12 @@ test_that("writing page-count validation enforces declared deliverable length", 
   grDevices::dev.off()
   env <- sample_test_env()
 
-  expect_silent(env$validate_writing_sample_page_count(pdf, 1L))
-  expect_error(env$validate_writing_sample_page_count(pdf, 2L), "rendered to 1 pages")
+  expect_silent(env$validate_writing_sample_page_counts(c(pdf, pdf), c(1L, NA_integer_)))
+  expect_error(
+    env$validate_writing_sample_page_counts(c(pdf, pdf), c(2L, 3L)),
+    "(?s)1 pages \\(expected 2\\).+1 pages \\(expected 3\\)",
+    perl = TRUE
+  )
 })
 
 test_that("final-output requirements are derived from the sample manifest", {

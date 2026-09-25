@@ -49,14 +49,25 @@ pdf_page_count <- function(path) {
   as.integer(sub("^Pages:[[:space:]]+", "", page_line))
 }
 
-validate_writing_sample_page_count <- function(path, expected_pages = NULL) {
-  if (is.null(expected_pages) || !length(expected_pages)) return(invisible(TRUE))
+validate_writing_sample_page_counts <- function(paths, expected_pages) {
+  if (length(paths) != length(expected_pages)) {
+    stop("Writing-sample paths and page targets must have the same length.", call. = FALSE)
+  }
   expected_pages <- as.integer(expected_pages)
-  actual <- pdf_page_count(path)
-  if (!identical(actual, expected_pages)) {
+  checked <- which(!is.na(expected_pages))
+  if (!length(checked)) return(invisible(TRUE))
+
+  actual_pages <- vapply(paths[checked], pdf_page_count, integer(1))
+  mismatch <- actual_pages != expected_pages[checked]
+  if (any(mismatch)) {
+    details <- paste0(
+      basename(paths[checked][mismatch]), ": ", actual_pages[mismatch],
+      " pages (expected ", expected_pages[checked][mismatch], ")"
+    )
     stop(
-      basename(path), " rendered to ", actual, " pages; expected ", expected_pages,
-      ". Adjust the section selection in application-samples/samples.yml.",
+      "Writing-sample page counts do not match the declared deliverables:\n- ",
+      paste(details, collapse = "\n- "),
+      "\nAdjust the section selection in application-samples/samples.yml.",
       call. = FALSE
     )
   }

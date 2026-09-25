@@ -1,5 +1,7 @@
 -- Retain the document preamble plus the sections named in sample-sections.
--- Section IDs are ordinary Pandoc/Quarto Header identifiers.
+-- Section IDs are ordinary Pandoc/Quarto Header identifiers. When a selected
+-- subsection is nested inside an omitted section, keep the ancestor heading as
+-- context without retaining the ancestor's unselected body.
 
 local selected = nil
 
@@ -22,6 +24,29 @@ local function selected_ids(meta)
   return ids
 end
 
+local function ancestor_ids(blocks, selected_ids_set)
+  local ancestors = {}
+  local stack = {}
+
+  for _, block in ipairs(blocks) do
+    if block.t == "Header" then
+      for level = block.level, 6 do
+        stack[level] = nil
+      end
+      if selected_ids_set[block.identifier] then
+        for level = 1, block.level - 1 do
+          local ancestor = stack[level]
+          if ancestor ~= nil and ancestor ~= "" then
+            ancestors[ancestor] = true
+          end
+        end
+      end
+      stack[block.level] = block.identifier
+    end
+  end
+  return ancestors
+end
+
 function Meta(meta)
   selected = selected_ids(meta)
   return meta
@@ -32,6 +57,7 @@ function Pandoc(doc)
     return doc
   end
 
+  local context = ancestor_ids(doc.blocks, selected)
   local out = pandoc.List()
   local seen_top_level = false
   local active = false
@@ -52,7 +78,7 @@ function Pandoc(doc)
       end
     end
 
-    if (not seen_top_level) or active then
+    if (not seen_top_level) or active or (block.t == "Header" and context[block.identifier]) then
       out:insert(block)
     end
   end

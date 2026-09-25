@@ -21,3 +21,5 @@ bash scripts/run_full_build.sh
 The first-page sample notice is generated from the manifest and the current paper headings. Quarto resolves cross-references against the complete paper before the section-selection filter runs, so references in excerpts retain the full paper's current figure, table, equation, and section numbers even when the referenced item is omitted from the excerpt.
 
 Named paper and application-sample PDFs are published from the tracked rendered files at <https://rishavbroy.github.io/emi-inequality-india/>. The Pages job does not rerun the empirical build. Anonymous variants are intended for direct application uploads and are deliberately not published on the identity-revealing Pages site.
+
+Coding samples use Quarto's idiomatic LaTeX syntax highlighting with line wrapping so long source lines remain visible in the PDF.

@@ -55,9 +55,14 @@ assemble_coding_sample_qmd <- function(spec, variant, manifest, body, output_qmd
     title = "Code Sample",
     subtitle = "Selected Replication Code",
     author = manifest$identity[[variant]]$author,
-    format = list(pdf = list(`pdf-engine` = "xelatex")),
+    format = list(pdf = list(
+      `pdf-engine` = "xelatex",
+      `syntax-highlighting` = "idiomatic"
+    )),
     geometry = "left=0.75in, right=0.75in, top=0.8in, bottom=0.8in",
-    `highlight-style` = "default"
+    `header-includes` = list(
+      "\\lstset{breaklines=true,breakatwhitespace=false,columns=fullflexible,keepspaces=true}"
+    )
   )
   yaml_lines <- quarto_yaml_lines(meta)
   lines <- c("---", yaml_lines, "---", "", coding_sample_notice(spec, variant, manifest), body)

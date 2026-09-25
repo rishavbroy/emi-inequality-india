@@ -5,11 +5,14 @@ render_writing_samples <- function(manifest_path = application_sample_manifest_p
   prune_application_sample_kind("writing")
   manifest <- read_application_sample_manifest(manifest_path)
   outputs <- character()
+  expected_pages <- integer()
   for (variant in application_sample_variants(manifest)) {
     for (spec in manifest$writing) {
       outputs <- c(outputs, render_one_writing_sample(spec, variant, manifest))
+      expected_pages <- c(expected_pages, as.integer(spec$target_pages %||% NA_integer_))
     }
   }
+  validate_writing_sample_page_counts(outputs, expected_pages)
   unname(outputs)
 }
 
@@ -26,7 +29,6 @@ render_one_writing_sample <- function(spec, variant, manifest) {
 
   assemble_writing_sample_qmd(source, spec, variant, manifest, output_qmd)
   render_qmd_to_pdf(output_qmd, output)
-  validate_writing_sample_page_count(output, spec$target_pages %||% NULL)
   if (identical(variant, "anonymous")) {
     validate_anonymous_sample(output, manifest$identity$anonymous$forbidden_strings %||% character())
   }

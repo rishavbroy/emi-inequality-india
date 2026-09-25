@@ -23,13 +23,15 @@ writing:
     target_pages: 10
     sections:
       - sec-intro
-      - sec-access
+      - sec-schooling-menu
+      - sec-social-access
   - id: 15pg
     target_pages: 15
     sections:
       - sec-intro
       - sec-language
-      - sec-access
+      - sec-schooling-menu
+      - sec-social-access
   - id: full
     mode: full
 coding_outputs:
