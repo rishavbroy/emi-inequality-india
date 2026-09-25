@@ -192,9 +192,9 @@ public_table_note <- function(name) {
     ),
     appendix_migration_summary = paste(
       "Each column is a separate district regression using speaker-weighted linguistic distance from Hindi, predetermined Census-2001 controls, state fixed effects, and state-clustered standard errors.",
-      "National significance stars use Holm-adjusted $p$-values across the eight registered migration outcomes in the preferred specification; the predeclared Hindi-belt restriction uses its single raw $p$-value.",
+      "National significance stars use Holm-adjusted $p$-values across all eight registered migration outcomes; three registered outcomes are omitted from this compact table. The prespecified Hindi-belt restriction uses its single raw $p$-value.",
       regression_star_note(),
-      "The dependent variables are shares, so coefficients are changes in shares associated with a one-degree increase in linguistic distance. These are conditional associations, not causal migration effects."
+      "The dependent variables are shares, so coefficients are changes in shares associated with a one-degree increase in linguistic distance. The table reports conditional district associations. The regressions do not identify causal effects of linguistic distance on migration."
     ),
     appendix_selection_ame = paste(
       "Entries are average changes in predicted enrollment probability.",
