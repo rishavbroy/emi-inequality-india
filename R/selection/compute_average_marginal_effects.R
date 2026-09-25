@@ -299,7 +299,7 @@ ame_label_lookup <- function() {
       "Social group: Scheduled Tribe (ref: Other)", "Social group: Scheduled Caste", "Social group: Other Backward Class",
       "Urban (ref: Rural)",
       "Distance 1–2km (ref: <1km)", "Distance 2–3km", "Distance 3–5km", "Distance > 5km",
-      "Father's educ.: Literate, no school (ref: Illiterate)", "Father's educ.: Literate, school < primary", "Father's educ.: Primary", "Father's educ.: Upper primary", "Father's educ.: Secondary", "Father's educ.: Higher secondary", "Father's educ.: Postsecondary+",
+      "Male household educ.: Literate, no school (ref: Illiterate)", "Male household educ.: Literate, school < primary", "Male household educ.: Primary", "Male household educ.: Upper primary", "Male household educ.: Secondary", "Male household educ.: Higher secondary", "Male household educ.: Postsecondary+",
       "Educ. free available (ref: No)", "Tuition waiver received", "Scholarship/Stipend received", "Textbook(s) received", "Stationery received", "Mid-day meal, etc. received", "Enrollment cost (Rs.)"
     ),
     stringsAsFactors = FALSE

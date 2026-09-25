@@ -124,8 +124,8 @@ public_table_caption_text <- function(name) {
     appendix_iv_relevance_summary = "First-Stage Relevance Across Linguistic Measures",
     appendix_iv_weak_inference = "Weak-IV-Robust Long-Run Inference",
     appendix_migration_summary = "Linguistic Distance and Migration Composition",
-    appendix_selection_ame = "Correlates of School Enrollment: Average Marginal Effects from a Survey-Weighted Probit",
-    appendix_selection_missingness = "Missingness in the Child-Enrollment Probit",
+    appendix_selection_ame = "Correlates of School Enrollment: Average Slopes and Discrete Comparisons from a Survey-Weighted Probit",
+    appendix_selection_missingness = "Missingness in Child-Enrollment Model Covariates",
     fs_cons = "First-Stage Regression: EMI Exposure on Linguistic Distance",
     cons_iv = "Second-Stage Regression: Real Log Consumption Growth on EMI Exposure (Fitted)",
     ame_results = "Average Marginal Effects Results",
@@ -198,13 +198,13 @@ public_table_note <- function(name) {
     ),
     appendix_selection_ame = paste(
       "Entries are average changes in predicted enrollment probability.",
-      "Continuous covariates are reported as average slopes; categorical covariates are average discrete comparisons against the stated reference category, evaluated over the observed covariate distribution.",
-      "The probit uses NSS survey weights and design-based standard errors clustered at the primary sampling unit.",
-      "District-level schooling-context controls constructed from enrolled children remain in the fitted model but are omitted from the table and are not interpreted causally."
+      "Continuous covariates are average slopes; categorical covariates are average discrete comparisons against the stated reference category, evaluated over the observed covariate distribution.",
+      "Standard errors use the declared NSS survey design, including household weights, primary sampling units, and strata formed from state, stratum, and substratum identifiers.",
+      "The fitted model includes district-level schooling-context variables constructed among enrolled children. Their coefficients are omitted because those variables combine local provision with the composition of enrolled children."
     ),
     appendix_selection_missingness = paste(
       "The final row reports children missing at least one covariate required by the probit.",
-      "Pseudo-$R^2$ values come from the registered missingness-logit screen; the blank aggregate cell has no corresponding missingness regression.",
+      "Pseudo-$R^2$ values come from separate logits for whether each listed covariate is missing; the aggregate row has no corresponding missingness regression.",
       "No missing-value imputation is used."
     ),
     sum_tbl_probit_cat = "Values = all possible values; Mode = most frequent value; Pct. Mode = percent of observations taking the modal value; Least Freq. = least frequent value; Pct. Least Freq. = percent of observations taking the least frequent value; $N$ = number of observations.",

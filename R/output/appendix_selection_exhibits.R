@@ -66,7 +66,7 @@ appendix_selection_missingness_table <- function(missingness) {
   labels <- c(
     DIST_FROM_NEAREST_PRIMARY_CLASS = "Distance to nearest primary class",
     dmean_num_ENROLLMENT_COST = "District-average enrollment cost",
-    father_educ = "Father's education",
+    father_educ = "Male household education",
     `Total probit-model with NA` = "Any model covariate"
   )
   pseudo <- rep(NA_real_, nrow(counts))

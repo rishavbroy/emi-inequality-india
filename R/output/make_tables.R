@@ -690,7 +690,7 @@ make_selection_summary_numeric_table <- function(selection_data) {
 make_selection_summary_categorical_table <- function(selection_data) {
   meta <- data.frame(
     var = c("SEX", "RELIGION", "SOCIAL_GROUP", "SECTOR", "DIST_FROM_NEAREST_PRIMARY_CLASS", "father_educ"),
-    label = c("Sex", "Religion", "Social group", "Urban", "Distance of nearest primary class", "Father's education"),
+    label = c("Sex", "Religion", "Social group", "Urban", "Distance of nearest primary class", "Male household education"),
     stringsAsFactors = FALSE
   )
   public_categorical_stats(selection_data, meta)
