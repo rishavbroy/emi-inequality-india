@@ -80,6 +80,7 @@ test_that("paper render has one current manuscript target", {
 
   expect_setequal(paper_targets, c("paper_qmd", "paper"))
   expect_match(repo_target_command("paper_qmd"), "paper/paper.qmd", fixed = TRUE)
+  expect_match(repo_target_command("paper"), "keep_latex_intermediates = TRUE", fixed = TRUE)
   expect_false(grepl("paper-new", repo_target_definition_text(), fixed = TRUE))
 })
 

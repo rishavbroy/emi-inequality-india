@@ -67,14 +67,22 @@ writing_sample_notice <- function(spec, variant, manifest, source_lines) {
     )
   }
 
-  if (identical(variant, "named")) {
-    description <- paste0(
-      description,
-      " The [full paper](", manifest$paper$full_paper_url, ") and [repository](",
-      manifest$paper$repository_url,
-      ") are available online. This writing sample can be generated using `make samples` or `bash scripts/run_full_build.sh`."
+  availability_note <- if (identical(variant, "named")) {
+    paste0(
+      "The [full paper](", manifest$paper$full_paper_url, ") and [repository](",
+      manifest$paper$repository_url, ") are available online."
     )
+  } else {
+    # Keep anonymous first-page layout comparable to the named copy without
+    # exposing identity-bearing URLs.  The parallel notice prevents anonymity
+    # itself from changing a fixed-length sample's pagination.
+    "Links to the full paper and repository are omitted here."
   }
+  description <- paste(
+    description,
+    availability_note,
+    "This writing sample can be generated using `make samples` or `bash scripts/run_full_build.sh`."
+  )
   c(heading, "", description, "")
 }
 
@@ -92,13 +100,32 @@ sample_metadata <- function(source_metadata, spec, variant, manifest) {
     # itself while citeproc still renders the in-text citations.
     meta$`suppress-bibliography` <- TRUE
     meta$`link-citations` <- FALSE
+    meta$crossref <- utils::modifyList(meta$crossref %||% list(), list(`ref-hyperlink` = FALSE))
     # Pandoc normally defines \citeproc only when it emits a bibliography.
     # Excerpts suppress that bibliography, while existing LaTeX table notes use
     # \citeproc{ref-key}{visible label} for source labels.  A fallback keeps
     # those labels readable without overriding Pandoc when it defines the macro.
+    #
+    # The LaTeX xr package is the standard mechanism for cross-document labels.
+    # Quarto preserves paper.aux for the full-paper render; excerpt references
+    # use their local label when the referenced item is retained and otherwise
+    # fall back to the full paper's numbered label with an explicit qualifier.
+    external_reference_header <- paste(
+      "\\usepackage{xr}",
+      "\\externaldocument[full-][nocite]{../../paper/paper}",
+      "\\makeatletter",
+      "\\let\\sample@localref\\ref",
+      paste0(
+        "\\renewcommand{\\ref}[1]{\\@ifundefined{r@#1}",
+        "{\\sample@localref{full-#1}\\textnormal{ (full paper)}}",
+        "{\\sample@localref{#1}}}"
+      ),
+      "\\makeatother",
+      sep = "\n"
+    )
     meta$`header-includes` <- c(
       meta$`header-includes` %||% list(),
-      list("\\providecommand{\\citeproc}[2]{#2}")
+      list("\\providecommand{\\citeproc}[2]{#2}", external_reference_header)
     )
     meta$filters <- c(
       meta$filters %||% list(),

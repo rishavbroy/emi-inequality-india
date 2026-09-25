@@ -108,5 +108,12 @@ pdf_has_landscape_page <- function(layout) {
 source_requests_landscape <- function(path) {
   if (!file.exists(path)) return(FALSE)
   lines <- readLines(path, warn = FALSE)
-  any(grepl("^\\s*:::\\s*\\{[^}]*\\.landscape(?:\\s|\\}|$)", lines, perl = TRUE))
+  any(grepl("^\\s*:::\\s*\\{[^}]*\\.landscape(?:\\s|\\}|$)", lines, perl = TRUE)) ||
+    any(grepl("\\\\begin\\{landscape\\}", lines, perl = TRUE))
+}
+
+rendered_layout_request_source <- function(source_path) {
+  if (!grepl("\\.qmd$", source_path, ignore.case = TRUE)) return(source_path)
+  rendered_tex <- sub("\\.qmd$", ".tex", source_path, ignore.case = TRUE)
+  if (file.exists(rendered_tex)) rendered_tex else source_path
 }

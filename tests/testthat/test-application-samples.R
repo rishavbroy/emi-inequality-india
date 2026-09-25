@@ -89,6 +89,10 @@ test_that("writing sample assembly derives identity and section selection from o
   named_meta <- env$read_qmd_metadata(readLines(out_named, warn = FALSE))
   header_includes <- unlist(named_meta$`header-includes`, use.names = FALSE)
   expect_true(any(grepl("\\providecommand{\\citeproc}[2]{#2}", header_includes, fixed = TRUE)))
+  expect_true(any(grepl("\\usepackage{xr}", header_includes, fixed = TRUE)))
+  expect_true(any(grepl("\\externaldocument[full-][nocite]{../../paper/paper}", header_includes, fixed = TRUE)))
+  expect_true(any(grepl("(full paper)", header_includes, fixed = TRUE)))
+  expect_false(isTRUE(named_meta$crossref$`ref-hyperlink`))
   selector <- named_meta$filters[[length(named_meta$filters)]]
   expect_identical(selector$at, "post-quarto")
   expect_identical(selector$path, "../filters/select-sections.lua")
@@ -96,6 +100,8 @@ test_that("writing sample assembly derives identity and section selection from o
   expect_match(named, manifest$paper$repository_url, fixed = TRUE)
   expect_match(anonymous, "author: Anonymous", fixed = TRUE)
   expect_false(grepl(manifest$paper$repository_url, anonymous, fixed = TRUE))
+  expect_false(grepl(manifest$paper$full_paper_url, anonymous, fixed = TRUE))
+  expect_match(anonymous, "make samples", fixed = TRUE)
 })
 
 test_that("coding sample assembly uses static code blocks", {

@@ -206,7 +206,8 @@ core_public_target_definitions <- function() {
           report_values, table_files, figure_files, dise_publication_validation,
           appendix_data_construction_files, appendix_migration_files, appendix_selection_files,
           appendix_identification_files
-        )
+        ),
+        keep_latex_intermediates = TRUE
       ),
       format = "file"
     )

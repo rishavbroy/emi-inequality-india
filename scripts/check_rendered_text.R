@@ -107,13 +107,18 @@ for (path in pdf_paths) {
 }
 
 landscape_sources <- source_paths[grepl("\\.qmd$", source_paths)]
-landscape_sources <- landscape_sources[vapply(landscape_sources, source_requests_landscape, logical(1))]
 for (source_path in landscape_sources) {
+  # Section-selected writing samples retain the complete QMD as input, so the
+  # raw source can mention landscape content that the Quarto filter removes.
+  # The rendered TeX is the authoritative layout request when it is available.
+  layout_source <- rendered_layout_request_source(source_path)
+  if (!source_requests_landscape(layout_source)) next
+
   pdf_path <- sub("\\.qmd$", ".pdf", source_path)
   if (!file.exists(pdf_path)) next
   if (!pdf_info_available()) {
     if (is_final_check) {
-      hits <- c(hits, paste0(source_path, " requests landscape content but pdfinfo is unavailable"))
+      hits <- c(hits, paste0(layout_source, " requests landscape content but pdfinfo is unavailable"))
     }
     next
   }
@@ -121,7 +126,7 @@ for (source_path in landscape_sources) {
   if (is.null(layout) || !nrow(layout)) {
     hits <- c(hits, paste0(pdf_path, " page geometry could not be inspected"))
   } else if (!pdf_has_landscape_page(layout)) {
-    hits <- c(hits, paste0(pdf_path, " has no landscape page although ", source_path, " requests one"))
+    hits <- c(hits, paste0(pdf_path, " has no landscape page although ", layout_source, " requests one"))
   }
 }
 

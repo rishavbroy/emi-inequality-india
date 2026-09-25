@@ -53,12 +53,23 @@ test_that("rendered PDF layout checks recognize landscape pages", {
   expect_false(pdf_has_landscape_page(layout[1, , drop = FALSE]))
 })
 
-test_that("landscape requests are detected structurally", {
-  path <- tempfile(fileext = ".qmd")
-  writeLines(c("portrait", "::: {.landscape}", "content", ":::"), path)
-  on.exit(unlink(path), add = TRUE)
+test_that("landscape requests use rendered TeX when section filters remove source content", {
+  dir <- tempfile("layout-request-")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE, force = TRUE), add = TRUE)
+  qmd <- file.path(dir, "sample.qmd")
+  tex <- file.path(dir, "sample.tex")
+  writeLines(c("portrait", "::: {.landscape}", "content", ":::"), qmd)
 
-  expect_true(source_requests_landscape(path))
+  expect_true(source_requests_landscape(qmd))
+  expect_identical(rendered_layout_request_source(qmd), qmd)
+
+  writeLines("portrait only", tex)
+  expect_identical(rendered_layout_request_source(qmd), tex)
+  expect_false(source_requests_landscape(tex))
+
+  writeLines(c("portrait", "\\begin{landscape}", "content", "\\end{landscape}"), tex)
+  expect_true(source_requests_landscape(tex))
 })
 
 test_that("Moran diagnostics compute legacy asymptotic p-values from spatial weights", {

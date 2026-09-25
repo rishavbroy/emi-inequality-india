@@ -6,9 +6,12 @@
 #' @param dependencies Objects or file targets that must be current before the
 #'   document renders. The renderer does not interpret them; forcing the list
 #'   makes the publication dependency explicit to {targets}.
-#' @return Character vector of rendered PDF output paths for a `format = "file"`
+#' @param keep_latex_intermediates Preserve LaTeX intermediates and return the
+#'   `.aux` file alongside the PDF. This is used when another document imports
+#'   the rendered document's reference labels.
+#' @return Character vector of rendered file paths for a `format = "file"`
 #'   target.
-render_public_pdf <- function(qmd, dependencies = list()) {
+render_public_pdf <- function(qmd, dependencies = list(), keep_latex_intermediates = FALSE) {
   force(dependencies)
 
   if (!file.exists(qmd)) {
@@ -19,7 +22,14 @@ render_public_pdf <- function(qmd, dependencies = list()) {
   }
 
   pdf_path <- file.path(dirname(qmd), paste0(tools::file_path_sans_ext(basename(qmd)), ".pdf"))
-  status <- system2("quarto", c("render", qmd, "--to", "pdf"))
+  args <- c("render", qmd, "--to", "pdf")
+  if (isTRUE(keep_latex_intermediates)) {
+    # Quarto's keep-tex option preserves the LaTeX auxiliary files used for
+    # cross-document references.  Writing excerpts import the full paper's
+    # labels from paper.aux rather than maintaining a second numbering table.
+    args <- c(args, "-M", "keep-tex:true")
+  }
+  status <- system2("quarto", args)
   if (!identical(status, 0L)) {
     stop("quarto render ", qmd, " --to pdf failed with status ", status, call. = FALSE)
   }
@@ -27,7 +37,13 @@ render_public_pdf <- function(qmd, dependencies = list()) {
     stop("quarto render did not create a non-empty ", pdf_path, call. = FALSE)
   }
 
-  pdf_path
+  if (!isTRUE(keep_latex_intermediates)) return(pdf_path)
+
+  aux_path <- file.path(dirname(qmd), paste0(tools::file_path_sans_ext(basename(qmd)), ".aux"))
+  if (!file.exists(aux_path) || file.info(aux_path)$size <= 0L) {
+    stop("Quarto keep-tex render did not preserve a non-empty ", aux_path, call. = FALSE)
+  }
+  c(pdf_path, aux_path)
 }
 
 
