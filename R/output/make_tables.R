@@ -596,7 +596,7 @@ paper_control_summary <- function(panel, control_registry = NULL) {
 
   get <- function(variable) if (variable %in% names(panel)) panel[[variable]] else numeric()
   rows <- c(
-    list(paper_summary_group("Panel B. Predetermined Census-2001 controls")),
+    list(paper_summary_group("Panel B. Baseline Census-2001 covariates")),
     lapply(seq_len(nrow(registry)), function(i) {
       paper_summary_row(
         registry$label[[i]], get(registry$variable[[i]]), "2001",
@@ -655,7 +655,7 @@ make_paper_core_summary_table <- function(
     paper_summary_row(schooling_labels[["emi_all_children"]], get("emi_exposure_all_children_0708"), "2007-08", "% of children age 5-19"),
     paper_summary_row(schooling_labels[["public_emi"]], get("public_emi_exposure_all_children_0708"), "2007-08", "% of children age 5-19"),
     paper_summary_row(schooling_labels[["private_emi"]], get("private_emi_exposure_all_children_0708"), "2007-08", "% of children age 5-19"),
-    paper_summary_row(schooling_labels[["private_enrollment"]], get("private_share_enrolled_0708"), "2007-08", "% of enrolled children"),
+    paper_summary_row(schooling_labels[["private_enrollment"]], get("private_share_enrolled_0708"), "2007-08", "% of enrolled children with known management"),
     paper_summary_row(linguistic_labels[["nonzero_mean"]], get("ling_distance_nonzero_mean"), "2001", "Shastry degrees"),
     paper_summary_row(linguistic_labels[["distant_share"]], get("ling_share_distance_ge3"), "2001", "% of mother-tongue speakers"),
     paper_welfare_summary_row(consumption_district_welfare, "nss_2004_05", "Real mean consumption per person"),

@@ -1,40 +1,54 @@
-\begin{table}[H]
-\centering
-\caption{\label{tbl-paper-core-summary}Core Variables and Summary Statistics. Sources: NSS 64th Round; Census of India 2001; NSS 61st Round; HCES 2022-23 and 2023-24.}
-\centering
-\fontsize{9}{11}\selectfont
-\begin{threeparttable}
-\begin{tabular}[t]{lcccccc}
+
+\begin{ThreePartTable}
+\begin{TableNotes}[para]
+\item \textit{Note: } 
+\item District rows are unweighted descriptive statistics; $N$ is the number of districts with finite values. Schooling measures use NSS 2007-08 children age 5-19; linguistic distance and the ten baseline district covariates use Census-2001 geography. The language-behavior controls are summarized separately across Census-2001 state-by-native-language cells for persons because those regressions use a different unit of observation; native-language share is displayed in percentage points. Modern consumption rows summarize districts meeting the survey-design, price, and district-lineage requirements used for the preferred estimates. $p_{10}$ and $p_{90}$ are the 10th and 90th percentiles. Construction details are documented in the data appendix. Sources: \citeproc{ref-nationalsamplesurveyoffice2008}{NSS 64th Round, 2007--08}; \citeproc{ref-officeoftheregistrargeneralandcensuscommissionerofindiaCensusIndia20012001}{Census of India 2001}; \citeproc{ref-nssHouseholdConsumerExpenditure2004}{NSS 61st Round, 2004--05}; \citeproc{ref-nsoHCES2022}{HCES 2022--23}; \citeproc{ref-nsoHCES2023}{HCES 2023--24}.
+\end{TableNotes}
+\begin{longtable}[t]{lcccccc}
+\caption{\label{tbl-paper-core-summary}Core Variables and Summary Statistics}\\
 \toprule
-Variable & Mean & SD & N & p10 & p90 & Year / unit\\
+Variable & Mean & SD & $N$ & $p_{10}$ & $p_{90}$ & Year / unit\\
 \midrule
+\endfirsthead
+\caption[]{Core Variables and Summary Statistics \textit{(continued)}}\\
+\toprule
+Variable & Mean & SD & $N$ & $p_{10}$ & $p_{90}$ & Year / unit\\
+\midrule
+\endhead
+
+\endfoot
+\bottomrule
+\insertTableNotes
+\endlastfoot
 \addlinespace[0.3em]
-\multicolumn{7}{l}{\cellcolor{white}{\textbf{Panel A. Schooling, 2007-08:}}}\\
+\multicolumn{7}{l}{\cellcolor{white}{\textbf{Panel A. Principal variables:}}}\\
 \hspace{1em}\cellcolor{gray!10}{Enrollment} & \cellcolor{gray!10}{74.44} & \cellcolor{gray!10}{9.72} & \cellcolor{gray!10}{573} & \cellcolor{gray!10}{62.07} & \cellcolor{gray!10}{87.12} & \cellcolor{gray!10}{2007-08; \% of children age 5-19}\\
 \hspace{1em}English-medium share among enrolled & 18.99 & 25.34 & 573 & 0.83 & 52.98 & 2007-08; \% of enrolled children\\
 \hspace{1em}\cellcolor{gray!10}{English-medium exposure among all children} & \cellcolor{gray!10}{14.88} & \cellcolor{gray!10}{20.33} & \cellcolor{gray!10}{573} & \cellcolor{gray!10}{0.53} & \cellcolor{gray!10}{43.89} & \cellcolor{gray!10}{2007-08; \% of children age 5-19}\\
 \hspace{1em}Public-school English-medium exposure & 5.55 & 14.26 & 573 & 0.00 & 15.56 & 2007-08; \% of children age 5-19\\
 \hspace{1em}\cellcolor{gray!10}{Private-school English-medium exposure} & \cellcolor{gray!10}{9.20} & \cellcolor{gray!10}{11.58} & \cellcolor{gray!10}{573} & \cellcolor{gray!10}{0.32} & \cellcolor{gray!10}{25.41} & \cellcolor{gray!10}{2007-08; \% of children age 5-19}\\
-\hspace{1em}Private-school enrollment & 27.11 & 19.40 & 573 & 3.23 & 55.43 & 2007-08; \% of enrolled children\\
-\addlinespace[0.3em]
-\multicolumn{7}{l}{\cellcolor{white}{\textbf{Panel B. Inherited linguistic conditions:}}}\\
+\hspace{1em}Private-school enrollment & 27.11 & 19.40 & 573 & 3.23 & 55.43 & 2007-08; \% of enrolled children with known management\\
 \hspace{1em}\cellcolor{gray!10}{Speaker-weighted distance from Hindi} & \cellcolor{gray!10}{3.05} & \cellcolor{gray!10}{1.36} & \cellcolor{gray!10}{573} & \cellcolor{gray!10}{1.04} & \cellcolor{gray!10}{4.97} & \cellcolor{gray!10}{2001; Shastry degrees}\\
 \hspace{1em}Share speaking languages distant from Hindi & 42.23 & 42.80 & 573 & 0.13 & 98.44 & 2001; \% of mother-tongue speakers\\
+\hspace{1em}\cellcolor{gray!10}{Real mean consumption per person} & \cellcolor{gray!10}{928.07} & \cellcolor{gray!10}{377.75} & \cellcolor{gray!10}{557} & \cellcolor{gray!10}{464.61} & \cellcolor{gray!10}{1419.84} & \cellcolor{gray!10}{2004-05; 2011-12-price Rs/person/month}\\
+\hspace{1em}Real mean consumption per person & 2152.01 & 618.67 & 550 & 1490.97 & 2952.44 & 2022-23; 2011-12-price Rs/person/month\\
+\hspace{1em}\cellcolor{gray!10}{Real mean consumption per person} & \cellcolor{gray!10}{2242.07} & \cellcolor{gray!10}{601.13} & \cellcolor{gray!10}{551} & \cellcolor{gray!10}{1622.74} & \cellcolor{gray!10}{2991.47} & \cellcolor{gray!10}{2023-24; 2011-12-price Rs/person/month}\\
 \addlinespace[0.3em]
-\multicolumn{7}{l}{\cellcolor{white}{\textbf{Panel C. Predetermined district capacity:}}}\\
-\hspace{1em}\cellcolor{gray!10}{Secondary-plus share, age 7+} & \cellcolor{gray!10}{17.09} & \cellcolor{gray!10}{7.63} & \cellcolor{gray!10}{573} & \cellcolor{gray!10}{8.48} & \cellcolor{gray!10}{27.84} & \cellcolor{gray!10}{2001; \%}\\
-\hspace{1em}Urban population share & 23.27 & 19.11 & 573 & 6.18 & 47.54 & 2001; \%\\
-\hspace{1em}\cellcolor{gray!10}{Scheduled Tribe share} & \cellcolor{gray!10}{16.16} & \cellcolor{gray!10}{25.85} & \cellcolor{gray!10}{573} & \cellcolor{gray!10}{0.00} & \cellcolor{gray!10}{56.59} & \cellcolor{gray!10}{2001; \%}\\
+\multicolumn{7}{l}{\cellcolor{white}{\textbf{Panel B. Baseline Census-2001 covariates:}}}\\
+\hspace{1em}Log population & 14.00 & 1.02 & 573 & 12.64 & 15.03 & 2001; log persons\\
+\hspace{1em}\cellcolor{gray!10}{Urban population share} & \cellcolor{gray!10}{23.27} & \cellcolor{gray!10}{19.11} & \cellcolor{gray!10}{573} & \cellcolor{gray!10}{6.18} & \cellcolor{gray!10}{47.54} & \cellcolor{gray!10}{2001; \% of population}\\
+\hspace{1em}Log population density & 5.77 & 1.16 & 573 & 4.57 & 6.90 & 2001; log persons/km$^2$\\
+\hspace{1em}\cellcolor{gray!10}{Scheduled Caste share} & \cellcolor{gray!10}{14.71} & \cellcolor{gray!10}{8.64} & \cellcolor{gray!10}{573} & \cellcolor{gray!10}{1.96} & \cellcolor{gray!10}{25.09} & \cellcolor{gray!10}{2001; \% of population}\\
+\hspace{1em}Scheduled Tribe share & 16.16 & 25.85 & 573 & 0.00 & 56.59 & 2001; \% of population\\
+\hspace{1em}\cellcolor{gray!10}{Muslim share} & \cellcolor{gray!10}{11.40} & \cellcolor{gray!10}{14.81} & \cellcolor{gray!10}{573} & \cellcolor{gray!10}{0.82} & \cellcolor{gray!10}{24.24} & \cellcolor{gray!10}{2001; \% of population}\\
+\hspace{1em}Secondary-plus share, age 7+ & 17.09 & 7.63 & 573 & 8.48 & 27.84 & 2001; \% of population age 7+\\
+\hspace{1em}\cellcolor{gray!10}{Dependency ratio} & \cellcolor{gray!10}{69.39} & \cellcolor{gray!10}{13.29} & \cellcolor{gray!10}{573} & \cellcolor{gray!10}{51.72} & \cellcolor{gray!10}{86.88} & \cellcolor{gray!10}{2001; dependents per 100 persons age 15-64}\\
+\hspace{1em}Agricultural worker share & 60.53 & 20.40 & 573 & 31.36 & 81.24 & 2001; \% of workers\\
+\hspace{1em}\cellcolor{gray!10}{Electricity access share} & \cellcolor{gray!10}{54.44} & \cellcolor{gray!10}{28.01} & \cellcolor{gray!10}{573} & \cellcolor{gray!10}{14.78} & \cellcolor{gray!10}{89.61} & \cellcolor{gray!10}{2001; \% of households}\\
 \addlinespace[0.3em]
-\multicolumn{7}{l}{\cellcolor{white}{\textbf{Panel D. Later welfare:}}}\\
-\hspace{1em}Real mean consumption per person & 928.07 & 377.75 & 557 & 464.61 & 1419.84 & 2004-05; 2011-12-price Rs/person/month\\
-\hspace{1em}\cellcolor{gray!10}{Real mean consumption per person} & \cellcolor{gray!10}{2152.01} & \cellcolor{gray!10}{618.67} & \cellcolor{gray!10}{550} & \cellcolor{gray!10}{1490.97} & \cellcolor{gray!10}{2952.44} & \cellcolor{gray!10}{2022-23; 2011-12-price Rs/person/month}\\
-\hspace{1em}Real mean consumption per person & 2242.07 & 601.13 & 551 & 1622.74 & 2991.47 & 2023-24; 2011-12-price Rs/person/month\\
-\bottomrule
-\end{tabular}
-\begin{tablenotes}[para]
-\item \textit{Note: } 
-\item District-level descriptive statistics; N is the number of districts with finite values. Schooling measures use NSS 2007-08 children age 5-19; linguistic distance and predetermined capacity use Census-2001 geography. Modern consumption rows summarize districts meeting the survey-design, price, and district-lineage requirements used for the preferred estimates. p10 and p90 are the 10th and 90th percentiles. Sources: NSS 64th Round; Census of India 2001; NSS 61st Round; HCES 2022-23 and 2023-24. Construction details are documented in the data appendix.
-\end{tablenotes}
-\end{threeparttable}
-\end{table}
+\multicolumn{7}{l}{\cellcolor{white}{\textbf{Panel C. Language-behavior regression controls:}}}\\
+\hspace{1em}Native-language share within state & 1.26 & 8.35 & 2784 & 0.00 & 0.50 & 2001; \% of state native-language speakers\\
+\hspace{1em}\cellcolor{gray!10}{State modal-language indicator} & \cellcolor{gray!10}{0.01} & \cellcolor{gray!10}{0.11} & \cellcolor{gray!10}{2784} & \cellcolor{gray!10}{0.00} & \cellcolor{gray!10}{0.00} & \cellcolor{gray!10}{2001; indicator}\\
+\hspace{1em}Hindi/Urdu reference indicator & 0.03 & 0.16 & 2784 & 0.00 & 0.00 & 2001; indicator\\*
+\end{longtable}
+\end{ThreePartTable}

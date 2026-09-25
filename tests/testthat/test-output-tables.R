@@ -1248,7 +1248,9 @@ test_that("paper core summary derives preferred controls from their registries",
   controls <- paper_control_summary(panel, registry)
   control_csv <- paper_core_summary_csv_data(controls)
   expect_setequal(control_csv$variable, preferred$label)
-  expect_identical(unique(control_csv$panel), "Panel B. Predetermined Census-2001 controls")
+  expect_equal(nrow(control_csv), nrow(preferred))
+  expect_length(unique(control_csv$panel), 1L)
+  expect_identical(anyDuplicated(control_csv$variable), 0L)
   expect_identical(
     control_csv$unit[match("Urban population share", control_csv$variable)],
     "% of population"
