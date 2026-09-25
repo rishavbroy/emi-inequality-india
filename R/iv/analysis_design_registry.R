@@ -778,7 +778,7 @@ analysis_design_schooling_consumption_conversion <- function(
     adjustment_set = rep("state_main", nrow(specs)),
     fixed_effect = rep("state", nrow(specs)),
     functional_form_id = rep("linear_interaction", nrow(specs)),
-    estimand = rep("descriptive_schooling_by_baseline_capacity_interaction", nrow(specs)),
+    estimand = rep("descriptive_schooling_by_predetermined_complement_interaction", nrow(specs)),
     estimator = rep("ols", nrow(specs)),
     inference = rep("state_clustered+holm", nrow(specs)),
     sample_rule = rep("schooling_conversion_common_support", nrow(specs)),

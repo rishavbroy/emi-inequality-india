@@ -234,7 +234,7 @@ paper_conversion_complement_registry <- function() {
   )
 }
 
-paper_conversion_capacity_csv_data <- function(conversion) {
+paper_conversion_complement_csv_data <- function(conversion) {
   conversion_estimates <- safe_df(conversion$estimates)
   complements <- paper_conversion_complement_registry()
   treatments <- c("emi_all_children", "private_emi_all_children")
@@ -254,7 +254,7 @@ paper_conversion_capacity_csv_data <- function(conversion) {
       any(!is.finite(num(rows$interaction_per_10pp_schooling_per_modifier_sd)))) {
     stop("Paper conversion-complements table requires all six estimated schooling interactions.", call. = FALSE)
   }
-  rows$panel <- "predetermined_capacity"
+  rows$panel <- "predetermined_complements"
   rows$predictor_id <- ifelse(
     rows$treatment_id == "emi_all_children", "all_child_emi", "private_emi"
   )
@@ -296,7 +296,7 @@ paper_conversion_it_csv_data <- function(it_opportunity) {
 
 paper_conversion_complements_csv_data <- function(conversion, it_opportunity) {
   safe_bind_rows(list(
-    paper_conversion_capacity_csv_data(conversion),
+    paper_conversion_complement_csv_data(conversion),
     paper_conversion_it_csv_data(it_opportunity)
   ))
 }
@@ -323,7 +323,7 @@ paper_economic_conversion_csv_data <- function(bridge, conversion) {
     stringsAsFactors = FALSE
   )
 
-  complements <- paper_conversion_capacity_csv_data(conversion)
+  complements <- paper_conversion_complement_csv_data(conversion)
   complement_label <- ifelse(
     complements$predictor_id == "all_child_emi", "All-child EMI", "Private EMI"
   )

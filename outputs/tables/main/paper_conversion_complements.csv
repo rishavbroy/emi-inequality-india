@@ -1,9 +1,9 @@
 "panel","modifier_id","complement","predictor_id","interaction","std.error","p.value","p.value_holm","n"
-"predetermined_capacity","baseline_human_capital","Baseline human capital","all_child_emi",0.0149895993766283,0.00448069576181818,0.000886130833960825,0.00531678500376495,524
-"predetermined_capacity","urbanization","Urbanization","all_child_emi",0.0182621547854437,0.0061105725724871,0.00294611789632195,0.0147305894816098,524
-"predetermined_capacity","st_concentration","ST concentration","all_child_emi",0.000394422742064491,0.0051641557274355,0.939150987824107,1,524
-"predetermined_capacity","baseline_human_capital","Baseline human capital","private_emi",0.014655600288466,0.00798003134738629,0.0668968927789809,0.200690678336943,524
-"predetermined_capacity","urbanization","Urbanization","private_emi",0.0200435765238024,0.00980831406456493,0.0415454948373688,0.166181979349475,524
-"predetermined_capacity","st_concentration","ST concentration","private_emi",0.00396037018973962,0.00825995529051338,0.631825314217496,1,524
+"predetermined_complements","baseline_human_capital","Baseline human capital","all_child_emi",0.0149895993766283,0.00448069576181818,0.000886130833960825,0.00531678500376495,524
+"predetermined_complements","urbanization","Urbanization","all_child_emi",0.0182621547854437,0.0061105725724871,0.00294611789632195,0.0147305894816098,524
+"predetermined_complements","st_concentration","ST concentration","all_child_emi",0.000394422742064491,0.0051641557274355,0.939150987824107,1,524
+"predetermined_complements","baseline_human_capital","Baseline human capital","private_emi",0.014655600288466,0.00798003134738629,0.0668968927789809,0.200690678336943,524
+"predetermined_complements","urbanization","Urbanization","private_emi",0.0200435765238024,0.00980831406456493,0.0415454948373688,0.166181979349475,524
+"predetermined_complements","st_concentration","ST concentration","private_emi",0.00396037018973962,0.00825995529051338,0.631825314217496,1,524
 "predetermined_it_environment","ec05_it_employment_share","Baseline IT employment share","all_child_emi",0.000589904811788938,0.00402447627068962,0.883527097331058,0.883527097331058,514
 "predetermined_it_environment","ec05_it_employment_share","Baseline IT employment share","linguistic_distance",0.00797954781324292,0.0102033935498645,0.434580756021435,0.86916151204287,514
