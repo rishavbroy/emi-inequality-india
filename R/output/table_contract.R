@@ -171,13 +171,13 @@ public_table_note <- function(name) {
       "Columns use state fixed effects, predetermined Census-2001 controls, and common schooling support within each endpoint/estimand. State-clustered standard errors are in parentheses; stars use Holm-adjusted $p$-values within the predeclared schooling-welfare family.",
       "The six interaction rows appear only for the 2004-05 to 2022-23 long change and report how the all-child or private-EMI association differs with a one-standard-deviation increase in predetermined human capital, urbanization, or ST concentration. Those rows also come from separate registered regressions and use state-clustered standard errors and Holm-adjusted $p$-values within the predeclared complement family.",
       regression_star_note(),
-      "These are descriptive conditional associations, not causal returns or treatment-effect heterogeneity."
+      "The table reports descriptive conditional associations. It does not estimate causal returns or treatment-effect heterogeneity."
     ),
     paper_local_development = paste(
       "Each column is a separate district regression. The coefficient reports the association of one Shastry linguistic-distance degree with the listed outcome in its native unit; state-clustered standard errors are in parentheses and stars use Holm-adjusted $p$-values within the registered outcome/specification family.",
       "Household-capacity, migration, finance, asset, and labor regressions use state fixed effects plus predetermined controls; Economic Census regressions use region fixed effects plus the same controls, as reported in the table.",
       regression_star_note(),
-      "The 2001-11 Census and 2005-13 Economic Census windows overlap the 2007 schooling measurement, so these are co-evolving development margins rather than post-treatment EMI mechanisms.",
+      "The 2001-11 Census and 2005-13 Economic Census windows overlap the 2007 schooling measurement. The table therefore treats these outcomes as co-evolving development margins and does not order them as post-treatment EMI mechanisms.",
       "PLFS 2017-18 supplies the displayed labor endpoint; the semantic CSV retains the raw and Holm-adjusted $p$-values and matched NSS66 adjusted $p$-values. Heterogeneous outcomes remain in native units, and null outcomes are retained by design."
     ),
     appendix_iv_relevance_summary = paste(
