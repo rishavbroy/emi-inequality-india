@@ -18,7 +18,7 @@ or run the ordinary full build, which includes application samples by default:
 bash scripts/run_full_build.sh
 ```
 
-The first-page sample notice is generated from the manifest and the current paper headings. The full-paper render keeps `paper.tex` and makes a separate XeLaTeX label pass that writes `paper-reference-labels.aux`. Writing excerpts run their selector after Quarto resolves cross-references; before omitted targets are removed, the filter replaces Quarto's deferred LaTeX `\ref` with the current full-paper number from that label file and appends `(full paper)`. Named copies link that suffix to the hosted paper; anonymous copies keep it as plain text.
+The first-page sample notice is generated from the manifest and the current paper headings. The full-paper render keeps `paper.tex` and makes a separate XeLaTeX label pass that writes `paper-reference-labels.aux`. Before an excerpt is rendered, references to omitted sections, tables, figures, and equations are replaced with their current full-paper labels from that file. Named copies link the displayed label to the hosted paper; anonymous copies display the same label without an identity-bearing URL. References whose targets remain in the excerpt stay as ordinary Quarto cross-references. The Pandoc filter is responsible only for retaining the selected sections and their ancestor headings.
 
 Named paper and application-sample PDFs are published from the tracked rendered files at <https://rishavbroy.github.io/emi-inequality-india/>. The Pages job does not rerun the empirical build. Anonymous variants are intended for direct application uploads and are deliberately not published on the identity-revealing Pages site.
 

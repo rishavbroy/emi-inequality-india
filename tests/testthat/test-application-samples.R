@@ -77,8 +77,12 @@ test_that("writing sample assembly derives identity and section selection from o
   out_named <- tempfile(fileext = ".qmd")
   out_anonymous <- tempfile(fileext = ".qmd")
 
-  env$assemble_writing_sample_qmd(source, spec, "named", manifest, out_named)
-  env$assemble_writing_sample_qmd(source, spec, "anonymous", manifest, out_anonymous)
+  paper_text <- paste(readLines(source, warn = FALSE), collapse = "\n")
+  refs <- unique(regmatches(paper_text, gregexpr("@(sec|tbl|fig|eq)-[A-Za-z0-9_-]+", paper_text, perl = TRUE))[[1L]])
+  labels <- setNames(as.character(seq_along(refs)), sub("^@", "", refs))
+
+  env$assemble_writing_sample_qmd(source, spec, "named", manifest, out_named, labels)
+  env$assemble_writing_sample_qmd(source, spec, "anonymous", manifest, out_anonymous, labels)
   named <- paste(readLines(out_named, warn = FALSE), collapse = "\n")
   anonymous <- paste(readLines(out_anonymous, warn = FALSE), collapse = "\n")
 
@@ -91,8 +95,8 @@ test_that("writing sample assembly derives identity and section selection from o
   header_includes <- unlist(named_meta$`header-includes`, use.names = FALSE)
   expect_true(any(grepl("\\providecommand{\\citeproc}[2]{#2}", header_includes, fixed = TRUE)))
   expect_false(any(grepl("externaldocument", header_includes, fixed = TRUE)))
-  expect_identical(named_meta$`sample-reference-aux`, "../../paper/paper-reference-labels.aux")
-  expect_identical(named_meta$`sample-full-paper-url`, manifest$paper$full_paper_url)
+  expect_null(named_meta$`sample-reference-aux`)
+  expect_null(named_meta$`sample-full-paper-url`)
   expect_null(anonymous_meta$`sample-full-paper-url`)
   expect_true(isTRUE(named_meta$format$pdf$`keep-tex`))
   selector <- named_meta$filters[[length(named_meta$filters)]]
@@ -217,55 +221,97 @@ test_that("section-selection Lua filter retains selected subsections and ancesto
   expect_false(grepl("Charlie.", rendered, fixed = TRUE))
 })
 
-test_that("section-selection filter resolves omitted references from the full-paper label index", {
-  skip_if(!nzchar(Sys.which("pandoc")), "pandoc is unavailable")
-  filter <- repo_file("application-samples", "filters", "select-sections.lua")
+test_that("omitted writing-sample cross-references use the full-paper label index", {
+  env <- sample_test_env()
+  source <- c(
+    "---",
+    "title: Fixture",
+    "---",
+    "Preamble.",
+    "",
+    "# Keep {#sec-keep}",
+    "",
+    "See @sec-drop and @fig-keep.",
+    "",
+    "![Kept figure](figure.pdf){#fig-keep}",
+    "",
+    "# Drop {#sec-drop}",
+    "",
+    "Omitted."
+  )
+  body <- env$split_qmd_front_matter(source)$body
+  labels <- c(`sec-drop` = "2", `fig-keep` = "1")
+
+  named <- env$externalize_omitted_writing_crossrefs(
+    body, source, "sec-keep", labels, "named", "https://example.com/paper.pdf"
+  )
+  anonymous <- env$externalize_omitted_writing_crossrefs(
+    body, source, "sec-keep", labels, "anonymous", "https://example.com/paper.pdf"
+  )
+
+  named_text <- paste(named, collapse = "\n")
+  anonymous_text <- paste(anonymous, collapse = "\n")
+  expect_match(named_text, "[Section 2](https://example.com/paper.pdf)", fixed = TRUE)
+  expect_match(named_text, "@fig-keep", fixed = TRUE)
+  expect_false(grepl("@sec-drop", named_text, fixed = TRUE))
+  expect_match(anonymous_text, "Section 2", fixed = TRUE)
+  expect_false(grepl("example.com", anonymous_text, fixed = TRUE))
+  expect_match(anonymous_text, "@fig-keep", fixed = TRUE)
+  expect_error(
+    env$externalize_omitted_writing_crossrefs(
+      body, source, "sec-keep", c(`fig-keep` = "1"), "named", "https://example.com/paper.pdf"
+    ),
+    "no label for sec-drop"
+  )
+})
+
+
+test_that("LaTeX reference labels reject conflicting full-paper numbers", {
+  env <- sample_test_env()
   aux <- tempfile(fileext = ".aux")
   writeLines(c(
-    "\\relax",
-    "\\newlabel{sec-drop}{{2}{7}{Drop}{section.2}{}}",
-    "\\newlabel{sec-keep}{{3}{9}{Keep}{section.3}{}}"
+    "\\newlabel{sec-one}{{1}{2}{One}{section.1}{}}",
+    "\\newlabel{sec-one}{{1}{2}{One}{section.1}{}}",
+    "\\newlabel{tbl-one}{{3}{4}{Table}{table.3}{}}"
   ), aux)
+  labels <- env$read_latex_reference_labels(aux)
+  expect_identical(unname(labels[c("sec-one", "tbl-one")]), c("1", "3"))
 
-  render_fixture <- function(named = TRUE) {
-    input <- tempfile(fileext = ".md")
-    output <- tempfile(fileext = ".md")
-    meta <- c(
-      "---",
-      "sample-sections: sec-keep",
-      paste0("sample-reference-aux: ", aux),
-      if (named) "sample-full-paper-url: https://example.com/paper.pdf" else NULL,
-      "---"
-    )
-    writeLines(c(
-      meta,
-      "[Section \\ref{sec-drop}](#sec-drop){.quarto-xref} and [Section \\ref{sec-keep}](#sec-keep){.quarto-xref}.",
-      "",
-      "# Keep {#sec-keep}",
-      "",
-      "Retained.",
-      "",
-      "# Drop {#sec-drop}",
-      "",
-      "Omitted."
-    ), input)
-    status <- system2(
-      Sys.which("pandoc"),
-      c(shQuote(input), "--lua-filter", shQuote(filter), "--wrap=none", "-t", "markdown", "-o", shQuote(output))
-    )
-    expect_identical(status, 0L)
-    paste(readLines(output, warn = FALSE), collapse = "\n")
-  }
-
-  named <- render_fixture(TRUE)
-  anonymous <- render_fixture(FALSE)
-
-  expect_match(named, "Section 2 ([full paper](https://example.com/paper.pdf))", fixed = TRUE)
-  expect_match(named, "\\ref{sec-keep}", fixed = TRUE)
-  expect_match(anonymous, "Section 2 (full paper)", fixed = TRUE)
-  expect_false(grepl("example.com", anonymous, fixed = TRUE))
-  expect_false(grepl("Omitted.", named, fixed = TRUE))
+  writeLines(c(
+    "\\newlabel{sec-one}{{1}{2}{One}{section.1}{}}",
+    "\\newlabel{sec-one}{{2}{3}{One}{section.2}{}}"
+  ), aux)
+  expect_error(env$read_latex_reference_labels(aux), "conflicting numbers for: sec-one")
 })
+
+
+test_that("writing excerpts fail closed without the full-paper reference index", {
+  env <- sample_test_env()
+  source <- tempfile(fileext = ".qmd")
+  output <- tempfile(fileext = ".qmd")
+  writeLines(c(
+    "---",
+    "title: Fixture",
+    "abstract: Abstract.",
+    "---",
+    "# Keep {#sec-keep}",
+    "",
+    "See @sec-drop.",
+    "",
+    "# Drop {#sec-drop}"
+  ), source)
+  manifest <- list(
+    paper = list(full_paper_url = "https://example.com/paper.pdf", repository_url = "https://example.com/repo"),
+    identity = list(named = list(author = "Example Author"))
+  )
+  spec <- list(id = "fixture", target_pages = 1L, sections = "sec-keep")
+
+  expect_error(
+    env$assemble_writing_sample_qmd(source, spec, "named", manifest, output),
+    "require the current full-paper reference index"
+  )
+})
+
 
 test_that("writing page-count validation reports all mismatched deliverables together", {
   skip_if(!nzchar(Sys.which("pdfinfo")), "pdfinfo is unavailable")

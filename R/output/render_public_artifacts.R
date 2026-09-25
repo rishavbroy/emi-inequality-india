@@ -7,7 +7,7 @@
 #'   document renders. The renderer does not interpret them; forcing the list
 #'   makes the publication dependency explicit to {targets}.
 #' @param reference_aux Build a stable LaTeX auxiliary file containing the
-#'   rendered document's labels for cross-document references.
+#'   rendered document's labels for application-sample references.
 #' @return Character vector of rendered file paths for a `format = "file"`
 #'   target.
 render_public_pdf <- function(qmd, dependencies = list(), reference_aux = FALSE) {
@@ -48,7 +48,7 @@ render_public_pdf <- function(qmd, dependencies = list(), reference_aux = FALSE)
 #'
 #' XeLaTeX writes cross-reference labels during its first pass. Running it with
 #' `-no-pdf` and a distinct job name leaves the already-rendered PDF untouched
-#' while producing the `.aux` file consumed by LaTeX's `xr` package.
+#' while producing the `.aux` file consumed by the application-sample renderer.
 #'
 #' @param tex_path Path to a rendered LaTeX file.
 #' @param job_name Stable basename for the retained auxiliary file.
