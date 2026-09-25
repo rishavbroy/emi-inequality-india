@@ -422,8 +422,9 @@ test_that("native marginaleffects tables preserve metadata and stack uncertainty
 
   skip_if_not_installed("modelsummary")
   skip_if_not_installed("kableExtra")
+  tex <- expect_no_warning(ame_modelsummary_table(table, "appendix_selection_ame"))
   tex_lines <- strsplit(
-    paste(as.character(ame_modelsummary_table(table, "appendix_selection_ame")), collapse = "\n"),
+    paste(as.character(tex), collapse = "\n"),
     "\n",
     fixed = TRUE
   )[[1L]]
@@ -434,6 +435,9 @@ test_that("native marginaleffects tables preserve metadata and stack uncertainty
   expect_false(any(grepl("Std. Error", tex_lines, fixed = TRUE)))
   expect_equal(length(strsplit(tex_lines[[estimate_row]], "&", fixed = TRUE)[[1L]]), 2L)
   expect_equal(length(strsplit(tex_lines[[se_row]], "&", fixed = TRUE)[[1L]]), 2L)
+  expect_true(any(grepl("Enrolled (1 = yes)", tex_lines, fixed = TRUE)))
+  expect_true(any(grepl("Observations", tex_lines, fixed = TRUE)))
+  expect_true(any(grepl("100", tex_lines, fixed = TRUE)))
 })
 
 

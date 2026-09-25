@@ -288,28 +288,6 @@ ame_modelsummary_object <- function(table) {
   native
 }
 
-ame_gof_function <- function(table) {
-  n <- attr(table, "marginaleffects_n", exact = TRUE)
-  n <- suppressWarnings(as.numeric(n))
-  if (!length(n) || !is.finite(n[[1]])) return(NULL)
-
-  n <- round(n[[1]])
-  function(model) {
-    data.frame(nobs = n, check.names = FALSE)
-  }
-}
-
-
-ame_gof_map <- function() {
-  data.frame(
-    raw = "nobs",
-    clean = "Observations",
-    fmt = 0,
-    stringsAsFactors = FALSE
-  )
-}
-
-
 ame_modelsummary_table <- function(table, name) {
   need_pkg("modelsummary", "native marginaleffects AME table rendering")
   mfx <- ame_modelsummary_object(table)
@@ -323,13 +301,20 @@ ame_modelsummary_table <- function(table, name) {
   options(modelsummary_format_numeric_latex = "plain", modelsummary_stars_note = FALSE)
 
   keep_terms <- attr(table, "ame_keep_terms", exact = TRUE)
+  model_name <- "Enrolled (1 = yes)"
+  n <- suppressWarnings(as.numeric(attr(table, "marginaleffects_n", exact = TRUE)))
+  add_rows <- NULL
+  if (length(n) && is.finite(n[[1]])) {
+    add_rows <- data.frame(term = "Observations", stringsAsFactors = FALSE, check.names = FALSE)
+    add_rows[[model_name]] <- format(round(n[[1]]), scientific = FALSE, trim = TRUE)
+  }
   args <- list(
     # Pass the marginaleffects object itself to modelsummary, following the
-    # native marginaleffects -> modelsummary integration. Observations are
-    # supplied through modelsummary's GOF extension hook.
-    models = list(mfx),
-    gof_map = ame_gof_map(),
-    gof_function = ame_gof_function(table),
+    # native marginaleffects -> modelsummary integration. This table needs no
+    # model goodness-of-fit extraction; the sample size is carried explicitly.
+    models = stats::setNames(list(mfx), model_name),
+    gof_map = NA,
+    add_rows = add_rows,
     # Use the same coefficient/uncertainty row layout as the other regression tables.
     # Explicit formatting prevents native marginaleffects columns from widening the table.
     estimate = "{estimate}{stars}",
@@ -355,7 +340,6 @@ ame_modelsummary_table <- function(table, name) {
     position = "center",
     full_width = FALSE
   )
-  tex <- kableExtra::add_header_above(tex, c(" " = 1, "Enrolled (1 = yes)" = 1))
   tex <- add_public_longtable_notes(tex, name)
   single_space_longtable_tex(tex)
 }
