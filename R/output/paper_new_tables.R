@@ -161,8 +161,8 @@ paper_language_behavior_registry <- function() {
       "Linguistic distance from Hindi"
     ),
     outcome = c(
-      "English acquisition", "English acquisition", "Hindi acquisition", "Multilingualism",
-      "English acquisition", "English acquisition", "Hindi acquisition"
+      "Reported English", "Reported English", "Reported Hindi", "Multilingualism",
+      "Reported English", "Reported English", "Reported Hindi"
     ),
     population = c(
       rep("Multilingual speakers", 3L), "Native speakers",

@@ -118,7 +118,7 @@ public_table_caption_text <- function(name) {
     sum_tbl_iv = "Summary Statistics for 2SLS Model",
     paper_core_summary = "Core Variables and Summary Statistics",
     paper_schooling_market_geography = "Linguistic Distance and English-Medium Schooling across Geographic Specifications",
-    paper_language_behavior = "Linguistic Distance and Language-Learning Behavior",
+    paper_language_behavior = "Linguistic Distance and Reported Language Choice",
     paper_economic_conversion = "English-Medium Schooling, Later Consumption, and Predetermined Complements",
     paper_local_development = "Linguistic Conditions and Selective Local Development",
     appendix_iv_relevance_summary = "First-Stage Relevance Across Linguistic Measures",
@@ -163,7 +163,7 @@ public_table_note <- function(name) {
       "All specifications include state fixed effects, native-language state share, an indicator for the state's most common native language, and a Hindi/Urdu reference indicator where required by the registered specification.",
       "Continuous-distance coefficients are percentage-point changes per one Shastry distance degree; the distant-language indicator equals one for languages at least three degrees from Hindi.",
       "Partial $R^2$ is the one-degree-of-freedom model-based partial $R^2$ for the reported linguistic-distance coefficient.",
-      "Columns (5)-(7) apply the predeclared Hindi-belt sample restriction. These are descriptive associations with language-learning behavior rather than instrumental-variable first stages.",
+      "Columns (5)-(7) apply the predeclared Hindi-belt sample restriction. The coefficients describe associations with reported subsidiary-language outcomes. Instrumental-variable first stages are reported separately.",
       regression_star_note()
     ),
     paper_economic_conversion = paste(

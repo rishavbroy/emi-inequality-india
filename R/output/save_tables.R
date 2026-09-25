@@ -1321,7 +1321,7 @@ paper_language_behavior_modelsummary_table <- function(table, name) {
   add_rows <- data.frame(
     term = c(
       "Outcome", "Population", "Observations", "Partial $R^2$",
-      "State fixed effects", "Language-share controls"
+      "State fixed effects", "Language-prevalence controls"
     ),
     check.names = FALSE,
     stringsAsFactors = FALSE
