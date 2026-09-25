@@ -4,24 +4,21 @@ args <- commandArgs(trailingOnly = TRUE)
 strict_report <- "--strict-report" %in% args
 explicit_qmd_files <- args[!startsWith(args, "--")]
 
-source("scripts/public_output_contract.R", local = TRUE)
-
-qmd_files <- public_qmd_sources()
-if (length(explicit_qmd_files)) qmd_files <- explicit_qmd_files
-
-work_files <- character()
-if (dir.exists("application-samples/.work")) {
-  work_files <- list.files(
-    "application-samples/.work",
-    pattern = "\\.qmd$",
-    full.names = TRUE,
-    recursive = TRUE
-  )
-}
-
 if (length(explicit_qmd_files)) {
-  qmd_files <- qmd_files[file.exists(qmd_files)]
+  qmd_files <- explicit_qmd_files[file.exists(explicit_qmd_files)]
 } else {
+  source("scripts/public_output_contract.R", local = TRUE)
+
+  qmd_files <- public_qmd_sources()
+  work_files <- character()
+  if (dir.exists("application-samples/.work")) {
+    work_files <- list.files(
+      "application-samples/.work",
+      pattern = "\\.qmd$",
+      full.names = TRUE,
+      recursive = TRUE
+    )
+  }
   qmd_files <- unique(c(qmd_files[file.exists(qmd_files)], work_files))
 }
 
@@ -72,7 +69,7 @@ malformed_atx_heading_lines <- function(lines) {
   headings[headings > 1L & nzchar(trimws(lines[headings - 1L]))]
 }
 
-scan_crossrefs <- function(path) {
+scan_crossrefs <- function(path, include_generated_tex_labels = TRUE) {
   lines <- readLines(path, warn = FALSE)
   text <- paste(lines, collapse = "\n")
   malformed_heading_lines <- malformed_atx_heading_lines(lines)
@@ -93,7 +90,7 @@ scan_crossrefs <- function(path) {
   chunk_labels <- sub("^\\s*#\\|\\s*label:\\s*", "", chunk_label_lines)
   chunk_labels <- trimws(chunk_labels)
 
-  table_tex_files <- if (dir.exists("outputs/tables")) {
+  table_tex_files <- if (include_generated_tex_labels && dir.exists("outputs/tables")) {
     list.files("outputs/tables", pattern = "\\.tex$", full.names = TRUE, recursive = TRUE)
   } else {
     character()
@@ -125,7 +122,14 @@ if (!length(qmd_files)) {
   stop("No QMD files found for cross-reference audit.", call. = FALSE)
 }
 
-results <- do.call(rbind, lapply(qmd_files, scan_crossrefs))
+results <- do.call(
+  rbind,
+  lapply(
+    qmd_files,
+    scan_crossrefs,
+    include_generated_tex_labels = !length(explicit_qmd_files)
+  )
+)
 
 cat("Cross-reference audit\n")
 cat("=====================\n")

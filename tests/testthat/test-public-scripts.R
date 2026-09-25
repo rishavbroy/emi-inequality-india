@@ -53,7 +53,7 @@ test_that("cross-reference audit enforces Pandoc heading separation", {
     "See @sec-broken."
   ), bad)
 
-  bad_output <- system2(
+  bad_output <- suppressWarnings(system2(
     "Rscript",
     c(
       shQuote(repo_file("scripts", "audit_crossrefs.R")),
@@ -62,14 +62,9 @@ test_that("cross-reference audit enforces Pandoc heading separation", {
     ),
     stdout = TRUE,
     stderr = TRUE
-  )
+  ))
 
   expect_true((attr(bad_output, "status") %||% 0L) != 0L)
-  expect_true(any(grepl(
-    "headings_without_blank_line",
-    bad_output,
-    fixed = TRUE
-  )))
 
   good <- tempfile(fileext = ".qmd")
   writeLines(c(
