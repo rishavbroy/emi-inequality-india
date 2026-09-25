@@ -87,12 +87,13 @@ test_that("writing sample assembly derives identity and section selection from o
   expect_match(named, selected[[1L]], fixed = TRUE)
   expect_match(named, "suppress-bibliography: true", fixed = TRUE)
   named_meta <- env$read_qmd_metadata(readLines(out_named, warn = FALSE))
+  anonymous_meta <- env$read_qmd_metadata(readLines(out_anonymous, warn = FALSE))
   header_includes <- unlist(named_meta$`header-includes`, use.names = FALSE)
   expect_true(any(grepl("\\providecommand{\\citeproc}[2]{#2}", header_includes, fixed = TRUE)))
-  expect_true(any(grepl("\\usepackage{xr}", header_includes, fixed = TRUE)))
-  expect_true(any(grepl("\\externaldocument[full-][nocite]{../../paper/paper-reference-labels}", header_includes, fixed = TRUE)))
-  expect_true(any(grepl("(full paper)", header_includes, fixed = TRUE)))
-  expect_false(isTRUE(named_meta$crossref$`ref-hyperlink`))
+  expect_false(any(grepl("externaldocument", header_includes, fixed = TRUE)))
+  expect_identical(named_meta$`sample-reference-aux`, "../../paper/paper-reference-labels.aux")
+  expect_identical(named_meta$`sample-full-paper-url`, manifest$paper$full_paper_url)
+  expect_null(anonymous_meta$`sample-full-paper-url`)
   expect_true(isTRUE(named_meta$format$pdf$`keep-tex`))
   selector <- named_meta$filters[[length(named_meta$filters)]]
   expect_identical(selector$at, "post-quarto")
@@ -214,6 +215,56 @@ test_that("section-selection Lua filter retains selected subsections and ancesto
   expect_false(grepl("Bravo two should be omitted.", rendered, fixed = TRUE))
   expect_false(grepl("Alpha.", rendered, fixed = TRUE))
   expect_false(grepl("Charlie.", rendered, fixed = TRUE))
+})
+
+test_that("section-selection filter resolves omitted references from the full-paper label index", {
+  skip_if(!nzchar(Sys.which("pandoc")), "pandoc is unavailable")
+  filter <- repo_file("application-samples", "filters", "select-sections.lua")
+  aux <- tempfile(fileext = ".aux")
+  writeLines(c(
+    "\\relax",
+    "\\newlabel{sec-drop}{{2}{7}{Drop}{section.2}{}}",
+    "\\newlabel{sec-keep}{{3}{9}{Keep}{section.3}{}}"
+  ), aux)
+
+  render_fixture <- function(named = TRUE) {
+    input <- tempfile(fileext = ".md")
+    output <- tempfile(fileext = ".md")
+    meta <- c(
+      "---",
+      "sample-sections: sec-keep",
+      paste0("sample-reference-aux: ", aux),
+      if (named) "sample-full-paper-url: https://example.com/paper.pdf" else NULL,
+      "---"
+    )
+    writeLines(c(
+      meta,
+      "[Section \\ref{sec-drop}](#sec-drop){.quarto-xref} and [Section \\ref{sec-keep}](#sec-keep){.quarto-xref}.",
+      "",
+      "# Keep {#sec-keep}",
+      "",
+      "Retained.",
+      "",
+      "# Drop {#sec-drop}",
+      "",
+      "Omitted."
+    ), input)
+    status <- system2(
+      Sys.which("pandoc"),
+      c(shQuote(input), "--lua-filter", shQuote(filter), "--wrap=none", "-t", "markdown", "-o", shQuote(output))
+    )
+    expect_identical(status, 0L)
+    paste(readLines(output, warn = FALSE), collapse = "\n")
+  }
+
+  named <- render_fixture(TRUE)
+  anonymous <- render_fixture(FALSE)
+
+  expect_match(named, "Section 2 ([full paper](https://example.com/paper.pdf))", fixed = TRUE)
+  expect_match(named, "\\ref{sec-keep}", fixed = TRUE)
+  expect_match(anonymous, "Section 2 (full paper)", fixed = TRUE)
+  expect_false(grepl("example.com", anonymous, fixed = TRUE))
+  expect_false(grepl("Omitted.", named, fixed = TRUE))
 })
 
 test_that("writing page-count validation reports all mismatched deliverables together", {

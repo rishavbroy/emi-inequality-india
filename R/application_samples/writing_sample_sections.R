@@ -100,35 +100,24 @@ sample_metadata <- function(source_metadata, spec, variant, manifest) {
     # itself while citeproc still renders the in-text citations.
     meta$`suppress-bibliography` <- TRUE
     meta$`link-citations` <- FALSE
-    meta$crossref <- utils::modifyList(meta$crossref %||% list(), list(`ref-hyperlink` = FALSE))
     meta$format <- meta$format %||% list()
     meta$format$pdf <- utils::modifyList(meta$format$pdf %||% list(), list(`keep-tex` = TRUE))
     # Pandoc normally defines \citeproc only when it emits a bibliography.
     # Excerpts suppress that bibliography, while existing LaTeX table notes use
-    # \citeproc{ref-key}{visible label} for source labels.  A fallback keeps
+    # \citeproc{ref-key}{visible label} for source labels. A fallback keeps
     # those labels readable without overriding Pandoc when it defines the macro.
-    #
-    # The LaTeX xr package is the standard mechanism for cross-document labels.
-    # The paper target creates paper-reference-labels.aux from the rendered
-    # paper.tex; excerpt references use a local label when the referenced item
-    # is retained and otherwise fall back to that full-paper label.
-    external_reference_header <- paste(
-      "\\usepackage{xr}",
-      "\\externaldocument[full-][nocite]{../../paper/paper-reference-labels}",
-      "\\makeatletter",
-      "\\let\\sample@localref\\ref",
-      paste0(
-        "\\renewcommand{\\ref}[1]{\\@ifundefined{r@#1}",
-        "{\\sample@localref{full-#1}\\textnormal{ (full paper)}}",
-        "{\\sample@localref{#1}}}"
-      ),
-      "\\makeatother",
-      sep = "\n"
-    )
     meta$`header-includes` <- c(
       meta$`header-includes` %||% list(),
-      list("\\providecommand{\\citeproc}[2]{#2}", external_reference_header)
+      list("\\providecommand{\\citeproc}[2]{#2}")
     )
+    # Quarto's PDF cross-reference renderer deliberately leaves the numeric
+    # component as a LaTeX \ref. The post-Quarto sample filter resolves refs
+    # whose targets will be omitted against this full-paper label index before
+    # section selection removes those targets.
+    meta$`sample-reference-aux` <- "../../paper/paper-reference-labels.aux"
+    if (identical(variant, "named")) {
+      meta$`sample-full-paper-url` <- manifest$paper$full_paper_url
+    }
     meta$filters <- c(
       meta$filters %||% list(),
       list(list(at = "post-quarto", path = "../filters/select-sections.lua"))
