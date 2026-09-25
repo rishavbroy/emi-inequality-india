@@ -181,14 +181,14 @@ public_table_note <- function(name) {
       "PLFS 2017-18 supplies the displayed labor endpoint; the semantic CSV retains the raw and Holm-adjusted $p$-values and matched NSS66 adjusted $p$-values. Heterogeneous outcomes remain in native units, and null outcomes are retained by design."
     ),
     appendix_iv_relevance_summary = paste(
-      "The first three columns report the state-clustered joint excluded-instrument $F$ statistic for the unadjusted specification (no fixed effects or controls), six-region fixed effects plus the main predetermined controls, and state fixed effects plus the same controls.",
-      "The final relevance column is the state-FE partial $R^2$. The historical row uses its validated 1991 common support and is therefore not numerically pooled with the modern district sample.",
-      "These conventional first-stage statistics describe relevance only; they are not substituted for the Montiel Olea--Pflueger effective $F$ statistic used for weak-IV assessment."
+      "The first three columns report the state-clustered joint excluded-instrument $F$ statistic for the unadjusted specification (no fixed effects or controls), six-region fixed effects plus the main Census-2001 controls, and state fixed effects plus the same controls.",
+      "The final relevance column is the state-FE partial $R^2$. The historical row uses its validated 1991 common support and is estimated separately from the modern district sample.",
+      "These conventional first-stage statistics describe relevance across geographic adjustments. The preferred IV specifications use the Montiel Olea--Pflueger effective $F$ statistic for weak-identification assessment."
     ),
     appendix_iv_weak_inference = paste(
-      "2SLS standard errors are state-clustered; conventional significance stars are omitted because weak-IV-robust inference takes precedence.",
-      "MOP effective $F$ is the Montiel Olea--Pflueger statistic. AR denotes Anderson--Rubin inference; the 95\\% accepted sets are displayed as unions of intervals on the registered inversion grid, and both reported sets touch the grid boundaries.",
-      "The direct-effect row is the smallest bounded exclusion violation, as a share of the absolute reduced form, that admits $\\beta = 0$."
+      "The table reports conventional 2SLS coefficients without significance stars; standard errors are state-clustered. Weak-identification assessment uses the Montiel Olea--Pflueger effective $F$ statistic and Anderson--Rubin inference.",
+      "The 95\\% AR accepted sets are displayed as unions of intervals on the registered inversion grid, and both reported sets reach the grid boundaries.",
+      "The direct-effect row gives the smallest permitted direct effect, as a share of the absolute reduced form, for which the AR set includes $\\beta = 0$."
     ),
     appendix_migration_summary = paste(
       "Each column is a separate district regression using speaker-weighted linguistic distance from Hindi, predetermined Census-2001 controls, state fixed effects, and state-clustered standard errors.",
