@@ -207,7 +207,7 @@ core_public_target_definitions <- function() {
           appendix_data_construction_files, appendix_migration_files, appendix_selection_files,
           appendix_identification_files
         ),
-        keep_latex_intermediates = TRUE
+        reference_aux = TRUE
       ),
       format = "file"
     )

@@ -6,12 +6,11 @@
 #' @param dependencies Objects or file targets that must be current before the
 #'   document renders. The renderer does not interpret them; forcing the list
 #'   makes the publication dependency explicit to {targets}.
-#' @param keep_latex_intermediates Preserve LaTeX intermediates and return the
-#'   `.aux` file alongside the PDF. This is used when another document imports
-#'   the rendered document's reference labels.
+#' @param reference_aux Build a stable LaTeX auxiliary file containing the
+#'   rendered document's labels for cross-document references.
 #' @return Character vector of rendered file paths for a `format = "file"`
 #'   target.
-render_public_pdf <- function(qmd, dependencies = list(), keep_latex_intermediates = FALSE) {
+render_public_pdf <- function(qmd, dependencies = list(), reference_aux = FALSE) {
   force(dependencies)
 
   if (!file.exists(qmd)) {
@@ -23,10 +22,11 @@ render_public_pdf <- function(qmd, dependencies = list(), keep_latex_intermediat
 
   pdf_path <- file.path(dirname(qmd), paste0(tools::file_path_sans_ext(basename(qmd)), ".pdf"))
   args <- c("render", qmd, "--to", "pdf")
-  if (isTRUE(keep_latex_intermediates)) {
-    # Quarto's keep-tex option preserves the LaTeX auxiliary files used for
-    # cross-document references.  Writing excerpts import the full paper's
-    # labels from paper.aux rather than maintaining a second numbering table.
+  if (isTRUE(reference_aux)) {
+    # Quarto reliably preserves the generated .tex file with keep-tex. The
+    # renderer then makes a separate no-PDF XeLaTeX pass to retain the label
+    # file needed by writing excerpts. This avoids relying on Quarto's cleanup
+    # policy for temporary .aux files.
     args <- c(args, "-M", "keep-tex:true")
   }
   status <- system2("quarto", args)
@@ -37,13 +37,60 @@ render_public_pdf <- function(qmd, dependencies = list(), keep_latex_intermediat
     stop("quarto render did not create a non-empty ", pdf_path, call. = FALSE)
   }
 
-  if (!isTRUE(keep_latex_intermediates)) return(pdf_path)
+  if (!isTRUE(reference_aux)) return(pdf_path)
 
-  aux_path <- file.path(dirname(qmd), paste0(tools::file_path_sans_ext(basename(qmd)), ".aux"))
-  if (!file.exists(aux_path) || file.info(aux_path)$size <= 0L) {
-    stop("Quarto keep-tex render did not preserve a non-empty ", aux_path, call. = FALSE)
-  }
+  tex_path <- file.path(dirname(qmd), paste0(tools::file_path_sans_ext(basename(qmd)), ".tex"))
+  aux_path <- materialize_latex_reference_aux(tex_path)
   c(pdf_path, aux_path)
+}
+
+#' Materialize a stable LaTeX label file from a rendered `.tex` document
+#'
+#' XeLaTeX writes cross-reference labels during its first pass. Running it with
+#' `-no-pdf` and a distinct job name leaves the already-rendered PDF untouched
+#' while producing the `.aux` file consumed by LaTeX's `xr` package.
+#'
+#' @param tex_path Path to a rendered LaTeX file.
+#' @param job_name Stable basename for the retained auxiliary file.
+#' @return Path to the non-empty auxiliary file.
+materialize_latex_reference_aux <- function(
+    tex_path,
+    job_name = paste0(tools::file_path_sans_ext(basename(tex_path)), "-reference-labels")
+) {
+  if (!file.exists(tex_path) || file.info(tex_path)$size <= 0L) {
+    stop("Rendered LaTeX file is missing or empty: ", tex_path, call. = FALSE)
+  }
+  engine_path <- Sys.which("xelatex")
+  if (!nzchar(engine_path)) {
+    stop("xelatex was not found on PATH; cannot materialize cross-reference labels.", call. = FALSE)
+  }
+
+  tex_path <- normalizePath(tex_path, winslash = "/", mustWork = TRUE)
+  old_wd <- getwd()
+  on.exit(setwd(old_wd), add = TRUE)
+  setwd(dirname(tex_path))
+
+  status <- system2(
+    engine_path,
+    c(
+      "-no-pdf",
+      "-interaction=nonstopmode",
+      "-halt-on-error",
+      paste0("-jobname=", job_name),
+      shQuote(basename(tex_path))
+    )
+  )
+  if (!identical(status, 0L)) {
+    stop("xelatex failed while materializing LaTeX reference labels with status ", status, call. = FALSE)
+  }
+
+  aux_path <- file.path(dirname(tex_path), paste0(job_name, ".aux"))
+  if (!file.exists(aux_path) || file.info(aux_path)$size <= 0L) {
+    stop("LaTeX reference-label pass did not create a non-empty ", aux_path, call. = FALSE)
+  }
+
+  unlink(file.path(dirname(tex_path), paste0(job_name, c(".log", ".out", ".toc", ".xdv"))), force = TRUE)
+  aux_path
 }
 
 

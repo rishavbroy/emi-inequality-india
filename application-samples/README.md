@@ -18,7 +18,7 @@ or run the ordinary full build, which includes application samples by default:
 bash scripts/run_full_build.sh
 ```
 
-The first-page sample notice is generated from the manifest and the current paper headings. The full-paper render preserves `paper.aux`, and writing excerpts use LaTeX's standard `xr` package for cross-document references. References to retained targets use the excerpt's local numbering; references to omitted targets use the full paper's current number and are marked as full-paper references.
+The first-page sample notice is generated from the manifest and the current paper headings. The full-paper render keeps `paper.tex` and makes a separate XeLaTeX label pass that writes `paper-reference-labels.aux`; writing excerpts use LaTeX's standard `xr` package to import those labels. References to retained targets use the excerpt's local numbering; references to omitted targets use the full paper's current number and are marked as full-paper references.
 
 Named paper and application-sample PDFs are published from the tracked rendered files at <https://rishavbroy.github.io/emi-inequality-india/>. The Pages job does not rerun the empirical build. Anonymous variants are intended for direct application uploads and are deliberately not published on the identity-revealing Pages site.
 

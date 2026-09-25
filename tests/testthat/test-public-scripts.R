@@ -80,9 +80,35 @@ test_that("paper render has one current manuscript target", {
 
   expect_setequal(paper_targets, c("paper_qmd", "paper"))
   expect_match(repo_target_command("paper_qmd"), "paper/paper.qmd", fixed = TRUE)
-  expect_match(repo_target_command("paper"), "keep_latex_intermediates = TRUE", fixed = TRUE)
+  expect_match(repo_target_command("paper"), "reference_aux = TRUE", fixed = TRUE)
   expect_false(grepl("paper-new", repo_target_definition_text(), fixed = TRUE))
 })
+
+test_that("paper reference-label pass writes aux data without replacing the PDF", {
+  env <- new.env(parent = globalenv())
+  sys.source(repo_file("R", "output", "render_public_artifacts.R"), envir = env)
+
+  dir <- tempfile("reference-labels-")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE, force = TRUE), add = TRUE)
+  tex <- file.path(dir, "paper.tex")
+  writeLines(c(
+    "\\documentclass{article}",
+    "\\begin{document}",
+    "\\section{Fixture}\\label{sec-fixture}",
+    "\\end{document}"
+  ), tex)
+
+  aux <- env$materialize_latex_reference_aux(tex)
+
+  expect_identical(basename(aux), "paper-reference-labels.aux")
+  expect_true(file.exists(aux))
+  expect_true(any(grepl("newlabel{sec-fixture}", readLines(aux, warn = FALSE), fixed = TRUE)))
+  expect_false(file.exists(file.path(dir, "paper-reference-labels.pdf")))
+  expect_false(file.exists(file.path(dir, "paper-reference-labels.xdv")))
+  expect_false(file.exists(file.path(dir, "paper-reference-labels.log")))
+})
+
 
 test_that("conference poster requirements are opt-in", {
   env <- new.env(parent = globalenv())

@@ -90,9 +90,10 @@ test_that("writing sample assembly derives identity and section selection from o
   header_includes <- unlist(named_meta$`header-includes`, use.names = FALSE)
   expect_true(any(grepl("\\providecommand{\\citeproc}[2]{#2}", header_includes, fixed = TRUE)))
   expect_true(any(grepl("\\usepackage{xr}", header_includes, fixed = TRUE)))
-  expect_true(any(grepl("\\externaldocument[full-][nocite]{../../paper/paper}", header_includes, fixed = TRUE)))
+  expect_true(any(grepl("\\externaldocument[full-][nocite]{../../paper/paper-reference-labels}", header_includes, fixed = TRUE)))
   expect_true(any(grepl("(full paper)", header_includes, fixed = TRUE)))
   expect_false(isTRUE(named_meta$crossref$`ref-hyperlink`))
+  expect_true(isTRUE(named_meta$format$pdf$`keep-tex`))
   selector <- named_meta$filters[[length(named_meta$filters)]]
   expect_identical(selector$at, "post-quarto")
   expect_identical(selector$path, "../filters/select-sections.lua")

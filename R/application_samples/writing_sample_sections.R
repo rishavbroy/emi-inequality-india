@@ -101,18 +101,20 @@ sample_metadata <- function(source_metadata, spec, variant, manifest) {
     meta$`suppress-bibliography` <- TRUE
     meta$`link-citations` <- FALSE
     meta$crossref <- utils::modifyList(meta$crossref %||% list(), list(`ref-hyperlink` = FALSE))
+    meta$format <- meta$format %||% list()
+    meta$format$pdf <- utils::modifyList(meta$format$pdf %||% list(), list(`keep-tex` = TRUE))
     # Pandoc normally defines \citeproc only when it emits a bibliography.
     # Excerpts suppress that bibliography, while existing LaTeX table notes use
     # \citeproc{ref-key}{visible label} for source labels.  A fallback keeps
     # those labels readable without overriding Pandoc when it defines the macro.
     #
     # The LaTeX xr package is the standard mechanism for cross-document labels.
-    # Quarto preserves paper.aux for the full-paper render; excerpt references
-    # use their local label when the referenced item is retained and otherwise
-    # fall back to the full paper's numbered label with an explicit qualifier.
+    # The paper target creates paper-reference-labels.aux from the rendered
+    # paper.tex; excerpt references use a local label when the referenced item
+    # is retained and otherwise fall back to that full-paper label.
     external_reference_header <- paste(
       "\\usepackage{xr}",
-      "\\externaldocument[full-][nocite]{../../paper/paper}",
+      "\\externaldocument[full-][nocite]{../../paper/paper-reference-labels}",
       "\\makeatletter",
       "\\let\\sample@localref\\ref",
       paste0(
