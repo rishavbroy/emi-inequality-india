@@ -30,9 +30,52 @@ extract_matches <- function(text, pattern) {
   hits[!is.na(hits)]
 }
 
+markdown_fence_mask <- function(lines) {
+  in_fence <- FALSE
+  fence_char <- ""
+  fence_length <- 0L
+  masked <- rep(FALSE, length(lines))
+
+  for (i in seq_along(lines)) {
+    line <- lines[[i]]
+    fence_match <- regexec("^\\s*(`{3,}|~{3,})", line, perl = TRUE)
+    groups <- regmatches(line, fence_match)[[1]]
+
+    if (!in_fence && length(groups) >= 2L) {
+      token <- groups[[2]]
+      in_fence <- TRUE
+      fence_char <- substr(token, 1L, 1L)
+      fence_length <- nchar(token)
+      masked[[i]] <- TRUE
+      next
+    }
+
+    if (in_fence) {
+      masked[[i]] <- TRUE
+      close_pattern <- sprintf("^\\s*%s{%d,}\\s*$", fence_char, fence_length)
+      if (grepl(close_pattern, line, perl = TRUE)) {
+        in_fence <- FALSE
+        fence_char <- ""
+        fence_length <- 0L
+      }
+    }
+  }
+
+  masked
+}
+
+malformed_atx_heading_lines <- function(lines) {
+  if (!length(lines)) return(integer())
+
+  fenced <- markdown_fence_mask(lines)
+  headings <- which(!fenced & grepl("^#{1,6}[[:space:]]+", lines, perl = TRUE))
+  headings[headings > 1L & nzchar(trimws(lines[headings - 1L]))]
+}
+
 scan_crossrefs <- function(path) {
   lines <- readLines(path, warn = FALSE)
   text <- paste(lines, collapse = "\n")
+  malformed_heading_lines <- malformed_atx_heading_lines(lines)
 
   refs <- unique(extract_matches(text, "@(fig|tbl|sec|eq)-[A-Za-z0-9_-]+"))
   latex_refs <- unique(extract_matches(text, "\\\\ref\\{(fig|tbl|sec|eq)-[A-Za-z0-9_-]+\\}"))
@@ -72,6 +115,8 @@ scan_crossrefs <- function(path) {
     labels = length(labels),
     unresolved = length(unresolved),
     unresolved_refs = paste(sort(unique(unresolved)), collapse = "; "),
+    malformed_headings = length(malformed_heading_lines),
+    malformed_heading_lines = paste(malformed_heading_lines, collapse = "; "),
     stringsAsFactors = FALSE
   )
 }
@@ -87,22 +132,47 @@ cat("=====================\n")
 for (i in seq_len(nrow(results))) {
   row <- results[i, ]
   cat(sprintf(
-    "- %s: %s refs, %s labels, %s unresolved\n",
+    "- %s: %s refs, %s labels, %s unresolved, %s malformed headings\n",
     row$file,
     row$refs,
     row$labels,
-    row$unresolved
+    row$unresolved,
+    row$malformed_headings
   ))
   if (nzchar(row$unresolved_refs)) {
     cat(sprintf("  unresolved: %s\n", row$unresolved_refs))
   }
+  if (nzchar(row$malformed_heading_lines)) {
+    cat(sprintf("  headings without required preceding blank lines: %s\n", row$malformed_heading_lines))
+  }
 }
 
 if (strict_report) {
-  bad <- results[results$unresolved > 0L, , drop = FALSE]
+  bad <- results[
+    results$unresolved > 0L | results$malformed_headings > 0L,
+    ,
+    drop = FALSE
+  ]
   if (nrow(bad)) {
-    details <- paste(sprintf("%s: %s", bad$file, bad$unresolved_refs), collapse = "\\n")
-    stop("Strict public cross-reference audit failed:\n", details, call. = FALSE)
+    details <- vapply(seq_len(nrow(bad)), function(i) {
+      row <- bad[i, ]
+      issues <- character()
+      if (row$unresolved > 0L) {
+        issues <- c(issues, paste0("unresolved=", row$unresolved_refs))
+      }
+      if (row$malformed_headings > 0L) {
+        issues <- c(
+          issues,
+          paste0("headings_without_blank_line=", row$malformed_heading_lines)
+        )
+      }
+      paste0(row$file, ": ", paste(issues, collapse = "; "))
+    }, character(1))
+    stop(
+      "Strict public cross-reference audit failed:\n",
+      paste(details, collapse = "\n"),
+      call. = FALSE
+    )
   }
 }
 

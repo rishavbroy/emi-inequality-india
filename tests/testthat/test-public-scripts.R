@@ -37,6 +37,72 @@ test_that("rendered and archived artifacts are treated as binary by Git", {
   )
 })
 
+
+test_that("cross-reference audit enforces Pandoc heading separation", {
+  skip_if(Sys.which("Rscript") == "")
+
+  bad <- tempfile(fileext = ".qmd")
+  writeLines(c(
+    "---",
+    "number-sections: true",
+    "---",
+    "",
+    "Paragraph.",
+    "# Broken {#sec-broken}",
+    "",
+    "See @sec-broken."
+  ), bad)
+
+  bad_output <- system2(
+    "Rscript",
+    c(
+      shQuote(repo_file("scripts", "audit_crossrefs.R")),
+      "--strict-report",
+      shQuote(bad)
+    ),
+    stdout = TRUE,
+    stderr = TRUE
+  )
+
+  expect_true((attr(bad_output, "status") %||% 0L) != 0L)
+  expect_true(any(grepl(
+    "headings_without_blank_line",
+    bad_output,
+    fixed = TRUE
+  )))
+
+  good <- tempfile(fileext = ".qmd")
+  writeLines(c(
+    "---",
+    "number-sections: true",
+    "---",
+    "",
+    "Paragraph.",
+    "",
+    "# Valid {#sec-valid}",
+    "",
+    "```r",
+    "x <- 1",
+    "# code comment",
+    "```",
+    "",
+    "See @sec-valid."
+  ), good)
+
+  good_output <- system2(
+    "Rscript",
+    c(
+      shQuote(repo_file("scripts", "audit_crossrefs.R")),
+      "--strict-report",
+      shQuote(good)
+    ),
+    stdout = TRUE,
+    stderr = TRUE
+  )
+
+  expect_identical(attr(good_output, "status") %||% 0L, 0L)
+})
+
 test_that("current public build helper scripts parse", {
   expect_silent(parse(repo_file("_targets.R")))
   for (file in repo_pipeline_target_files()) {
