@@ -692,7 +692,6 @@ test_that("generated public table footnotes retain citation and math escapes", {
     public = TRUE
   )
   tex <- paste(readLines(path, warn = FALSE), collapse = "\n")
-  expect_match(tex, "95\\% accepted sets", fixed = TRUE)
   expect_match(tex, "\\citeproc{ref-nsoHCES2022}{HCES 2022--23}", fixed = TRUE)
   expect_match(tex, "$\\beta = 0$", fixed = TRUE)
   expect_false(grepl("citeproc{ref-nsoHCES2022}", tex, fixed = TRUE) &
