@@ -27,6 +27,14 @@ test_that("application-sample manifest references current paper sections and cod
 })
 
 
+test_that("paper cross-references use Quarto identifiers", {
+  paper <- readLines(repo_file("paper", "paper.qmd"), warn = FALSE)
+  raw_refs <- grep("(?:Table|Figure|Section|Equation) \\\\ref\\{(?:tbl|fig|sec|eq)-", paper, perl = TRUE, value = TRUE)
+
+  expect_length(raw_refs, 0L)
+})
+
+
 test_that("application-sample directory ignores only transient work files", {
   ignore <- readLines(repo_file(".gitignore"), warn = FALSE)
   application_rules <- trimws(ignore[grepl("^application-samples/", trimws(ignore))])
@@ -78,6 +86,12 @@ test_that("writing sample assembly derives identity and section selection from o
   expect_match(named, "sample-sections", fixed = TRUE)
   expect_match(named, selected[[1L]], fixed = TRUE)
   expect_match(named, "suppress-bibliography: true", fixed = TRUE)
+  named_meta <- env$read_qmd_metadata(readLines(out_named, warn = FALSE))
+  header_includes <- unlist(named_meta$`header-includes`, use.names = FALSE)
+  expect_true(any(grepl("\\providecommand{\\citeproc}[2]{#2}", header_includes, fixed = TRUE)))
+  selector <- named_meta$filters[[length(named_meta$filters)]]
+  expect_identical(selector$at, "post-quarto")
+  expect_identical(selector$path, "../filters/select-sections.lua")
   expect_match(named, "Rishav Roy", fixed = TRUE)
   expect_match(named, manifest$paper$repository_url, fixed = TRUE)
   expect_match(anonymous, "author: Anonymous", fixed = TRUE)
@@ -115,6 +129,27 @@ test_that("coding sample assembly uses static code blocks", {
   expect_false(grepl("DefineVerbatimEnvironment", rendered, fixed = TRUE))
 })
 
+test_that("coding sample selected outputs come from the manifest registry", {
+  skip_if_not_installed("knitr")
+  env <- sample_test_env()
+  sys.source(repo_file("R", "application_samples", "coding_sample_outputs.R"), envir = env)
+  table_file <- tempfile(fileext = ".csv")
+  utils::write.csv(data.frame(label = c("a", "b"), estimate = c(1, 2)), table_file, row.names = FALSE)
+  manifest <- list(coding_outputs = list(result = list(
+    type = "table", file = table_file, title = "Result",
+    columns = c("label", "estimate"), labels = c("Label", "Estimate")
+  )))
+  spec <- list(outputs = "result")
+
+  lines <- env$coding_sample_output_lines(spec, manifest)
+  text <- paste(lines, collapse = "\n")
+
+  expect_match(text, "# Selected Outputs", fixed = TRUE)
+  expect_match(text, "## Result", fixed = TRUE)
+  expect_match(text, "\\|\\s*Label\\s*\\|\\s*Estimate\\s*\\|", perl = TRUE)
+  expect_match(text, "1.000", fixed = TRUE)
+})
+
 test_that("section-selection Lua filter retains preamble and requested sections", {
   skip_if(!nzchar(Sys.which("pandoc")), "pandoc is unavailable")
   input <- tempfile(fileext = ".md")
@@ -122,6 +157,7 @@ test_that("section-selection Lua filter retains preamble and requested sections"
   writeLines(c(
     "---",
     "sample-sections:",
+    "  - sec-a",
     "  - sec-b",
     "---",
     "Preamble.",
@@ -159,9 +195,9 @@ test_that("section-selection Lua filter retains preamble and requested sections"
   rendered <- paste(readLines(output, warn = FALSE), collapse = "\n")
   expect_match(rendered, "Preamble.", fixed = TRUE)
   expect_match(rendered, "Abstract text.", fixed = TRUE)
+  expect_match(rendered, "Alpha.", fixed = TRUE)
   expect_match(rendered, "Bravo.", fixed = TRUE)
   expect_match(rendered, "Charlie.", fixed = TRUE)
-  expect_false(grepl("Alpha.", rendered, fixed = TRUE))
   expect_false(grepl("Delta.", rendered, fixed = TRUE))
 })
 

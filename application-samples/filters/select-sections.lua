@@ -9,7 +9,10 @@ local function selected_ids(meta)
   if value == nil then
     return ids
   end
-  if value.t == "MetaList" then
+  -- Pandoc represents metadata sequences as List values in current releases.
+  -- pandoc.utils.type() is the supported way to distinguish metadata values.
+  local value_type = pandoc.utils.type(value)
+  if value_type == "List" or value_type == "MetaList" then
     for _, item in ipairs(value) do
       ids[pandoc.utils.stringify(item)] = true
     end

@@ -12,7 +12,7 @@ read_application_sample_manifest <- function(path = application_sample_manifest_
 }
 
 validate_application_sample_manifest <- function(manifest) {
-  required <- c("schema_version", "paper", "identity", "writing", "coding")
+  required <- c("schema_version", "paper", "identity", "writing", "coding_outputs", "coding")
   missing <- setdiff(required, names(manifest))
   if (length(missing)) {
     stop("Application-sample manifest is missing: ", paste(missing, collapse = ", "), call. = FALSE)
@@ -33,6 +33,15 @@ validate_application_sample_manifest <- function(manifest) {
   }
   if (any(!nzchar(coding_ids)) || anyDuplicated(coding_ids)) {
     stop("Coding-sample IDs must be nonempty and unique.", call. = FALSE)
+  }
+  output_ids <- names(manifest$coding_outputs)
+  if (is.null(output_ids) || any(!nzchar(output_ids)) || anyDuplicated(output_ids)) {
+    stop("coding_outputs must be a named mapping with unique IDs.", call. = FALSE)
+  }
+  referenced_outputs <- unique(unlist(lapply(manifest$coding, function(x) x$outputs %||% character()), use.names = FALSE))
+  missing_outputs <- setdiff(referenced_outputs, output_ids)
+  if (length(missing_outputs)) {
+    stop("Coding samples reference unknown selected outputs: ", paste(missing_outputs, collapse = ", "), call. = FALSE)
   }
   invisible(TRUE)
 }

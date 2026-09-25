@@ -99,6 +99,15 @@ if [[ "$include_poster" == "true" ]]; then
 else
   rm -f "$tmpdir/posters/2026_predoc_conference/poster.pdf" "$tmpdir/posters/2026_predoc_conference/RishavRoy-Education.png"
 fi
+# Preserve application-sample configuration and filters from the working tree even
+# before they are committed; omit only transient render files. Generated PDFs are
+# copied separately below so stale or retired outputs cannot leak into the archive.
+if [[ -d application-samples ]]; then
+  rm -rf "$tmpdir/application-samples"
+  cp -R application-samples "$tmpdir/application-samples"
+  rm -rf "$tmpdir/application-samples/.work" "$tmpdir/application-samples/output"
+fi
+
 if [[ "$include_samples" == "true" ]]; then
   mkdir -p "$tmpdir/application-samples/output"
   while IFS= read -r sample_output; do

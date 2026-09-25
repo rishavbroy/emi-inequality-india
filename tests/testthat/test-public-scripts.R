@@ -212,8 +212,7 @@ test_that("debug review archives retain intermediate diagnostics but exclude raw
   system2(
     "git",
     c(
-      "-C", shQuote(root), "add", "README.md", "scripts/make_review_archive.sh",
-      "application-samples/samples.yml", "application-samples/filters/select-sections.lua"
+      "-C", shQuote(root), "add", "README.md", "scripts/make_review_archive.sh"
     )
   )
 

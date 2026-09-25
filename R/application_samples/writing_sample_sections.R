@@ -92,7 +92,18 @@ sample_metadata <- function(source_metadata, spec, variant, manifest) {
     # itself while citeproc still renders the in-text citations.
     meta$`suppress-bibliography` <- TRUE
     meta$`link-citations` <- FALSE
-    meta$filters <- c(meta$filters %||% list(), "../filters/select-sections.lua")
+    # Pandoc normally defines \citeproc only when it emits a bibliography.
+    # Excerpts suppress that bibliography, while existing LaTeX table notes use
+    # \citeproc{ref-key}{visible label} for source labels.  A fallback keeps
+    # those labels readable without overriding Pandoc when it defines the macro.
+    meta$`header-includes` <- c(
+      meta$`header-includes` %||% list(),
+      list("\\providecommand{\\citeproc}[2]{#2}")
+    )
+    meta$filters <- c(
+      meta$filters %||% list(),
+      list(list(at = "post-quarto", path = "../filters/select-sections.lua"))
+    )
     meta$`sample-sections` <- unname(unlist(spec$sections, use.names = FALSE))
   }
   list(metadata = meta, abstract = abstract)
@@ -102,17 +113,6 @@ normalize_sample_resource_paths <- function(lines) {
   gsub("../outputs/", "../../outputs/", lines, fixed = TRUE)
 }
 
-replace_excerpt_external_refs <- function(lines) {
-  lines <- gsub("@fig-[A-Za-z0-9_-]+", "the corresponding figure in the full paper", lines, perl = TRUE)
-  lines <- gsub("@tbl-[A-Za-z0-9_-]+", "the corresponding table in the full paper", lines, perl = TRUE)
-  lines <- gsub("@sec-[A-Za-z0-9_-]+", "the corresponding section of the full paper", lines, perl = TRUE)
-  lines <- gsub("@eq-[A-Za-z0-9_-]+", "the corresponding equation in the full paper", lines, perl = TRUE)
-  lines <- gsub("Table \\\\ref\\{tbl-[A-Za-z0-9_-]+\\}", "the corresponding table in the full paper", lines, perl = TRUE)
-  lines <- gsub("Figure \\\\ref\\{fig-[A-Za-z0-9_-]+\\}", "the corresponding figure in the full paper", lines, perl = TRUE)
-  lines <- gsub("Section \\\\ref\\{sec-[A-Za-z0-9_-]+\\}", "the corresponding section of the full paper", lines, perl = TRUE)
-  lines <- gsub("Equation \\\\ref\\{eq-[A-Za-z0-9_-]+\\}", "the corresponding equation in the full paper", lines, perl = TRUE)
-  lines
-}
 
 assemble_writing_sample_qmd <- function(source, spec, variant, manifest, output_qmd) {
   source_lines <- readLines(source, warn = FALSE)
@@ -120,7 +120,6 @@ assemble_writing_sample_qmd <- function(source, spec, variant, manifest, output_
   prepared <- sample_metadata(read_qmd_metadata(source_lines), spec, variant, manifest)
   yaml_lines <- quarto_yaml_lines(prepared$metadata, indent.mapping.sequence = TRUE)
   body <- normalize_sample_resource_paths(parts$body)
-  if (!identical(spec$mode %||% "excerpt", "full")) body <- replace_excerpt_external_refs(body)
 
   preamble <- c(
     writing_sample_notice(spec, variant, manifest, source_lines),

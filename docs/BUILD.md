@@ -19,7 +19,7 @@ There is no separate diagnostic configuration. Extended checks and benchmarks ar
 | Render and validate the papers | `make paper` |
 | Render application samples | `make samples` |
 
-`make samples` reads `application-samples/samples.yml`. Writing samples are selected by ordinary Quarto section IDs from `paper/paper.qmd`; coding samples use marker-delimited R excerpts. Named and anonymous variants are generated from the same selections.
+`make samples` reads `application-samples/samples.yml`. Writing samples are selected by ordinary Quarto section IDs from `paper/paper.qmd`; coding samples use marker-delimited R excerpts. Named and anonymous variants are generated from the same selections. Writing excerpts run their section selector at Quarto's `post-quarto` stage, after cross-references have been resolved against the complete paper, so omitted targets retain the full paper's numbering.
 | Render the conference poster | `make poster` |
 | Re-render all QMD families | `make qmd-renders` |
 | Run the ordinary full build | `make` or `make all` |
@@ -27,6 +27,11 @@ There is no separate diagnostic configuration. Extended checks and benchmarks ar
 | Also destroy the `{targets}` store | `make clean-all` |
 
 `make` and `make all` call `bash scripts/run_full_build.sh` with its defaults.
+
+
+## GitHub Pages publication
+
+`.github/workflows/pages.yml` publishes the tracked current paper and named application-sample PDFs to GitHub Pages after pushes to `main`. It copies already-rendered files; it does not install R, restore raw data, or rerun the research build in CI. This keeps publication separate from empirical reconstruction while ensuring the browser-hosted PDFs update whenever a successful local build is committed. Anonymous application samples are excluded from Pages because the repository URL itself identifies the author.
 
 ## Full-build options
 

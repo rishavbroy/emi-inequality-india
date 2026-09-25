@@ -1,13 +1,13 @@
-# Unequal Access to Equalizing Opportunities
+# Inequality in a Potential Equalizer of Opportunity
 
-This repository contains the code, metadata, processed outputs, and build instructions for my paper, "Unequal Access to Equalizing Opportunities: Variation in Linguistic Conditions, Access to English-Medium Instruction, and Local Economic Outcomes in India."
+This repository contains the code, metadata, processed outputs, and build instructions for my paper, "Inequality in a Potential Equalizer of Opportunity: Variation in the Accessibility and Net Benefits of English-Medium Instruction in India."
 
 For build and replication commands, see [`docs/BUILD.md`](docs/BUILD.md) and [`REPLICATION.md`](REPLICATION.md).
 A raw-data-less district analysis replication is available with `make replicate-processed`; `make verify-processed-replication` checks its shared empirical targets against the full-source target store. Full reconstruction still requires the source files documented in `REPLICATION.md`.
 
 ## Key files
 
-- **[`paper/paper.pdf`](paper/paper.pdf): Current paper.** Its tables, figures, and reported quantities are generated from the repository.
+- **[`paper/paper.pdf`](paper/paper.pdf): Current paper.** Its tables, figures, and reported quantities are generated from the repository. A direct browser-hosted copy is available at <https://rishavbroy.github.io/emi-inequality-india/paper.pdf>.
 - [`paper/paper.qmd`](paper/paper.qmd): Current paper source.
 - [`archive/legacy-paper-drafts/2026-09-previous-final/`](archive/legacy-paper-drafts/2026-09-previous-final/): Frozen previous paper source and PDF.
 - [`REPLICATION.md`](REPLICATION.md): Replication guide.

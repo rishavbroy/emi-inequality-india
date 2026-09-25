@@ -35,13 +35,16 @@ extract_between_sample_markers <- function(file, id) {
 
 coding_sample_notice <- function(spec, variant, manifest) {
   heading <- paste0("**CODING SAMPLE: ", toupper(spec$id), " COPY**")
-  description <- "These excerpts are selected from the replication code for the paper."
+  description <- "These excerpts are selected from the replication code for the paper. Selected outputs appear at the end of the document."
   if (identical(variant, "named")) {
     description <- paste0(
       description,
       " The [full paper](", manifest$paper$full_paper_url, ") and [repository](",
       manifest$paper$repository_url,
-      ") are available online. This PDF can be generated using `make samples` or `bash scripts/run_full_build.sh`."
+      ") are available online. The complete paper-facing table and figure assembly code is in ",
+      "[`R/output/make_tables.R`](", manifest$paper$repository_url, "/blob/main/R/output/make_tables.R) and ",
+      "[`R/output/make_figures.R`](", manifest$paper$repository_url, "/blob/main/R/output/make_figures.R). ",
+      "This PDF can be generated using `make samples` or `bash scripts/run_full_build.sh`."
     )
   }
   c(heading, "", description, "")

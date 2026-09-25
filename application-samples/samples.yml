@@ -1,7 +1,7 @@
 schema_version: 1
 paper:
   source: paper/paper.qmd
-  full_paper_url: https://github.com/rishavbroy/emi-inequality-india/blob/main/paper/paper.pdf
+  full_paper_url: https://rishavbroy.github.io/emi-inequality-india/paper.pdf
   repository_url: https://github.com/rishavbroy/emi-inequality-india
 identity:
   named:
@@ -32,8 +32,59 @@ writing:
       - sec-access
   - id: full
     mode: full
+coding_outputs:
+  selection_ame:
+    type: table
+    file: outputs/tables/appendix/appendix_selection_ame.csv
+    title: Selected enrollment-model average marginal effects
+    description: Selected average slopes and discrete comparisons from the survey-weighted enrollment model.
+    rows:
+      - "Religion: Muslim (ref: Hindu)"
+      - "Social group: Scheduled Tribe (ref: Other)"
+      - "Social group: Scheduled Caste"
+      - "Social group: Other Backward Class"
+      - "Distance 1–2km (ref: <1km)"
+    columns:
+      - Term
+      - estimate
+      - std.error
+    labels:
+      - Covariate or comparison
+      - Estimate
+      - SE
+  weak_iv:
+    type: table
+    file: outputs/tables/appendix/appendix_iv_weak_inference.csv
+    title: Weak-instrument-robust long-run inference
+    description: Long-run IV estimates, effective first-stage F statistics, and Anderson--Rubin acceptance sets.
+    columns:
+      - outcome
+      - estimate
+      - std.error
+      - effective_f
+      - ar_95_components
+    labels:
+      - Outcome
+      - 2SLS estimate
+      - SE
+      - Effective F
+      - AR 95% set
+  consumption_validation:
+    type: figure
+    file: outputs/figures/appendix/appendix_consumption_hces_consistency.pdf
+    title: Consumption-series consistency
+    description: Validation of the harmonized consumption series used in the later-outcome analysis.
+  lineage_logic:
+    type: figure
+    file: outputs/figures/appendix/appendix_a2_lineage_logic.pdf
+    title: District-lineage construction
+    description: Summary of the cross-vintage district-lineage logic used to harmonize changing district boundaries.
 coding:
   - id: short
+    outputs:
+      - selection_ame
+      - weak_iv
+      - consumption_validation
     excerpts:
       - id: code-survey-probit
         file: R/selection/estimate_selection_probit.R
@@ -48,6 +99,11 @@ coding:
         file: R/prices/build_temporal_price_series.R
         title: Linked state-sector price series
   - id: full
+    outputs:
+      - selection_ame
+      - weak_iv
+      - consumption_validation
+      - lineage_logic
     excerpts:
       - id: code-survey-probit
         file: R/selection/estimate_selection_probit.R
