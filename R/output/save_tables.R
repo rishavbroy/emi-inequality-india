@@ -330,6 +330,10 @@ ame_modelsummary_table <- function(table, name) {
     models = list(mfx),
     gof_map = ame_gof_map(),
     gof_function = ame_gof_function(table),
+    # Use the same coefficient/uncertainty row layout as the other regression tables.
+    # Explicit formatting prevents native marginaleffects columns from widening the table.
+    estimate = "{estimate}{stars}",
+    statistic = "({std.error})",
     stars = regression_star_levels(),
     fmt = 3,
     title = table_caption(name),

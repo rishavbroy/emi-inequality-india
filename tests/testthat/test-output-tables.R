@@ -394,7 +394,7 @@ test_that("probit TeX stacks standard errors below AME estimates", {
   expect_false(grepl("\\multicolumn{2}{c}{Enrolled in School (1 = yes)}", tex, fixed = TRUE))
 })
 
-test_that("native marginaleffects objects are preserved for modelsummary rendering", {
+test_that("native marginaleffects tables preserve metadata and stack uncertainty rows", {
   mfx <- structure(
     data.frame(
       term = "AGE",
@@ -419,6 +419,21 @@ test_that("native marginaleffects objects are preserved for modelsummary renderi
   expect_equal(attr(attr(formatted, "marginaleffects_object"), "model"), "underlying model metadata")
   expect_s3_class(attr(table, "marginaleffects_object"), "marginaleffects")
   expect_equal(attr(table, "marginaleffects_n"), 100)
+
+  skip_if_not_installed("modelsummary")
+  skip_if_not_installed("kableExtra")
+  tex_lines <- strsplit(
+    paste(as.character(ame_modelsummary_table(table, "appendix_selection_ame")), collapse = "\n"),
+    "\n",
+    fixed = TRUE
+  )[[1L]]
+  estimate_row <- grep("-0.100", tex_lines, fixed = TRUE)
+  se_row <- grep("(0.020)", tex_lines, fixed = TRUE)
+  expect_length(estimate_row, 1L)
+  expect_equal(se_row, estimate_row + 1L)
+  expect_false(any(grepl("Std. Error", tex_lines, fixed = TRUE)))
+  expect_equal(length(strsplit(tex_lines[[estimate_row]], "&", fixed = TRUE)[[1L]]), 2L)
+  expect_equal(length(strsplit(tex_lines[[se_row]], "&", fixed = TRUE)[[1L]]), 2L)
 })
 
 
