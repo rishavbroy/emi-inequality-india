@@ -99,11 +99,16 @@ test_that("paper reference-label pass writes aux data without replacing the PDF"
     "\\end{document}"
   ), tex)
 
+  stale_aux <- file.path(dir, "paper-reference-labels.aux")
+  writeLines("\\newlabel{sec-stale}{{99}{99}}", stale_aux)
+
   aux <- env$materialize_latex_reference_aux(tex)
+  aux_lines <- readLines(aux, warn = FALSE)
 
   expect_identical(basename(aux), "paper-reference-labels.aux")
   expect_true(file.exists(aux))
-  expect_true(any(grepl("newlabel{sec-fixture}", readLines(aux, warn = FALSE), fixed = TRUE)))
+  expect_true(any(grepl("newlabel{sec-fixture}", aux_lines, fixed = TRUE)))
+  expect_false(any(grepl("sec-stale", aux_lines, fixed = TRUE)))
   expect_false(file.exists(file.path(dir, "paper-reference-labels.pdf")))
   expect_false(file.exists(file.path(dir, "paper-reference-labels.xdv")))
   expect_false(file.exists(file.path(dir, "paper-reference-labels.log")))
@@ -270,6 +275,97 @@ test_that("debug review archives retain intermediate diagnostics but exclude raw
   expect_true("application-samples/filters/select-sections.lua" %in% listing)
   expect_false(any(grepl("^application-samples/output/", listing)))
   expect_false("data/raw/private.csv" %in% listing)
+})
+
+test_that("review archives include every manifest-declared application sample", {
+  skip_if(Sys.which("git") == "")
+  skip_if(Sys.which("zip") == "")
+  skip_if(Sys.which("Rscript") == "")
+
+  root <- tempfile("review-archive-samples-")
+  dir.create(root, recursive = TRUE)
+  on.exit(unlink(root, recursive = TRUE, force = TRUE), add = TRUE)
+
+  dir.create(file.path(root, "scripts"), recursive = TRUE)
+  dir.create(file.path(root, "R", "io"), recursive = TRUE)
+  dir.create(file.path(root, "R", "application_samples"), recursive = TRUE)
+  dir.create(file.path(root, "application-samples", "output"), recursive = TRUE)
+  file.copy(
+    repo_file("scripts", "make_review_archive.sh"),
+    file.path(root, "scripts", "make_review_archive.sh")
+  )
+  file.copy(
+    repo_file("R", "io", "utils_data_frame.R"),
+    file.path(root, "R", "io", "utils_data_frame.R")
+  )
+  file.copy(
+    repo_file("R", "application_samples", "sample_manifest.R"),
+    file.path(root, "R", "application_samples", "sample_manifest.R")
+  )
+  writeLines(c(
+    "schema_version: 1",
+    "paper:",
+    "  source: paper/paper.qmd",
+    "identity:",
+    "  named:",
+    "    author: Named",
+    "    prefix: Named",
+    "  anonymous:",
+    "    author: Anonymous",
+    "    prefix: Anonymous",
+    "writing:",
+    "  - id: 5pg",
+    "    target_pages: 5",
+    "    sections: [sec-fixture]",
+    "coding_outputs:",
+    "  fixture:",
+    "    type: table",
+    "    file: outputs/fixture.csv",
+    "coding:",
+    "  - id: full",
+    "    outputs: [fixture]",
+    "    excerpts: []"
+  ), file.path(root, "application-samples", "samples.yml"))
+
+  expected <- c(
+    "application-samples/output/Named_WritingSample_5pg.pdf",
+    "application-samples/output/Named_CodingSample.pdf",
+    "application-samples/output/Anonymous_WritingSample_5pg.pdf",
+    "application-samples/output/Anonymous_CodingSample.pdf"
+  )
+  for (path in expected) {
+    dir.create(dirname(file.path(root, path)), recursive = TRUE, showWarnings = FALSE)
+    writeBin(charToRaw("pdf fixture"), file.path(root, path))
+  }
+
+  writeLines("tracked", file.path(root, "README.md"))
+  system2("git", c("-C", shQuote(root), "init", "-q"))
+  system2(
+    "git",
+    c(
+      "-C", shQuote(root), "add",
+      "README.md", "scripts/make_review_archive.sh",
+      "R/io/utils_data_frame.R", "R/application_samples/sample_manifest.R",
+      "application-samples/samples.yml"
+    )
+  )
+
+  old_wd <- setwd(root)
+  on.exit(setwd(old_wd), add = TRUE)
+  output <- system2(
+    "bash",
+    c(
+      "scripts/make_review_archive.sh",
+      "--with-samples",
+      "--allow-incomplete",
+      "--output", "review.zip"
+    ),
+    stdout = TRUE,
+    stderr = TRUE
+  )
+  expect_null(attr(output, "status"))
+  listing <- utils::unzip("review.zip", list = TRUE)$Name
+  expect_true(all(expected %in% listing))
 })
 
 test_that("selected target warning scope includes executed dependencies", {

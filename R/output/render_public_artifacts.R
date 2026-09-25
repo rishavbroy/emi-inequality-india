@@ -66,9 +66,17 @@ materialize_latex_reference_aux <- function(
   }
 
   tex_path <- normalizePath(tex_path, winslash = "/", mustWork = TRUE)
+  output_dir <- dirname(tex_path)
+  aux_path <- file.path(output_dir, paste0(job_name, ".aux"))
+  transient_paths <- file.path(output_dir, paste0(job_name, c(".log", ".out", ".toc", ".xdv")))
+  # A stable job name is useful to downstream sample rendering, but XeLaTeX also
+  # reads an existing auxiliary file with that name. Remove prior pass files so
+  # the retained label index can only describe the current manuscript render.
+  unlink(c(aux_path, transient_paths), force = TRUE)
+
   old_wd <- getwd()
   on.exit(setwd(old_wd), add = TRUE)
-  setwd(dirname(tex_path))
+  setwd(output_dir)
 
   status <- system2(
     engine_path,
@@ -84,12 +92,11 @@ materialize_latex_reference_aux <- function(
     stop("xelatex failed while materializing LaTeX reference labels with status ", status, call. = FALSE)
   }
 
-  aux_path <- file.path(dirname(tex_path), paste0(job_name, ".aux"))
   if (!file.exists(aux_path) || file.info(aux_path)$size <= 0L) {
     stop("LaTeX reference-label pass did not create a non-empty ", aux_path, call. = FALSE)
   }
 
-  unlink(file.path(dirname(tex_path), paste0(job_name, c(".log", ".out", ".toc", ".xdv"))), force = TRUE)
+  unlink(transient_paths, force = TRUE)
   aux_path
 }
 
