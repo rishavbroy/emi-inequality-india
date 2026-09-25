@@ -36,10 +36,7 @@ if (check_application_samples) {
 }
 source_paths <- source_paths[file.exists(source_paths)]
 
-pdf_paths <- c(
-  "paper/paper.pdf",
-  "paper/paper-new.pdf"
-)
+pdf_paths <- "paper/paper.pdf"
 if (check_application_samples) {
   pdf_paths <- c(
     pdf_paths,

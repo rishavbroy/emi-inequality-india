@@ -7,14 +7,14 @@ A raw-data-less district analysis replication is available with `make replicate-
 
 ## Key files
 
-- **[`paper/paper-new.pdf`](paper/paper-new.pdf): Current paper.** Its tables, figures, and reported quantities are generated from the repository.
-- [`paper/paper-new.qmd`](paper/paper-new.qmd): Current paper source.
-- [`paper/paper.qmd`](paper/paper.qmd) and [`paper/paper.pdf`](paper/paper.pdf): Earlier paper retained for comparison and application-sample source excerpts.
+- **[`paper/paper.pdf`](paper/paper.pdf): Current paper.** Its tables, figures, and reported quantities are generated from the repository.
+- [`paper/paper.qmd`](paper/paper.qmd): Current paper source.
+- [`archive/legacy-paper-drafts/2026-09-previous-final/`](archive/legacy-paper-drafts/2026-09-previous-final/): Frozen previous paper source and PDF.
 - [`REPLICATION.md`](REPLICATION.md): Replication guide.
 - [`DATA_AVAILABILITY.md`](DATA_AVAILABILITY.md): Source-by-source data availability and redistribution notes.
 
 - [`docs/plan/roadmap.md`](docs/plan/roadmap.md): Current empirical roadmap and source-first priorities.
-- [`application-samples/output/RishavRoy_WritingSample.pdf`](application-samples/output/RishavRoy_WritingSample.pdf): Reviewer-facing writing sample generated from [marked excerpts](application-samples/specs/writing-10pg.yml) in the [paper](paper/paper.qmd). Cover note updates are still pending.
+- [`application-samples/output/RishavRoy_WritingSample.pdf`](application-samples/output/RishavRoy_WritingSample.pdf): Reviewer-facing writing sample generated from [marked excerpts](application-samples/specs/writing-10pg.yml) from the frozen pre-transition paper while the application-sample renderer is being replaced.
 - [`application-samples/output/RishavRoy_CodingSample.pdf`](application-samples/output/RishavRoy_CodingSample.pdf):  Reviewer-facing coding sample generated from [marked excerpts](application-samples/specs/coding-full.yml) in the [code](R). Cover note updates are still pending.
 
 ## Research question
@@ -36,7 +36,7 @@ Current build status:
 
 ## For faculty reviewers and hiring/admissions committees
 
-I believe the [current paper](paper/paper-new.pdf) displays multiple traits that are essential to high-quality economics research: a commitment to institutional knowledge and literature reviews, a deep understanding of econometrics, and meticulous empirical judgement.
+I believe the [current paper](paper/paper.pdf) displays multiple traits that are essential to high-quality economics research: a commitment to institutional knowledge and literature reviews, a deep understanding of econometrics, and meticulous empirical judgement.
 
 This repository, on the other hand, is intended to signal more than just one PDF. Its current state contains the following:
 
@@ -74,7 +74,7 @@ This repository, on the other hand, is intended to signal more than just one PDF
 make restore   # restore the R library recorded in renv.lock
 make test      # unit tests
 make pipeline  # final research targets, without samples or poster
-make paper     # render and validate the papers
+make paper     # render and validate the paper
 make samples   # application samples
 make all       # ordinary full build; equivalent to scripts/run_full_build.sh
 ```

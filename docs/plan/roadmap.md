@@ -102,7 +102,7 @@ The imperfect-IV consolidation is likewise complete: weak-IV results report the 
 
 ### 5. Paper and reviewer-facing outputs
 
-The final-paper rewrite is implemented in `paper/paper-new.qmd`: the introduction is organized around inherited linguistic conditions, access to EMI, and local economic outcomes; weak first-stage evidence is stated prominently; local associations are distinguished from individual effects; and the migration, selection, identification, and data-construction appendices use the generated evidence. Remaining manuscript work is editorial refinement rather than a new empirical phase.
+The final-paper rewrite is implemented in `paper/paper.qmd`: the introduction is organized around inherited linguistic conditions, access to EMI, and local economic outcomes; weak first-stage evidence is stated prominently; local associations are distinguished from individual effects; and the migration, selection, identification, and data-construction appendices use the generated evidence. Remaining manuscript work is editorial refinement rather than a new empirical phase.
 
 ### 6. Processed-data replication
 

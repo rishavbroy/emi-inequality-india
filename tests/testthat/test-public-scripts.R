@@ -72,6 +72,17 @@ test_that("raw source registry is a tracked target input", {
   expect_true("raw_file_manifest_file" %in% all.names(command))
 })
 
+test_that("paper render has one current manuscript target", {
+  manifest <- repo_target_manifest()
+  paper_targets <- manifest$name[manifest$name %in% c(
+    "paper_qmd", "paper", "paper_new_qmd", "paper_new"
+  )]
+
+  expect_setequal(paper_targets, c("paper_qmd", "paper"))
+  expect_match(repo_target_command("paper_qmd"), "paper/paper.qmd", fixed = TRUE)
+  expect_false(grepl("paper-new", repo_target_definition_text(), fixed = TRUE))
+})
+
 test_that("conference poster requirements are opt-in", {
   env <- new.env(parent = globalenv())
   sys.source(repo_file("scripts", "public_output_contract.R"), envir = env)
@@ -347,7 +358,7 @@ test_that("target issue printer selects columns without data-frame drop warnings
 
 test_that("active QMD citations resolve through the project bibliography", {
   source(repo_file("scripts", "public_output_contract.R"), local = TRUE)
-  qmd_sources <- unique(c(public_qmd_sources(), "paper/paper-new.qmd"))
+  qmd_sources <- public_qmd_sources()
   bibliography <- readLines(repo_file("paper", "references.bib"), warn = FALSE)
   bibliography_keys <- sub(
     "^@[[:alpha:]]+\\{([^,]+),.*$",

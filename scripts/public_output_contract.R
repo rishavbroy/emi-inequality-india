@@ -3,17 +3,16 @@
 public_qmd_sources <- function() {
   c(
     "paper/paper.qmd",
-    "paper/paper-new.qmd",
     "posters/2026_predoc_conference/poster.qmd"
   )
 }
 
 public_report_value_sources <- function() {
-  c("paper/paper.qmd", "paper/paper-new.qmd")
+  "paper/paper.qmd"
 }
 
 
-paper_new_appendix_render_inputs <- function() {
+paper_appendix_render_inputs <- function() {
   c(
     "outputs/figures/appendix/appendix_consumption_hces_consistency.pdf",
     "outputs/figures/appendix/appendix_historical_language_persistence.pdf",
@@ -38,12 +37,6 @@ poster_render_inputs <- function() {
 required_public_render_inputs <- function(require_poster = FALSE) {
   files <- c(
     "paper/references.bib",
-    "outputs/tables/main/sum_tbl_probit_quant.csv",
-    "outputs/tables/main/sum_tbl_probit_cat.csv",
-    "outputs/tables/main/probit_mfx.csv",
-    "outputs/tables/main/sum_tbl_iv.csv",
-    "outputs/tables/main/fs_cons.csv",
-    "outputs/tables/main/cons_iv.csv",
     "outputs/tables/main/paper_core_summary.tex",
     "outputs/tables/main/paper_schooling_market_geography.tex",
     "outputs/tables/main/paper_language_behavior.tex",
@@ -57,14 +50,10 @@ required_public_render_inputs <- function(require_poster = FALSE) {
     "outputs/figures/main/map_paper_real_consumption_change.pdf",
     "outputs/figures/main/paper_unequal_schooling_access.pdf",
     "outputs/figures/main/consumption_iv_dynamics.pdf",
-    "outputs/figures/main/fig_ilo_trends.png",
-    "outputs/figures/main/district_carveouts_shifts.png",
     "outputs/figures/main/poster_first_stage_specs.pdf",
     "outputs/figures/main/map_emi_exposure.pdf",
-    "outputs/figures/main/map_residual_emi_exposure.pdf",
     "outputs/figures/main/map_linguistic_distance.pdf",
-    "outputs/figures/main/map_residual_linguistic_distance.pdf",
-    paper_new_appendix_render_inputs()
+    paper_appendix_render_inputs()
   )
   if (isTRUE(require_poster)) files <- c(files, poster_render_inputs())
   unique(files)
@@ -82,7 +71,7 @@ application_sample_outputs <- function() {
 }
 
 required_final_documents <- function(require_application_samples = TRUE, require_poster = FALSE) {
-  files <- c("paper/paper.pdf", "paper/paper-new.pdf")
+  files <- "paper/paper.pdf"
   if (isTRUE(require_poster)) {
     files <- c(
       files,
@@ -125,12 +114,6 @@ required_extended_diagnostic_outputs <- function() {
 required_final_artifacts <- function(require_poster = FALSE) {
   files <- c(
     "paper/references.bib",
-    "outputs/tables/main/sum_tbl_probit_quant.csv",
-    "outputs/tables/main/sum_tbl_probit_cat.csv",
-    "outputs/tables/main/probit_mfx.csv",
-    "outputs/tables/main/sum_tbl_iv.csv",
-    "outputs/tables/main/fs_cons.csv",
-    "outputs/tables/main/cons_iv.csv",
     "outputs/tables/main/paper_core_summary.csv",
     "outputs/tables/main/paper_core_summary.tex",
     "outputs/tables/main/paper_schooling_market_geography.csv",
@@ -152,7 +135,6 @@ required_final_artifacts <- function(require_poster = FALSE) {
     "outputs/tables/appendix/appendix_migration_summary.tex",
     "outputs/tables/appendix/appendix_selection_ame.csv",
     "outputs/tables/appendix/appendix_selection_ame.tex",
-    "outputs/tables/main/probit_mfx.tex",
     "outputs/tables/appendix/appendix_selection_missingness.csv",
     "outputs/tables/appendix/appendix_selection_missingness.tex",
     "outputs/figures/main/map_linguistic_distance.pdf",
@@ -165,10 +147,6 @@ required_final_artifacts <- function(require_poster = FALSE) {
     "outputs/figures/main/map_paper_real_consumption_change.pdf",
     "outputs/figures/main/paper_unequal_schooling_access.pdf",
     "outputs/figures/main/consumption_iv_dynamics.pdf",
-    "outputs/figures/main/fig_ilo_trends.png",
-    "outputs/figures/main/district_carveouts_shifts.png",
-    "outputs/figures/main/collage_main_maps.png",
-    "outputs/figures/main/collage_iv_region_maps.png",
     "outputs/figures/main/poster_first_stage_specs.pdf",
     "outputs/diagnostics/public/spatial_moran_tests.csv",
     "outputs/diagnostics/public/spatial_moran_mc_reference.csv",

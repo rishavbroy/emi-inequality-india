@@ -17,30 +17,6 @@ if (length(missing_required)) {
   add_failure("Missing required public output files: ", paste(missing_required, collapse = ", "))
 }
 
-report_has_geometry_blocker <- FALSE
-if (file.exists("paper/paper.qmd")) {
-  report_text <- paste(readLines("paper/paper.qmd", warn = FALSE), collapse = "\n")
-  report_has_geometry_blocker <- grepl("Final district map figures are withheld", report_text, fixed = TRUE)
-}
-
-figure_dir <- "outputs/figures/main"
-if (dir.exists(figure_dir)) {
-  manifest_path <- file.path(figure_dir, "figure_manifest.csv")
-  if (file.exists(manifest_path)) {
-    manifest <- utils::read.csv(manifest_path, stringsAsFactors = FALSE)
-    if (report_has_geometry_blocker && "name" %in% names(manifest)) {
-      diagnostic_names <- grep("^(map_|collage_.*maps)", manifest$name, value = TRUE)
-      if (length(diagnostic_names)) {
-        add_failure("Final figure manifest lists map/collage outputs while final maps are withheld: ", paste(diagnostic_names, collapse = ", "))
-      }
-    }
-  }
-  if (report_has_geometry_blocker) {
-    map_files <- list.files(figure_dir, pattern = "^(map_|collage_.*maps)", full.names = TRUE)
-    if (length(map_files)) add_failure("Final figure directory contains map-like files despite withheld final maps: ", paste(basename(map_files), collapse = ", "))
-  }
-}
-
 table_dir <- "outputs/tables/main"
 if (dir.exists(table_dir)) {
   csv_files <- list.files(table_dir, pattern = "\\.csv$", full.names = TRUE)

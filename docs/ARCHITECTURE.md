@@ -282,12 +282,7 @@ modification: EC05 IT is neither an exclusion control nor a proxy for unavailabl
 
 ### Publication dependencies versus extended diagnostics
 
-`paper/paper-new.qmd` now carries the final claim architecture and its Appendix A--E
-material in one self-contained Quarto document. The legacy `paper.qmd` likewise retains
-its historical appendix in-document. Both manuscripts use a raw `\appendix` boundary,
-so labeled appendix sections share the same cross-reference namespace as their main text.
-Neither manuscript QMD owns estimators: both consume the paper-facing output contract,
-while `paper.qmd` remains for legacy compatibility and application-sample excerpts.
+`paper/paper.qmd` carries the final claim architecture and its Appendix A--E material in one self-contained Quarto document. It uses a raw `\appendix` boundary, so labeled appendix sections share the same cross-reference namespace as the main text. The manuscript QMD owns no estimators; it consumes generated paper inputs. The previous completed draft is frozen under `archive/legacy-paper-drafts/2026-09-previous-final/` and has no paper-render target. The existing marker-based writing samples still read that snapshot during this transition; the section-ID sample manifest will remove that final dependency.
 Whether a raw source
 can be redistributed is not the boundary between core and extended work: the project
 does not redistribute most raw research data.
@@ -328,7 +323,7 @@ same diagnostic result; it does not rerun the analysis.
 
 For appendix tables that remain LaTeX outputs, the shared table writer escapes both body
 cells and column headers before handing text to `kableExtra` with raw-LaTeX styling
-enabled. The legacy probit table remains available to `paper.qmd`; `paper-new.qmd` uses the
+enabled. The older probit table remains available as a generated compatibility output; `paper.qmd` uses the
 filtered appendix rendering while sharing the same estimated AMEs.
 
 Appendix A is prose-led. `appendix_data_construction_exhibits` now generates only the
@@ -343,10 +338,10 @@ so manuscript-facing exhibits reuse one save path rather than duplicating save l
 
 Appendix artifacts are listed in `required_final_artifacts()` as soon as their
 builders exist. The exact TeX and figure inputs consumed by the in-document appendices
-of `paper/paper-new.qmd` are centralized in `paper_new_appendix_render_inputs()` and
+of `paper/paper.qmd` are centralized in `paper_appendix_render_inputs()` and
 reused by the strict render-input contract. This keeps the full machine-readable exhibit
 inventory distinct from the smaller document-render dependency list while making every
-file consumed by the new paper's appendices an explicit publication dependency. The
+file consumed by the paper's appendices an explicit publication dependency. The
 standalone appendix QMD/PDF and the duplicated district-matching/8.3-filename public notes
 were removed once their material was owned by the manuscripts.
 

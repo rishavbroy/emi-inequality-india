@@ -1,4 +1,4 @@
-.PHONY: all prepare-data init-renv restore snapshot download-census-tables download-natural-earth-boundaries pipeline pipeline-fast replicate-processed verify-processed-replication clean-processed-replication diagnostics public-diagnostics extended-diagnostics lineage-geometry-build lineage-geometry benchmarking rerun-extended-diagnostics rerun-benchmarks qmd-renders clean clean-all clean-public-diagnostics clean-extended-diagnostics clean-benchmarking paper paper-new poster samples check-report-values check-report-values-final audit-crossrefs audit-crossrefs-final audit-outputs-final output-manifest check-public check-public-fast check-public-final check-public-final-no-samples check-public-text check-rendered-text check-sample-specs test tests test-affected test-inventory clean-targets clean-renders clean-renders-core clean-renders-no-samples
+.PHONY: all prepare-data init-renv restore snapshot download-census-tables download-natural-earth-boundaries pipeline pipeline-fast replicate-processed verify-processed-replication clean-processed-replication diagnostics public-diagnostics extended-diagnostics lineage-geometry-build lineage-geometry benchmarking rerun-extended-diagnostics rerun-benchmarks qmd-renders clean clean-all clean-public-diagnostics clean-extended-diagnostics clean-benchmarking paper poster samples check-report-values check-report-values-final audit-crossrefs audit-crossrefs-final audit-outputs-final output-manifest check-public check-public-fast check-public-final check-public-final-no-samples check-public-text check-rendered-text check-sample-specs test tests test-affected test-inventory clean-targets clean-renders clean-renders-core clean-renders-no-samples
 
 TMP_ROOT ?= $(if $(strip $(TMPDIR)),$(patsubst %/,%,$(TMPDIR)),/tmp)
 TEXCACHE_ROOT ?= $(TMP_ROOT)/emi-inequality-india-texcache
@@ -109,9 +109,6 @@ poster: $(QUARTO_CACHE_DIRS)
 
 paper: check-public-final-no-samples
 
-paper-new: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
-	EMI_CONFIG=$(CONFIG) Rscript scripts/run_targets_checked.R --targets paper_new
-
 samples: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
 	EMI_CONFIG=$(CONFIG) EMI_RENDER_APPLICATION_SAMPLES=true Rscript scripts/run_targets_checked.R --targets writing_sample_pdfs,coding_sample_pdfs
 
@@ -204,7 +201,7 @@ clean-renders-core:
 	rm -rf outputs/figures/* outputs/tables/* outputs/build outputs/diagnostics/public outputs/replication paper/output/*
 	rm -f outputs/diagnostics/*.csv
 	mkdir -p outputs/build outputs/diagnostics/public
-	rm -f paper/paper.pdf paper/paper.html paper/paper.tex paper/paper-new.pdf paper/paper-new.html paper/paper-new.tex paper/appendix.pdf paper/appendix.html paper/appendix.tex
+	rm -f paper/paper.pdf paper/paper.html paper/paper.tex paper/appendix.pdf paper/appendix.html paper/appendix.tex
 	rm -rf posters/2026_predoc_conference/generated
 	rm -f posters/2026_predoc_conference/poster.pdf posters/2026_predoc_conference/poster.png posters/2026_predoc_conference/RishavRoy-Education.png posters/2026_predoc_conference/poster.typ
 	rm -f docs/district-matching.html docs/district-matching.pdf docs/district-matching.tex

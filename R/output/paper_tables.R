@@ -1,4 +1,4 @@
-# Main-paper tables unique to paper-new.qmd.
+# Main-paper tables unique to paper.qmd.
 #
 # Statistical objects are computed upstream in the target graph. This module only
 # reshapes publication evidence and keeps machine-readable CSV payloads separate

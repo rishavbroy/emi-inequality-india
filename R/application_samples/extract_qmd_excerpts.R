@@ -1,4 +1,5 @@
-# Utilities for extracting writing-sample excerpts from paper/paper.qmd.
+# Utilities for the legacy marker-based writing samples. These are removed when the
+# section-ID sample manifest replaces the current specs.
 # Excerpts are marked in the report with fenced Divs like:
 # ::: {.sample-excerpt #ws-intro-question-contribution sets="writing-5pg writing-10pg" order="1"}
 # ...
@@ -6,11 +7,9 @@
 
 
 resolve_writing_sample_source <- function(path = NULL) {
-  if (is.null(path) || !length(path) || !nzchar(path)) return("paper/paper.qmd")
-  # Local application-sample specs may predate the report.qmd -> paper.qmd
-  # rename and are intentionally omitted from fast review archives. Resolve that
-  # one historical path here so those specs keep pointing at the reviewed paper.
-  if (identical(path, "paper/report.qmd")) return("paper/paper.qmd")
+  legacy <- "archive/legacy-paper-drafts/2026-09-previous-final/paper.qmd"
+  if (is.null(path) || !length(path) || !nzchar(path)) return(legacy)
+  if (path %in% c("paper/report.qmd", "paper/paper.qmd")) return(legacy)
   path
 }
 

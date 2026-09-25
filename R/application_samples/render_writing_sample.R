@@ -1,4 +1,4 @@
-# Render writing samples from excerpt markers in paper/paper.qmd.
+# Render the legacy marker-based writing samples during the sample-system transition.
 
 #' Render all writing samples described by YAML specs
 #'

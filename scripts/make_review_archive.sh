@@ -92,7 +92,7 @@ done < <(git ls-files -z)
 
 # Include regenerated public artifacts whether tracked or not.
 mkdir -p "$tmpdir/paper" "$tmpdir/docs" "$tmpdir/outputs"
-cp -f paper/paper.pdf paper/paper.html paper/paper.qmd paper/paper-new.pdf paper/paper-new.html paper/paper-new.qmd "$tmpdir/paper/" 2>/dev/null || true
+cp -f paper/paper.pdf paper/paper.html paper/paper.qmd "$tmpdir/paper/" 2>/dev/null || true
 if [[ "$include_poster" == "true" ]]; then
   mkdir -p "$tmpdir/posters/2026_predoc_conference"
   cp -f posters/2026_predoc_conference/poster.pdf posters/2026_predoc_conference/RishavRoy-Education.png "$tmpdir/posters/2026_predoc_conference/" 2>/dev/null || true
@@ -171,7 +171,6 @@ rm -f "$tmpdir/docs/plan/THOROUGH NOTES Research Paper ECON 623.docx" \
 
 required_public=(
   "paper/paper.pdf"
-  "paper/paper-new.pdf"
 )
 if [[ "$include_samples" == "true" ]]; then
   required_public+=(

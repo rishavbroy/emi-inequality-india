@@ -198,13 +198,10 @@ core_public_target_definitions <- function() {
     tar_target(table_files, save_tables(tables, cfg), format = "file"),
     tar_target(report_values, { diag_public_spatial_autocorrelation_files; build_report_values(ame_results, revised_first_stage_tests, revised_iv_models, selection_data, district_panel, diag_public_spatial_autocorrelation, cfg) }),
     tar_target(paper_qmd, "paper/paper.qmd", format = "file"),
-    tar_target(paper_new_qmd, "paper/paper-new.qmd", format = "file"),
-
-    tar_target(paper, render_paper_pdf(paper_qmd, report_values, figure_files, table_files), format = "file"),
     tar_target(
-      paper_new,
+      paper,
       render_public_pdf(
-        paper_new_qmd,
+        paper_qmd,
         dependencies = list(
           report_values, table_files, figure_files, dise_publication_validation,
           appendix_data_construction_files, appendix_migration_files, appendix_selection_files,

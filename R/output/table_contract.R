@@ -3,7 +3,7 @@
 
 # Reader-facing vocabulary shared across manuscript tables.  These labels are
 # deliberately descriptive rather than implementation-specific so table text stays
-# synchronized with the definitions in paper-new.qmd.
+# synchronized with the definitions in paper.qmd.
 paper_schooling_display_labels <- function() {
   c(
     enrollment = "Enrollment",

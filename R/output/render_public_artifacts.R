@@ -31,20 +31,6 @@ render_public_pdf <- function(qmd, dependencies = list()) {
 }
 
 
-#' Render a paper PDF
-#'
-#' Backward-compatible paper wrapper around `render_public_pdf()`. Keeping the
-#' domain-specific arguments here makes the legacy-paper dependency contract easy
-#' to read. The current paper calls the shared renderer directly because its
-#' in-document appendices add explicit exhibit dependencies.
-render_paper_pdf <- function(paper_qmd, report_values, figure_files, table_files) {
-  render_public_pdf(
-    paper_qmd,
-    dependencies = list(report_values, figure_files, table_files)
-  )
-}
-
-
 poster_typst_template_paths <- function(poster_qmd) {
   extension_dir <- file.path(dirname(poster_qmd), "_extensions", "poster")
   c(

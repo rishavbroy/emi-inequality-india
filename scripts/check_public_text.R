@@ -21,24 +21,6 @@ patterns <- c(
   "active figures below use district-level empirical distributions"
 )
 
-required_figure_captions <- c(
-  "paper/paper.qmd" = "Trends in earnings, labor‐force participation, and unemployment (ILO, 2024).",
-  "paper/paper.qmd" = "Number of 2001 districts which absorbed a percentage of a 1991 district's population via name change, clean merger, carve-out, or border shift. Data from Kumar \\& Somanathan (2016)."
-)
-
-required_map_paths <- c(
-  "../outputs/figures/main/collage_main_maps.pdf",
-  "../outputs/figures/main/collage_iv_region_maps.pdf"
-)
-
-required_map_refs <- c("@fig-map1-fig", "@fig-map2-fig")
-
-blocked_map_text <- c(
-  "Final district map figures are withheld",
-  "Final map figures are withheld",
-  "the withheld final map figures"
-)
-
 hits <- list()
 for (file in files) {
   txt <- readLines(file, warn = FALSE)
@@ -56,42 +38,11 @@ for (file in files) {
   }
 }
 
-caption_hits <- character()
-for (file in unique(names(required_figure_captions))) {
-  if (!file.exists(file)) {
-    caption_hits <- c(caption_hits, paste0(file, " is missing"))
-    next
-  }
-  text <- paste(readLines(file, warn = FALSE), collapse = "\n")
-  expected <- unname(required_figure_captions[names(required_figure_captions) == file])
-  missing <- expected[!vapply(expected, grepl, logical(1), x = text, fixed = TRUE)]
-  if (length(missing)) {
-    caption_hits <- c(caption_hits, paste0(file, " is missing required figure caption: ", missing))
-  }
-}
-
-for (file in "paper/paper.qmd") {
-  if (!file.exists(file)) next
-  text <- paste(readLines(file, warn = FALSE), collapse = "\n")
-  stale <- blocked_map_paths[vapply(blocked_map_paths, grepl, logical(1), x = text, fixed = TRUE)]
-  if (length(stale)) {
-    caption_hits <- c(caption_hits, paste0(file, " still references blocked final map path: ", paste(stale, collapse = ", ")))
-  }
-  dangling <- blocked_map_refs[vapply(blocked_map_refs, grepl, logical(1), x = text, fixed = TRUE)]
-  if (length(dangling)) {
-    caption_hits <- c(caption_hits, paste0(file, " still references blocked final map figure id: ", paste(dangling, collapse = ", ")))
-  }
-}
-
 if (length(hits)) {
   out <- do.call(rbind, hits)
   print(out, row.names = FALSE)
   stop("Public-facing placeholder/fallback text remains.", call. = FALSE)
 }
 
-if (length(caption_hits)) {
-  cat(paste0("- ", caption_hits, collapse = "\n"), "\n")
-  stop("Public-facing required captions are missing.", call. = FALSE)
-}
 
 message("No public-facing placeholder/fallback text detected.")
