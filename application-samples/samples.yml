@@ -1,0 +1,69 @@
+schema_version: 1
+paper:
+  source: paper/paper.qmd
+  full_paper_url: https://github.com/rishavbroy/emi-inequality-india/blob/main/paper/paper.pdf
+  repository_url: https://github.com/rishavbroy/emi-inequality-india
+identity:
+  named:
+    author: Rishav Roy
+    prefix: RishavRoy
+  anonymous:
+    author: Anonymous
+    prefix: Anonymous
+    forbidden_strings:
+      - Rishav Roy
+      - rishavbroy
+      - github.com/rishavbroy
+writing:
+  - id: 5pg
+    target_pages: 5
+    sections:
+      - sec-intro
+  - id: 10pg
+    target_pages: 10
+    sections:
+      - sec-intro
+      - sec-access
+  - id: 15pg
+    target_pages: 15
+    sections:
+      - sec-intro
+      - sec-language
+      - sec-access
+  - id: full
+    mode: full
+coding:
+  - id: short
+    excerpts:
+      - id: code-survey-probit
+        file: R/selection/estimate_selection_probit.R
+        title: Survey-weighted enrollment model
+      - id: code-ame-estimation
+        file: R/selection/compute_average_marginal_effects.R
+        title: Average marginal effects on the model estimation sample
+      - id: code-mop-effective-f
+        file: R/iv/weak_identification.R
+        title: Montiel Olea--Pflueger effective-F calculation
+      - id: code-temporal-price-series
+        file: R/prices/build_temporal_price_series.R
+        title: Linked state-sector price series
+  - id: full
+    excerpts:
+      - id: code-survey-probit
+        file: R/selection/estimate_selection_probit.R
+        title: Survey-weighted enrollment model
+      - id: code-ame-estimation
+        file: R/selection/compute_average_marginal_effects.R
+        title: Average marginal effects on the model estimation sample
+      - id: code-mop-effective-f
+        file: R/iv/weak_identification.R
+        title: Montiel Olea--Pflueger effective-F calculation
+      - id: code-anderson-rubin
+        file: R/iv/weak_identification.R
+        title: Anderson--Rubin inference and bounded exclusion sensitivity
+      - id: code-temporal-price-series
+        file: R/prices/build_temporal_price_series.R
+        title: Linked state-sector price series
+      - id: code-lineage-candidate-scoring
+        file: R/districts/lineage_matching.R
+        title: Cross-vintage district candidate scoring

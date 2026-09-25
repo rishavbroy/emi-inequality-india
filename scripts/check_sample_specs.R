@@ -1,57 +1,45 @@
-# Check that application-sample YAML specs refer to real, nonempty excerpts.
+# Validate the tracked application-sample manifest against the current paper and code.
 
-source("R/application_samples/extract_qmd_excerpts.R")
+source("R/io/utils_data_frame.R")
+source("R/application_samples/sample_manifest.R")
+source("R/application_samples/writing_sample_sections.R")
 source("R/application_samples/extract_code_excerpts.R")
 
-`%||%` <- function(x, y) if (is.null(x) || length(x) == 0L) y else x
-
 if (!requireNamespace("yaml", quietly = TRUE)) {
-  stop("Package 'yaml' is required for application-sample specs. Run `make restore`.", call. = FALSE)
+  stop("Package 'yaml' is required for application-sample configuration. Run `make restore`.", call. = FALSE)
 }
 
+manifest <- read_application_sample_manifest()
+source_path <- manifest$paper$source
+source_lines <- readLines(source_path, warn = FALSE)
+index <- qmd_section_index(source_lines)
 failures <- character()
 
-writing_specs <- list.files("application-samples/specs", pattern = "^writing-.*\\.yml$", full.names = TRUE)
-if (!length(writing_specs)) stop("No writing-sample specs found in application-samples/specs.", call. = FALSE)
-
-for (spec_path in writing_specs) {
-  spec <- yaml::read_yaml(spec_path)
-  source <- resolve_writing_sample_source(spec$source %||% "paper/paper.qmd")
-  excerpts <- unlist(spec$excerpts, use.names = FALSE)
-  blocks <- extract_marked_divs(readLines(source, warn = FALSE))
-
-  missing <- setdiff(excerpts, names(blocks))
+for (spec in manifest$writing) {
+  if (identical(spec$mode %||% "excerpt", "full")) next
+  ids <- unlist(spec$sections, use.names = FALSE)
+  missing <- setdiff(ids, index$id)
   if (length(missing)) {
-    failures <- c(failures, paste0(spec_path, " missing writing excerpts: ", paste(missing, collapse = ", ")))
+    failures <- c(failures, paste0("writing sample ", spec$id, " missing section IDs: ", paste(missing, collapse = ", ")))
   }
-
-  for (id in intersect(excerpts, names(blocks))) {
-    nonblank <- sum(nzchar(trimws(blocks[[id]])))
-    if (nonblank < 2L) {
-      failures <- c(failures, paste0(spec_path, " has near-empty writing excerpt: ", id))
-    }
+  if (is.null(spec$target_pages) || !is.finite(as.numeric(spec$target_pages)) || as.integer(spec$target_pages) < 1L) {
+    failures <- c(failures, paste0("writing sample ", spec$id, " needs a positive target_pages value"))
   }
 }
 
-coding_specs <- list.files("application-samples/specs", pattern = "^coding-.*\\.yml$", full.names = TRUE)
-if (!length(coding_specs)) stop("No coding-sample specs found in application-samples/specs.", call. = FALSE)
-
-for (spec_path in coding_specs) {
-  spec <- yaml::read_yaml(spec_path)
+for (spec in manifest$coding) {
   result <- tryCatch({
     validate_code_excerpt_markers(spec)
     TRUE
   }, error = function(e) {
-    failures <<- c(failures, paste0(spec_path, " coding marker error: ", conditionMessage(e)))
+    failures <<- c(failures, paste0("coding sample ", spec$id, ": ", conditionMessage(e)))
     FALSE
   })
-
   if (isTRUE(result)) {
     for (excerpt in spec$excerpts) {
       lines <- extract_between_sample_markers(excerpt$file, excerpt$id)
-      nonblank <- sum(nzchar(trimws(lines)))
-      if (nonblank < 2L) {
-        failures <- c(failures, paste0(spec_path, " has near-empty coding excerpt: ", excerpt$id))
+      if (sum(nzchar(trimws(lines))) < 2L) {
+        failures <- c(failures, paste0("coding sample ", spec$id, " has near-empty excerpt: ", excerpt$id))
       }
     }
   }
@@ -59,7 +47,7 @@ for (spec_path in coding_specs) {
 
 if (length(failures)) {
   cat(paste0("- ", failures, collapse = "\n"), "\n")
-  stop("Application-sample specs are inconsistent with report/code excerpt markers.", call. = FALSE)
+  stop("Application-sample manifest is inconsistent with the current paper or code markers.", call. = FALSE)
 }
 
-message("Writing and coding sample specs match nonempty excerpts.")
+message("Application-sample manifest matches current paper sections and code markers.")

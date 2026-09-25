@@ -115,6 +115,7 @@ ame_out_of_pipeline <- function(status, reason) {
 #' without an explicit `wts` argument. Build a newdata frame from the exact
 #' model estimation sample and attach a synthetic weight column whenever the
 #' fitted model exposes usable weights.
+# sample-start: code-ame-estimation
 ame_model_weight <- function(model_data, model_weights = NULL) {
   weight_cols <- intersect(c("weight", "WEIGHT", "Multiplier", "multiplier", "(weights)"), names(model_data))
   if (length(weight_cols)) {
@@ -181,6 +182,7 @@ compute_ames_autodiff <- function(model) {
   amed <- ame_model_data_and_weights(model)
   run_avg_slopes(model, amed$data, amed$wts)
 }
+# sample-end: code-ame-estimation
 
 
 #' compute analytic probit AMEs

@@ -188,8 +188,8 @@ benchmark_targets <- list(
 
 application_sample_targets <- list(
   tar_target(application_sample_inputs, application_sample_input_files(), format = "file"),
-  tar_target(writing_sample_pdfs, { report_values; application_sample_inputs; render_writing_samples(output_files = c(figure_files, table_files)) }, format = "file"),
-  tar_target(coding_sample_pdfs, { report_values; application_sample_inputs; render_coding_samples(output_files = c(figure_files, table_files)) }, format = "file")
+  tar_target(writing_sample_pdfs, { paper; application_sample_inputs; render_writing_samples() }, format = "file"),
+  tar_target(coding_sample_pdfs, { application_sample_inputs; render_coding_samples() }, format = "file")
 )
 
 poster_targets <- poster_target_definitions()

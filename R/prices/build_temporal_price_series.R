@@ -119,6 +119,7 @@ validate_temporal_price_chain <- function(index, switch_date) {
   invisible(out)
 }
 
+# sample-start: code-temporal-price-series
 build_temporal_price_series <- function(
     price_sources,
     switch_date = as.Date("2013-01-01"),
@@ -190,6 +191,7 @@ build_temporal_price_series <- function(
     class = "emi_temporal_price_series"
   )
 }
+# sample-end: code-temporal-price-series
 
 summarise_ruc_base_overlap <- function(price_sources) {
   required <- c("cpi_ruc_2010", "cpi_ruc_2012")

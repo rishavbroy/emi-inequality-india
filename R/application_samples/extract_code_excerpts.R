@@ -1,13 +1,5 @@
-# Utilities for extracting coding-sample excerpts from R source files.
-# Code excerpts are marked with comments like:
-# # sample-start: code-census-geospatial-import
-# ...
-# # sample-end: code-census-geospatial-import
+# Utilities for marker-delimited coding-sample excerpts from R files.
 
-#' Extract multiple code excerpts from a YAML spec
-#'
-#' @param spec Parsed YAML list with an `excerpts` element.
-#' @return Character vector of Quarto markdown lines containing code excerpts.
 extract_code_excerpts <- function(spec) {
   pieces <- lapply(spec$excerpts, function(x) {
     file <- x$file
@@ -18,11 +10,9 @@ extract_code_excerpts <- function(spec) {
       "",
       paste0("## ", title),
       "",
-      paste0("Source: `", file, "`"),
+      paste0("File: `", file, "`"),
       "",
-      "```{r}",
-      "#| eval: false",
-      "#| echo: true",
+      "```r",
       code,
       "```",
       ""
@@ -31,73 +21,48 @@ extract_code_excerpts <- function(spec) {
   unlist(pieces, use.names = FALSE)
 }
 
-#' Extract one code excerpt by marker ID
-#'
-#' @param file Path to R source file.
-#' @param id Marker ID.
-#' @return Character vector of source lines between start/end markers.
 extract_between_sample_markers <- function(file, id) {
   if (!file.exists(file)) stop("Code excerpt file does not exist: ", file, call. = FALSE)
   text <- readLines(file, warn = FALSE)
-  start_pat <- paste0("^\\s*#\\s*sample-start:\\s*", gsub("([\\W])", "\\\\\\1", id), "\\s*$")
-  end_pat <- paste0("^\\s*#\\s*sample-end:\\s*", gsub("([\\W])", "\\\\\\1", id), "\\s*$")
-  start <- grep(start_pat, text)
-  end <- grep(end_pat, text)
+  escaped <- gsub("([\\W])", "\\\\\\1", id)
+  start <- grep(paste0("^\\s*#\\s*sample-start:\\s*", escaped, "\\s*$"), text)
+  end <- grep(paste0("^\\s*#\\s*sample-end:\\s*", escaped, "\\s*$"), text)
   if (length(start) != 1L || length(end) != 1L || end <= start) {
     stop("Could not find a unique valid code excerpt marker pair for ID: ", id, call. = FALSE)
   }
   text[(start + 1L):(end - 1L)]
 }
 
-#' Assemble a temporary coding-sample QMD
-#'
-#' @param cover_note Path to cover-note QMD.
-#' @param body Character vector of code excerpt lines.
-#' @param output_qmd Path to write assembled QMD.
-#' @return `output_qmd` invisibly.
-assemble_coding_sample_qmd <- function(cover_note, body, output_qmd) {
-  cover <- if (!is.null(cover_note) && file.exists(cover_note)) readLines(cover_note, warn = FALSE) else character()
-  cover <- normalize_coding_sample_yaml(cover)
-  lines <- c(cover, "", "\\newpage", "", body)
+coding_sample_notice <- function(spec, variant, manifest) {
+  heading <- paste0("**CODING SAMPLE: ", toupper(spec$id), " COPY**")
+  description <- "These excerpts are selected from the replication code for the paper."
+  if (identical(variant, "named")) {
+    description <- paste0(
+      description,
+      " The [full paper](", manifest$paper$full_paper_url, ") and [repository](",
+      manifest$paper$repository_url,
+      ") are available online. This PDF can be generated using `make samples` or `bash scripts/run_full_build.sh`."
+    )
+  }
+  c(heading, "", description, "")
+}
+
+assemble_coding_sample_qmd <- function(spec, variant, manifest, body, output_qmd) {
+  meta <- list(
+    title = "Code Sample",
+    subtitle = "Selected Replication Code",
+    author = manifest$identity[[variant]]$author,
+    format = list(pdf = list(`pdf-engine` = "xelatex")),
+    geometry = "left=0.75in, right=0.75in, top=0.8in, bottom=0.8in",
+    `highlight-style` = "default"
+  )
+  yaml_lines <- quarto_yaml_lines(meta)
+  lines <- c("---", yaml_lines, "---", "", coding_sample_notice(spec, variant, manifest), body)
   dir.create(dirname(output_qmd), recursive = TRUE, showWarnings = FALSE)
   writeLines(lines, output_qmd)
   invisible(output_qmd)
 }
 
-normalize_coding_sample_yaml <- function(lines) {
-  if (!length(lines) || !identical(lines[[1]], "---")) return(lines)
-  close <- which(lines[-1L] == "---")
-  if (!length(close)) return(lines)
-  end <- close[[1]] + 1L
-  yaml <- lines[seq_len(end)]
-  rest <- lines[-seq_len(end)]
-
-  if (!any(grepl("^format:", yaml))) {
-    yaml <- append(yaml, c("format:", "  pdf:", "    pdf-engine: xelatex"), after = end - 1L)
-    end <- end + 3L
-  }
-  if (!any(grepl("^    pdf-engine:", yaml))) {
-    pdf_idx <- grep("^  pdf:\\s*$", yaml)
-    if (length(pdf_idx)) yaml <- append(yaml, "    pdf-engine: xelatex", after = pdf_idx[[1]])
-  }
-  if (!any(grepl("^include-in-header:", yaml))) {
-    yaml <- append(yaml, c(
-      "include-in-header:",
-      "  text: |",
-      "    \\usepackage{fvextra}",
-      "    \\DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,breakanywhere,commandchars=\\\\\\{\\}}"
-    ), after = length(yaml) - 1L)
-  }
-  if (!any(grepl("^highlight-style:", yaml))) {
-    yaml <- append(yaml, "highlight-style: default", after = length(yaml) - 1L)
-  }
-  c(yaml, rest)
-}
-
-#' Validate code excerpt markers listed in a spec
-#'
-#' @param spec Parsed YAML list.
-#' @return TRUE invisibly.
 validate_code_excerpt_markers <- function(spec) {
   invisible(lapply(spec$excerpts, function(x) extract_between_sample_markers(x$file, x$id)))
   invisible(TRUE)

@@ -122,6 +122,8 @@ make all
 bash scripts/run_full_build.sh
 ```
 
+`make samples` generates the named and anonymous writing/coding variants declared in [`application-samples/samples.yml`](application-samples/samples.yml). Writing excerpts come from current-paper section IDs rather than a separately maintained manuscript.
+
 `run_full_build.sh` uses [`config/final.yml`](config/final.yml), includes application samples, writes `review.zip`, and leaves the conference poster out unless requested. Useful options are:
 
 ```bash

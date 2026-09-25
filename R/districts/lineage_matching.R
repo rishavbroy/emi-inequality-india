@@ -340,6 +340,7 @@ exact_source_candidates <- function(source_roster, reference_units) {
   }))
 }
 
+# sample-start: code-lineage-candidate-scoring
 score_match_candidates <- function(source_roster, reference_units, excluded_source_ids = character()) {
   need_pkg("stringdist", "district-lineage candidate scores")
   source_roster <- safe_df(source_roster)
@@ -419,6 +420,7 @@ score_match_candidates <- function(source_roster, reference_units, excluded_sour
     stringsAsFactors = FALSE
   )
 }
+# sample-end: code-lineage-candidate-scoring
 
 build_source_adjudication_queue <- function(source_roster, candidates, adjudications = data.frame()) {
   roster <- safe_df(source_roster)

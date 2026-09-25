@@ -18,6 +18,8 @@ There is no separate diagnostic configuration. Extended checks and benchmarks ar
 | Run the faster development target set | `make pipeline-fast` |
 | Render and validate the papers | `make paper` |
 | Render application samples | `make samples` |
+
+`make samples` reads `application-samples/samples.yml`. Writing samples are selected by ordinary Quarto section IDs from `paper/paper.qmd`; coding samples use marker-delimited R excerpts. Named and anonymous variants are generated from the same selections.
 | Render the conference poster | `make poster` |
 | Re-render all QMD families | `make qmd-renders` |
 | Run the ordinary full build | `make` or `make all` |

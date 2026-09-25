@@ -101,7 +101,13 @@ else
 fi
 if [[ "$include_samples" == "true" ]]; then
   mkdir -p "$tmpdir/application-samples/output"
-  cp -f application-samples/output/*.pdf "$tmpdir/application-samples/output/" 2>/dev/null || true
+  while IFS= read -r sample_output; do
+    [[ -n "$sample_output" ]] || continue
+    if [[ -f "$sample_output" ]]; then
+      mkdir -p "$tmpdir/$(dirname "$sample_output")"
+      cp -f "$sample_output" "$tmpdir/$sample_output"
+    fi
+  done < <(Rscript -e 'source("R/io/utils_data_frame.R"); source("R/application_samples/sample_manifest.R"); cat(paste(application_sample_expected_outputs(), collapse = "\n"), "\n")')
 else
   rm -rf "$tmpdir/application-samples/output"
 fi
@@ -173,14 +179,9 @@ required_public=(
   "paper/paper.pdf"
 )
 if [[ "$include_samples" == "true" ]]; then
-  required_public+=(
-    "application-samples/output/RishavRoy_WritingSample.pdf"
-    "application-samples/output/RishavRoy_WritingSample10pg.pdf"
-    "application-samples/output/RishavRoy_WritingSample5pg.pdf"
-    "application-samples/output/RishavRoy_CodingSample.pdf"
-    "application-samples/output/RishavRoy_CodingSample47pg.pdf"
-    "application-samples/output/RishavRoy_CodingSample25pg.pdf"
-  )
+  while IFS= read -r sample_output; do
+    [[ -n "$sample_output" ]] && required_public+=("$sample_output")
+  done < <(Rscript -e 'source("R/io/utils_data_frame.R"); source("R/application_samples/sample_manifest.R"); cat(paste(application_sample_expected_outputs(), collapse = "\n"), "\n")')
 fi
 if [[ "$include_poster" == "true" ]]; then
   required_public+=(

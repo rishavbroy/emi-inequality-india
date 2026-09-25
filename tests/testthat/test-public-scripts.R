@@ -58,7 +58,7 @@ test_that("current public build helper scripts parse", {
   expect_silent(parse(repo_file("R", "output", "report_value_coefficients.R")))
   expect_silent(parse(repo_file("R", "output", "report_value_selection_ame.R")))
   expect_silent(parse(repo_file("R", "output", "report_value_spatial.R")))
-  expect_silent(parse(repo_file("R", "application_samples", "extract_qmd_excerpts.R")))
+  expect_silent(parse(repo_file("R", "application_samples", "writing_sample_sections.R")))
 })
 
 test_that("raw source registry is a tracked target input", {
@@ -167,25 +167,6 @@ test_that("audit workspace cleanup removes transient state and preserves optiona
 
 
 
-test_that("writing sample YAML includes LaTeX table packages for raw table excerpts", {
-  source(repo_file("R", "application_samples", "extract_qmd_excerpts.R"), local = TRUE)
-  lines <- c(
-    "---",
-    "title: Test",
-    "format:",
-    "  pdf:",
-    "    pdf-engine: xelatex",
-    "---"
-  )
-
-  out <- normalize_sample_yaml(lines)
-
-  expect_true(any(out == "  - \\usepackage{setspace}"))
-  expect_true(any(out == "  - \\usepackage{threeparttable}"))
-  expect_true(any(out == "  - \\usepackage{booktabs}"))
-  expect_true(any(out == "  - \\usepackage{xcolor}"))
-})
-
 test_that("debug review archives retain intermediate diagnostics but exclude raw data", {
   skip_if(Sys.which("git") == "")
   skip_if(Sys.which("zip") == "")
@@ -202,6 +183,8 @@ test_that("debug review archives retain intermediate diagnostics but exclude raw
   dir.create(file.path(root, "outputs", "replication", "processed"), recursive = TRUE)
   dir.create(file.path(root, "data", "processed"), recursive = TRUE)
   dir.create(file.path(root, "data", "raw"), recursive = TRUE)
+  dir.create(file.path(root, "application-samples", "filters"), recursive = TRUE)
+  dir.create(file.path(root, "application-samples", "output"), recursive = TRUE)
   file.copy(
     repo_file("scripts", "make_review_archive.sh"),
     file.path(root, "scripts", "make_review_archive.sh")
@@ -221,11 +204,17 @@ test_that("debug review archives retain intermediate diagnostics but exclude raw
   )
   writeLines("processed", file.path(root, "data", "processed", "panel.csv"))
   writeLines("raw", file.path(root, "data", "raw", "private.csv"))
+  writeLines("schema_version: 1", file.path(root, "application-samples", "samples.yml"))
+  writeLines("-- filter", file.path(root, "application-samples", "filters", "select-sections.lua"))
+  writeLines("generated", file.path(root, "application-samples", "output", "sample.pdf"))
 
   system2("git", c("-C", shQuote(root), "init", "-q"))
   system2(
     "git",
-    c("-C", shQuote(root), "add", "README.md", "scripts/make_review_archive.sh")
+    c(
+      "-C", shQuote(root), "add", "README.md", "scripts/make_review_archive.sh",
+      "application-samples/samples.yml", "application-samples/filters/select-sections.lua"
+    )
   )
 
   old_wd <- setwd(root)
@@ -251,6 +240,9 @@ test_that("debug review archives retain intermediate diagnostics but exclude raw
   expect_true("outputs/benchmarking/runtime.csv" %in% listing)
   expect_true("outputs/replication/processed/verification.csv" %in% listing)
   expect_true("data/processed/panel.csv" %in% listing)
+  expect_true("application-samples/samples.yml" %in% listing)
+  expect_true("application-samples/filters/select-sections.lua" %in% listing)
+  expect_false(any(grepl("^application-samples/output/", listing)))
   expect_false("data/raw/private.csv" %in% listing)
 })
 
@@ -391,31 +383,6 @@ test_that("active QMD citations resolve through the project bibliography", {
 
 })
 
-
-test_that("coding-sample specifications use one valid nonempty marker pair", {
-  env <- new.env(parent = globalenv())
-  sys.source(repo_file("R", "application_samples", "extract_code_excerpts.R"), envir = env)
-  specs <- list.files(
-    repo_file("application-samples", "specs"),
-    pattern = "^coding-.*\\.yml$",
-    full.names = TRUE
-  )
-  expect_gt(length(specs), 0L)
-
-  for (spec_path in specs) {
-    spec <- yaml::read_yaml(spec_path)
-    for (excerpt in spec$excerpts) {
-      lines <- env$extract_between_sample_markers(
-        repo_file(excerpt$file),
-        excerpt$id
-      )
-      expect_true(
-        sum(nzchar(trimws(lines))) > 1L,
-        info = excerpt$id
-      )
-    }
-  }
-})
 
 poster_renderer_test_env <- function() {
   env <- new.env(parent = globalenv())

@@ -119,7 +119,7 @@ The household-capacity branch follows the same boundary: `R/io/read_census_house
 - `legacy_comparison_targets` — the inherited legacy panel, archived historical reviews, and crosswalk comparisons used only by extended diagnostics.
 - `extended_diagnostic_targets` — extended diagnostic target objects composed from the five domain-oriented factories under `R/pipeline/`; target names and dependency commands remain unchanged when orchestration is moved out of `_targets.R`.
 - `benchmark_targets` — optional benchmarks.
-- `application_sample_targets` — optional application-sample derivatives.
+- `application_sample_targets` — writing and coding samples driven by `application-samples/samples.yml`; writing variants select current-paper section IDs and coding variants select R marker pairs.
 - `poster_targets` — optional poster-only derivations and rendering; shared manuscript figures remain core targets.
 
 Legacy geography is appended once when either extended diagnostics or benchmarks are enabled.
@@ -282,7 +282,7 @@ modification: EC05 IT is neither an exclusion control nor a proxy for unavailabl
 
 ### Publication dependencies versus extended diagnostics
 
-`paper/paper.qmd` carries the final claim architecture and its Appendix A--E material in one self-contained Quarto document. It uses a raw `\appendix` boundary, so labeled appendix sections share the same cross-reference namespace as the main text. The manuscript QMD owns no estimators; it consumes generated paper inputs. The previous completed draft is frozen under `archive/legacy-paper-drafts/2026-09-previous-final/` and has no paper-render target. The existing marker-based writing samples still read that snapshot during this transition; the section-ID sample manifest will remove that final dependency.
+`paper/paper.qmd` carries the final claim architecture and its Appendix A--E material in one self-contained Quarto document. It uses a raw `\appendix` boundary, so labeled appendix sections share the same cross-reference namespace as the main text. The manuscript QMD owns no estimators; it consumes generated paper inputs. The previous completed draft is frozen under `archive/legacy-paper-drafts/2026-09-previous-final/` and has no paper-render target. Application writing samples read the current paper and select complete sections by their ordinary Quarto IDs.
 Whether a raw source
 can be redistributed is not the boundary between core and extended work: the project
 does not redistribute most raw research data.

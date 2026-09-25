@@ -60,15 +60,11 @@ required_public_render_inputs <- function(require_poster = FALSE) {
 }
 
 application_sample_outputs <- function() {
-  c(
-    "application-samples/output/RishavRoy_WritingSample.pdf",
-    "application-samples/output/RishavRoy_WritingSample10pg.pdf",
-    "application-samples/output/RishavRoy_WritingSample5pg.pdf",
-    "application-samples/output/RishavRoy_CodingSample.pdf",
-    "application-samples/output/RishavRoy_CodingSample47pg.pdf",
-    "application-samples/output/RishavRoy_CodingSample25pg.pdf"
-  )
+  source("R/io/utils_data_frame.R", local = TRUE)
+  source("R/application_samples/sample_manifest.R", local = TRUE)
+  application_sample_expected_outputs()
 }
+
 
 required_final_documents <- function(require_application_samples = TRUE, require_poster = FALSE) {
   files <- "paper/paper.pdf"

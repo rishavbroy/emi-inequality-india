@@ -63,7 +63,9 @@ Rplots.pdf
 
 # in-progress folders
 analysis/
-application-samples/
+
+# application-sample build intermediates
+application-samples/.work/
 
 # temporary files to help coding and testing
 Archive.zip

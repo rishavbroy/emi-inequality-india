@@ -1,5 +1,6 @@
 # Weak-identification-robust inference shared by IV specifications.
 
+# sample-start: code-mop-effective-f
 mop_effective_f <- function(
     model, analysis_data, tau = 0.10, size = 0.05) {
   unavailable <- function(reason) {
@@ -104,7 +105,9 @@ mop_effective_f <- function(
     list(tau = tau, size = size, status = "estimated", reason = NA_character_)
   )
 }
+# sample-end: code-mop-effective-f
 
+# sample-start: code-anderson-rubin
 anderson_rubin_test <- function(
   data, outcome, treatment, excluded, included = character(),
   controls = character(), fixed_effect = "none", cluster, beta0 = 0
@@ -161,6 +164,7 @@ bounded_exclusion_ar_profile <- function(
     )
   }))
 }
+# sample-end: code-anderson-rubin
 
 bounded_exclusion_ar_grid <- function(
     profile, gamma_lower, gamma_upper, level = 0.95) {
