@@ -66,7 +66,18 @@ malformed_atx_heading_lines <- function(lines) {
 
   fenced <- markdown_fence_mask(lines)
   headings <- which(!fenced & grepl("^#{1,6}[[:space:]]+", lines, perl = TRUE))
-  headings[headings > 1L & nzchar(trimws(lines[headings - 1L]))]
+  headings <- headings[headings > 1L]
+  if (!length(headings)) return(integer())
+
+  previous <- lines[headings - 1L]
+  previous_is_blank <- !nzchar(trimws(previous))
+  previous_is_heading <- grepl("^#{1,6}[[:space:]]+", previous, perl = TRUE)
+  previous_is_div_fence <- grepl("^\\s*:{3,}(?:\\s|$)", previous, perl = TRUE)
+
+  # Pandoc's blank-before-heading rule protects against a heading marker being
+  # absorbed into an ordinary paragraph. A preceding heading or fenced-div
+  # boundary already terminates the prior block, so those cases are valid.
+  headings[!(previous_is_blank | previous_is_heading | previous_is_div_fence)]
 }
 
 scan_crossrefs <- function(path, include_generated_tex_labels = TRUE) {

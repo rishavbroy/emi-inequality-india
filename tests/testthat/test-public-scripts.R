@@ -75,13 +75,20 @@ test_that("cross-reference audit enforces Pandoc heading separation", {
     "Paragraph.",
     "",
     "# Valid {#sec-valid}",
+    "## Child heading {#sec-child}",
+    "",
+    "::: {.sample-excerpt}",
+    "### Heading inside div {#sec-div-heading}",
+    "",
+    "Text inside div.",
+    ":::",
     "",
     "```r",
     "x <- 1",
     "# code comment",
     "```",
     "",
-    "See @sec-valid."
+    "See @sec-valid, @sec-child, and @sec-div-heading."
   ), good)
 
   good_output <- system2(
