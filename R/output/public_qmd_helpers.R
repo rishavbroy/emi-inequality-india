@@ -47,10 +47,10 @@ initialize_public_qmd_helpers <- function(env = parent.frame()) {
 
 paper_map_boundary_note <- function() {
   paste(
-    "District geometry follows the canonical DataMeet Census-2001 districts; gray districts have no estimate.",
-    "A lighter gray identifies five registered disputed areas without district estimates—Aksai Chin, Azad Kashmir, Gilgit-Baltistan, the Trans-Karakoram Tract, and Siachen Glacier.",
-    "For display only, Natural Earth's Jammu-and-Kashmir polygon classifies source-geometry disagreements, while the DataMeet 99/99 feature supplies source-native missing coverage; unresolved DataMeet J&K pieces that do not share a side with another Census state are assigned to the disputed/no-estimate class.",
-    "These display corrections do not alter analytical district joins, samples, spatial weights, or estimates; the depiction does not imply a position on territorial claims."
+    "DataMeet [@datameetCensus2001Districts] and Natural Earth [@naturalearthDisputedBoundaries] provide geospatial data.",
+    "District boundaries reflect 2001 geography and are sourced from DataMeet.",
+    "Politically disputed regions are identified using Natural Earth, and those for which the analysis lacks data—Aksai Chin, Azad Kashmir, Gilgit-Baltistan, the Trans-Karakoram Tract, and Siachen Glacier—are colored light gray.",
+    "Their inclusion is not meant to imply a position on the territorial disputes."
   )
 }
 
