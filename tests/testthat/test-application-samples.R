@@ -35,6 +35,34 @@ test_that("paper cross-references use Quarto identifiers", {
 })
 
 
+test_that("render cells do not redefine labels already owned by included table TeX", {
+  paper <- readLines(repo_file("paper", "paper.qmd"), warn = FALSE)
+  cell_lines <- grep(
+    "^\\s*#\\|\\s*label:\\s*tbl-[A-Za-z0-9_-]+\\s*$",
+    paper,
+    value = TRUE,
+    perl = TRUE
+  )
+  cell_labels <- sub("^\\s*#\\|\\s*label:\\s*", "", cell_lines, perl = TRUE)
+  cell_labels <- trimws(cell_labels)
+
+  tex_files <- list.files(
+    repo_file("outputs", "tables"),
+    pattern = "[.]tex$",
+    recursive = TRUE,
+    full.names = TRUE
+  )
+  tex_labels <- unique(unlist(lapply(tex_files, function(path) {
+    text <- paste(readLines(path, warn = FALSE), collapse = "\n")
+    hits <- regmatches(text, gregexpr("\\\\label\\{tbl-[A-Za-z0-9_-]+\\}", text, perl = TRUE))[[1L]]
+    if (!length(hits) || identical(hits, "")) return(character())
+    sub("^\\\\label\\{|\\}$", "", hits, perl = TRUE)
+  }), use.names = FALSE))
+
+  expect_empty(intersect(cell_labels, tex_labels))
+})
+
+
 test_that("application-sample directory ignores only transient work files", {
   ignore <- readLines(repo_file(".gitignore"), warn = FALSE)
   application_rules <- trimws(ignore[grepl("^application-samples/", trimws(ignore))])
