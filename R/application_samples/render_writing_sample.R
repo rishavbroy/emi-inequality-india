@@ -26,7 +26,7 @@ render_writing_samples <- function(manifest_path = application_sample_manifest_p
       expected_pages <- c(expected_pages, as.integer(spec$target_pages %||% NA_integer_))
     }
   }
-  validate_writing_sample_page_counts(outputs, expected_pages)
+  check_writing_sample_page_counts(outputs, expected_pages)
   unname(outputs)
 }
 

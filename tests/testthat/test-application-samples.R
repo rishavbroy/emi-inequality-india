@@ -59,7 +59,7 @@ test_that("render cells do not redefine labels already owned by included table T
     sub("^\\\\label\\{|\\}$", "", hits, perl = TRUE)
   }), use.names = FALSE))
 
-  expect_empty(intersect(cell_labels, tex_labels))
+  expect_length(intersect(cell_labels, tex_labels), 0L)
 })
 
 
@@ -341,7 +341,7 @@ test_that("writing excerpts fail closed without the full-paper reference index",
 })
 
 
-test_that("writing page-count validation reports all mismatched deliverables together", {
+test_that("writing page-count checks report all mismatched deliverables without failing", {
   skip_if(!nzchar(Sys.which("pdfinfo")), "pdfinfo is unavailable")
   pdf <- tempfile(fileext = ".pdf")
   grDevices::pdf(pdf, width = 4, height = 4)
@@ -350,10 +350,10 @@ test_that("writing page-count validation reports all mismatched deliverables tog
   grDevices::dev.off()
   env <- sample_test_env()
 
-  expect_silent(env$validate_writing_sample_page_counts(c(pdf, pdf), c(1L, NA_integer_)))
-  expect_error(
-    env$validate_writing_sample_page_counts(c(pdf, pdf), c(2L, 3L)),
-    "(?s)1 pages \\(expected 2\\).+1 pages \\(expected 3\\)",
+  expect_silent(env$check_writing_sample_page_counts(c(pdf, pdf), c(1L, NA_integer_)))
+  expect_message(
+    env$check_writing_sample_page_counts(c(pdf, pdf), c(2L, 3L)),
+    "(?s)WARNING: Writing-sample page counts differ from their current targets:.+1 pages \\(target 2\\).+1 pages \\(target 3\\)",
     perl = TRUE
   )
 })

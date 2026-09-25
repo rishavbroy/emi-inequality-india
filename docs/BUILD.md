@@ -18,13 +18,15 @@ There is no separate diagnostic configuration. Extended checks and benchmarks ar
 | Run the faster development target set | `make pipeline-fast` |
 | Render and validate the papers | `make paper` |
 | Render application samples | `make samples` |
-
-`make samples` reads `application-samples/samples.yml`. Writing samples are selected by ordinary Quarto section IDs from `paper/paper.qmd`; coding samples use marker-delimited R excerpts. Named and anonymous variants are generated from the same selections. The full-paper render keeps `paper.tex`, then a no-PDF XeLaTeX pass writes `paper-reference-labels.aux`. Before Quarto renders an excerpt, references whose targets will be omitted are replaced with their current full-paper labels from that file; references to retained targets remain ordinary Quarto cross-references. The post-Quarto Pandoc filter then removes unselected sections. Excerpt renders keep their generated `.tex` files under `application-samples/.work/` so final layout checks inspect the filtered document rather than the unfiltered QMD.
 | Render the conference poster | `make poster` |
 | Re-render all QMD families | `make qmd-renders` |
 | Run the ordinary full build | `make` or `make all` |
 | Remove generated renders and optional outputs | `make clean` |
 | Also destroy the `{targets}` store | `make clean-all` |
+
+`make samples` reads `application-samples/samples.yml`. Writing samples are selected by ordinary Quarto section IDs from `paper/paper.qmd`; coding samples use marker-delimited R excerpts. Named and anonymous variants are generated from the same selections. The full-paper render keeps `paper.tex`, then a no-PDF XeLaTeX pass writes `paper-reference-labels.aux`. Before Quarto renders an excerpt, references whose targets will be omitted are replaced with their current full-paper labels from that file; references to retained targets remain ordinary Quarto cross-references. The post-Quarto Pandoc filter then removes unselected sections. Excerpt renders keep their generated `.tex` files under `application-samples/.work/` so final layout checks inspect the filtered document rather than the unfiltered QMD.
+
+Fixed-length writing samples currently treat their declared page counts as advisory. If a rendered sample differs from its target, the build prints a `WARNING:` message with the actual and target counts and continues. This avoids making pagination a release condition while the sample formatting is still being revised.
 
 `make` and `make all` call `bash scripts/run_full_build.sh` with its defaults.
 
