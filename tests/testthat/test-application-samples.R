@@ -52,12 +52,8 @@ test_that("render cells do not redefine labels already owned by included table T
     recursive = TRUE,
     full.names = TRUE
   )
-  tex_labels <- unique(unlist(lapply(tex_files, function(path) {
-    text <- paste(readLines(path, warn = FALSE), collapse = "\n")
-    hits <- regmatches(text, gregexpr("\\\\label\\{tbl-[A-Za-z0-9_-]+\\}", text, perl = TRUE))[[1L]]
-    if (!length(hits) || identical(hits, "")) return(character())
-    sub("^\\\\label\\{|\\}$", "", hits, perl = TRUE)
-  }), use.names = FALSE))
+  env <- sample_test_env()
+  tex_labels <- unique(unlist(lapply(tex_files, env$tex_crossref_ids), use.names = FALSE))
 
   expect_length(intersect(cell_labels, tex_labels), 0L)
 })
@@ -355,6 +351,7 @@ test_that("writing excerpts recognize labels owned by included TeX tables", {
   dir.create(root)
   tex <- file.path(root, "table.tex")
   writeLines("\\begin{table}\\caption{Fixture}\\label{tbl-fixture}\\end{table}", tex)
+  expect_identical(env$tex_crossref_ids(tex), "tbl-fixture")
   source <- c(
     "---", "title: Fixture", "---",
     "# Keep {#sec-keep}", "",

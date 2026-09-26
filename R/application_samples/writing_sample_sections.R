@@ -104,7 +104,7 @@ tex_crossref_ids <- function(path) {
     gregexpr("\\\\label\\{(?:tbl|fig|eq)-[A-Za-z0-9_-]+\\}", text, perl = TRUE)
   )[[1L]]
   if (!length(hits) || identical(hits, "")) return(character())
-  sub("^\\\\label\\{|\\}$", "", hits, perl = TRUE)
+  sub("\\}$", "", sub("^\\\\label\\{", "", hits, perl = TRUE), perl = TRUE)
 }
 
 qmd_rendered_tex_ids <- function(lines, source_dir) {
