@@ -10,12 +10,13 @@ does not depend on Poppler.
 from __future__ import annotations
 
 import argparse
-import csv
 import re
 import shutil
 import subprocess
 import tempfile
 from pathlib import Path
+
+from dise_report_common import read_csv, registered_reports
 
 NUMBER = re.compile(r"(?<![A-Za-z])\d+(?:\.\d+)?")
 PATTERNS = {
@@ -40,25 +41,6 @@ FIELDS = [
     "report_girls_toilet_school_share",
     "girls_toilet_definition",
 ]
-
-
-def read_csv(path: Path) -> list[dict[str, str]]:
-    with path.open(newline="", encoding="utf-8-sig") as handle:
-        return list(csv.DictReader(handle))
-
-
-def registered_reports(registry: Path) -> dict[str, Path]:
-    reports: dict[str, Path] = {}
-    for row in read_csv(registry):
-        for column in ("report_primary", "report_secondary"):
-            relative = (row.get(column) or "").strip()
-            if not relative:
-                continue
-            name = Path(relative).name
-            if name in reports and reports[name] != Path(relative):
-                raise ValueError(f"duplicate registered report basename: {name}")
-            reports[name] = Path(relative)
-    return reports
 
 
 def extract_pdf_pages(pdf: Path, pdftotext: str, workdir: Path) -> list[str]:

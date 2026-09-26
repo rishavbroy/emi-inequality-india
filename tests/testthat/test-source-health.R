@@ -8,9 +8,12 @@ test_that("source health distinguishes referenced, metadata-dispatched, and orph
   writeLines(c(
     "base::options(width = 80, digits = 3)",
     "used <- function(x) x + 1",
+    "used_alias <- used",
+    "orphan_alias <- used",
     "default_helper <- function() 1",
     "higher_order <- function(fun = used) fun()",
     "caller <- function(x = default_helper()) used(x)",
+    "alias_caller <- function() used_alias(1)",
     "metadata_reader <- function(x) x",
     "inline_helper <- function() 1",
     "orphan <- function(x) x"
@@ -30,7 +33,11 @@ test_that("source health distinguishes referenced, metadata-dispatched, and orph
     metadata_path = metadata
   )
   status <- setNames(report$status, report$function_name)
+  definition_type <- setNames(report$definition_type, report$function_name)
+  expect_identical(definition_type[["used_alias"]], "alias")
   expect_identical(status[["used"]], "referenced")
+  expect_identical(status[["used_alias"]], "referenced")
+  expect_identical(status[["orphan_alias"]], "possible_orphan")
   expect_identical(status[["default_helper"]], "referenced")
   expect_identical(status[["higher_order"]], "possible_orphan")
   expect_identical(status[["caller"]], "possible_orphan")

@@ -1,6 +1,6 @@
 # Conservative static source-health audit.
 #
-# This audit reports top-level production functions that have no symbolic
+# This audit reports top-level production functions and direct function aliases that have no symbolic
 # reference in active R/QMD code and no exact metadata reference. It is
 # deliberately advisory: R permits dynamic dispatch, so absence of a static
 # reference is evidence for review, not proof that a function is unreachable.
@@ -32,22 +32,46 @@ source_health_is_function_definition <- function(expr) {
     identical(expr[[3L]][[1L]], as.name("function"))
 }
 
+source_health_is_symbol_alias <- function(expr) {
+  is.call(expr) &&
+    length(expr) == 3L &&
+    (identical(expr[[1L]], as.name("<-")) ||
+      identical(expr[[1L]], as.name("="))) &&
+    is.symbol(expr[[2L]]) &&
+    is.symbol(expr[[3L]])
+}
+
 source_health_function_definitions <- function(paths = list.files(
     "R", "\\.[Rr]$", recursive = TRUE, full.names = TRUE)) {
+  parsed <- lapply(sort(paths[file.exists(paths)]), function(path) {
+    list(path = path, code = parse(path, keep.source = TRUE))
+  })
+  function_names <- unique(unlist(lapply(parsed, function(item) {
+    vapply(
+      item$code[vapply(item$code, source_health_is_function_definition, logical(1))],
+      function(expr) as.character(expr[[2L]]),
+      character(1)
+    )
+  }), use.names = FALSE))
+
   rows <- list()
-  for (path in sort(paths[file.exists(paths)])) {
-    code <- parse(path, keep.source = TRUE)
-    refs <- attr(code, "srcref")
-    for (i in seq_along(code)) {
-      expr <- code[[i]]
-      if (!source_health_is_function_definition(expr)) next
-      line <- NA_integer_
-      if (length(refs) >= i && !is.null(refs[[i]])) {
-        line <- as.integer(refs[[i]][[1L]])
+  for (item in parsed) {
+    refs <- attr(item$code, "srcref")
+    for (i in seq_along(item$code)) {
+      expr <- item$code[[i]]
+      definition_type <- if (source_health_is_function_definition(expr)) {
+        "function"
+      } else if (source_health_is_symbol_alias(expr) && as.character(expr[[3L]]) %in% function_names) {
+        "alias"
+      } else {
+        next
       }
+      line <- NA_integer_
+      if (length(refs) >= i && !is.null(refs[[i]])) line <- as.integer(refs[[i]][[1L]])
       rows[[length(rows) + 1L]] <- data.frame(
         function_name = as.character(expr[[2L]]),
-        file = gsub("\\\\", "/", path),
+        definition_type = definition_type,
+        file = gsub("\\\\", "/", item$path),
         line = line,
         stringsAsFactors = FALSE
       )
@@ -55,8 +79,8 @@ source_health_function_definitions <- function(paths = list.files(
   }
   if (!length(rows)) {
     return(data.frame(
-      function_name = character(), file = character(), line = integer(),
-      stringsAsFactors = FALSE
+      function_name = character(), definition_type = character(),
+      file = character(), line = integer(), stringsAsFactors = FALSE
     ))
   }
   do.call(rbind, rows)
@@ -75,10 +99,15 @@ source_health_expression_names <- function(expr) {
   all.names(expr, functions = TRUE)
 }
 
-source_health_code_names <- function(code) {
+source_health_code_names <- function(code, alias_names = character()) {
   unlist(lapply(code, function(expr) {
     if (source_health_is_function_definition(expr)) {
       source_health_expression_names(expr[[3L]])
+    } else if (
+      source_health_is_symbol_alias(expr) &&
+        as.character(expr[[2L]]) %in% alias_names
+    ) {
+      as.character(expr[[3L]])
     } else {
       all.names(expr, functions = TRUE)
     }
@@ -86,17 +115,18 @@ source_health_code_names <- function(code) {
 }
 
 source_health_symbol_counts <- function(
-    r_paths = source_health_r_files(), qmd_paths = source_health_qmd_files()) {
+    r_paths = source_health_r_files(), qmd_paths = source_health_qmd_files(),
+    alias_names = character()) {
   names_seen <- character()
   for (path in r_paths[file.exists(r_paths)]) {
-    names_seen <- c(names_seen, source_health_code_names(parse(path)))
+    names_seen <- c(names_seen, source_health_code_names(parse(path), alias_names))
   }
   for (path in qmd_paths[file.exists(qmd_paths)]) {
     output <- tempfile(fileext = ".R")
     old_options <- options(knitr.purl.inline = TRUE)
     tryCatch({
       knitr::purl(path, output = output, quiet = TRUE)
-      names_seen <- c(names_seen, source_health_code_names(parse(output)))
+      names_seen <- c(names_seen, source_health_code_names(parse(output), alias_names))
     }, finally = {
       options(old_options)
       unlink(output)
@@ -128,7 +158,8 @@ source_health_report <- function(
     definitions$status <- character()
     return(definitions)
   }
-  counts <- source_health_symbol_counts(reference_paths, qmd_paths)
+  alias_names <- definitions$function_name[definitions$definition_type == "alias"]
+  counts <- source_health_symbol_counts(reference_paths, qmd_paths, alias_names)
   definition_counts <- table(definitions$function_name)
   dynamic <- source_health_metadata_references(
     unique(definitions$function_name), metadata_path

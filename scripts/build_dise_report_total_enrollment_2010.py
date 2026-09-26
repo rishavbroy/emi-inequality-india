@@ -12,16 +12,18 @@ import argparse
 import csv
 import re
 import shutil
-import subprocess
 from pathlib import Path
+
+from dise_report_common import (
+    extract_pdf_page,
+    parse_int,
+    read_csv,
+    registered_reports,
+)
 
 NUMBER = re.compile(r"(?<![\w.])(?:\d{1,3}(?:,\d{3})+|\d+)(?![\w.])")
 PRIMARY = re.compile(r"\bTotal\s+Pr\.\s*", re.IGNORECASE)
 UPPER = re.compile(r"\bTotal\s+U\.?P\.?\s*", re.IGNORECASE)
-
-
-def parse_int(text: str) -> int:
-    return int(text.replace(",", ""))
 
 
 def last_number_after(pattern: re.Pattern[str], lines: list[str]) -> int | None:
@@ -42,43 +44,6 @@ def parse_current_total_enrollment(text: str) -> int:
     if primary is None or upper is None:
         raise ValueError("page lacks published current-year Total Pr. and Total U.P. counts")
     return primary + upper
-
-
-def read_csv(path: Path) -> list[dict[str, str]]:
-    with path.open(newline="", encoding="utf-8-sig") as handle:
-        return list(csv.DictReader(handle))
-
-
-def registered_reports(registry: Path) -> dict[str, Path]:
-    reports: dict[str, Path] = {}
-    for row in read_csv(registry):
-        for column in ("report_primary", "report_secondary"):
-            relative = (row.get(column) or "").strip()
-            if not relative:
-                continue
-            name = Path(relative).name
-            if name in reports and reports[name] != Path(relative):
-                raise ValueError(f"duplicate registered report basename: {name}")
-            reports[name] = Path(relative)
-    return reports
-
-
-def extract_page(pdf: Path, page: int, pdftotext: str) -> str:
-    completed = subprocess.run(
-        [
-            pdftotext,
-            "-f", str(page),
-            "-l", str(page),
-            "-layout",
-            str(pdf),
-            "-",
-        ],
-        check=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-    )
-    return completed.stdout
 
 
 def provenance_rows(path: Path) -> list[dict[str, str]]:
@@ -118,7 +83,7 @@ def rebuild(
         if not pdf.is_file():
             raise FileNotFoundError(f"missing registered DISE report PDF: {pdf}")
         page = int(row["source_page"])
-        total = parse_current_total_enrollment(extract_page(pdf, page, pdftotext))
+        total = parse_current_total_enrollment(extract_pdf_page(pdf, page, pdftotext))
         rebuilt.append({
             "academic_year": "2010-11",
             "state_report": row["state_report"].strip(),
