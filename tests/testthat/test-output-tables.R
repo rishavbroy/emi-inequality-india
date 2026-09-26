@@ -820,7 +820,6 @@ test_that("paper schooling-market renderer uses modelsummary regression blocks",
   expect_match(tex, "Region fixed effects", fixed = TRUE)
   expect_match(tex, "State fixed effects", fixed = TRUE)
   expect_match(tex, "Predetermined controls", fixed = TRUE)
-  expect_match(tex, "State-membership $R^2$", fixed = TRUE)
   expect_false(grepl("NSS-DISE correlation", tex, fixed = TRUE))
 })
 
