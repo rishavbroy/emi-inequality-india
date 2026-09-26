@@ -20,13 +20,37 @@ clustered_coefficient_frame <- function(fit, vcov) {
     check.names = FALSE,
     stringsAsFactors = FALSE
   )
-  rownames(result) <- as.character(out$Coef)
+  coefficient_names <- names(stats::coef(fit))
+  coefficient_names <- coefficient_names[is.finite(stats::coef(fit))]
+  if (length(coefficient_names) != nrow(result)) return(data.frame())
+  rownames(result) <- coefficient_names
   attr(result, "df") <- stats::setNames(
     suppressWarnings(as.numeric(out$df_Satt)),
-    as.character(out$Coef)
+    coefficient_names
   )
   result
 }
+
+clustered_term_inference <- function(fit, term, vcov) {
+  if (is.null(vcov) || !inherits(vcov, "clubSandwich")) return(NULL)
+  out <- tryCatch(
+    clubSandwich::coef_test(
+      fit,
+      vcov = vcov,
+      test = "Satterthwaite",
+      coefs = term
+    ),
+    error = function(e) NULL
+  )
+  if (is.null(out) || nrow(out) != 1L) return(NULL)
+  c(
+    estimate = suppressWarnings(as.numeric(out$beta[[1L]])),
+    std.error = suppressWarnings(as.numeric(out$SE[[1L]])),
+    statistic = suppressWarnings(as.numeric(out$tstat[[1L]])),
+    p.value = suppressWarnings(as.numeric(out$p_Satt[[1L]]))
+  )
+}
+
 
 wald_test_from_vcov <- function(fit, terms, vcov) {
   coefficients <- tryCatch(stats::coef(fit), error = function(e) NULL)
@@ -224,15 +248,8 @@ model_term_inference <- function(fit, term, vcov = NULL) {
   }
 
   clustered_requested <- !is.null(vcov) && inherits(vcov, "clubSandwich")
-  clustered <- clustered_coefficient_frame(fit, vcov)
-  if (nrow(clustered) && term %in% rownames(clustered)) {
-    return(c(
-      estimate = clustered[term, "Estimate"],
-      std.error = clustered[term, "Std. Error"],
-      statistic = clustered[term, "statistic"],
-      p.value = clustered[term, "Pr(>|t|)"]
-    ))
-  }
+  clustered <- clustered_term_inference(fit, term, vcov)
+  if (!is.null(clustered) && all(is.finite(clustered))) return(clustered)
   if (clustered_requested) {
     return(c(
       estimate = unname(coefficients[[term]]),

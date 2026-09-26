@@ -675,6 +675,43 @@ test_that("clustered joint inference matches clubSandwich HTZ tests", {
   expect_equal(observed[["df_denom"]], direct$df_denom[[1L]], tolerance = 1e-12)
 })
 
+test_that("clustered IV term inference selects the endogenous coefficient by fitted name", {
+  skip_if_not_installed("clubSandwich")
+  skip_if_not_installed("ivreg")
+  set.seed(8804)
+  n <- 120L
+  dat <- data.frame(
+    instrument = stats::rnorm(n),
+    control = stats::rnorm(n),
+    cluster = rep(seq_len(12), each = 10)
+  )
+  dat$long_endogenous_treatment_name <-
+    0.8 * dat$instrument + 0.2 * dat$control + stats::rnorm(n)
+  dat$outcome <-
+    1.1 * dat$long_endogenous_treatment_name + dat$control + stats::rnorm(n)
+  fit <- ivreg::ivreg(
+    outcome ~ long_endogenous_treatment_name + control |
+      instrument + control,
+    data = dat
+  )
+  inference <- iv_clustered_inference(fit, dat$cluster)
+  observed <- model_term_inference(
+    fit, "long_endogenous_treatment_name", inference$vcov
+  )
+  direct <- clubSandwich::coef_test(
+    fit,
+    vcov = inference$vcov,
+    test = "Satterthwaite",
+    coefs = "long_endogenous_treatment_name"
+  )
+
+  expect_true(all(is.finite(observed)))
+  expect_equal(observed[["estimate"]], direct$beta[[1L]], tolerance = 1e-12)
+  expect_equal(observed[["std.error"]], direct$SE[[1L]], tolerance = 1e-12)
+  expect_equal(observed[["statistic"]], direct$tstat[[1L]], tolerance = 1e-12)
+  expect_equal(observed[["p.value"]], direct$p_Satt[[1L]], tolerance = 1e-12)
+})
+
 test_that("fitted IV term parsing preserves ivreg component terms", {
   skip_if_not_installed("ivreg")
   set.seed(8803)
