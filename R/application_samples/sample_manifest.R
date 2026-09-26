@@ -43,6 +43,21 @@ validate_application_sample_manifest <- function(manifest) {
   if (length(missing_outputs)) {
     stop("Coding samples reference unknown selected outputs: ", paste(missing_outputs, collapse = ", "), call. = FALSE)
   }
+  latex_outputs <- manifest$coding_outputs[vapply(
+    manifest$coding_outputs, function(x) identical(x$type %||% "", "latex"), logical(1)
+  )]
+  bad_labels <- names(latex_outputs)[!vapply(
+    latex_outputs,
+    function(x) grepl("^tbl-[A-Za-z0-9_-]+$", x$paper_label %||% ""),
+    logical(1)
+  )]
+  if (length(bad_labels)) {
+    stop(
+      "LaTeX coding outputs must declare a tbl- paper_label: ",
+      paste(bad_labels, collapse = ", "),
+      call. = FALSE
+    )
+  }
   invisible(TRUE)
 }
 

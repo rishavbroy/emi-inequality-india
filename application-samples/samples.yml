@@ -41,9 +41,11 @@ coding_outputs:
   selection_ame:
     type: latex
     file: outputs/tables/appendix/appendix_selection_ame.tex
+    paper_label: tbl-appendix-selection-ame
   weak_iv:
     type: latex
     file: outputs/tables/appendix/appendix_iv_weak_inference.tex
+    paper_label: tbl-app-iv-weak
   consumption_validation:
     type: figure
     file: outputs/figures/appendix/appendix_consumption_hces_consistency.pdf

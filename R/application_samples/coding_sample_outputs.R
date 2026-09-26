@@ -27,14 +27,13 @@ selected_latex_lines <- function(item, reference_labels) {
   path <- item$file %||% ""
   if (!file.exists(path)) stop("Selected coding-sample table does not exist: ", path, call. = FALSE)
 
-  table_ids <- tex_crossref_ids(path)
-  table_ids <- table_ids[startsWith(table_ids, "tbl-")]
-  if (length(table_ids) != 1L) {
-    stop("Selected coding-sample table must define exactly one tbl- label: ", path, call. = FALSE)
+  paper_label <- item$paper_label %||% ""
+  if (!grepl("^tbl-[A-Za-z0-9_-]+$", paper_label)) {
+    stop("Selected coding-sample table must name its paper_label: ", path, call. = FALSE)
   }
-  number <- unname(reference_labels[table_ids[[1L]]])
+  number <- unname(reference_labels[paper_label])
   if (length(number) != 1L || is.na(number) || !grepl("^[0-9]+$", number)) {
-    stop("Full-paper reference index has no integer table number for ", table_ids[[1L]], call. = FALSE)
+    stop("Full-paper reference index has no integer table number for ", paper_label, call. = FALSE)
   }
 
   c(

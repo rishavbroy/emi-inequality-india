@@ -27,6 +27,23 @@ test_that("application-sample manifest references current paper sections and cod
 })
 
 
+
+test_that("LaTeX coding outputs declare the paper cross-reference they preserve", {
+  env <- sample_test_env()
+  manifest <- yaml::read_yaml(repo_file("application-samples", "samples.yml"))
+  latex_ids <- names(manifest$coding_outputs)[vapply(
+    manifest$coding_outputs, function(x) identical(x$type %||% "", "latex"), logical(1)
+  )]
+  expect_true(length(latex_ids) > 0L)
+
+  broken <- manifest
+  broken$coding_outputs[[latex_ids[[1L]]]]$paper_label <- NULL
+  expect_error(
+    env$validate_application_sample_manifest(broken),
+    "LaTeX coding outputs must declare a tbl- paper_label"
+  )
+})
+
 test_that("long coding sample contains every short-sample excerpt plus additional material", {
   env <- sample_test_env()
   manifest <- env$read_application_sample_manifest(repo_file("application-samples", "samples.yml"))
@@ -291,17 +308,19 @@ test_that("coding samples reuse paper-formatted output files", {
   sys.source(repo_file("R", "application_samples", "coding_sample_outputs.R"), envir = env)
   table_file <- tempfile(fileext = ".tex")
   figure_file <- tempfile(fileext = ".pdf")
-  writeLines("\\begin{table}\\caption{Fixture}\\label{tbl-fixture}paper table\\end{table}", table_file)
+  writeLines("\\begin{table}\\caption{Fixture}\\label{tbl-file-fixture}paper table\\end{table}", table_file)
   writeBin(charToRaw("pdf fixture"), figure_file)
   manifest <- list(coding_outputs = list(
-    table = list(type = "latex", file = table_file),
+    table = list(type = "latex", file = table_file, paper_label = "tbl-paper-fixture"),
     figure = list(type = "figure", file = figure_file, title = "Paper figure")
   ))
   spec <- list(outputs = c("table", "figure"))
 
   manifest$paper <- list(repository_url = "https://github.com/example/repository")
   text <- paste(
-    env$coding_sample_output_lines(spec, manifest, "named", c(`tbl-fixture` = "7")),
+    env$coding_sample_output_lines(
+      spec, manifest, "named", c(`tbl-paper-fixture` = "7", `tbl-file-fixture` = "7a")
+    ),
     collapse = "\n"
   )
 
@@ -320,13 +339,17 @@ test_that("coding-sample tables require an unambiguous full-paper number", {
   env <- sample_test_env()
   sys.source(repo_file("R", "application_samples", "coding_sample_outputs.R"), envir = env)
   table_file <- tempfile(fileext = ".tex")
-  writeLines("\\begin{table}\\caption{Fixture}\\label{tbl-fixture}x\\end{table}", table_file)
-  item <- list(type = "latex", file = table_file)
+  writeLines("\\begin{table}\\caption{Fixture}\\label{tbl-file-fixture}x\\end{table}", table_file)
+  item <- list(type = "latex", file = table_file, paper_label = "tbl-paper-fixture")
 
-  expect_error(env$selected_latex_lines(item, character()), "no integer table number for tbl-fixture")
+  expect_error(env$selected_latex_lines(item, character()), "no integer table number for tbl-paper-fixture")
   expect_error(
-    env$selected_latex_lines(item, c(`tbl-fixture` = "7a")),
-    "no integer table number for tbl-fixture"
+    env$selected_latex_lines(item, c(`tbl-paper-fixture` = "7a")),
+    "no integer table number for tbl-paper-fixture"
+  )
+  expect_error(
+    env$selected_latex_lines(list(type = "latex", file = table_file), c(`tbl-paper-fixture` = "7")),
+    "must name its paper_label"
   )
 })
 
