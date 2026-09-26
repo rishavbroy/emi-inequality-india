@@ -41,7 +41,7 @@ selected_figure_lines <- function(item) {
   )
 }
 
-coding_sample_output_lines <- function(spec, manifest) {
+coding_sample_output_lines <- function(spec, manifest, variant) {
   items <- resolve_coding_outputs(spec, manifest)
   if (!length(items)) return(character())
   pieces <- lapply(items, function(item) {
@@ -53,9 +53,14 @@ coding_sample_output_lines <- function(spec, manifest) {
     )
     c("", content, "")
   })
+  table_code <- application_sample_file_reference("R/output/make_tables.R", variant, manifest)
+  figure_code <- application_sample_file_reference("R/output/make_figures.R", variant, manifest)
   c(
     "", "# Selected Paper Outputs", "",
-    "These outputs are the same formatted table and figure files used by the paper; their presentation is assembled in `R/output/make_tables.R` and `R/output/make_figures.R`.",
+    paste0(
+      "These outputs are the same formatted table and figure files used by the paper; their presentation is assembled in ",
+      table_code, " and ", figure_code, "."
+    ),
     unlist(pieces, use.names = FALSE)
   )
 }

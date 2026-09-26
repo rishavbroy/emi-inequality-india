@@ -19,7 +19,10 @@ render_one_coding_sample <- function(spec, variant, manifest) {
   work_dir <- file.path("application-samples", ".work")
   dir.create(work_dir, recursive = TRUE, showWarnings = FALSE)
   output_qmd <- file.path(work_dir, paste0(tools::file_path_sans_ext(basename(output)), ".qmd"))
-  body <- c(extract_code_excerpts(spec), coding_sample_output_lines(spec, manifest))
+  body <- c(
+    extract_code_excerpts(spec, variant, manifest),
+    coding_sample_output_lines(spec, manifest, variant)
+  )
   assemble_coding_sample_qmd(spec, variant, manifest, body, output_qmd)
   render_qmd_to_pdf(output_qmd, output)
   if (identical(variant, "anonymous")) {

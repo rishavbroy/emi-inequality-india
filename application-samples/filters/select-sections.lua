@@ -1,24 +1,34 @@
--- Retain the document preamble plus the sections named in sample-sections.
--- Omitted cross-references are externalized in R before Quarto renders this
--- document. This filter therefore has one responsibility: section selection.
+-- Retain the sections named in sample-sections and preserve the numbering of
+-- retained sections, figures, tables, and equations from the full paper.
 
 local selected = nil
+local reference_labels = nil
 
-local function selected_ids(meta)
-  local ids = {}
-  local value = meta["sample-sections"]
+local function meta_strings(value)
+  local out = {}
   if value == nil then
-    return ids
+    return out
   end
   local value_type = pandoc.utils.type(value)
   if value_type == "List" or value_type == "MetaList" then
     for _, item in ipairs(value) do
-      ids[pandoc.utils.stringify(item)] = true
+      out[pandoc.utils.stringify(item)] = true
     end
   else
-    ids[pandoc.utils.stringify(value)] = true
+    out[pandoc.utils.stringify(value)] = true
   end
-  return ids
+  return out
+end
+
+local function reference_label_map(value)
+  local out = {}
+  if value == nil then
+    return out
+  end
+  for key, item in pairs(value) do
+    out[key] = pandoc.utils.stringify(item)
+  end
+  return out
 end
 
 local function ancestor_ids(blocks, selected_ids_set)
@@ -44,8 +54,77 @@ local function ancestor_ids(blocks, selected_ids_set)
   return ancestors
 end
 
+local section_counters = {"section", "subsection", "subsubsection", "paragraph", "subparagraph"}
+
+local function numeric_parts(number)
+  local parts = {}
+  for part in string.gmatch(number or "", "[^.]+") do
+    local value = tonumber(part)
+    if value == nil then
+      return nil
+    end
+    table.insert(parts, value)
+  end
+  if #parts == 0 then
+    return nil
+  end
+  return parts
+end
+
+local function counter_reset(id)
+  local number = reference_labels[id]
+  if number == nil or number == "" then
+    return nil
+  end
+
+  local prefix = string.match(id, "^([^-]+)-")
+  if prefix == "sec" then
+    local parts = numeric_parts(number)
+    if parts == nil or #parts > #section_counters then
+      return nil
+    end
+    local commands = {}
+    for i, value in ipairs(parts) do
+      local target = value
+      if i == #parts then
+        target = target - 1
+      end
+      table.insert(commands, string.format("\\setcounter{%s}{%d}", section_counters[i], target))
+    end
+    return pandoc.RawBlock("latex", table.concat(commands, "\n"))
+  end
+
+  local counter = ({tbl = "table", fig = "figure", eq = "equation"})[prefix]
+  local value = tonumber(number)
+  if counter ~= nil and value ~= nil and math.floor(value) == value then
+    return pandoc.RawBlock("latex", string.format("\\setcounter{%s}{%d}", counter, value - 1))
+  end
+  return nil
+end
+
+local function block_crossref_id(block)
+  if block.t == "Figure" or block.t == "Table" or block.t == "Div" then
+    local id = block.identifier or ""
+    local prefix = string.match(id, "^([^-]+)-")
+    if prefix == "fig" or prefix == "tbl" or prefix == "eq" then
+      return id
+    end
+  end
+  if block.t == "RawBlock" and block.format == "latex" then
+    local id = string.match(block.text, "\\label{([A-Za-z]+%-[A-Za-z0-9_-]+)}")
+    if id ~= nil then
+      local prefix = string.match(id, "^([^-]+)-")
+      if prefix == "tbl" or prefix == "fig" or prefix == "eq" then
+        return id
+      end
+    end
+  end
+  return nil
+end
+
 function Meta(meta)
-  selected = selected_ids(meta)
+  selected = meta_strings(meta["sample-sections"])
+  reference_labels = reference_label_map(meta["sample-reference-labels"])
   return meta
 end
 
@@ -59,6 +138,17 @@ function Pandoc(doc)
   local seen_top_level = false
   local active = false
   local active_level = nil
+
+  local function insert_numbered(block)
+    local id = block_crossref_id(block)
+    if id ~= nil then
+      local reset = counter_reset(id)
+      if reset ~= nil then
+        out:insert(reset)
+      end
+    end
+    out:insert(block)
+  end
 
   for _, block in ipairs(doc.blocks) do
     if block.t == "Header" then
@@ -75,8 +165,17 @@ function Pandoc(doc)
       end
     end
 
-    if (not seen_top_level) or active or (block.t == "Header" and context[block.identifier]) then
-      out:insert(block)
+    local retain = (not seen_top_level) or active or (block.t == "Header" and context[block.identifier])
+    if retain then
+      if block.t == "Header" then
+        local reset = counter_reset(block.identifier)
+        if reset ~= nil then
+          out:insert(reset)
+        end
+        out:insert(block)
+      else
+        insert_numbered(block)
+      end
     end
   end
 

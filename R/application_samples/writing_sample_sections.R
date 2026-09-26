@@ -96,10 +96,48 @@ qmd_label_ids <- function(lines) {
 }
 
 
-writing_sample_retained_label_ids <- function(source_lines, section_ids) {
+tex_crossref_ids <- function(path) {
+  if (!file.exists(path)) return(character())
+  text <- paste(readLines(path, warn = FALSE), collapse = "\n")
+  hits <- regmatches(
+    text,
+    gregexpr("\\\\label\\{(?:tbl|fig|eq)-[A-Za-z0-9_-]+\\}", text, perl = TRUE)
+  )[[1L]]
+  if (!length(hits) || identical(hits, "")) return(character())
+  sub("^\\\\label\\{|\\}$", "", hits, perl = TRUE)
+}
+
+qmd_rendered_tex_ids <- function(lines, source_dir) {
+  pattern <- 'render_public_table\\(\\s*"([^"]+[.]tex)"'
+  hits <- regexec(pattern, lines, perl = TRUE)
+  parts <- regmatches(lines, hits)
+  paths <- vapply(parts[lengths(parts) == 2L], `[[`, character(1), 2L)
+  if (!length(paths)) return(character())
+  unique(unlist(lapply(paths, function(path) {
+    tex_crossref_ids(normalizePath(file.path(source_dir, path), mustWork = FALSE))
+  }), use.names = FALSE))
+}
+
+writing_sample_retained_label_ids <- function(source_lines, section_ids, source_dir = ".") {
   body <- split_qmd_front_matter(source_lines)$body
   keep <- writing_sample_retained_body_lines(source_lines, section_ids)
-  qmd_label_ids(body[keep])
+  kept <- body[keep]
+  unique(c(qmd_label_ids(kept), qmd_rendered_tex_ids(kept, source_dir)))
+}
+
+validate_writing_reference_labels <- function(source, section_ids, reference_labels) {
+  source_lines <- readLines(source, warn = FALSE)
+  retained <- writing_sample_retained_label_ids(source_lines, section_ids, dirname(source))
+  retained <- retained[grepl("^(?:sec|tbl|fig|eq)-", retained, perl = TRUE)]
+  missing <- setdiff(retained, names(reference_labels %||% character()))
+  if (length(missing)) {
+    stop(
+      "Full-paper reference index has no label for retained writing-sample content: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  invisible(TRUE)
 }
 
 paper_reference_aux_path <- function(source) {
@@ -183,10 +221,10 @@ externalize_crossrefs_in_line <- function(line, retained_ids, reference_labels, 
 # references to content that the excerpt will omit before Quarto processes the
 # excerpt; references to retained targets stay in Quarto's ordinary @id form.
 externalize_omitted_writing_crossrefs <- function(
-    body, source_lines, section_ids, reference_labels, variant, full_paper_url = ""
+    body, source_lines, section_ids, reference_labels, variant, full_paper_url = "", source_dir = "."
 ) {
   keep <- writing_sample_retained_body_lines(source_lines, section_ids)
-  retained_ids <- writing_sample_retained_label_ids(source_lines, section_ids)
+  retained_ids <- writing_sample_retained_label_ids(source_lines, section_ids, source_dir)
   body[keep] <- vapply(
     body[keep],
     externalize_crossrefs_in_line,
@@ -252,39 +290,40 @@ writing_sample_contents <- function(spec, source_lines, reference_labels) {
   format_english_list(c(named_sections, numbered))
 }
 
-writing_sample_notice <- function(spec, variant, manifest, source_lines, source_metadata, reference_labels = NULL) {
+writing_sample_notice <- function(spec, variant, manifest, source_lines, reference_labels = NULL) {
   is_full <- identical(spec$mode %||% "excerpt", "full")
   label <- if (is_full) "FULL PAPER" else paste0(spec$target_pages, "-PAGE COPY")
-  heading <- paste0("**WRITING SAMPLE: ", label, "**")
-  paper_title <- quoted_paper_title(source_metadata)
-
-  description <- if (is_full) {
-    paste0("This document contains the full paper ", paper_title, ".")
-  } else {
+  description <- if (is_full) character() else {
     paste0(
       "This document contains ",
       writing_sample_contents(spec, source_lines, reference_labels),
-      " of ",
-      if (identical(variant, "anonymous")) "a paper titled " else "the paper ",
-      paper_title,
       "."
     )
   }
+  text <- paste(
+    c(
+      description,
+      application_sample_availability_sentence(variant, manifest),
+      application_sample_build_sentence(variant, manifest)
+    ),
+    collapse = " "
+  )
 
   c(
-    heading,
-    "",
-    paste(
-      c(
-        description,
-        application_sample_availability_sentence(variant, manifest),
-        application_sample_build_sentence(variant, manifest)
-      ),
-      collapse = " "
-    ),
+    "```{=latex}",
+    "\\begingroup",
+    paste0("\\renewcommand{\\abstractname}{WRITING SAMPLE: ", label, "}"),
+    "\\begin{abstract}",
+    "```",
+    text,
+    "```{=latex}",
+    "\\end{abstract}",
+    "\\endgroup",
+    "```",
     ""
   )
 }
+
 
 sample_metadata <- function(source_metadata, spec, variant, manifest) {
   meta <- paper_sample_metadata(source_metadata, variant, manifest)
@@ -327,6 +366,9 @@ assemble_writing_sample_qmd <- function(source, spec, variant, manifest, output_
   parts <- split_qmd_front_matter(source_lines)
   source_metadata <- read_qmd_metadata(source_lines)
   prepared <- sample_metadata(source_metadata, spec, variant, manifest)
+  if (!identical(spec$mode %||% "excerpt", "full")) {
+    prepared$metadata$`sample-reference-labels` <- as.list(reference_labels)
+  }
   yaml_lines <- quarto_yaml_lines(prepared$metadata, indent.mapping.sequence = TRUE)
   body <- normalize_sample_resource_paths(parts$body)
   if (!identical(spec$mode %||% "excerpt", "full")) {
@@ -335,12 +377,12 @@ assemble_writing_sample_qmd <- function(source, spec, variant, manifest, output_
     }
     body <- externalize_omitted_writing_crossrefs(
       body, source_lines, unlist(spec$sections, use.names = FALSE), reference_labels,
-      variant, manifest$paper$full_paper_url %||% ""
+      variant, manifest$paper$full_paper_url %||% "", dirname(source)
     )
   }
 
   preamble <- c(
-    writing_sample_notice(spec, variant, manifest, source_lines, source_metadata, reference_labels),
+    writing_sample_notice(spec, variant, manifest, source_lines, reference_labels),
     "```{=latex}",
     "\\begin{abstract}",
     "```",

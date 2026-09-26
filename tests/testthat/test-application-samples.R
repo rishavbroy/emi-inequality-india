@@ -105,9 +105,10 @@ test_that("writing sample assembly derives identity and section selection from o
   out_named <- tempfile(fileext = ".qmd")
   out_anonymous <- tempfile(fileext = ".qmd")
 
-  paper_text <- paste(readLines(source, warn = FALSE), collapse = "\n")
-  refs <- unique(regmatches(paper_text, gregexpr("@(sec|tbl|fig|eq)-[A-Za-z0-9_-]+", paper_text, perl = TRUE))[[1L]])
-  labels <- setNames(as.character(seq_along(refs)), sub("^@", "", refs))
+  paper_lines <- readLines(source, warn = FALSE)
+  ids <- env$qmd_label_ids(paper_lines)
+  ids <- unique(c(ids, "tbl-paper-core-summary", "tbl-paper-language-behavior", "tbl-paper-schooling-market-geography", "tbl-paper-economic-conversion", "tbl-paper-local-development"))
+  labels <- setNames(as.character(seq_along(ids)), ids)
 
   env$assemble_writing_sample_qmd(source, spec, "named", manifest, out_named, labels)
   env$assemble_writing_sample_qmd(source, spec, "anonymous", manifest, out_anonymous, labels)
@@ -126,6 +127,7 @@ test_that("writing sample assembly derives identity and section selection from o
   expect_null(named_meta$`sample-reference-aux`)
   expect_null(named_meta$`sample-full-paper-url`)
   expect_null(anonymous_meta$`sample-full-paper-url`)
+  expect_true(length(named_meta$`sample-reference-labels`) > 0L)
   expect_true(isTRUE(named_meta$format$pdf$`keep-tex`))
   expect_identical(named_meta$format$pdf$documentclass, "article")
   expect_match(named, "\\begin{abstract}", fixed = TRUE)
@@ -137,7 +139,7 @@ test_that("writing sample assembly derives identity and section selection from o
   expect_match(named, "Rishav Roy", fixed = TRUE)
   expect_match(named, manifest$paper$repository_url, fixed = TRUE)
   expect_match(named, env$application_sample_build_script_url(manifest), fixed = TRUE)
-  expect_match(named, env$quoted_paper_title(env$read_qmd_metadata(readLines(source, warn = FALSE))), fixed = TRUE)
+  expect_false(grepl(env$quoted_paper_title(env$read_qmd_metadata(readLines(source, warn = FALSE))), named, fixed = TRUE))
   expect_false(grepl("bash scripts/run_full_build.sh", named, fixed = TRUE))
   expect_match(anonymous, "author: Anonymous", fixed = TRUE)
   expect_false(grepl(manifest$paper$repository_url, anonymous, fixed = TRUE))
@@ -149,7 +151,7 @@ test_that("writing sample assembly derives identity and section selection from o
   expect_false(grepl("bash scripts/run_full_build.sh", anonymous, fixed = TRUE))
 })
 
-test_that("writing sample notices use current paper numbers and title metadata", {
+test_that("writing sample notices use current paper numbers and abstract styling", {
   env <- sample_test_env()
   source <- c(
     "---",
@@ -166,7 +168,6 @@ test_that("writing sample notices use current paper numbers and title metadata",
     "",
     "# Conclusion {#sec-discussion}"
   )
-  meta <- env$read_qmd_metadata(source)
   spec <- list(id = "fixture", target_pages = 5L, sections = c("sec-intro", "sec-first", "sec-second", "sec-discussion"))
   manifest <- list(
     paper = list(
@@ -176,16 +177,25 @@ test_that("writing sample notices use current paper numbers and title metadata",
   )
   labels <- c(`sec-first` = "3.1", `sec-second` = "3.2")
 
-  named <- paste(env$writing_sample_notice(spec, "named", manifest, source, meta, labels), collapse = "\n")
-  anonymous <- paste(env$writing_sample_notice(spec, "anonymous", manifest, source, meta, labels), collapse = "\n")
+  named <- paste(env$writing_sample_notice(spec, "named", manifest, source, labels), collapse = "\n")
+  anonymous <- paste(env$writing_sample_notice(spec, "anonymous", manifest, source, labels), collapse = "\n")
 
-  expect_match(named, "the Introduction, Conclusion, and Sections 3.1 and 3.2", fixed = TRUE)
-  expect_match(named, "the paper “Fixture Paper: Fixture Subtitle”", fixed = TRUE)
+  expect_match(named, "This document contains the Introduction, Conclusion, and Sections 3.1 and 3.2.", fixed = TRUE)
+  expect_false(grepl("Fixture Paper", named, fixed = TRUE))
+  expect_match(named, "\\renewcommand{\\abstractname}{WRITING SAMPLE: 5-PAGE COPY}", fixed = TRUE)
+  expect_match(named, "\\begin{abstract}", fixed = TRUE)
   expect_match(named, env$application_sample_build_script_url(manifest), fixed = TRUE)
   expect_false(grepl("bash scripts/run_full_build.sh", named, fixed = TRUE))
-  expect_match(anonymous, "a paper titled “Fixture Paper: Fixture Subtitle”", fixed = TRUE)
+  expect_false(grepl("Fixture Paper", anonymous, fixed = TRUE))
   expect_false(grepl("https://", anonymous, fixed = TRUE))
   expect_match(anonymous, "`scripts/run_full_build.sh`", fixed = TRUE)
+
+  full <- paste(
+    env$writing_sample_notice(list(id = "full", mode = "full"), "named", manifest, source),
+    collapse = "\n"
+  )
+  expect_false(grepl("This document contains", full, fixed = TRUE))
+  expect_match(full, "WRITING SAMPLE: FULL PAPER", fixed = TRUE)
 })
 
 
@@ -223,7 +233,7 @@ test_that("coding sample assembly uses paper typography and wrapped highlighted 
       repository_url = "https://example.com/repository"
     )
   )
-  body <- env$extract_code_excerpts(spec)
+  body <- env$extract_code_excerpts(spec, "named", manifest)
   out <- tempfile(fileext = ".qmd")
 
   env$assemble_coding_sample_qmd(spec, "named", manifest, body, out)
@@ -231,6 +241,7 @@ test_that("coding sample assembly uses paper typography and wrapped highlighted 
 
   expect_match(rendered, "```r", fixed = TRUE)
   expect_match(rendered, "answer <- 42", fixed = TRUE)
+  expect_match(rendered, env$application_sample_file_url(code_file, manifest), fixed = TRUE)
   expect_false(grepl("```{r}", rendered, fixed = TRUE))
   expect_false(grepl("CODING SAMPLE:", rendered, fixed = TRUE))
   expect_match(rendered, "the paper “Fixture Paper: Fixture Subtitle”", fixed = TRUE)
@@ -247,7 +258,8 @@ test_that("coding sample assembly uses paper typography and wrapped highlighted 
 
   anon_out <- tempfile(fileext = ".qmd")
   manifest$identity$anonymous <- list(author = "Anonymous")
-  env$assemble_coding_sample_qmd(spec, "anonymous", manifest, body, anon_out)
+  anonymous_body <- env$extract_code_excerpts(spec, "anonymous", manifest)
+  env$assemble_coding_sample_qmd(spec, "anonymous", manifest, anonymous_body, anon_out)
   anonymous <- paste(readLines(anon_out, warn = FALSE), collapse = "\n")
   expect_match(anonymous, "a paper titled “Fixture Paper: Fixture Subtitle”", fixed = TRUE)
   expect_false(grepl("https://", anonymous, fixed = TRUE))
@@ -268,12 +280,15 @@ test_that("coding samples reuse paper-formatted output files", {
   ))
   spec <- list(outputs = c("table", "figure"))
 
-  text <- paste(env$coding_sample_output_lines(spec, manifest), collapse = "\n")
+  manifest$paper <- list(repository_url = "https://github.com/example/repository")
+  text <- paste(env$coding_sample_output_lines(spec, manifest, "named"), collapse = "\n")
 
   expect_match(text, "# Selected Paper Outputs", fixed = TRUE)
   expect_match(text, paste0("\\input{../../", table_file, "}"), fixed = TRUE)
   expect_match(text, paste0("![](../../", figure_file, "){width=95%}"), fixed = TRUE)
   expect_match(text, "## Paper figure", fixed = TRUE)
+  expect_match(text, "https://github.com/example/repository/blob/main/R/output/make_tables.R", fixed = TRUE)
+  expect_match(text, "https://github.com/example/repository/blob/main/R/output/make_figures.R", fixed = TRUE)
 })
 
 
@@ -332,6 +347,95 @@ test_that("section-selection Lua filter retains selected subsections and ancesto
   expect_false(grepl("Bravo two should be omitted.", rendered, fixed = TRUE))
   expect_false(grepl("Alpha.", rendered, fixed = TRUE))
   expect_false(grepl("Charlie.", rendered, fixed = TRUE))
+})
+
+test_that("writing excerpts recognize labels owned by included TeX tables", {
+  env <- sample_test_env()
+  root <- tempfile("sample-paper-")
+  dir.create(root)
+  tex <- file.path(root, "table.tex")
+  writeLines("\\begin{table}\\caption{Fixture}\\label{tbl-fixture}\\end{table}", tex)
+  source <- c(
+    "---", "title: Fixture", "---",
+    "# Keep {#sec-keep}", "",
+    "```{r}", "#| results: asis",
+    'render_public_table("table.tex", "fixture")',
+    "```"
+  )
+  ids <- env$writing_sample_retained_label_ids(source, "sec-keep", root)
+  expect_true("tbl-fixture" %in% ids)
+})
+
+test_that("writing numbering preflight requires labels for retained cross-reference content", {
+  env <- sample_test_env()
+  root <- tempfile("sample-paper-")
+  dir.create(root)
+  source <- file.path(root, "paper.qmd")
+  writeLines(c(
+    "---", "title: Fixture", "---",
+    "# Keep {#sec-keep}", "",
+    "![Figure](figure.pdf){#fig-keep}"
+  ), source)
+
+  expect_error(
+    env$validate_writing_reference_labels(source, "sec-keep", c(`sec-keep` = "3")),
+    "no label for retained writing-sample content: fig-keep"
+  )
+  expect_no_error(env$validate_writing_reference_labels(
+    source,
+    "sec-keep",
+    c(`sec-keep` = "3", `fig-keep` = "4")
+  ))
+})
+
+test_that("section-selection filter preserves full-paper numbering for retained content", {
+  skip_if(!nzchar(Sys.which("pandoc")), "pandoc is unavailable")
+  input <- tempfile(fileext = ".md")
+  output <- tempfile(fileext = ".tex")
+  writeLines(c(
+    "---",
+    "sample-sections:",
+    "  - sec-language-choice",
+    "  - sec-social",
+    "sample-reference-labels:",
+    "  sec-language: '3'",
+    "  sec-language-choice: '3.2'",
+    "  sec-access: '4'",
+    "  sec-social: '4.3'",
+    "  fig-social: '4'",
+    "  tbl-language: '2'",
+    "---",
+    "# Language {#sec-language}",
+    "",
+    "## Choice {#sec-language-choice}",
+    "",
+    "```{=latex}",
+    "\\begin{table}\\caption{Language}\\label{tbl-language}x\\end{table}",
+    "```",
+    "",
+    "# Access {#sec-access}",
+    "",
+    "## Social {#sec-social}",
+    "",
+    "![Social](figure.pdf){#fig-social}"
+  ), input)
+  status <- system2(
+    Sys.which("pandoc"),
+    c(
+      shQuote(input),
+      "--lua-filter", shQuote(repo_file("application-samples", "filters", "select-sections.lua")),
+      "-t", "latex",
+      "-o", shQuote(output)
+    )
+  )
+  expect_identical(status, 0L)
+  rendered <- paste(readLines(output, warn = FALSE), collapse = "\n")
+  expect_match(rendered, "\\setcounter{section}{2}", fixed = TRUE)
+  expect_match(rendered, "\\setcounter{subsection}{1}", fixed = TRUE)
+  expect_match(rendered, "\\setcounter{section}{3}", fixed = TRUE)
+  expect_match(rendered, "\\setcounter{subsection}{2}", fixed = TRUE)
+  expect_match(rendered, "\\setcounter{table}{1}", fixed = TRUE)
+  expect_match(rendered, "\\setcounter{figure}{3}", fixed = TRUE)
 })
 
 test_that("omitted writing-sample cross-references use the full-paper label index", {

@@ -1,6 +1,6 @@
 # Utilities for marker-delimited coding-sample excerpts from R files.
 
-extract_code_excerpts <- function(spec) {
+extract_code_excerpts <- function(spec, variant, manifest) {
   pieces <- lapply(spec$excerpts, function(x) {
     file <- x$file
     id <- x$id
@@ -10,7 +10,7 @@ extract_code_excerpts <- function(spec) {
       "",
       paste0("## ", title),
       "",
-      paste0("File: `", file, "`"),
+      paste0("File: ", application_sample_file_reference(file, variant, manifest)),
       "",
       "```r",
       code,

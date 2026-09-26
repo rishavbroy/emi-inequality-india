@@ -38,6 +38,18 @@ application_sample_build_script_url <- function(manifest) {
   paste0(repository_url, "/blob/main/", application_sample_build_script())
 }
 
+application_sample_file_url <- function(path, manifest) {
+  repository_url <- sub("/+$", "", manifest$paper$repository_url %||% "")
+  if (!nzchar(repository_url)) stop("Application-sample manifest is missing paper.repository_url.", call. = FALSE)
+  paste0(repository_url, "/blob/main/", path)
+}
+
+application_sample_file_reference <- function(path, variant, manifest) {
+  code <- paste0("`", path, "`")
+  if (!identical(variant, "named")) return(code)
+  paste0("[", code, "](", application_sample_file_url(path, manifest), ")")
+}
+
 application_sample_availability_sentence <- function(variant, manifest) {
   if (!identical(variant, "named")) return(character())
   paste0(
