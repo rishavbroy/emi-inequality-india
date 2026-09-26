@@ -291,7 +291,7 @@ test_that("coding samples reuse paper-formatted output files", {
   sys.source(repo_file("R", "application_samples", "coding_sample_outputs.R"), envir = env)
   table_file <- tempfile(fileext = ".tex")
   figure_file <- tempfile(fileext = ".pdf")
-  writeLines("\\begin{table}paper table\\end{table}", table_file)
+  writeLines("\\begin{table}\\caption{Fixture}\\label{tbl-fixture}paper table\\end{table}", table_file)
   writeBin(charToRaw("pdf fixture"), figure_file)
   manifest <- list(coding_outputs = list(
     table = list(type = "latex", file = table_file),
@@ -300,14 +300,34 @@ test_that("coding samples reuse paper-formatted output files", {
   spec <- list(outputs = c("table", "figure"))
 
   manifest$paper <- list(repository_url = "https://github.com/example/repository")
-  text <- paste(env$coding_sample_output_lines(spec, manifest, "named"), collapse = "\n")
+  text <- paste(
+    env$coding_sample_output_lines(spec, manifest, "named", c(`tbl-fixture` = "7")),
+    collapse = "\n"
+  )
 
   expect_match(text, "# Selected Paper Outputs", fixed = TRUE)
+  expect_match(text, "\\setcounter{table}{6}", fixed = TRUE)
+  expect_equal(length(gregexpr("\\\\FloatBarrier", text, perl = TRUE)[[1L]]), 2L)
   expect_match(text, paste0("\\input{../../", table_file, "}"), fixed = TRUE)
   expect_match(text, paste0("![](../../", figure_file, "){width=95%}"), fixed = TRUE)
   expect_match(text, "## Paper figure", fixed = TRUE)
   expect_match(text, "https://github.com/example/repository/blob/main/R/output/make_tables.R", fixed = TRUE)
   expect_match(text, "https://github.com/example/repository/blob/main/R/output/make_figures.R", fixed = TRUE)
+})
+
+
+test_that("coding-sample tables require an unambiguous full-paper number", {
+  env <- sample_test_env()
+  sys.source(repo_file("R", "application_samples", "coding_sample_outputs.R"), envir = env)
+  table_file <- tempfile(fileext = ".tex")
+  writeLines("\\begin{table}\\caption{Fixture}\\label{tbl-fixture}x\\end{table}", table_file)
+  item <- list(type = "latex", file = table_file)
+
+  expect_error(env$selected_latex_lines(item, character()), "no integer table number for tbl-fixture")
+  expect_error(
+    env$selected_latex_lines(item, c(`tbl-fixture` = "7a")),
+    "no integer table number for tbl-fixture"
+  )
 })
 
 

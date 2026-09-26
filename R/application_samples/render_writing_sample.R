@@ -1,7 +1,6 @@
 # Render writing samples from the tracked application-sample manifest.
 
-render_writing_samples <- function(manifest_path = application_sample_manifest_path(), output_files = NULL) {
-  force(output_files)
+render_writing_samples <- function(manifest_path = application_sample_manifest_path()) {
   manifest <- read_application_sample_manifest(manifest_path)
   excerpt_specs <- vapply(manifest$writing, function(x) !identical(x$mode %||% "excerpt", "full"), logical(1))
   if (any(excerpt_specs)) {

@@ -23,16 +23,38 @@ sample_output_path <- function(path) {
   paste0("../../", path)
 }
 
-selected_latex_lines <- function(item) {
+selected_latex_lines <- function(item, reference_labels) {
   path <- item$file %||% ""
   if (!file.exists(path)) stop("Selected coding-sample table does not exist: ", path, call. = FALSE)
-  c("```{=latex}", paste0("\\input{", sample_output_path(path), "}"), "```")
+
+  table_ids <- tex_crossref_ids(path)
+  table_ids <- table_ids[startsWith(table_ids, "tbl-")]
+  if (length(table_ids) != 1L) {
+    stop("Selected coding-sample table must define exactly one tbl- label: ", path, call. = FALSE)
+  }
+  number <- unname(reference_labels[table_ids[[1L]]])
+  if (length(number) != 1L || is.na(number) || !grepl("^[0-9]+$", number)) {
+    stop("Full-paper reference index has no integer table number for ", table_ids[[1L]], call. = FALSE)
+  }
+
+  c(
+    "```{=latex}",
+    "\\FloatBarrier",
+    sprintf("\\setcounter{table}{%d}", as.integer(number) - 1L),
+    paste0("\\input{", sample_output_path(path), "}"),
+    "\\FloatBarrier",
+    "```"
+  )
 }
 
 selected_figure_lines <- function(item) {
   path <- item$file %||% ""
   if (!file.exists(path)) stop("Selected coding-sample figure does not exist: ", path, call. = FALSE)
   c(
+    "```{=latex}",
+    "\\clearpage",
+    "```",
+    "",
     paste0("## ", item$title %||% basename(path)),
     "",
     item$description %||% "",
@@ -41,13 +63,13 @@ selected_figure_lines <- function(item) {
   )
 }
 
-coding_sample_output_lines <- function(spec, manifest, variant) {
+coding_sample_output_lines <- function(spec, manifest, variant, reference_labels) {
   items <- resolve_coding_outputs(spec, manifest)
   if (!length(items)) return(character())
   pieces <- lapply(items, function(item) {
     content <- switch(
       item$type %||% "",
-      latex = selected_latex_lines(item),
+      latex = selected_latex_lines(item, reference_labels),
       figure = selected_figure_lines(item),
       stop("Unsupported coding-sample output type: ", item$type %||% "", call. = FALSE)
     )

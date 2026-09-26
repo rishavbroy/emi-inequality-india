@@ -77,6 +77,7 @@ coding_sample_metadata <- function(spec, variant, manifest, source_metadata) {
     meta$`header-includes` %||% list(),
     list(
       "\\usepackage{fvextra}",
+      "\\usepackage{placeins}",
       paste0(
         "\\RecustomVerbatimEnvironment{Highlighting}{Verbatim}",
         "{commandchars=\\\\\\{\\},breaklines=true,breaknonspaceingroup,",

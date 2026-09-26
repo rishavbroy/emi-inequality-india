@@ -96,16 +96,6 @@ qmd_label_ids <- function(lines) {
 }
 
 
-tex_crossref_ids <- function(path) {
-  if (!file.exists(path)) return(character())
-  text <- paste(readLines(path, warn = FALSE), collapse = "\n")
-  hits <- regmatches(
-    text,
-    gregexpr("\\\\label\\{(?:tbl|fig|eq)-[A-Za-z0-9_-]+\\}", text, perl = TRUE)
-  )[[1L]]
-  if (!length(hits) || identical(hits, "")) return(character())
-  sub("\\}$", "", sub("^\\\\label\\{", "", hits, perl = TRUE), perl = TRUE)
-}
 
 qmd_rendered_tex_ids <- function(lines, source_dir) {
   # Public paper tables are inserted by literal render_public_table() calls.
@@ -151,54 +141,6 @@ validate_writing_reference_labels <- function(source, section_ids, reference_lab
   invisible(TRUE)
 }
 
-paper_reference_aux_path <- function(source) {
-  file.path(
-    dirname(source),
-    paste0(tools::file_path_sans_ext(basename(source)), "-reference-labels.aux")
-  )
-}
-
-read_latex_reference_labels <- function(path) {
-  if (!file.exists(path)) {
-    stop("Full-paper reference index is missing: ", path, call. = FALSE)
-  }
-  lines <- readLines(path, warn = FALSE)
-  pattern <- "^\\\\newlabel\\{([^}]+)\\}\\{\\{([^}]*)\\}"
-  hits <- regexec(pattern, lines, perl = TRUE)
-  parts <- regmatches(lines, hits)
-  parts <- parts[lengths(parts) == 3L]
-  if (!length(parts)) {
-    stop("Full-paper reference index contains no LaTeX labels: ", path, call. = FALSE)
-  }
-
-  ids <- vapply(parts, `[[`, character(1), 2L)
-  numbers <- vapply(parts, `[[`, character(1), 3L)
-  keep <- nzchar(ids) & nzchar(numbers)
-  ids <- ids[keep]
-  numbers <- numbers[keep]
-
-  grouped <- split(numbers, ids)
-  conflicts <- names(grouped)[vapply(grouped, function(x) length(unique(x)) > 1L, logical(1))]
-  if (length(conflicts)) {
-    stop(
-      "Full-paper reference index contains conflicting numbers for: ",
-      paste(conflicts, collapse = ", "),
-      call. = FALSE
-    )
-  }
-  vapply(grouped, function(x) unique(x)[[1L]], character(1))
-}
-
-crossref_display_name <- function(id) {
-  prefix <- sub("-.*$", "", id)
-  switch(prefix,
-    sec = "Section",
-    tbl = "Table",
-    fig = "Figure",
-    eq = "Equation",
-    stop("Unsupported Quarto cross-reference ID: ", id, call. = FALSE)
-  )
-}
 
 externalize_crossrefs_in_line <- function(line, retained_ids, reference_labels, variant, full_paper_url) {
   pattern <- "@((?:sec|tbl|fig|eq)-[A-Za-z0-9_-]+)"

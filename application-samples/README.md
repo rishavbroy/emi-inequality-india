@@ -24,4 +24,4 @@ The 5-, 10-, and 15-page values in `samples.yml` are current page targets. Durin
 
 Named paper and application-sample PDFs are published from the tracked rendered files at <https://rishavbroy.github.io/emi-inequality-india/>. The Pages job does not rerun the empirical build. Anonymous variants are intended for direct application uploads and are deliberately not published on the identity-revealing Pages site.
 
-Coding samples use Pandoc's `tango` syntax highlighting with `fvextra` line wrapping and a smaller code font. Tables are included from the same generated LaTeX files used by the paper, and figures reuse the paper's generated PDF files.
+Coding samples use Pandoc's `tango` syntax highlighting with `fvextra` line wrapping and a smaller code font. Tables are included from the same generated LaTeX files used by the paper, retain their full-paper table numbers, and are separated with LaTeX float barriers so a later table cannot pass an earlier output. Figures reuse the paper's generated PDF files.

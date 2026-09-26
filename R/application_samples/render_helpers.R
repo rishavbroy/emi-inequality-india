@@ -87,6 +87,71 @@ application_sample_build_sentence <- function(variant, manifest) {
   )
 }
 
+# Read the current paper's LaTeX cross-reference data.  Writing excerpts use
+# these labels for omitted references and retained counters; coding samples use
+# the same labels when reproducing paper-formatted tables.
+
+tex_crossref_ids <- function(path) {
+  if (!file.exists(path)) return(character())
+  text <- paste(readLines(path, warn = FALSE), collapse = "\n")
+  hits <- regmatches(
+    text,
+    gregexpr("\\\\label\\{(?:tbl|fig|eq)-[A-Za-z0-9_-]+\\}", text, perl = TRUE)
+  )[[1L]]
+  if (!length(hits) || identical(hits, "")) return(character())
+  sub("\\}$", "", sub("^\\\\label\\{", "", hits, perl = TRUE), perl = TRUE)
+}
+
+paper_reference_aux_path <- function(source) {
+  file.path(
+    dirname(source),
+    paste0(tools::file_path_sans_ext(basename(source)), "-reference-labels.aux")
+  )
+}
+
+read_latex_reference_labels <- function(path) {
+  if (!file.exists(path)) {
+    stop("Full-paper reference index is missing: ", path, call. = FALSE)
+  }
+  lines <- readLines(path, warn = FALSE)
+  pattern <- "^\\\\newlabel\\{([^}]+)\\}\\{\\{([^}]*)\\}"
+  hits <- regexec(pattern, lines, perl = TRUE)
+  parts <- regmatches(lines, hits)
+  parts <- parts[lengths(parts) == 3L]
+  if (!length(parts)) {
+    stop("Full-paper reference index contains no LaTeX labels: ", path, call. = FALSE)
+  }
+
+  ids <- vapply(parts, `[[`, character(1), 2L)
+  numbers <- vapply(parts, `[[`, character(1), 3L)
+  keep <- nzchar(ids) & nzchar(numbers)
+  ids <- ids[keep]
+  numbers <- numbers[keep]
+
+  grouped <- split(numbers, ids)
+  conflicts <- names(grouped)[vapply(grouped, function(x) length(unique(x)) > 1L, logical(1))]
+  if (length(conflicts)) {
+    stop(
+      "Full-paper reference index contains conflicting numbers for: ",
+      paste(conflicts, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  vapply(grouped, function(x) unique(x)[[1L]], character(1))
+}
+
+crossref_display_name <- function(id) {
+  prefix <- sub("-.*$", "", id)
+  switch(prefix,
+    sec = "Section",
+    tbl = "Table",
+    fig = "Figure",
+    eq = "Equation",
+    stop("Unsupported Quarto cross-reference ID: ", id, call. = FALSE)
+  )
+}
+
+
 # Serialize metadata for Quarto, which follows YAML 1.2 boolean syntax.
 quarto_yaml_lines <- function(x, indent.mapping.sequence = FALSE) {
   text <- yaml::as.yaml(
