@@ -878,6 +878,7 @@ test_that("paper language-behavior renderer uses standard economics regression l
   expect_match(tex, "Partial $R^2$", fixed = TRUE)
   expect_match(tex, "Linguistic distance", fixed = TRUE)
   expect_false(grepl("Linguistic distance from Hindi", tex, fixed = TRUE))
+  expect_false(grepl("\\begin{table}[H]", tex, fixed = TRUE))
 })
 
 test_that("regression stars use the manuscript-wide economics convention", {

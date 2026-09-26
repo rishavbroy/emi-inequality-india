@@ -948,7 +948,7 @@ appendix_migration_modelsummary_table <- function(table, name) {
   ))
   tex <- kableExtra::kable_styling(
     tex,
-    latex_options = c("HOLD_position", "striped"),
+    latex_options = c("striped"),
     position = "center",
     full_width = FALSE,
     font_size = 9
@@ -1326,7 +1326,7 @@ paper_language_behavior_modelsummary_table <- function(table, name) {
   ))
   tex <- kableExtra::kable_styling(
     tex,
-    latex_options = c("HOLD_position", "striped"),
+    latex_options = c("striped"),
     position = "center",
     full_width = FALSE,
     font_size = 9
