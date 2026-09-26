@@ -727,3 +727,49 @@ test_that("fitted IV term parsing preserves ivreg component terms", {
   expect_true("factor(state)" %in% parsed$regressors)
   expect_true("factor(state)" %in% parsed$instruments)
 })
+
+test_that("clustered term extraction reuses the normalized coefficient table", {
+  skip_if_not_installed("clubSandwich")
+  set.seed(8805)
+  dat <- data.frame(
+    y = stats::rnorm(120),
+    z = stats::rnorm(120),
+    cluster = rep(seq_len(12), each = 10)
+  )
+  dat$y <- 0.6 * dat$z + dat$y
+  fit <- stats::lm(y ~ z, data = dat)
+  inference <- iv_clustered_inference(fit, dat$cluster)
+  frame <- clustered_coefficient_frame(fit, inference$vcov)
+  observed <- clustered_term_inference(fit, "z", inference$vcov)
+
+  expect_equal(observed[["estimate"]], frame["z", "Estimate"], tolerance = 1e-12)
+  expect_equal(observed[["std.error"]], frame["z", "Std. Error"], tolerance = 1e-12)
+  expect_equal(observed[["statistic"]], frame["z", "statistic"], tolerance = 1e-12)
+  expect_equal(observed[["p.value"]], frame["z", "Pr(>|t|)"], tolerance = 1e-12)
+})
+
+test_that("weak-IV unavailable results preserve diagnostic evidence", {
+  spec <- data.frame(
+    specification_id = "spec", adjustment_id = "adjustment",
+    construction_id = "construction", stringsAsFactors = FALSE
+  )
+  effective <- list(
+    statistic = 9.5, critical_value = 10, p.value = 0.08, effective_df = 1
+  )
+
+  out <- weak_iv_inference_unavailable(
+    spec, effective, n = 42L,
+    reason = "CR2/Satterthwaite inference unavailable."
+  )
+
+  expect_identical(out$summary$status, "inference_unavailable")
+  expect_identical(out$summary$reason, "CR2/Satterthwaite inference unavailable.")
+  expect_equal(out$summary$effective_f, effective$statistic)
+  expect_identical(out$summary$n, 42L)
+  expect_true(all(is.na(out$summary[c(
+    "estimate_2sls", "std_error_clustered", "p_value_clustered",
+    "anderson_rubin_p_beta0"
+  )])))
+  expect_equal(nrow(out$grid), 0L)
+  expect_equal(nrow(out$overidentification), 0L)
+})

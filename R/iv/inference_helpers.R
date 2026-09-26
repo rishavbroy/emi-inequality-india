@@ -32,22 +32,14 @@ clustered_coefficient_frame <- function(fit, vcov) {
 }
 
 clustered_term_inference <- function(fit, term, vcov) {
-  if (is.null(vcov) || !inherits(vcov, "clubSandwich")) return(NULL)
-  out <- tryCatch(
-    clubSandwich::coef_test(
-      fit,
-      vcov = vcov,
-      test = "Satterthwaite",
-      coefs = term
-    ),
-    error = function(e) NULL
-  )
-  if (is.null(out) || nrow(out) != 1L) return(NULL)
+  coefficients <- clustered_coefficient_frame(fit, vcov)
+  if (!nrow(coefficients) || !term %in% rownames(coefficients)) return(NULL)
+  row <- coefficients[term, , drop = FALSE]
   c(
-    estimate = suppressWarnings(as.numeric(out$beta[[1L]])),
-    std.error = suppressWarnings(as.numeric(out$SE[[1L]])),
-    statistic = suppressWarnings(as.numeric(out$tstat[[1L]])),
-    p.value = suppressWarnings(as.numeric(out$p_Satt[[1L]]))
+    estimate = suppressWarnings(as.numeric(row$Estimate[[1L]])),
+    std.error = suppressWarnings(as.numeric(row[["Std. Error"]][[1L]])),
+    statistic = suppressWarnings(as.numeric(row$statistic[[1L]])),
+    p.value = suppressWarnings(as.numeric(row[["Pr(>|t|)"]][[1L]]))
   )
 }
 
