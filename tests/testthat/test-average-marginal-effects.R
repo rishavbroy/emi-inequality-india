@@ -125,7 +125,7 @@ test_that("survey AMEs use the fitted design's sampling weights", {
   amed <- ame_model_data_and_weights(model)
 
   expect_equal(nrow(amed$data), stats::nobs(model))
-  expect_equal(amed$wts, as.numeric(survey::weights(model$survey.design)))
+  expect_equal(amed$wts, as.numeric(stats::weights(model$survey.design, type = "sampling")))
 })
 
 test_that("programmatic selection formulas remain reconstructable", {

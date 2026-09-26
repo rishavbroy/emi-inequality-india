@@ -51,7 +51,7 @@ ame_model_data_and_weights <- function(model) {
   model_data <- as.data.frame(stats::model.frame(model))
 
   model_weights <- if (inherits(model, "svyglm") && !is.null(model$survey.design)) {
-    survey::weights(model$survey.design)
+    stats::weights(model$survey.design, type = "sampling")
   } else {
     tryCatch(stats::weights(model, type = "prior"), error = function(e) NULL)
   }
