@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This module defines how 1991-era language and socioeconomic evidence is related to the Census-2001 district geography used by the main analysis. It is distinct from the modern district-lineage system: the problem here is historical comparability across older boundary regimes.
+This module defines how 1991-era language and socioeconomic evidence is related to the 2001 Census district geography used by the main analysis. It is distinct from the modern district-lineage system: the problem here is historical comparability across older boundary regimes.
 
 ## Geography before allocation
 
@@ -22,11 +22,11 @@ When an exact historical-to-2001 relationship is supported, the crosswalk record
 
 ## Vanneman geography
 
-Vanneman provides an external historical district framework and baseline variables used for robustness/benchmarking. Vanneman constructs remain separately labeled so a result on that geography is not presented as an official Census-2001 district result.
+Vanneman provides an external historical district framework and baseline variables used for robustness and benchmarking. Results on that geography retain a Vanneman label.
 
 ## Population-interpolated G2 geography
 
-The G2 construction provides a population-interpolated harmonized geography for analyses that require comparable historical and modern support beyond exact constant-boundary components. It is a robustness framework, not a replacement for the paper's primary Census-2001 geography.
+The G2 construction provides a population-interpolated geography for analyses that require comparable historical and modern support beyond exact constant-boundary components. It forms a separate robustness specification alongside the paper's primary 2001 Census geography.
 
 ## Exact-three-vintage certification
 
@@ -38,11 +38,11 @@ The geography layer checks uniqueness, complete component membership, population
 
 ## Interpretation and limits
 
-Historical harmonization can reduce sample size and changes the estimand from individual districts to stable components. Robustness results on constant-boundary or G2 units should be interpreted as sensitivity to geographic comparability, not as more precise versions of the main specification.
+Historical harmonization can reduce sample size and changes the estimand from individual districts to stable components. Results on constant-boundary or G2 units measure sensitivity to geographic comparability and retain their own estimands.
 
 ## Implementation
 
-Relevant code is under historical geography/diagnostic modules and `data/metadata/` crosswalks. The broader modern lineage architecture is documented in [`DISTRICT_LINEAGE.md`](DISTRICT_LINEAGE.md) and [`GEOGRAPHY_HARMONIZATION.md`](GEOGRAPHY_HARMONIZATION.md).
+Relevant code is under the historical geography and validation modules and `data/metadata/` crosswalks. The broader modern lineage architecture is documented in [`DISTRICT_LINEAGE.md`](DISTRICT_LINEAGE.md) and [`GEOGRAPHY_HARMONIZATION.md`](GEOGRAPHY_HARMONIZATION.md).
 
 ## Related documentation
 

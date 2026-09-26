@@ -6,7 +6,7 @@ This module defines the household/student and administrative measures of English
 
 ## Role in the paper
 
-NSS measures provide household/student exposure and social-group access evidence. DISE/UDISE provides administrative enrollment/provision and school-quality measures. Census C-17 supplies a related language-acquisition mechanism outcome. These sources are conceptually linked but are not treated as identical measures.
+NSS measures household-reported schooling and social-group access. DISE/UDISE measures school-reported enrollment, provision, and school conditions. Census C-17 provides a related language-acquisition outcome. Together they describe distinct parts of EMI access and English acquisition.
 
 ## NSS education exposure
 
@@ -22,11 +22,11 @@ Administrative measures include baseline English-medium enrollment/provision, lo
 
 ## Intensive-margin variants
 
-Alternative EMI treatments are finite, registered variants such as conditional EMI shares or genuine school-supply measures where the data support them. A variant enters analysis because it answers a distinct measurement question, not because it improves the first stage.
+Alternative EMI treatments are predeclared variants such as conditional EMI shares or school-supply measures where the data support them. Each variant answers a distinct measurement question.
 
 ## Census C-17 language acquisition
 
-Census-2001 C-17 English-acquisition measures provide a related behavioral/mechanism outcome. They are interpreted as language-acquisition evidence rather than as direct administrative EMI enrollment.
+2001 Census C-17 measures provide a related outcome for English acquisition and are analyzed separately from administrative EMI enrollment.
 
 ## Geography and denominators
 
@@ -38,7 +38,7 @@ Validation includes denominator/accounting checks, medium-category coverage, sur
 
 ## Outputs
 
-EMI measures feed main access tables/figures, selection analysis, first-stage/IV families, social-group access results, and historical/administrative validation exhibits.
+EMI measures feed the main access tables and figures, selection analysis, first-stage and IV specifications, social-group access results, and historical and school-administration validation.
 
 ## Interpretation and limits
 

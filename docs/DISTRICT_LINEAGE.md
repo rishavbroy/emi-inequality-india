@@ -2,11 +2,11 @@
 
 ## Purpose
 
-The district-lineage system links source districts across vintages to the Census-2001 analysis geography. It provides reviewed identity evidence and deterministic aggregation rules; it is not a fuzzy matching shortcut.
+The district-lineage system reconstructs consistent district identities across changing administrative boundaries and links them to the 2001 Census analysis geography. Reviewed documentary and boundary evidence determine accepted links and aggregation rules.
 
 ## Reference geography
 
-Census-2001 districts are the primary paper geography. Later-source districts may be pooled back to a 2001 parent only when the reviewed transition evidence supports a complete deterministic relationship. Historical analyses may use separate constant-boundary/harmonized geographies documented elsewhere.
+2001 Census districts are the primary paper geography. Later-source districts may be pooled back to a 2001 parent only when the reviewed transition evidence supports a complete deterministic relationship. Historical analyses may use separate constant-boundary/harmonized geographies documented elsewhere.
 
 ## Evidence hierarchy
 
@@ -22,7 +22,7 @@ Final identities prioritize official codes/names and reviewed transition evidenc
 
 ## Adjudication rules
 
-Reviewed decisions are data. They belong in the district-lineage metadata rather than hidden conditional branches. Multi-parent, cross-cutting, or incomplete transitions remain unresolved unless an explicit allocation rule is substantively justified and registered.
+Reviewed identity decisions are recorded in district-lineage metadata and reused by the code. Multi-parent, cross-cutting, or incomplete transitions remain unresolved unless an explicit allocation rule is substantively justified and registered.
 
 ## Crosswalk roles
 
@@ -30,7 +30,7 @@ Crosswalks have explicit purposes: source-vintage identity, deterministic 2011-t
 
 ## Aggregation rules
 
-Counts are pooled before shares/rates. Means or percentages are never averaged across child districts without the underlying numerator/denominator or another declared weighting rule. Incomplete parent coverage is withheld rather than treated as a complete parent total.
+Counts are pooled before shares/rates. Means or percentages are never averaged across child districts without the underlying numerator/denominator or another declared weighting rule. Incomplete parent coverage remains unavailable.
 
 ## Unresolved districts
 
@@ -38,11 +38,11 @@ The system intentionally tolerates a bounded unresolved set. Full coverage is no
 
 ## Validation
 
-Lineage checks cover key uniqueness, one-to-one/one-to-many role constraints, complete-parent conditions, evidence consistency, geometry attachment, and downstream support. The review archive retains lineage diagnostics needed to understand unresolved cases.
+Lineage checks cover key uniqueness, one-to-one and one-to-many roles, complete-parent conditions, evidence consistency, geometry attachment, and downstream support. The review archive retains the evidence needed to understand unresolved cases.
 
 ## Metadata and outputs
 
-Tracked lineage inputs live under `data/metadata/district_lineage/` and related geography metadata. Derived lineage review files are written under diagnostic outputs. The full data-access inventory is in [`../DATA_AVAILABILITY.md`](../DATA_AVAILABILITY.md).
+Tracked lineage inputs are under `data/metadata/district_lineage/` and related geography metadata. Derived lineage review files are written under the validation outputs. The full data-access inventory is in [`../DATA_AVAILABILITY.md`](../DATA_AVAILABILITY.md).
 
 ## Legacy comparison
 
@@ -50,7 +50,7 @@ Older lineage variants may be retained for explicit sensitivity comparison, but 
 
 ## Implementation
 
-Primary code is under `R/districts/`, lineage/geography helpers, and the lineage target modules. The canonical audit command and build behavior are documented in [`BUILD.md`](BUILD.md) and [`../REPLICATION.md`](../REPLICATION.md).
+Primary code is under `R/districts/`, lineage/geography helpers, and the lineage target modules. The standard audit command and build behavior are documented in [`BUILD.md`](BUILD.md) and [`../REPLICATION.md`](../REPLICATION.md).
 
 ## Related documentation
 

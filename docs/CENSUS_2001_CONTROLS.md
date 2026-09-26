@@ -2,19 +2,19 @@
 
 ## Purpose
 
-This module constructs the compact predetermined district controls used by the main specifications and the finite alternative parameterizations used in balance/absorption diagnostics.
+This module constructs the predetermined district controls used by the main specifications and the alternative control sets used in balance and first-stage sensitivity analyses.
 
 ## Tables used
 
-The active control build combines the registered Census-2001 PCA district archive with official C-01, C-08, C-14, and H-09 workbooks. Exact manifest/source details belong in [`../DATA_AVAILABILITY.md`](../DATA_AVAILABILITY.md) and `data/metadata/`.
+The active control build combines the registered 2001 Census PCA district archive with official C-01, C-08, C-14, and H-09 workbooks. Exact manifest/source details belong in [`../DATA_AVAILABILITY.md`](../DATA_AVAILABILITY.md) and `data/metadata/`.
 
 ## Geography
 
-Controls are defined on the native 593-district Census-2001 geography. State and district codes are normalized jointly; district numbers are never interpreted without their state code.
+Controls are defined on the native 593-district 2001 Census geography. State and district codes are normalized jointly; district numbers are never interpreted without their state code.
 
 ## Main-paper controls
 
-The compact main family contains the registered predetermined variables, including population scale, urbanization, adult human capital, and the declared economic/social structure controls. The machine-readable control registry is authoritative for exact variable membership and parameterization.
+The main control set contains the registered predetermined variables, including population scale, urbanization, adult human capital, and the declared economic and social structure controls. The control registry records the exact variable membership and parameterization.
 
 ## Alternative parameterizations
 
@@ -22,15 +22,15 @@ Alternative controls are finite sensitivity designs, including declared proxy su
 
 ## Accounting and validation
 
-Each required count source must contain the expected Census-2001 state-district keys with no duplicates. Ratios are constructed only after source counts have passed key/accounting checks. Final-mode construction stops for incomplete or unexpected required coverage rather than dropping districts silently.
+Each required count source must contain the expected 2001 Census state-district keys with no duplicates. Ratios are constructed only after source counts have passed key/accounting checks. Final-mode construction stops when required coverage is incomplete or unexpected.
 
 ## Inferential role
 
-These variables are predetermined adjustment/balance variables. They do not repair weak relevance and should not be selected by whichever set yields the strongest first stage. Historical baseline controls are documented separately in [`HISTORICAL_BASELINE_VALIDATION.md`](HISTORICAL_BASELINE_VALIDATION.md).
+These variables provide predetermined adjustment and balance checks. Control specifications are predeclared independently of first-stage strength. Historical baseline controls are documented separately in [`HISTORICAL_BASELINE_VALIDATION.md`](HISTORICAL_BASELINE_VALIDATION.md).
 
 ## Outputs
 
-The controls feed the shared analysis-design registry, first-stage/IV models, balance diagnostics, and sensitivity families. Diagnostic summaries are retained under the extended output tree where declared.
+The controls feed the shared analysis registry, first-stage and IV models, balance checks, and sensitivity analyses. Extended summaries are retained in the validation outputs where declared.
 
 ## Implementation
 

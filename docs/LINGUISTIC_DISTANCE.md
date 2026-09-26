@@ -6,7 +6,7 @@ This module defines the district-level linguistic-distance measures used to char
 
 ## Role in the paper
 
-The preferred distance is an inherited/predetermined linguistic condition. Alternative genealogical/cognate constructions are robustness and identification diagnostics. Candidate strength does not determine which construction is declared preferred.
+The preferred distance is an inherited/predetermined linguistic condition. Alternative genealogical and cognate constructions provide robustness and identification checks. The preferred construction is chosen from pre-specified linguistic and historical criteria before first-stage results are compared.
 
 ## Language inputs
 
@@ -30,7 +30,7 @@ Historical Ethnologue, Dyen, Vanneman, Atlas-1991, and related evidence are used
 
 ## Adjudication
 
-Ambiguous or conflicting language identities are resolved in tracked review ledgers. Sensitivity scenarios alter only predeclared ambiguous decisions; they do not remap languages after observing first-stage or outcome estimates.
+Ambiguous or conflicting language identities are resolved in tracked review ledgers. Sensitivity scenarios alter only predeclared ambiguous decisions; the same reviewed mappings are used before and after first-stage or outcome estimation.
 
 ## Validation
 
@@ -38,15 +38,15 @@ The module checks mapping coverage, district language-share accounting, expected
 
 ## Instrument interpretation
 
-Linguistic distance is used as a source of variation in EMI exposure only under the paper's relevance and exclusion arguments. Alternative distance measures form a finite candidate family. Weak relevance and exclusion sensitivity are handled in [`IV_DIAGNOSTICS.md`](IV_DIAGNOSTICS.md), not by selecting the strongest ex post construction.
+Linguistic distance is used as a source of variation in EMI exposure only under the paper's relevance and exclusion arguments. Alternative distance measures form a finite candidate family. Weak relevance and exclusion sensitivity are handled in [`IV_DIAGNOSTICS.md`](IV_DIAGNOSTICS.md), while the instrument construction remains pre-specified.
 
 ## Outputs
 
-District measures feed the main paper, first-stage tables, weak-identification diagnostics, historical validation, and application-sample code excerpts. Review outputs preserve the construction ID so results from different distance definitions cannot be conflated.
+District measures feed the main paper, first-stage tables, weak-identification checks, historical validation, and application-sample code excerpts. Review outputs record the construction ID for every result.
 
 ## Implementation
 
-Relevant code is under `R/language/`, measure construction modules, analysis-design registries, and language metadata under `data/metadata/`.
+Relevant code is under `R/language/`, measure construction modules, analysis registries, and language metadata under `data/metadata/`.
 
 ## Related documentation
 

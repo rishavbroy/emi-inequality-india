@@ -2,17 +2,17 @@
 
 ## Purpose
 
-This document explains how observations are transformed across geographic definitions after district identities have been established. District identity/evidence belongs in [`DISTRICT_LINEAGE.md`](DISTRICT_LINEAGE.md); this module governs analytical aggregation/allocation and the supported geography specifications.
+This document explains how observations are transformed across geographic definitions after district identities have been established. [`DISTRICT_LINEAGE.md`](DISTRICT_LINEAGE.md) documents the identity evidence; this file documents aggregation, allocation, and the supported geography specifications.
 
 ## Supported geography specifications
 
-The paper's primary geography is Census-2001 districts. Registered alternatives include reviewed lineage variants, exact/constant-boundary historical components, and the population-interpolated G2 construction used for specific historical robustness analyses.
+The paper's primary geography is 2001 Census districts. Registered alternatives include reviewed lineage variants, exact/constant-boundary historical components, and the population-interpolated G2 construction used for specific historical robustness analyses.
 
-Every analytical row records the geography specification or panel variant so results from different units cannot be silently combined.
+Every analytical row records the geography specification or panel variant so analyses can distinguish results from different units.
 
 ## Multi-vintage representation
 
-The geography layer stores explicit relationships among 1991, 2001, and 2011 units where evidence supports them. Exact three-vintage support requires all relevant links; a partial chain is not relabeled as exact three-vintage comparability.
+The geography layer stores explicit relationships among 1991, 2001, and 2011 units where evidence supports them. Exact three-vintage comparability requires every relevant link.
 
 ## Aggregation and allocation
 
@@ -20,15 +20,15 @@ Administrative/source counts are aggregated through deterministic complete-paren
 
 ## G2 population interpolation
 
-G2 provides a population-interpolated harmonized geography for historical robustness when exact stable components are too restrictive. Its interpolation weights and support are explicit, and outputs remain labeled as G2 rather than as native Census-2001 districts.
+G2 provides a population-interpolated geography for historical robustness when exact stable components are too restrictive. Its interpolation weights and support are explicit, and outputs retain the G2 label.
 
 ## Population interpolation
 
-Population-based allocation uses registered source/target population totals and preserves accounting within the declared component. Missing population anchors or inconsistent component totals fail the construction rather than being replaced by arbitrary equal shares.
+Population-based allocation uses registered source and target population totals and preserves accounting within the declared component. Components with missing population anchors or inconsistent totals remain unresolved.
 
 ## Analysis use
 
-Geography variants answer sensitivity questions about boundary change and historical comparability. They should not be selected because one produces a stronger first stage or more favorable outcome coefficient.
+Geography variants answer sensitivity questions about boundary change and historical comparability. Their definitions are fixed before first-stage and outcome results are compared.
 
 ## Validation
 
@@ -36,11 +36,11 @@ Validation covers component completeness, key uniqueness, weight sums, count pre
 
 ## Interpretation and limits
 
-Changing geography can alter both sample composition and the estimand. Results on amalgamated or interpolated units therefore provide robustness evidence; they are not simply more or less precise versions of the native-district model.
+Changing geography can alter both sample composition and the estimand. Results on amalgamated or interpolated units therefore retain separate interpretations from the native-district model.
 
 ## Implementation
 
-Modern identity/linkage code is under `R/districts/`. Historical and G2 constructions are under historical geography/diagnostic modules with metadata in `data/metadata/`.
+Modern identity/linkage code is under `R/districts/`. Historical and G2 constructions are under the historical geography and validation modules with metadata in `data/metadata/`.
 
 ## Related documentation
 

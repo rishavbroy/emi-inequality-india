@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The migration module constructs Census-2011 district migration outcomes and selected 2001-to-2011 migration-rate changes for descriptive and post-treatment mechanism analysis.
+The migration module constructs 2011 Census district migration outcomes and selected 2001-to-2011 migration-rate changes for descriptive analysis of later district composition.
 
 ## Tables used
 
@@ -10,7 +10,7 @@ The active family uses D-02 through D-07 according to their published universes.
 
 ## Geography
 
-Native Census-2011 counts are validated first and then pooled to Census-2001 parents only through complete deterministic lineage. Counts are pooled before rates/shares. Source tables that do not support district detail for a desired concept are not reconstructed from unrelated tables.
+Native Census-2011 counts are validated first and then pooled to 2001 Census parents only through complete deterministic lineage. Counts are pooled before rates/shares. Source tables that do not support district detail for a desired concept are not reconstructed from unrelated tables.
 
 ## Constructed measures
 
@@ -22,7 +22,7 @@ Readers enforce the published sex/duration/reason/education/activity partitions 
 
 ## Registered inference
 
-The finite post-treatment mechanism family uses the predeclared D-02/D-03/D-04/D-07 outcomes on common support with the shared weak-IV inference layer. D-05/D-06 and additional rate changes remain descriptive unless explicitly registered; this avoids enlarging an already weakly identified family merely because more measures can be constructed.
+The predeclared D-02, D-03, D-04, and D-07 outcomes are analyzed on common support with the shared weak-IV inference. D-05, D-06, and additional rate changes are reported descriptively unless separately registered.
 
 The registered 2011 local-development reduced forms and any weak-IV mechanism IVs use the same central design metadata for controls, fixed effects, clustering, and instrument construction.
 
@@ -32,7 +32,7 @@ Migration outcomes are possible post-treatment channels or local-development cor
 
 ## Outputs
 
-Validated/harmonized migration measures and registered reduced-form/IV summaries are retained in migration diagnostic outputs and selected appendix tables.
+Validated and harmonized migration measures and registered reduced-form and IV summaries are retained in the migration validation outputs and selected appendix tables.
 
 ## Limitations
 
@@ -40,4 +40,4 @@ Published migration tables have different universes and cannot always be combine
 
 ## Implementation
 
-Readers are in `R/io/read_census_migration.R`; construction and inference are in Census migration/diagnostic modules using the shared 2011-to-2001 harmonization and post-treatment inference helpers.
+Readers are in `R/io/read_census_migration.R`; construction and inference are in the Census migration and validation modules using the shared 2011-to-2001 harmonization and post-treatment inference helpers.

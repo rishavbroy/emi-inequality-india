@@ -6,7 +6,7 @@ This module constructs comparable district welfare outcomes from historical NSS 
 
 ## Role in the paper
 
-The preferred consumption outcomes are paper-facing economic-conversion measures. Historical rounds also support baseline adjustment, dynamics, and pre-trend checks. Modern HCES is used both for later welfare outcomes and for cross-source consistency checks.
+The preferred consumption outcomes measure later district welfare in the paper. Historical rounds also support baseline adjustment, dynamics, and pre-trend checks. Modern HCES provides later welfare outcomes and cross-source consistency checks.
 
 ## Survey sources
 
@@ -14,11 +14,11 @@ The active family includes historical NSS consumer-expenditure rounds, the 2011-
 
 ## Household MPCE definitions
 
-Source adapters normalize each survey to a household-level contract before district estimation. The contract keeps the provider's consumption concept explicit, records household size and survey-design variables, and avoids mixing aggregate survey-frame geography with district identity.
+Input adapters normalize each survey to a common household-level schema before district estimation. The schema records the provider's consumption concept, household size, survey-design variables, and geographic identifiers.
 
-Detailed-consumption rounds are reconstructed from their item/block files only after the source-level accounting and person/household keys pass validation. The reconstructed household total is compared with any published aggregate measure available for that round before it is admitted to district estimation.
+Detailed-consumption rounds are reconstructed from their item and block files after accounting identities and person/household keys pass validation. The reconstructed household total is compared with any published aggregate measure available for that round before it is admitted to district estimation.
 
-Modern HCES uses the registered nominal-MPCE contract. Nominal values are retained separately from real values so price conversion can be audited independently.
+Modern HCES uses the registered nominal-MPCE schema. Nominal values are retained separately from real values so price conversion can be audited independently.
 
 ## District welfare estimands
 
@@ -34,7 +34,7 @@ The statistical treatment of lonely PSUs is a methodological choice and should b
 
 ## Modern HCES validation
 
-Modern HCES district estimates are compared across the available releases/visits using the registered consistency diagnostics. The validation asks whether the alternative published consumption series support the same district ranking/level relationships needed for the paper; it does not redefine the preferred outcome after seeing downstream IV results.
+Modern HCES district estimates are compared across the available releases and visits using registered consistency checks. The preferred outcome is defined before downstream IV results are examined.
 
 ## Historical comparability
 
@@ -54,11 +54,11 @@ The measurement layer checks, as applicable:
 
 ## Outputs
 
-Paper-facing tables and figures are generated downstream under `outputs/tables/` and `outputs/figures/`. Measurement/validation tables used for review are retained under `outputs/diagnostics/` according to the output-retention rules.
+Paper tables and figures are generated downstream under `outputs/tables/` and `outputs/figures/`. Measurement and validation tables used for review are retained under `outputs/diagnostics/` according to the output-retention rules.
 
 ## Interpretation and limits
 
-District consumption is an economic-outcome measure, not a direct measure of individual returns to English or EMI. Historical and modern rounds differ in questionnaire design and institutional context, so longitudinal claims rely on the registered harmonization and sensitivity analyses rather than treating every nominal MPCE variable as interchangeable.
+District consumption measures later local economic outcomes. Historical and modern rounds differ in questionnaire design and institutional context, so longitudinal comparisons use the registered harmonization and sensitivity analyses for each MPCE definition.
 
 ## Implementation
 

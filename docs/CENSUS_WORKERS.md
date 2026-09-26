@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The worker module uses Census-2001 tables for predetermined industrial/occupational validation and Census-2011 tables for post-treatment local-development mechanisms.
+The worker module uses 2001 Census tables for predetermined industrial/occupational validation and Census-2011 tables for post-treatment local-development mechanisms.
 
 ## Tables used
 
@@ -10,11 +10,11 @@ The 2001 family uses B-04, B-25, and B-26. The 2011 family uses B-04, B-06, B-25
 
 ## Geography
 
-Census-2001 outcomes are native to the reference 593 districts. Census-2011 counts are pooled to Census-2001 parents only through complete deterministic lineage; shares are formed after count pooling.
+2001 Census outcomes are native to the reference 593 districts. Census-2011 counts are pooled to 2001 Census parents only through complete deterministic lineage; shares are formed after count pooling.
 
 ## Constructed measures
 
-The module constructs registered industrial and occupational shares/counts from the source tables. B-25/B-26-type occupation measures retain their published worker universe rather than being normalized by an unrelated population denominator.
+The module constructs registered industrial and occupational shares and counts from the published tables. B-25/B-26 occupation measures use their published worker denominator.
 
 ## Accounting and validation
 
@@ -22,19 +22,19 @@ B-25 provides an independent check on compatible B-26 main-worker occupation cou
 
 ## Longitudinal comparability
 
-Only concepts with comparable worker universes are used for change-style interpretation. Differences in census occupation/industry classification are kept visible rather than forced into a false exact match.
+Only concepts with comparable worker denominators are used for changes over time. Differences in Census occupation and industry classification remain explicit.
 
 ## Inferential role
 
-The 2001 worker block supplies predetermined balance/validity evidence. The 2011 worker block supplies post-treatment industrial/occupational mechanism outcomes through the shared finite inference family. Post-treatment worker structure is not a control for the preferred causal model.
+The 2001 worker block supplies predetermined balance evidence. The 2011 worker block supplies later industrial and occupational outcomes through the shared inference specifications.
 
 ## Outputs
 
-Validated worker measures and registered mechanism summaries are retained under the corresponding diagnostic outputs.
+Validated worker measures and registered summaries are retained under the corresponding validation outputs.
 
 ## Limitations
 
-Census worker measures describe resident workers under census definitions, while Economic Census measures describe employment at establishments. They are complementary rather than interchangeable.
+Census worker measures describe resident workers, while Economic Census measures describe jobs located at establishments. The two therefore measure different populations.
 
 ## Implementation
 

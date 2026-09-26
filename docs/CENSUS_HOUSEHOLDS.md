@@ -10,7 +10,7 @@ The 2011 family uses HH-08, HH-10, and HH-11. The matched 2001 baseline uses the
 
 ## Geography
 
-Native table accounting is validated before any geography transformation. Census-2011 counts are pooled to Census-2001 parents only through complete deterministic lineage relationships. Shares are calculated after counts are pooled.
+Native table accounting is validated before any geography transformation. 2011 Census counts are pooled to 2001 Census parents only through complete deterministic lineage relationships. Shares are calculated after counts are pooled.
 
 ## Constructed measures
 
@@ -20,7 +20,7 @@ Native table accounting is validated before any geography transformation. Census
 
 ## Accounting and validation
 
-HH-08 and HH-11 must reconcile their household totals. HH-10's relevant partitions must reconcile with the same household universe and its own published subtotals. Worker counts and main/marginal components are checked where the table publishes both. Cross-table disagreement is surfaced before harmonization.
+HH-08 and HH-11 must reconcile their household totals. HH-10's relevant partitions must reconcile with the same household denominator and its own published subtotals. Worker counts and main/marginal components are checked where the table publishes both. Cross-table disagreement is surfaced before harmonization.
 
 ## Longitudinal comparability
 
@@ -28,7 +28,7 @@ Only concepts with defensible 2001/2011 counterparts enter changes. The module a
 
 ## Inferential role
 
-Household-capacity changes are descriptive co-evolving development evidence. A bounded paper-facing synthesis uses predeclared changes, but these outcomes are not preferred controls and are not interpreted as identified mediation effects.
+The predeclared household literacy, education-access, and worker-intensity changes describe how local development differs across districts. The paper uses them as later outcomes, with mediation left unidentified.
 
 ## Outputs
 
@@ -36,8 +36,8 @@ Validated baseline, harmonized 2011, and change files are retained under `output
 
 ## Limitations
 
-Household-capacity measures describe household composition/access, not individual schooling quality or earnings. Post-treatment changes may reflect many local-development channels.
+These measures describe household literacy, education access, and worker composition. Changes after the treatment period can reflect several local-development processes.
 
 ## Implementation
 
-Table-specific readers and measure builders live under Census I/O/measure modules; pooling uses the shared 2011-to-2001 harmonization utilities.
+Table-specific readers and measure builders are under the Census input and measure modules; pooling uses the shared 2011-to-2001 harmonization utilities.

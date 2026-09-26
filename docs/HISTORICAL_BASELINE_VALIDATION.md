@@ -6,7 +6,7 @@ This module evaluates whether the preferred linguistic-distance/instrument const
 
 ## Role in the paper
 
-These analyses are identification diagnostics and historical validation. They do not turn balance on observed covariates into proof of the exclusion restriction.
+These analyses examine historical balance and pre-treatment evidence relevant to the identification argument. Balance on observed covariates cannot establish the exclusion restriction.
 
 ## Official Census-1991 baseline
 
@@ -20,13 +20,13 @@ A compact PCA summary is constructed only from the registered predetermined base
 
 Vanneman historical district data provide an independent benchmark and alternative concept-matched baseline. Comparisons distinguish source differences from geography differences by using the registered Vanneman and harmonized-geography variants rather than collapsing them into one label.
 
-## Source-count contracts
+## Expected source coverage
 
-Each historical source family has explicit expected coverage and key uniqueness. Exact-required source comparisons fail when a required district/key or accounting identity is missing. Predeclared non-fatal source discrepancies remain visible as diagnostics rather than being silently corrected.
+Each historical source family has explicit expected coverage and key uniqueness. Exact-required comparisons stop when a required district, key, or accounting identity is missing. Predeclared non-fatal discrepancies remain visible in the validation results.
 
 ## External benchmarks
 
-External historical linguistic and socioeconomic references are used to check whether the constructed baseline behaves plausibly on overlapping support. They are validation anchors, not additional controls automatically inserted into the preferred model.
+External historical linguistic and socioeconomic references are compared with the constructed baseline on overlapping districts. They provide independent checks of levels, direction, and coverage and are kept separate from the preferred model's controls.
 
 ## Pre-treatment trends
 
@@ -34,15 +34,15 @@ Where repeated historical outcomes exist, pre-treatment trend analysis is used t
 
 ## Balance and robustness families
 
-Historical balance/adjustment families are finite and concept-driven. Compact Census-2001 adjustment, historical PCA, Vanneman adjustment, and related registered variants answer distinct sensitivity questions. They should not be ranked by whichever produces the strongest modern first stage or outcome coefficient.
+Historical balance and adjustment specifications are predeclared according to the information they add: compact 2001 Census controls, historical PCA, Vanneman controls, and related registered variants. Their interpretation follows those substantive differences, with first-stage and outcome results reported afterward.
 
 ## Validation
 
-The module checks official-source accounting, cross-source district overlap, geography support, PCA input completeness, consistency of historical variable direction/units, and reproducibility of the registered comparison cells.
+The module verifies official-table accounting and district overlap, then checks geography support, PCA inputs, historical variable units and direction, and the reproducibility of registered comparisons.
 
 ## Interpretation and limits
 
-Observed historical balance can rule out some confounding stories but cannot establish independence from unobserved historical conditions. Pre-trend evidence is likewise diagnostic rather than a direct test of every exclusion pathway.
+Observed historical balance can rule out some confounding stories but cannot establish independence from unobserved historical conditions. Pre-trend evidence addresses observed pre-treatment patterns but cannot test every exclusion pathway.
 
 ## Implementation
 

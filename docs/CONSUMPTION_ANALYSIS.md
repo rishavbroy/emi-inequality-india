@@ -18,15 +18,15 @@ The descriptive bridge relates observed schooling margins to later real consumpt
 
 ## Preferred IV specification
 
-The preferred consumption IV rows use the cross-family analysis-design registry and the weak-identification diagnostics described in [`IV_DIAGNOSTICS.md`](IV_DIAGNOSTICS.md). The final paper should report weak first-stage evidence directly and use weak-identification-robust inference where required.
+The preferred consumption IV rows use the shared analysis registry and the weak-identification checks described in [`IV_DIAGNOSTICS.md`](IV_DIAGNOSTICS.md). The final paper should report weak first-stage evidence directly and use weak-identification-robust inference where required.
 
 ## Registered robustness families
 
-Robustness is finite and registry driven. Current families include alternative welfare outcomes, treatment definitions, control strategies/parameterizations, historical concept-matched adjustment, and related declared comparisons. A new family should enter the registry with a distinct scientific question; it should not be generated merely by crossing every available variable.
+Robustness analyses are limited to predeclared families: alternative welfare outcomes, treatment definitions, control specifications, historical concept-matched adjustments, and related comparisons. Each family answers a stated scientific question.
 
 ## Common-support policy
 
-Comparisons within a robustness family use an explicit common-support rule so coefficient differences are not mechanically driven by changing samples. If multiple families intentionally share the identical support definition, that support should be computed once or the equivalence should be declared so output-hygiene checks remain meaningful.
+Comparisons within a robustness family use an explicit common support rule so coefficient differences are not mechanically driven by changing samples. If multiple families intentionally share the identical support definition, that support should be computed once or the equivalence should be declared so output checks remain meaningful.
 
 ## Validation
 
@@ -34,15 +34,15 @@ The analysis checks estimation-sample identity, instrument/treatment availabilit
 
 ## Outputs
 
-Main tables/figures are under `outputs/tables/main/` and `outputs/figures/main/`; appendix and diagnostic outputs live in their corresponding directories. Output code formats registered results but does not redefine the statistical specification.
+Main tables and figures are under `outputs/tables/main/` and `outputs/figures/main/`; appendix and validation results are stored in their corresponding directories. Output code formats registered results while the statistical specifications remain defined upstream.
 
 ## Interpretation and limits
 
-The consumption IV design depends on instrument relevance and exclusion assumptions. Weak relevance is not repaired by adding controls or by choosing the strongest observed candidate. Post-treatment mechanism outcomes remain descriptive/diagnostic unless a separate identifying argument is stated. Alternative welfare and control families are robustness evidence, not independent discoveries.
+The consumption IV design depends on instrument relevance and exclusion assumptions. Weak-identification-robust inference reports what the data support when relevance is limited. Post-treatment outcomes describe associated district changes unless a separate identifying argument is stated. Alternative welfare and control specifications show how the main results change across predeclared choices.
 
 ## Implementation
 
-Consumption analysis code is primarily under `R/iv/`, `R/diagnostics/`, `R/consumption/`, and consumption target modules in `R/pipeline/`. Cross-family design rows are centralized in the analysis-design registry; output formatting belongs under `R/output/`.
+Consumption analysis code is primarily under `R/iv/`, `R/diagnostics/`, `R/consumption/`, and the consumption target modules in `R/pipeline/`. Shared design rows are defined in the analysis registry, and output formatting is under `R/output/`.
 
 ## Related documentation
 

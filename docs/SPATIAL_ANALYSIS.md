@@ -2,11 +2,11 @@
 
 ## Purpose
 
-Spatial diagnostics test whether district variables or fitted-model residuals retain geographic autocorrelation on the reviewed Census-2001 geometry. They are model-adequacy and descriptive dependence checks; the preferred paper estimator is not a spatial IV model.
+Spatial checks test whether district variables or fitted-model residuals retain geographic autocorrelation on the reviewed 2001 Census geometry. These checks assess geographic dependence around the paper's non-spatial preferred estimator.
 
 ## Geometry
 
-The analysis uses the reviewed Census-2001 district polygons attached to the main district panel. Geometry preparation and district identity are governed by the lineage/geography modules rather than by spatial diagnostics.
+The analysis uses the reviewed 2001 Census district polygons attached to the main district panel. The lineage and geography modules determine district identity and prepare the geometry used here.
 
 ## Weight construction
 
@@ -14,25 +14,25 @@ The preferred neighborhood definition is rook contiguity with row-standardized w
 
 ## Islands and zero-neighbor policy
 
-Lakshadweep, South Andaman, and Nicobars are genuine offshore islands in the reference geometry. They remain in the dataset with `zero.policy = TRUE`. Their zero-neighbor status is not evidence that polygon snap tolerance should be inflated until every district receives a neighbor.
+Lakshadweep, South Andaman, and Nicobars are genuine offshore islands in the reference geometry. They remain in the dataset with zero neighbors under `zero.policy = TRUE`.
 
-## Moran diagnostics
+## Moran checks
 
-The diagnostic layer computes Moran tests for selected variables and model residuals on the exact fitted rows. Residual alignment should reuse the shared fitted-sample/index machinery so factor/transformation handling and row exclusions match the fitted model.
+The spatial-analysis code computes Moran tests for selected variables and model residuals on the exact fitted rows. Residual alignment should reuse the shared fitted-sample/index machinery so factor/transformation handling and row exclusions match the fitted model.
 
-Asymptotic Moran tests are the routine diagnostic. Monte Carlo checks may be used as sensitivity analysis when computationally justified; if reported, the simulation count and random-seed policy should be explicit.
+Asymptotic Moran tests are the routine check. Monte Carlo versions are used as sensitivity analyses when reported, with the simulation count and random-seed policy recorded.
 
 ## Experimental spatial IV
 
-`R/iv/estimate_spatial_iv_experimental.R` is experimental. Spatially lagged endogenous variables change the identifying assumptions, so these estimates are not promoted to the paper merely because residual spatial dependence is detected.
+`R/iv/estimate_spatial_iv_experimental.R` is experimental. Spatially lagged endogenous variables require additional identifying assumptions and are evaluated separately from the paper's preferred estimator.
 
 ## Interpretation boundary
 
-Spatial autocorrelation can reveal omitted geographic structure or residual dependence. It does not by itself identify the correct spatial causal model, nor does a non-significant residual Moran test prove the absence of spatial confounding.
+Spatial autocorrelation can reveal omitted geographic structure or residual dependence. Interpreting that pattern causally requires a separately specified spatial model; a residual Moran test alone does not establish such a model.
 
 ## Outputs and tests
 
-Spatial-weight and residual diagnostics are retained under the diagnostic output tree. Tests should protect neighbor/weight behavior, island handling, fitted-row alignment, and model residual use rather than implementation text.
+Spatial-weight and residual checks are retained under the validation outputs. Tests protect neighbor and weight behavior, island handling, fitted-row alignment, and model residual use.
 
 ## Implementation
 

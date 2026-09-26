@@ -10,7 +10,7 @@ The active matched families include the registered H-04/H-05/H-08/H-09/H-10/H-11
 
 ## Geography
 
-Census-2001 measures are native to the 593-district reference geography. Census-2011 counts are pooled backward only when the reviewed lineage yields a complete deterministic parent. Partial parents are withheld. Shares/rates are computed after pooling counts.
+2001 Census measures are native to the 593-district reference geography. Census-2011 counts are pooled backward only when the reviewed lineage yields a complete deterministic parent. Partial parents are withheld. Shares/rates are computed after pooling counts.
 
 ## Constructed measures
 
@@ -20,7 +20,7 @@ Richer 2011 categories are collapsed only to an explicit 2001 counterpart. The c
 
 ## Accounting and validation
 
-Each table's mutually exclusive categories must reconcile to its published household total before harmonization. Asset tables are treated differently because households may own multiple assets: each asset count is checked only as a valid subcount. Independent table families are used as cross-checks where their universes overlap.
+Each table's mutually exclusive categories must reconcile to its published household total before harmonization. Asset tables are treated differently because households may own multiple assets: each asset count is checked as a valid subcount. Independent table families provide cross-checks where their denominators overlap.
 
 ## Longitudinal comparability
 
@@ -28,11 +28,11 @@ Only directly comparable categories enter 2001-to-2011 changes. Source-specific 
 
 ## Inferential role
 
-A finite registry carries selected living-standard changes into the shared post-treatment mechanism diagnostics. These are changes, not 2011 levels, and remain descriptive/mechanism evidence rather than identified mediation effects.
+A finite registry carries selected 2001–2011 living-standard changes into the shared post-treatment analysis. These changes describe local development associated with the treatment-period measures; mediation is not identified by these regressions.
 
 ## Outputs
 
-Validated native/harmonized measures, source-accounting checks, and registered mechanism summaries are retained under the housing diagnostic outputs.
+Validated native and harmonized measures, source-accounting checks, and registered summaries are retained under the housing validation outputs.
 
 ## Limitations
 
@@ -40,4 +40,4 @@ Category harmonization cannot eliminate changes in census wording/technology. Ho
 
 ## Implementation
 
-Housing readers are in `R/io/read_census_housing.R`; measure/harmonization and shared mechanism inference are downstream in the Census/diagnostic modules.
+Housing readers are in `R/io/read_census_housing.R`; measure/harmonization and shared inference are downstream in the Census and validation modules.

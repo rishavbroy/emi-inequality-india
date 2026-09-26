@@ -10,11 +10,11 @@ Historical language evidence is validation and predetermined-baseline support. I
 
 ## 1991 Language Atlas
 
-The Census of India Language Atlas 1991 is the principal historical language source. The repository retains extraction metadata and reviewed cell decisions rather than treating OCR/extraction output as automatically authoritative. Extracted state/district/language cells enter analysis only after the registered validation and adjudication rules are satisfied.
+The Census of India Language Atlas 1991 is the principal historical language source. The repository retains extraction metadata and reviews extracted cells before they enter the analysis. Extracted state/district/language cells enter analysis only after the registered validation and adjudication rules are satisfied.
 
 ## Extraction and review
 
-The extraction process separates machine-readable capture from reviewed acceptance. Reviewed cells record the published label/value, any ambiguity, and the decision used downstream. The active analysis should consume the reviewed table, not a fresh unreviewed extraction.
+The extraction process separates machine-readable capture from reviewed acceptance. Reviewed cells record the published label/value, any ambiguity, and the decision used downstream. The active analysis uses the reviewed table.
 
 ## Historical language allocation
 
@@ -22,7 +22,7 @@ Historical language shares are assigned to the historical geographic units suppo
 
 ## Preferred and alternative language references
 
-Historical validation uses the same conceptual language-distance family as the modern analysis: reviewed language identities, Glottolog genealogical information, Dyen/Shastry cognate-distance evidence where applicable, and the frozen preferred 0--5 mapping. Alternative references are sensitivity checks rather than competing definitions selected by first-stage strength.
+Historical validation uses the same conceptual language-distance family as the modern analysis: reviewed language identities, Glottolog genealogical information, Dyen/Shastry cognate-distance evidence where applicable, and the frozen preferred 0--5 mapping. Alternative references provide sensitivity checks under pre-specified language definitions.
 
 ## Reviewed adjudication
 
@@ -34,7 +34,7 @@ Validation checks include extraction/accounting consistency, coverage of reviewe
 
 ## Outputs
 
-Historical language diagnostics are retained under extended diagnostic outputs and feed the baseline/pre-trend analyses described in [`HISTORICAL_BASELINE_VALIDATION.md`](HISTORICAL_BASELINE_VALIDATION.md).
+Historical language validation results are retained under the extended outputs and feed the baseline/pre-trend analyses described in [`HISTORICAL_BASELINE_VALIDATION.md`](HISTORICAL_BASELINE_VALIDATION.md).
 
 ## Interpretation and limits
 
@@ -42,7 +42,7 @@ Historical language composition is used to establish persistence/predeterminatio
 
 ## Implementation
 
-Relevant code is under `R/language/`, `R/io/`, historical diagnostic modules, and tracked language metadata in `data/metadata/`. The Python atlas extractor is a source-materialization tool; reviewed metadata remain the downstream authority.
+Relevant code is under `R/language/`, `R/io/`, historical validation modules, and tracked language metadata in `data/metadata/`. The Python atlas extractor creates the local table used for review; the accepted cell decisions are stored in tracked metadata.
 
 ## Related documentation
 

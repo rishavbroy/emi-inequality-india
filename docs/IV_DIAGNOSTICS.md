@@ -1,26 +1,26 @@
-# IV diagnostics and weak identification
+# IV checks and weak identification
 
 ## Purpose
 
-This document describes the registered instrumental-variable specifications and the diagnostics used to evaluate relevance, observed-balance evidence, weak identification, monotonicity, and overidentifying restrictions. The specification layer is centralized so diagnostics do not independently reconstruct controls, fixed effects, instruments, language adjustments, clustering, or sample rules.
+This document describes the registered instrumental-variable specifications and the checks used to evaluate relevance, observed balance, weak identification, monotonicity, and overidentifying restrictions. Shared specifications keep controls, fixed effects, instruments, language adjustments, clustering, and sample rules consistent across those checks.
 
 ## Preferred IV specification
 
-Each IV row is self-describing: outcome, endogenous treatment, excluded instrument construction, included language adjustments, controls, fixed effects, clustering variable, sample rule, panel/geography variant, and diagnostic tier are declared in the shared IV/analysis-design registries. `state_code_2001` is the current cluster variable for the registered paper designs.
+Each IV row records its outcome, endogenous treatment, excluded instrument construction, language adjustments, controls, fixed effects, clustering variable, sample rule, panel/geography variant, and validation tier in the shared IV registries. `state_code_2001` is the current cluster variable for the registered paper designs.
 
-The linguistic-distance measure and included language-composition adjustments are separate registries. Stable construction IDs name only the admissible pairings used by the project; they are compatibility identifiers, not a license to cross every measure and adjustment mechanically.
+The linguistic-distance measure and included language-composition adjustments are separate registries. Stable construction IDs name the admissible pairings used by the project.
 
 ## Candidate-design governance
 
-Scientific questions and execution cells are distinct. A named question may reduce to the same formula/sample as an existing cell. The candidate registry retains the semantic question, the execution registry de-duplicates identical designs, and the alias relation records which questions share an execution. This preserves reviewer visibility without fitting duplicate regressions.
+Scientific questions and execution cells are distinct. A named question may reduce to the same formula/sample as an existing cell. The candidate registry retains the substantive question, while the execution registry avoids fitting identical designs twice and records which questions share a fit. This preserves reviewer visibility without fitting duplicate regressions.
 
 New candidates should enter because they represent a distinct identification or measurement question. They should not be added merely because another variable can be crossed into the grid or because a candidate produces a stronger first stage.
 
-## First-stage diagnostics
+## First-stage checks
 
-Registered relevance diagnostics include the excluded-instrument first-stage Wald statistic, individual first-stage coefficients, partial R-squared, and Montiel Olea--Pflueger effective F where the structural IV model makes that statistic applicable. The effective-F calculation uses `momentfit::MOPtest()` on the fitted structural specification/sample; it is not invented from an outcome-free first-stage-only comparison.
+Registered relevance checks include the excluded-instrument first-stage Wald statistic, individual first-stage coefficients, partial R-squared, and Montiel Olea--Pflueger effective F where the structural IV model makes that statistic applicable. The effective-F calculation uses `momentfit::MOPtest()` on the fitted structural specification and sample.
 
-The project reports the MOP statistic and the ordinary clustered first-stage statistic side by side because their covariance conventions need not coincide. A threshold is diagnostic evidence, not a rule for choosing among instrument constructions.
+The project reports the MOP statistic and the ordinary clustered first-stage statistic side by side because their covariance conventions need not coincide. Thresholds summarize instrument relevance; instrument constructions are chosen from the predeclared design.
 
 ## Weak-identification-robust inference
 
@@ -32,21 +32,21 @@ Bounded exclusion-restriction sensitivity is a separate imperfect-IV analysis. B
 
 ## Observed-balance and exclusion evidence
 
-Specification-matched covariate balance and omnibus holdout balance provide evidence about observed independence. Historical controls, placebo-style outcomes, migration, geography, and other diagnostics add evidence about possible exclusion pathways. None of these directly proves exogeneity or exclusion.
+Specification-matched covariate balance and omnibus holdout balance provide evidence about observed independence. Historical controls, placebo outcomes, migration, geography, and other checks add evidence about possible exclusion pathways. None of these directly proves exogeneity or exclusion.
 
-Overidentification uses the standard Sargan diagnostic only when the number of excluded instruments exceeds the number of endogenous regressors. Applicability is recorded explicitly rather than forcing a diagnostic onto an inapplicable design.
+Overidentification uses the standard Sargan test when the number of excluded instruments exceeds the number of endogenous regressors. Other designs record the test as inapplicable.
 
 ## Monotonicity evidence
 
-Scalar first-stage shape diagnostics use residualized first-stage variation, binned means, isotonic fit, and state-specific slopes. They are inapplicable to genuinely multi-instrument constructions unless a defensible scalar ordering is separately declared.
+Scalar first-stage shape checks use residualized first-stage variation, binned means, isotonic fit, and state-specific slopes. They are inapplicable to genuinely multi-instrument constructions unless a defensible scalar ordering is separately declared.
 
-## Spatial/model diagnostics
+## Spatial and model checks
 
 Residual spatial-autocorrelation checks are documented in [`SPATIAL_ANALYSIS.md`](SPATIAL_ANALYSIS.md). The experimental spatial-IV estimator remains outside the preferred specification because spatial lags introduce additional identifying assumptions.
 
 ## Robustness families
 
-The active IV design families are finite and registry driven:
+The active IV specifications are predeclared in the registries:
 
 | Family | Question |
 |---|---|
@@ -61,15 +61,15 @@ The registries own exact cells; this table describes scientific purpose only.
 
 ## Publication outputs
 
-Paper-facing outputs report preferred/candidate first-stage evidence, weak-identification-robust inference, and compact identification summaries. Extended diagnostic files retain broader candidate and balance families for review without promoting every fitted model into the paper.
+Paper outputs report preferred and candidate first-stage evidence, weak-identification-robust inference, and compact identification summaries. Extended validation files retain broader candidate and balance results for review.
 
 ## Interpretation limits
 
-Weak relevance cannot be repaired by adding many controls, selecting the strongest ex post instrument, or interpreting conventional 2SLS t statistics as reliable. Balance and overidentification tests are evidence, not proofs of the exclusion restriction. Post-treatment mechanism IV results remain especially sensitive to relevance and should be presented with their weak-identification diagnostics.
+Weak first stages require weak-identification-robust inference; adding controls or selecting an ex post instrument does not supply relevance. Balance and overidentification tests provide evidence about observed implications of the design; the exclusion restriction still depends on the substantive identification argument. Post-treatment IV results are presented with the corresponding weak-identification evidence.
 
 ## Implementation
 
-The specification registries and shared inference helpers are under `R/iv/` and the cross-family analysis-design layer. Candidate/balance/robustness execution is under `R/diagnostics/`. Paper formatting belongs under `R/output/`.
+The specification registries and shared inference helpers are under `R/iv/`. Candidate, balance, and robustness checks are under `R/diagnostics/`, and paper formatting is under `R/output/`.
 
 ## Related documentation
 
