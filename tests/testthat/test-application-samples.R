@@ -77,8 +77,8 @@ test_that("application-sample outputs are unique across content and identity var
 
   expect_identical(anyDuplicated(outputs), 0L)
   expect_length(outputs, length(manifest$identity) * (length(manifest$writing) + length(manifest$coding)))
-  expect_true(any(grepl("Anonymous_WritingSample_5pg[.]pdf$", outputs)))
-  expect_true(any(grepl("RishavRoy_CodingSample[.]pdf$", outputs)))
+  expect_true(any(grepl("Anon_WritingSample_5pg[.]pdf$", outputs)))
+  expect_true(any(grepl("RishavRoy_CodeSample_Long[.]pdf$", outputs)))
 })
 
 test_that("Quarto metadata serialization uses YAML 1.2 booleans", {
@@ -127,6 +127,10 @@ test_that("writing sample assembly derives identity and section selection from o
   expect_null(named_meta$`sample-full-paper-url`)
   expect_null(anonymous_meta$`sample-full-paper-url`)
   expect_true(isTRUE(named_meta$format$pdf$`keep-tex`))
+  expect_identical(named_meta$format$pdf$documentclass, "article")
+  expect_match(named, "\\begin{abstract}", fixed = TRUE)
+  expect_match(named, "\\end{abstract}", fixed = TRUE)
+  expect_false(grepl("## Abstract", named, fixed = TRUE))
   selector <- named_meta$filters[[length(named_meta$filters)]]
   expect_identical(selector$at, "post-quarto")
   expect_identical(selector$path, "../filters/select-sections.lua")
@@ -138,9 +142,22 @@ test_that("writing sample assembly derives identity and section selection from o
   expect_match(anonymous, "make samples", fixed = TRUE)
 })
 
-test_that("coding sample assembly uses static code blocks", {
+test_that("coding sample assembly uses paper typography and wrapped highlighted code", {
   env <- sample_test_env()
   code_file <- tempfile(fileext = ".R")
+  paper_file <- tempfile(fileext = ".qmd")
+  writeLines(c(
+    "---",
+    "title: Fixture Paper",
+    "format:",
+    "  pdf:",
+    "    pdf-engine: xelatex",
+    "geometry: left=0.85in, right=0.85in, top=0.9in, bottom=0.9in",
+    "header-includes:",
+    "  - \\usepackage{setspace}\\doublespacing",
+    "---",
+    "# Intro {#sec-intro}"
+  ), paper_file)
   writeLines(c(
     "# sample-start: fixture",
     "answer <- 42",
@@ -153,6 +170,7 @@ test_that("coding sample assembly uses static code blocks", {
   manifest <- list(
     identity = list(named = list(author = "Example Author")),
     paper = list(
+      source = paper_file,
       full_paper_url = "https://example.com/paper.pdf",
       repository_url = "https://example.com/repository"
     )
@@ -166,31 +184,40 @@ test_that("coding sample assembly uses static code blocks", {
   expect_match(rendered, "```r", fixed = TRUE)
   expect_match(rendered, "answer <- 42", fixed = TRUE)
   expect_false(grepl("```{r}", rendered, fixed = TRUE))
+  expect_false(grepl("CODING SAMPLE:", rendered, fixed = TRUE))
+  expect_match(rendered, "the paper titled *Fixture Paper*", fixed = TRUE)
   meta <- env$read_qmd_metadata(readLines(out, warn = FALSE))
-  expect_identical(meta$format$pdf$`syntax-highlighting`, "idiomatic")
-  expect_true(any(grepl("breaklines=true", unlist(meta$`header-includes`), fixed = TRUE)))
+  expect_identical(meta$subtitle, "Short Version")
+  expect_identical(meta$format$pdf$documentclass, "article")
+  expect_identical(meta$format$pdf$`syntax-highlighting`, "tango")
+  expect_identical(meta$format$pdf$`code-block-bg`, "#f7f7f7")
+  headers <- unlist(meta$`header-includes`, use.names = FALSE)
+  expect_true(any(grepl("usepackage{fvextra}", headers, fixed = TRUE)))
+  expect_true(any(grepl("RecustomVerbatimEnvironment{Highlighting}", headers, fixed = TRUE)))
 })
 
-test_that("coding sample selected outputs come from the manifest registry", {
-  skip_if_not_installed("knitr")
+
+test_that("coding samples reuse paper-formatted output files", {
   env <- sample_test_env()
   sys.source(repo_file("R", "application_samples", "coding_sample_outputs.R"), envir = env)
-  table_file <- tempfile(fileext = ".csv")
-  utils::write.csv(data.frame(label = c("a", "b"), estimate = c(1, 2)), table_file, row.names = FALSE)
-  manifest <- list(coding_outputs = list(result = list(
-    type = "table", file = table_file, title = "Result",
-    columns = c("label", "estimate"), labels = c("Label", "Estimate")
-  )))
-  spec <- list(outputs = "result")
+  table_file <- tempfile(fileext = ".tex")
+  figure_file <- tempfile(fileext = ".pdf")
+  writeLines("\\begin{table}paper table\\end{table}", table_file)
+  writeBin(charToRaw("pdf fixture"), figure_file)
+  manifest <- list(coding_outputs = list(
+    table = list(type = "latex", file = table_file),
+    figure = list(type = "figure", file = figure_file, title = "Paper figure")
+  ))
+  spec <- list(outputs = c("table", "figure"))
 
-  lines <- env$coding_sample_output_lines(spec, manifest)
-  text <- paste(lines, collapse = "\n")
+  text <- paste(env$coding_sample_output_lines(spec, manifest), collapse = "\n")
 
-  expect_match(text, "# Selected Outputs", fixed = TRUE)
-  expect_match(text, "## Result", fixed = TRUE)
-  expect_match(text, "\\|\\s*Label\\s*\\|\\s*Estimate\\s*\\|", perl = TRUE)
-  expect_match(text, "1.000", fixed = TRUE)
+  expect_match(text, "# Selected Paper Outputs", fixed = TRUE)
+  expect_match(text, paste0("\\input{../../", table_file, "}"), fixed = TRUE)
+  expect_match(text, paste0("![](../../", figure_file, "){width=95%}"), fixed = TRUE)
+  expect_match(text, "## Paper figure", fixed = TRUE)
 })
+
 
 test_that("section-selection Lua filter retains selected subsections and ancestor headings", {
   skip_if(!nzchar(Sys.which("pandoc")), "pandoc is unavailable")

@@ -34,42 +34,77 @@ extract_between_sample_markers <- function(file, id) {
 }
 
 coding_sample_notice <- function(spec, variant, manifest) {
-  heading <- paste0("**CODING SAMPLE: ", toupper(spec$id), " COPY**")
-  description <- "These excerpts are selected from the replication code for the paper. Selected outputs appear at the end of the document."
-  if (identical(variant, "named")) {
-    description <- paste0(
-      description,
-      " The [full paper](", manifest$paper$full_paper_url, ") and [repository](",
-      manifest$paper$repository_url,
-      ") are available online. The complete paper-facing table and figure assembly code is in ",
+  paper_meta <- read_qmd_metadata(readLines(manifest$paper$source, warn = FALSE))
+  paper_title <- paper_meta$title %||% ""
+  article <- if (identical(variant, "anonymous")) "a paper titled" else "the paper titled"
+  description <- paste0(
+    "These excerpts are selected from the replication code for ", article,
+    " *", paper_title, "*. Selected paper-formatted outputs appear at the end of the document. "
+  )
+
+  assembly_note <- if (identical(variant, "named")) {
+    paste0(
+      "The [full paper](", manifest$paper$full_paper_url, ") and [repository](",
+      manifest$paper$repository_url, ") are available online. Paper-facing tables and figures are assembled in ",
       "[`R/output/make_tables.R`](", manifest$paper$repository_url, "/blob/main/R/output/make_tables.R) and ",
-      "[`R/output/make_figures.R`](", manifest$paper$repository_url, "/blob/main/R/output/make_figures.R). ",
-      "This PDF can be generated using `make samples` or `bash scripts/run_full_build.sh`."
+      "[`R/output/make_figures.R`](", manifest$paper$repository_url, "/blob/main/R/output/make_figures.R). "
     )
+  } else {
+    "Paper-facing tables and figures are assembled in `R/output/make_tables.R` and `R/output/make_figures.R`. "
   }
-  c(heading, "", description, "")
+
+  c(
+    paste0(
+      description, assembly_note,
+      "This PDF can be generated using `make samples` or `bash scripts/run_full_build.sh`."
+    ),
+    ""
+  )
+}
+
+coding_sample_metadata <- function(spec, variant, manifest) {
+  source_meta <- read_qmd_metadata(readLines(manifest$paper$source, warn = FALSE))
+  meta <- paper_sample_metadata(source_meta, variant, manifest)
+  meta$title <- "Code Sample"
+  meta$subtitle <- if (identical(spec$id, "short")) "Short Version" else "Long Version"
+  meta$abstract <- NULL
+  meta$bibliography <- NULL
+  meta$execute <- NULL
+  meta$`link-citations` <- NULL
+  meta$`cite-method` <- NULL
+  meta$`number-sections` <- FALSE
+  meta$format$pdf <- utils::modifyList(
+    meta$format$pdf %||% list(),
+    list(
+      `syntax-highlighting` = "tango",
+      `code-block-bg` = "#f7f7f7",
+      `keep-tex` = TRUE
+    )
+  )
+  meta$`header-includes` <- c(
+    meta$`header-includes` %||% list(),
+    list(
+      "\\usepackage{fvextra}",
+      paste0(
+        "\\RecustomVerbatimEnvironment{Highlighting}{Verbatim}",
+        "{commandchars=\\\\\\{\\},breaklines=true,breaknonspaceingroup,",
+        "breakanywhere=true,fontsize=\\footnotesize}"
+      ),
+      "\\providecommand{\\citeproc}[2]{#2}"
+    )
+  )
+  meta
 }
 
 assemble_coding_sample_qmd <- function(spec, variant, manifest, body, output_qmd) {
-  meta <- list(
-    title = "Code Sample",
-    subtitle = "Selected Replication Code",
-    author = manifest$identity[[variant]]$author,
-    format = list(pdf = list(
-      `pdf-engine` = "xelatex",
-      `syntax-highlighting` = "idiomatic"
-    )),
-    geometry = "left=0.75in, right=0.75in, top=0.8in, bottom=0.8in",
-    `header-includes` = list(
-      "\\lstset{breaklines=true,breakatwhitespace=false,columns=fullflexible,keepspaces=true}"
-    )
-  )
-  yaml_lines <- quarto_yaml_lines(meta)
+  meta <- coding_sample_metadata(spec, variant, manifest)
+  yaml_lines <- quarto_yaml_lines(meta, indent.mapping.sequence = TRUE)
   lines <- c("---", yaml_lines, "---", "", coding_sample_notice(spec, variant, manifest), body)
   dir.create(dirname(output_qmd), recursive = TRUE, showWarnings = FALSE)
   writeLines(lines, output_qmd)
   invisible(output_qmd)
 }
+
 
 validate_code_excerpt_markers <- function(spec) {
   invisible(lapply(spec$excerpts, function(x) extract_between_sample_markers(x$file, x$id)))

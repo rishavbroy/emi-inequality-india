@@ -33,8 +33,8 @@ jobs:
           cp application-samples/output/RishavRoy_WritingSample_10pg.pdf _site/application-samples/
           cp application-samples/output/RishavRoy_WritingSample_15pg.pdf _site/application-samples/
           cp application-samples/output/RishavRoy_WritingSample_Full.pdf _site/application-samples/
-          cp application-samples/output/RishavRoy_CodingSample_Short.pdf _site/application-samples/
-          cp application-samples/output/RishavRoy_CodingSample.pdf _site/application-samples/
+          cp application-samples/output/RishavRoy_CodeSample_Short.pdf _site/application-samples/
+          cp application-samples/output/RishavRoy_CodeSample_Long.pdf _site/application-samples/
       - name: Upload Pages files
         uses: actions/upload-pages-artifact@v5
         with:

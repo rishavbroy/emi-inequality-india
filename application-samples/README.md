@@ -4,7 +4,7 @@ Application samples are generated from the current paper and current R files. Th
 
 Writing excerpts use the ordinary Quarto section IDs already present in `paper/paper.qmd`. The short variants build outward from the Introduction: the 10-page sample adds the measurement and social-access portions of the EMI section, while the 15-page sample also adds the persistence and reported-language portions of the inherited-linguistic-conditions section. The full variant uses the complete paper. Excerpts suppress the repeated bibliography while retaining rendered in-text citations; the linked full paper contains complete references. Named and anonymous versions use the same substantive selections and comparable first-page notices so anonymity does not alter pagination.
 
-Coding samples continue to use `sample-start`/`sample-end` comments because R files do not have an equivalent section-ID system. The short sample emphasizes survey econometrics, weak-instrument assessment, and economic measurement. The full sample adds Anderson--Rubin sensitivity analysis and cross-vintage district matching. Both append selected empirical outputs from the same analyses and are rendered in named and anonymous forms.
+Coding samples continue to use `sample-start`/`sample-end` comments because R files do not have an equivalent section-ID system. The short sample emphasizes survey econometrics, weak-instrument assessment, and economic measurement. The long sample adds Anderson--Rubin sensitivity analysis and cross-vintage district matching. Both append paper-formatted empirical outputs from the same analyses and are rendered in named and anonymous forms.
 
 Run:
 
@@ -24,4 +24,4 @@ The 5-, 10-, and 15-page values in `samples.yml` are current page targets. Durin
 
 Named paper and application-sample PDFs are published from the tracked rendered files at <https://rishavbroy.github.io/emi-inequality-india/>. The Pages job does not rerun the empirical build. Anonymous variants are intended for direct application uploads and are deliberately not published on the identity-revealing Pages site.
 
-Coding samples use Quarto's idiomatic LaTeX syntax highlighting with line wrapping so long source lines remain visible in the PDF.
+Coding samples use Pandoc's `tango` syntax highlighting with `fvextra` line wrapping and a smaller code font. Tables are included from the same generated LaTeX files used by the paper, and figures reuse the paper's generated PDF files.

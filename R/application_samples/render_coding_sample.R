@@ -2,8 +2,9 @@
 
 render_coding_samples <- function(manifest_path = application_sample_manifest_path(), output_files = NULL) {
   force(output_files)
-  prune_application_sample_kind("coding")
   manifest <- read_application_sample_manifest(manifest_path)
+  for (spec in manifest$coding) validate_code_excerpt_markers(spec)
+  prune_application_sample_kind("coding")
   outputs <- character()
   for (variant in application_sample_variants(manifest)) {
     for (spec in manifest$coding) {

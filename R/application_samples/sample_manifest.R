@@ -54,14 +54,13 @@ application_sample_output_path <- function(kind, sample_id, variant, manifest = 
   identity <- manifest$identity[[variant]]
   if (is.null(identity)) stop("Unknown application-sample identity: ", variant, call. = FALSE)
   prefix <- identity$prefix %||% variant
-  kind_label <- if (identical(kind, "writing")) "WritingSample" else "CodingSample"
-  if (identical(kind, "coding") && identical(sample_id, "full")) {
-    filename <- paste0(prefix, "_", kind_label, ".pdf")
+  kind_label <- if (identical(kind, "writing")) "WritingSample" else "CodeSample"
+  suffix <- if (identical(kind, "writing")) {
+    if (identical(sample_id, "full")) "Full" else sample_id
   } else {
-    suffix <- if (identical(sample_id, "full")) "Full" else sample_id
-    if (identical(kind, "coding") && identical(sample_id, "short")) suffix <- "Short"
-    filename <- paste0(prefix, "_", kind_label, "_", suffix, ".pdf")
+    if (identical(sample_id, "short")) "Short" else if (identical(sample_id, "long")) "Long" else sample_id
   }
+  filename <- paste0(prefix, "_", kind_label, "_", suffix, ".pdf")
   file.path("application-samples", "output", filename)
 }
 
@@ -98,7 +97,7 @@ application_sample_input_files <- function(manifest_path = application_sample_ma
 }
 
 prune_application_sample_kind <- function(kind) {
-  token <- if (identical(kind, "writing")) "WritingSample" else "CodingSample"
+  token <- if (identical(kind, "writing")) "WritingSample" else "(Code|Coding)Sample"
   output_files <- list.files(
     "application-samples/output",
     pattern = paste0(token, ".*[.]pdf$"),

@@ -1,5 +1,21 @@
 # Shared rendering and validation helpers for application-sample PDFs.
 
+
+# Application samples use the current paper's PDF typography and page geometry.
+# The paper gets its standard article class from the project configuration; sample
+# QMDs are rendered from a nested work directory, so set that class explicitly.
+paper_sample_metadata <- function(source_metadata, variant, manifest) {
+  meta <- source_metadata
+  meta$thanks <- NULL
+  meta$author <- manifest$identity[[variant]]$author
+  meta$format <- meta$format %||% list()
+  meta$format$pdf <- utils::modifyList(
+    meta$format$pdf %||% list(),
+    list(documentclass = "article", `pdf-engine` = "xelatex")
+  )
+  meta
+}
+
 # Serialize metadata for Quarto, which follows YAML 1.2 boolean syntax.
 quarto_yaml_lines <- function(x, indent.mapping.sequence = FALSE) {
   text <- yaml::as.yaml(

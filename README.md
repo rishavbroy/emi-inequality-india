@@ -16,7 +16,7 @@ A raw-data-less district analysis replication is available with `make replicate-
 - [`docs/plan/roadmap.md`](docs/plan/roadmap.md): Current empirical roadmap and source-first priorities.
 - [`application-samples/samples.yml`](application-samples/samples.yml): Single tracked configuration for writing and coding samples.
 - [`application-samples/output/RishavRoy_WritingSample_10pg.pdf`](application-samples/output/RishavRoy_WritingSample_10pg.pdf): Named 10-page writing sample generated from current-paper section IDs.
-- [`application-samples/output/RishavRoy_CodingSample.pdf`](application-samples/output/RishavRoy_CodingSample.pdf): Named full coding sample generated from selected R-file markers.
+- [`application-samples/output/RishavRoy_CodeSample_Long.pdf`](application-samples/output/RishavRoy_CodeSample_Long.pdf): Named long code sample generated from selected R-file markers.
 
 ## Research question
 

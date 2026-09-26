@@ -258,11 +258,9 @@ writing_sample_notice <- function(spec, variant, manifest, source_lines) {
 }
 
 sample_metadata <- function(source_metadata, spec, variant, manifest) {
-  meta <- source_metadata
+  meta <- paper_sample_metadata(source_metadata, variant, manifest)
   abstract <- meta$abstract %||% ""
   meta$abstract <- NULL
-  meta$thanks <- NULL
-  meta$author <- manifest$identity[[variant]]$author
   meta$bibliography <- "../../paper/references.bib"
   meta$`number-sections` <- TRUE
   if (!identical(spec$mode %||% "excerpt", "full")) {
@@ -313,9 +311,13 @@ assemble_writing_sample_qmd <- function(source, spec, variant, manifest, output_
 
   preamble <- c(
     writing_sample_notice(spec, variant, manifest, source_lines),
-    "## Abstract {-}",
-    "",
+    "```{=latex}",
+    "\\begin{abstract}",
+    "```",
     prepared$abstract,
+    "```{=latex}",
+    "\\end{abstract}",
+    "```",
     ""
   )
   lines <- c("---", yaml_lines, "---", "", preamble, body)

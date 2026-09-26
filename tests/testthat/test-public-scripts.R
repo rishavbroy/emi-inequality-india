@@ -312,26 +312,26 @@ test_that("review archives include every manifest-declared application sample", 
     "    prefix: Named",
     "  anonymous:",
     "    author: Anonymous",
-    "    prefix: Anonymous",
+    "    prefix: Anon",
     "writing:",
     "  - id: 5pg",
     "    target_pages: 5",
     "    sections: [sec-fixture]",
     "coding_outputs:",
     "  fixture:",
-    "    type: table",
-    "    file: outputs/fixture.csv",
+    "    type: latex",
+    "    file: outputs/fixture.tex",
     "coding:",
-    "  - id: full",
+    "  - id: long",
     "    outputs: [fixture]",
     "    excerpts: []"
   ), file.path(root, "application-samples", "samples.yml"))
 
   expected <- c(
     "application-samples/output/Named_WritingSample_5pg.pdf",
-    "application-samples/output/Named_CodingSample.pdf",
-    "application-samples/output/Anonymous_WritingSample_5pg.pdf",
-    "application-samples/output/Anonymous_CodingSample.pdf"
+    "application-samples/output/Named_CodeSample_Long.pdf",
+    "application-samples/output/Anon_WritingSample_5pg.pdf",
+    "application-samples/output/Anon_CodeSample_Long.pdf"
   )
   for (path in expected) {
     dir.create(dirname(file.path(root, path)), recursive = TRUE, showWarnings = FALSE)
