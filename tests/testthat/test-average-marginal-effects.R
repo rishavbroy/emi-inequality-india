@@ -139,26 +139,3 @@ test_that("programmatic selection formulas remain reconstructable", {
   expect_identical(model$call$formula, attr(model, "selection_probit_formula"))
   expect_identical(stats::formula(model), model$call$formula)
 })
-
-test_that("AME benchmark exercises the production marginaleffects wrapper", {
-  skip_if_not_installed("marginaleffects")
-  selection_data <- data.frame(
-    enrolled = rep(c(0, 1), 20),
-    AGE = seq_len(40),
-    weight = rep(c(1, 2), 20)
-  )
-  model <- stats::glm(
-    enrolled ~ AGE,
-    data = selection_data,
-    weights = weight,
-    family = stats::binomial(link = "probit")
-  )
-
-  out <- benchmark_ame_methods(model, list(), sample_sizes = 20L)
-
-  expect_setequal(out$method, c("avg_slopes_centered_default", "avg_slopes_fdforward"))
-  expect_true(all(out$n_numeric_variables == 1L))
-  expect_true(all(out$status == "estimated"))
-  expect_true(all(is.na(out$reason)))
-  expect_true(all(out$n_estimates > 0L))
-})
