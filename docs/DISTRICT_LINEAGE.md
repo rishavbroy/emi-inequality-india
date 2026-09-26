@@ -107,4 +107,4 @@ The extended lineage diagnostic writes:
 - readiness, blockers, and six-step completion status;
 - legacy comparisons when the legacy target group is enabled.
 
-The canonical audit command is documented in `REPLICATION.md` and `docs/ARCHITECTURE.md`.
+The canonical audit command is documented in `REPLICATION.md` and `docs/BUILD.md`.

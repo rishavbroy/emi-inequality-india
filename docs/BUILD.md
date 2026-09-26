@@ -1,72 +1,137 @@
-# Building and checking the project
+# Build and validation
 
-The repository has two computation configurations and a small set of optional build families. These are separate choices.
+This document is the human-facing execution reference. Scientific configuration, optional build families, and destructive reconstruction are separate choices.
 
-## Configurations
+## Research configurations
 
-- `config/final.yml` is the research configuration used for the paper and release checks. It runs the full average-marginal-effect calculation and applies the strict district-panel checks.
-- `config/fast.yml` is for code iteration. It keeps the same registered estimands and variable definitions but skips the expensive full AME calculation and relaxes strict panel checks that are useful only for release validation.
+- [`config/final.yml`](../config/final.yml) is the release configuration used by the paper and final checks. It runs the full average-marginal-effect calculation and strict district-panel validation.
+- [`config/fast.yml`](../config/fast.yml) is for code iteration. It retains the registered estimands and variable definitions while reducing expensive release-only checks.
 
-There is no separate diagnostic configuration. Extended checks and benchmarks are selected by build options while retaining the chosen research configuration.
+There is no separate diagnostic configuration. Extended diagnostics and benchmarks are optional target families layered onto the selected scientific configuration.
 
-## Common commands
+## Main commands
 
 | Task | Command |
 |---|---|
+| Restore the R library | `make restore` |
+| Prepare automatically retrievable inputs | `make prepare-data` |
 | Run unit tests | `make test` |
-| Run the final target set without samples or the poster | `make pipeline` |
-| Run the faster development target set | `make pipeline-fast` |
-| Render and validate the papers | `make paper` |
+| Run the final target graph without samples/poster | `make pipeline` |
+| Run the faster development target graph | `make pipeline-fast` |
+| Render and validate the paper | `make paper` |
 | Render application samples | `make samples` |
-| Render the conference poster | `make poster` |
-| Re-render all QMD families | `make qmd-renders` |
-| Run the ordinary full build | `make` or `make all` |
-| Remove generated renders and optional outputs | `make clean` |
-| Also destroy the `{targets}` store | `make clean-all` |
+| Render the optional conference poster | `make poster` |
+| Run the processed-data replication | `make replicate-processed` |
+| Verify processed results against the full store | `make verify-processed-replication` |
+| Run the ordinary complete build | `make` or `make all` |
+| Remove generated renders/optional outputs | `make clean` |
+| Also destroy both `{targets}` stores | `make clean-all` |
 
-`make samples` reads `application-samples/samples.yml`. Writing samples are selected by ordinary Quarto section IDs from `paper/paper.qmd`; code samples use marker-delimited R excerpts and reuse the paper-formatted table/figure files selected in the manifest. Named and anonymous variants are generated from the same selections. The full-paper render keeps `paper.tex`, then a no-PDF XeLaTeX pass writes `paper-reference-labels.aux`. Before Quarto renders an excerpt, references whose targets will be omitted are replaced with their current full-paper labels from that file; references to retained targets remain ordinary Quarto cross-references. The post-Quarto Pandoc filter removes unselected sections and uses the same label index to preserve the full paper's numbering for retained section headings, tables, figures, and equations. Excerpt renders keep their generated `.tex` files under `application-samples/.work/` so final layout checks inspect the filtered document rather than the unfiltered QMD.
+`make` and `make all` delegate to `scripts/run_full_build.sh` with its ordinary defaults.
 
-Fixed-length writing samples currently treat their declared page counts as advisory. If a rendered sample differs from its target, the build prints a `WARNING:` message with the actual and target counts and continues. This avoids making pagination a release condition while the sample formatting is still being revised.
-The paper and its writing excerpts use flexible LaTeX float placement (`htbp` for figures and ordinary floating tables) rather than forcing `[H]`; this lets TeX use otherwise empty page space while the excerpt page targets are still being tuned.
+## Full-build sequence
 
-`make` and `make all` call `bash scripts/run_full_build.sh` with its defaults.
+The standard build executes these stages in order:
 
+1. check source whitespace;
+2. restore the project library from `renv.lock`;
+3. optionally remove generated state for a clean-slate run;
+4. prepare automatically retrievable inputs;
+5. check stale/live `{targets}` process metadata;
+6. run shell, Python, R, QMD, manifest, and renv synchronization checks;
+7. run the complete `testthat` suite unless explicitly skipped;
+8. build/validate the lineage geometry;
+9. run requested extended diagnostics;
+10. run the selected main target graph, including samples/poster when requested;
+11. run fast or final publication checks;
+12. verify the processed-data replication in final mode;
+13. run requested benchmarks;
+14. fail on persisted target warnings;
+15. write the output manifest; and
+16. write the review archive unless disabled.
 
-## GitHub Pages publication
-
-`.github/workflows/pages.yml` publishes the tracked current paper and named application-sample PDFs to GitHub Pages after pushes to `main`. It copies already-rendered files; it does not install R, restore raw data, or rerun the research build in CI. This keeps publication separate from empirical reconstruction while ensuring the browser-hosted PDFs update whenever a successful local build is committed. Anonymous application samples are excluded from Pages because the repository URL itself identifies the author.
+The ordinary run preserves the existing target store. `{targets}` checks dependencies and reruns work whose recorded inputs/commands are no longer current.
 
 ## Full-build options
 
-The ordinary command is:
+The standard shell entry point is:
 
 ```bash
-bash scripts/run_full_build.sh
+scripts/run_full_build.sh
 ```
-
-It uses `config/final.yml`, includes application samples, omits the conference poster, preserves the `{targets}` store, and writes `review.zip` on success or failure.
 
 Useful options are:
 
-- `--no-samples`: omit application-sample rendering and checks.
-- `--with-poster`: construct poster-only figure dependencies, render the conference poster, and require its outputs.
-- `--with-extended-diagnostics`: run extended research checks.
-- `--with-benchmarks`: run benchmarks.
-- `--fast`: use `config/fast.yml`.
-- `--from-clean-slate`: remove generated outputs and destroy `_targets/` before rebuilding.
-- `--no-archive`: do not create `review.zip`.
-- `--skip-tests`: skip unit tests.
+- `--no-samples` — omit application-sample rendering and checks;
+- `--with-poster` — render and require the conference poster;
+- `--with-extended-diagnostics` — run the extended scientific diagnostic family;
+- `--with-benchmarks` — run optional benchmarks;
+- `--fast` — use `config/fast.yml` and fast publication checks;
+- `--from-clean-slate` — remove generated outputs and both target stores before reconstruction;
+- `--no-archive` — do not write `review.zip`; and
+- `--skip-tests` — skip unit tests for an explicitly scoped run.
 
-The default preserves cached target values because `{targets}` already reruns only work that is out of date. `--from-clean-slate` is therefore an exceptional reconstruction check, not the ordinary development mode. A fresh clone already starts without a target store.
+`--from-clean-slate` is an exceptional reconstruction check. A fresh clone already has no target store, and ordinary development should allow `{targets}` to decide what is out of date.
 
-Final checks also write advisory maintenance reports under `outputs/build/`. `source_health.csv` lists top-level production functions and direct function aliases and flags definitions with no symbolic or registered metadata reference for manual review; it does not fail the build because dynamic R dispatch can defeat static reachability analysis. `schema_less_csvs.csv` remains a hard output-structure check, while `duplicate_generated_csvs.csv` is advisory because independent analyses may legitimately serialize identical results.
+The main build requests up to four consumption-domain workers by default. Override with `EMI_CONSUMPTION_DOMAIN_CORES`; the R code clamps the request to detected physical cores and uses serial execution on Windows.
 
 ## Optional target families
 
-The maintained build switches `EMI_RUN_EXTENDED_DIAGNOSTICS`, `EMI_RUN_BENCHMARKS`, `EMI_RENDER_APPLICATION_SAMPLES`, and `EMI_RENDER_POSTER` determine which optional target definitions `_targets.R` includes. They do not select a different YAML configuration.
+The maintained environment switches are:
 
-The full-build script is the intended human interface to those switches. `_targets.R` does not print a message every time an omitted family is encountered; the script prints one build-profile summary instead.
+- `EMI_RUN_EXTENDED_DIAGNOSTICS`;
+- `EMI_RUN_BENCHMARKS`;
+- `EMI_RENDER_APPLICATION_SAMPLES`; and
+- `EMI_RENDER_POSTER`.
 
-## Processed-data analysis replication
+The full-build script is the intended human interface to these switches. For direct maintenance/debugging, the Make targets `extended-diagnostics`, `benchmarking`, `samples`, and `poster` select the corresponding families.
 
-`make replicate-processed` runs `_targets_processed.R` in its own `_targets_processed/` store using only the tracked district panel, district welfare estimates, and tracked metadata. It reruns the paper-facing district consumption/IV, schooling-conversion, alternative-distance first-stage, and first-stage-absorption analyses. It intentionally does not rerun the individual-level NSS selection model or source-level reconstruction. `make verify-processed-replication` updates that graph and compares the reported empirical components of the five shared result objects with the full `_targets/` store; a final full build performs this check automatically.
+Extended diagnostic files intended for durable review should terminate in a `diag_ext_` file target so prefix-selected runs actually traverse the computation that produces them.
+
+## Target subsets and reruns
+
+Useful targeted commands include:
+
+```bash
+make public-diagnostics
+make extended-diagnostics
+make benchmarking
+make rerun-extended-diagnostics
+make rerun-benchmarks
+```
+
+For direct target selection, use the maintained `scripts/run_targets_checked.R` interface rather than creating a second ad hoc execution script.
+
+## Build markers and maintenance reports
+
+Successful strict builds write short-lived markers such as `.pipeline-final-ok` and `.public-final-ok`; downstream archive/release checks use these to distinguish a verified render from arbitrary files left in the working tree.
+
+Final checks also write maintenance reports under `outputs/build/`:
+
+- `source_health.csv` is an advisory static inventory for possible orphan/duplicate production functions and direct aliases;
+- `schema_less_csvs.csv` is a hard output-structure check; and
+- `duplicate_generated_csvs.csv` is advisory because distinct analyses can legitimately serialize identical tables.
+
+`outputs/build/output_manifest.csv` is written after requested target families and renders finish. It indexes generated filesystem outputs; it is not a replacement for the scientific design registries.
+
+## Application samples
+
+`make samples` reads [`../application-samples/samples.yml`](../application-samples/samples.yml) and generates named/anonymous writing and coding variants from the current paper/code. Sample selection, numbering preservation, page-count policy, and publication behavior are documented in [`../application-samples/README.md`](../application-samples/README.md).
+
+Application-sample page targets are currently advisory while typography is still being finalized: mismatches emit a visible `WARNING:` and do not fail the build.
+
+## GitHub Pages
+
+`.github/workflows/pages.yml` publishes the tracked current paper and named application-sample PDFs after pushes to `main`. The workflow copies committed PDFs; it does not restore raw data or rerun the empirical analysis in CI. Anonymous application samples are excluded because the repository itself identifies the author.
+
+## Processed-data replication
+
+`make replicate-processed` executes [`../_targets_processed.R`](../_targets_processed.R) in the separate `_targets_processed/` store using tracked district-level inputs and metadata. `make verify-processed-replication` compares the five shared result objects with the full `_targets/` store. See [`../REPLICATION.md`](../REPLICATION.md) for exact scope, exclusions, and data prerequisites.
+
+## Troubleshooting
+
+- **Live `{targets}` process:** the full build stops instead of killing it. Inspect the printed PID and terminate only an abandoned run.
+- **Package restore failure:** install the package's system requirements, then rerun `make restore`.
+- **Missing registered input:** use the exact path reported by source preflight and consult `data/metadata/file_manifest.csv` plus `DATA_AVAILABILITY.md`.
+- **Need a failed-run snapshot:** use `scripts/make_review_archive.sh --without-samples --allow-incomplete --output review.zip`.
+- **Need a true reconstruction check:** use `scripts/run_full_build.sh --from-clean-slate`.
