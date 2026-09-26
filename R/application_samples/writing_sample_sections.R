@@ -108,14 +108,25 @@ tex_crossref_ids <- function(path) {
 }
 
 qmd_rendered_tex_ids <- function(lines, source_dir) {
-  pattern <- 'render_public_table\\(\\s*"([^"]+[.]tex)"'
-  hits <- regexec(pattern, lines, perl = TRUE)
-  parts <- regmatches(lines, hits)
-  paths <- vapply(parts[lengths(parts) == 2L], `[[`, character(1), 2L)
+  # Public paper tables are inserted by literal render_public_table() calls.
+  # Read those paths directly from retained source lines, then inspect the TeX
+  # that owns the cross-reference label.  Do not normalize first: file.exists()
+  # in tex_crossref_ids() is the appropriate check and preserves ordinary paths
+  # relative to the paper containing the call.
+  pattern <- "render_public_table\\(\\s*['\"]([^'\"]+[.]tex)['\"]"
+  matches <- regexec(pattern, lines, perl = TRUE)
+  parts <- regmatches(lines, matches)
+  paths <- vapply(parts, function(x) {
+    if (length(x) < 2L) return(NA_character_)
+    x[[2L]]
+  }, character(1))
+  paths <- unique(paths[!is.na(paths) & nzchar(paths)])
   if (!length(paths)) return(character())
-  unique(unlist(lapply(paths, function(path) {
-    tex_crossref_ids(normalizePath(file.path(source_dir, path), mustWork = FALSE))
-  }), use.names = FALSE))
+
+  unique(unlist(lapply(
+    file.path(source_dir, paths),
+    tex_crossref_ids
+  ), use.names = FALSE))
 }
 
 writing_sample_retained_label_ids <- function(source_lines, section_ids, source_dir = ".") {

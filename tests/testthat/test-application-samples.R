@@ -364,6 +364,10 @@ test_that("writing excerpts recognize labels owned by included TeX tables", {
   )
   ids <- env$writing_sample_retained_label_ids(source, "sec-keep", root)
   expect_true("tbl-fixture" %in% ids)
+
+  source <- sub('"table[.]tex"', "'table.tex'", source)
+  ids <- env$writing_sample_retained_label_ids(source, "sec-keep", root)
+  expect_true("tbl-fixture" %in% ids)
 })
 
 test_that("writing numbering preflight requires labels for retained cross-reference content", {
