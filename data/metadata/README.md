@@ -1,125 +1,120 @@
 # Data metadata
 
-This directory contains tracked descriptions, manifests, checksums, crosswalks, and adjudication ledgers. Raw survey, Census, LGD, SHRUG, and boundary files remain local under `data/raw/`.
+This directory contains tracked registries, reviewed crosswalks, acquisition manifests, and validation metadata used by the active analysis. The files here should describe stable data/design facts rather than duplicate methodological prose from `docs/`.
 
-## General metadata
+## General files
 
-- `data_sources.csv`: project-wide source catalog, acquisition route, local path, role, and redistribution caveat.
-  `citation_key` stores one canonical `paper/references.bib` key only when a source family maps cleanly to one citation; composite source families may leave it blank and document component citations in notes or source-specific documentation. The test suite requires every nonblank key to resolve.
-- Census migration acquisition uses the year-specific download manifests; D-02 through D-07 district semantics, cross-table accounting checks, the 2001 D-03 granularity limitation, the SHRUG Census-2011 PCA population denominator, and the distinction between 2001 validity evidence and 2011 mechanisms are documented in `docs/CENSUS_MIGRATION.md`.
-- Census worker-structure acquisition uses both year manifests: 2001 B-04/B-25/B-26 feed predetermined balance diagnostics, while 2011 B-04/B-06/B-25A/B feed post-treatment mechanism diagnostics; B-04/B-06 industry accounting, B-25A/B occupational universes, and deterministic 2011-to-2001 count pooling are documented in `docs/CENSUS_WORKERS.md`.
-- Census housing/living-standard diagnostics use 2001 H-09/H-12/H-13 and 2011 HL-07/HL-11/HL-12. The module validates household/electricity universes across tables, pools 2011 counts only through complete deterministic parents, and computes common 2001–2011 household-share changes; see `docs/CENSUS_HOUSING.md`.
-- `map_disputed_areas.csv`: explicit Natural Earth registry for manuscript cartography. Five rows have role `display_disputed`; one `Jammu and Kashmir` row has role `administered_reference` and is used only to classify DataMeet/Natural-Earth coverage disagreements. No broad country-name or claim-line filter is allowed. Public maps union the five display polygons and the processed DataMeet 99/99 scaffold with residual DataMeet J&K components that do not share a side with another Census state, then subtract that one final display mask from rendered canonical districts. Analytical geography is unchanged.
-- `file_manifest.csv`: exact files required by the existing production pipeline. Required files may register an expected byte size and SHA-256 digest; mismatches fail before a raw reader is called. Hashes are populated only when the author-used bytes have been verified rather than inferred from filenames or URLs. Maintainers can pin a verified source family with `Rscript scripts/update_file_manifest_hashes.R SOURCE_ID`, then refresh `checksums.csv` with `Rscript scripts/update_checksums.R`. Additional source files may remain locally under `data/raw/` for provenance or future projects without appearing in this manifest; local presence alone does not make a file a production dependency.
-- `census_1991_download_manifest.tsv`, `census_2001_download_manifest.tsv`, and `census_2011_download_manifest.tsv`: official Census of India download URLs and repository destinations for project Census acquisition sets. The 2001 manifest uses the 35 state/UT workbooks (state codes 01-35) for standard all-population families. The 1991 historical-validation state-workbook series use the reviewed 31-code set 02-09 and 11-33, while the newly registered ST-16/ST-17 families preserve their smaller published state scopes rather than inventing missing files. C-09 remains a separate all-India workbook because ORGI catalog `1991-C09T-01` documents district geography. The 2001 manifest includes HH-09/HH-13/HH-15/HH-15 Appendix, now active in extended diagnostics for exact concept-matched household-capacity baselines and changes. The 2011 manifest includes the active HH-08/HH-10/HH-11 household families and acquisition-only ST-15/ST-16 Scheduled Tribe language tables. Files are grouped under thematic raw-data subdirectories (`workers/`, `languages/`, `migration/`, `housing/`, `households/`, `scheduled_tribes/`). Acquisition metadata is intentionally broader than `file_manifest.csv`: a downloaded table does not enter production until a table-specific reader, denominator contract, harmonization rule, and target explicitly use it. For 1991 ST-17, the manifest separates `ST17T_STATE` aggregate workbooks from `ST17T_DISTRICT` workbooks because the catalog explicitly indicates that the state-level files do not contain district observations; district analysis must therefore use the district files, while state files remain validation companions. The active housing branch now includes H-04 Appendix/H-05/H-08/H-10/H-11 alongside H-09/H-12/H-13, and HL-04/HL-06/HL-08/HL-09/HL-10/HL-13 alongside HL-07/HL-11/HL-12. H-05 is treated as a validated subset; H-10 provides the complete baseline latrine count while H-12 remains a source cross-check; and richer 2011 water, sanitation, and fuel categories are collapsed only to explicit 2001 counterparts. Census 2001 C-17 is the current exception in the useful sense: it is activated only in extended diagnostics, where its hierarchical bilingualism/trilingualism denominators are validated and its native-speaker totals must reconcile exactly to C-16; no C-17 regression is public yet.
-- `variable_dictionary.csv`: canonical processed-variable/construct semantics. In addition to labels and provenance it records domain, vintage, denominator/universe where applicable, analysis stage, analytical role, preference status, causal-status caveats, and explicit comparable/alternative constructs. Source-specific registries may add dimensions, but must not redefine these shared semantics.
-- `english_opportunity_measures.csv`: cross-source reporting semantics for the compact C-17/NSS/DISE mechanism sequence. It records units, numerators, denominators, populations, stages, and paper roles only; formulas and estimators remain in their source-specific modules.
-- `checksums.csv`: SHA-256 digests for every tracked metadata CSV/TSV. Generated processed outputs are validated by pipeline/tests rather than pinned to a pre-build digest because ordinary builds may legitimately regenerate them. Run `Rscript scripts/update_checksums.R` after intentionally changing any of those files; the test suite verifies both inventory completeness and current SHA-256 values.
+| File | Role |
+|---|---|
+| `file_manifest.csv` | Required/local input registry used by source preflight, including expected paths and optional byte/hash identities |
+| `data_sources.csv` | Source catalog and acquisition/reference notes, including optional/review inputs |
+| `checksums.csv` | SHA-256 registry for tracked metadata files |
+| `variable_dictionary.csv` | Shared analysis-construct semantics for variables in the common panel architecture |
+| `iv_candidate_designs.csv` | Declarative candidate-design/admissibility ledger for the bounded IV program |
 
-## Current production geography
+Raw-data access and redistribution belong in [`../../DATA_AVAILABILITY.md`](../../DATA_AVAILABILITY.md); execution requirements belong in [`../../REPLICATION.md`](../../REPLICATION.md).
 
-- `district_harmonization_crosswalk.csv`: inherited reviewed crosswalk used by the present paper pipeline.
-- `manual_district_corrections.csv`: tracked correction interface for the current pipeline.
+## Census acquisition and controls
 
-The legacy harmonization crosswalk is retained only for historical comparison. Current public analysis uses the reviewed district-lineage crosswalks described below.
+- `census_1991_download_manifest.tsv`
+- `census_2001_download_manifest.tsv`
+- `census_2011_download_manifest.tsv`
+- `census_2001_control_registry.csv`
 
-## District-lineage
+The download manifests define maintained acquisition destinations and source URLs. The control registry is the authority for Census-2001 control membership, labels, blocks, and alternative relationships used by the analysis.
 
-- `district_lineage_sources.csv`: compact source IDs that can be cited by accepted matches, events, and weights.
-- `district_match_gold.csv`: manually reviewed positive, negative, and ambiguous name-match examples used to evaluate candidate rules.
-- `district_adjudications.csv`: one accepted, excluded, or needs-review source identity per source row.
-- `district_admin_events.csv`: reviewed directed administrative-event edges.
-- `district_allocation_weights.csv`: reviewed non-primary or sensitivity allocation shares; current accepted rows renormalize mapped population shares only when at least 99 percent of the source population is covered. `source_unit` is canonicalized as the zero-padded `SS.DDD` Census-2011 code.
-- `district_geometry_carrybacks.csv`: reviewed cases where an official later-vintage polygon is carried back to an unchanged Census-2001 district.
-- `district_primary_reviews.csv`: reviewed near-complete single-parent mappings admitted to the 573-district primary panel.
-- `district_legacy_mapping_reviews.csv`: archived provenance for comparisons with the inherited pre-lineage panel; loaded only by extended legacy-comparison targets.
+See the Census domain documents under `docs/` for table-specific construction and comparability rules.
 
-Ledgers may begin blank, but accepted rows must remain narrow, source-backed decisions. Generated candidates belong under `outputs/diagnostics/extended/district_lineage/`; they must not be copied into tracked adjudications without review.
+## District lineage and geography
 
-- `vanneman_panel4_dist91_adjudications.csv`: reviewed one-to-one promotions for historical Vanneman stable panel units whose 1991 labels are not exact matches. Each accepted row is machine-checked against the registered Liu-Shamdasani-Taraz stable-ID crosswalk, raw Census-1991 code/name row, and an explicit published district-name alias rule; aggregate/split cases are excluded.
-- `helms_lim_linguistic_distance_1991.csv`: compact district-level extract from the verified Helms-Lim AJPS replication package. `IPUM1993` is retained as provenance and must decompose exactly into the two-digit Census-1991 state/district codes. The continuous variable is Shastry-derived and is used as an external coverage/replication benchmark, not as an independent linguistic-distance construction or a silent replacement for the Atlas source.
-- Vanneman pretrend diagnostics read only the archived stable `panel4` fixed-width count records specified by the author SAS reader, then restrict them through the reviewed one-to-one 1991→2001 bridge; split historical districts are never copied to multiple 2001 descendants.
+- `district_lineage_sources.csv` — reviewed lineage-source registry;
+- `district_admin_events.csv` — administrative transition/event records;
+- `district_adjudications.csv` and `district_primary_reviews.csv` — reviewed identity decisions;
+- `district_match_gold.csv` — reviewed matching reference set;
+- `district_allocation_weights.csv` — reviewed fractional allocations where the named specification permits them;
+- `district_geometry_carrybacks.csv` — reviewed geometry carryback decisions;
+- `district_harmonization_crosswalk.csv` — tracked harmonization authority used by processed replication;
+- `district_legacy_mapping_reviews.csv` and `manual_district_corrections.csv` — historical/legacy comparison support;
+- `map_disputed_areas.csv` — display classifications for manuscript cartography.
 
-See [`docs/DISTRICT_LINEAGE.md`](../../docs/DISTRICT_LINEAGE.md) for authority rules, source caveats, schemas, invariants, and the implementation plan.
+See [`../../docs/DISTRICT_LINEAGE.md`](../../docs/DISTRICT_LINEAGE.md) and [`../../docs/GEOGRAPHY_HARMONIZATION.md`](../../docs/GEOGRAPHY_HARMONIZATION.md).
 
-## Consumption prices and Census 2001 controls
+## Consumption and prices
 
-`price_series_registry.csv` records the role of each price source.
-`census_2001_control_registry.csv` is the semantic authority for Census-2001
-controls. It records labels/descriptions, theoretical control blocks, preferred
-versus alternative parameterizations, denominator/source provenance, and whether
-each variable belongs to the main, absorption, or appendix sets. Production
-targets track the file explicitly, and R control/specification helpers derive
-their vectors from it rather than maintaining parallel hard-coded lists. The
-construction rules are described in `docs/CONSUMPTION_AND_PRICES.md` and
-`docs/CENSUS_2001_CONTROLS.md`.
+Consumption metadata separate source identity, welfare concepts, registered analysis endpoints, comparison checks, and price construction:
 
-`iv_candidate_designs.csv` stores the scientific declarations behind the
-candidate-design ledger: the question, design axis, scope, admissibility,
-execution policy, and rationale for each bounded robustness family, future
-extension, or explicit non-goal. Counts that depend on currently registered
-specifications are intentionally left blank in metadata and are filled by
-`R/iv/candidate_design_ledger.R`; fixed methodological bounds remain declared
-in the table. The extended IV targets track this file explicitly.
+- `consumption_survey_registry.csv`
+- `consumption_welfare_outcomes.csv`
+- `consumption_iv_outcomes.csv`
+- `consumption_welfare_comparisons.csv`
+- `consumption_mpce_benchmarks.csv`
+- `consumption_state_code_crosswalk.csv`
+- `consumption_source_geography_special_units.csv`
+- `consumption_lineage_identity_aliases.csv`
+- `price_series_registry.csv`
+- `price_state_crosswalk.csv`
+- `cpi_iw_centres_1982.csv`
+- `cpi_iw_centres_2001.csv`
+- `tendulkar_poverty_lines_2011_12.csv`
+- `hces_2022_24_district_codebook.csv`
+- `hces_summary_items.csv`
 
-- `cpi_iw_centres_2001.csv`: the 78 Labour Bureau CPI-IW centres and their
-  All-India weights on the 2001=100 base. The three centres later assigned to
-  Telangana are assigned to undivided Andhra Pradesh for the 2007-08 price
-  series. `R/prices/read_price_sources.R` normalizes known spelling variants,
-  requires complete centre coverage by state and month, and renormalizes the
-  official weights within each state through `weighted.mean()`.
+See [`../../docs/CONSUMPTION_AND_PRICES.md`](../../docs/CONSUMPTION_AND_PRICES.md) while the planned split into measurement/price/analysis documents is pending.
 
-- `R/prices/build_temporal_price_series.R` constructs the direct monthly temporal chain: CPI-RL for rural areas and state-weighted CPI-IW for urban areas before January 2013, followed by the state CPI-R/U 2012-base series. State-sector median overlap ratios place the older observations on the newer scale; insufficient links stop construction rather than invoking an undocumented fallback.
+## DISE/UDISE and EMI metadata
 
-- `price_state_crosswalk.csv`: sector-specific, dated temporal fallback rules. Direct state observations always take precedence. The five small-UT donors mirror the Planning Commission's official Tendulkar substitutions; Telangana inherits undivided Andhra Pradesh before the post-2012 state CPI series. States outside the 20-state CPI-RL system or the 78-centre CPI-IW system use the corresponding published All-India series, with that fallback recorded explicitly.
-- `tendulkar_poverty_lines_2011_12.csv`: one resolved rural and urban 2011-12 poverty line for each of the 36 analysis states/UTs. It records the original source state, official UT substitution, source page, and table. All spatial relatives use the common all-India rural value of Rs. 816 so the national rural-urban price-level difference is retained rather than normalized away.
-- `R/prices/price_deflators.R` applies direct observations first, uses only dated rules from the crosswalk when a direct month is absent, and then multiplies temporal relatives by the Tendulkar spatial relative. Missing or overlapping rules are fatal, and provenance is retained through household attachment.
+- `dise_archive_registry.csv` — archive/report-card source registry;
+- `dise_medium_slot_crosswalk.csv` — medium-slot interpretation;
+- `dise_publication_checks.csv` — registered source cells that must reproduce exactly;
+- `dise_report_language_enrollment.csv`, `dise_report_total_enrollment_2010_11.csv`, and `dise_report_school_quality_2011_15.csv` — reviewed report extraction metadata;
+- `english_opportunity_measures.csv` — stable EMI/opportunity construct definitions.
 
-- `R/prices/nss_period_deflators.R` converts NSS 64 and NSS 75 sub-rounds into their three constituent survey months and averages the validated monthly state-sector deflator. `R/measures/build_real_consumption.R` attaches that object to household Block 3 records before person-weighted district aggregation.
+See [`../../docs/DISE_TREATMENTS.md`](../../docs/DISE_TREATMENTS.md) and [`../../docs/LINGUISTIC_DISTANCE_AND_EMI.md`](../../docs/LINGUISTIC_DISTANCE_AND_EMI.md).
 
-## Archived DISE/UDISE district data
+## Linguistic and historical metadata
 
-- `dise_archive_registry.csv` inventories annual raw workbooks and report-card PDFs.
-- `dise_medium_slot_crosswalk.csv` records report-derived medium-of-instruction slot identities for 2005-06 through 2007-08.
-- `dise_publication_checks.csv` records small raw-to-publication validation anchors.
+- `shastry_language_distance.csv` and `shastry_language_adjudications.csv`
+- `census_language_glottolog_crosswalk.csv`
+- `asjp_language_index.csv`
+- `lexical_language_index.csv`
+- `kogan_2017_anchor_similarity.csv`
+- `helms_lim_linguistic_distance_1991.csv`
+- `language_atlas_1991_accepted_source.csv`
+- `language_atlas_1991_cell_reviews.csv`
+- `language_atlas_1991_languages.csv`
+- `language_atlas_1991_state_crosswalk.csv`
+- `vanneman_archive_2013_checksums.csv`
+- `vanneman_panel4_dist91_adjudications.csv`
+- `vanneman_panel_state_crosswalk.csv`
 
-See `docs/DISE_TREATMENTS.md` for construction and scope.
+These files record reviewed identities, source selections, crosswalks, and validation anchors. See [`../../docs/LINGUISTIC_DISTANCE_AND_EMI.md`](../../docs/LINGUISTIC_DISTANCE_AND_EMI.md) and [`../../docs/HISTORICAL_LINGUISTIC_VALIDATION.md`](../../docs/HISTORICAL_LINGUISTIC_VALIDATION.md) pending their planned splits.
 
-- `dise_report_language_enrollment.csv` stores report-card-derived English/Hindi district enrollment for 2008-09 through 2014-15 with reviewed PDF/page provenance. `scripts/build_dise_report_language_enrollment.py` uses that provenance as an extraction manifest and re-reads the registered pages with Poppler `pdftotext -layout`; it can verify the tracked numeric counts or write a candidate rebuilt CSV. Page discovery remains a reviewed metadata decision rather than an untested PDF heuristic. The normal R/targets pipeline never invokes Poppler.
-- `dise_report_total_enrollment_2010_11.csv` stores published current-year elementary enrollment (`Total Pr.` + `Total U.P.`) for the reviewed 2010-11 district pages available in the report-language provenance. It repairs the archived 2010-11 enrollment workbook's district-row alignment corruption without guessing from neighboring rows. Historical report spellings are normalized through the shared state canonicalizer; if a raw 2010-11 district still lacks a reviewed report total, its raw enrollment remains QA-only and the analytical denominator is missing rather than falling back to the corrupt workbook row. `scripts/build_dise_report_total_enrollment_2010.py` verifies the tracked counts from the same reviewed page provenance; it is a maintainer command and is not part of the targets runtime graph.
-- `dise_report_school_quality_2011_15.csv` stores published all-school PTR, single-teacher-school percentages, and girls'-toilet percentages for 2011-12 through 2014-15 with page-level provenance. `scripts/build_dise_report_school_quality.py` re-verifies every tracked page against the registered PDFs. The girls'-toilet denominator changes after 2011-12, so longitudinal infrastructure diagnostics begin in 2012-13; PTR and single-teacher trajectories can begin in 2011-12. Because these publication values are already ratios, later child districts are never averaged back to a Census-2001 parent: only one-to-one deterministic source/target rows enter the mechanism panel.
+## Labor and source materialization
 
-`dise_archive_registry.csv` records the round-specific Teacher sheet for 2005-06 through 2013-14. The 2014-15 and 2015-16 summary sheets co-locate teacher and school-quality counts, so those rows intentionally leave `teacher_sheet` blank.
+- `nesstar_conversion_contracts.csv` — reviewed external-conversion contracts for supported Nesstar containers;
+- `plfs_labor_contracts.csv` — PLFS wave/source/design-field contract.
 
-DISE metadata files used by the `targets` pipeline are declared as explicit `format = "file"` dependencies before parsing. This ensures incremental builds invalidate cached parsed metadata when a registry, crosswalk, publication check, or report-language CSV changes.
+See [`../../docs/LABOR_MARKET.md`](../../docs/LABOR_MARKET.md).
 
-### Census 2011 household mechanisms
+## Editing rules
 
-HH-09/HH-13/HH-15(/Appendix) and HH-08/HH-10/HH-11 are active extended-diagnostic sources under `data/raw/census_2001/households/` and `data/raw/census_2011/households/`. `R/io/read_census_households.R` validates each table's published accounting; `R/measures/build_census_households.R` reconciles within-vintage household universes, pools only 2011 counts through the complete deterministic 2011-to-2001 bridge, and differences only exact common concepts. Worker-count top coding and the absent 2001 marginal-worker decomposition are treated as non-comparability constraints, not imputation opportunities. The branch remains descriptive and does not add post-treatment HH variables to preferred controls or automatically create another weak-IV outcome family.
+When changing metadata:
 
+1. **Preserve stable IDs.** IDs referenced by code, outputs, or review histories should not be renamed merely for presentation.
+2. **Keep paths repository-relative.** Local-machine absolute paths do not belong in tracked metadata.
+3. **Use one authoritative file per fact.** Do not duplicate a source path, construct definition, or finite design declaration in a second CSV for convenience; project it downstream instead.
+4. **Separate scientific declarations from run results.** Metadata may declare admissibility, source meaning, or expected identities. Realized estimates/counts that depend on execution belong in generated outputs unless they are reviewed external facts.
+5. **Do not infer missing semantics from filenames.** Add an explicit stable ID/label/role field when downstream code needs a scientific meaning.
+6. **Update dependent hashes deliberately.** After intentional tracked-metadata edits, refresh the digest registry with `Rscript scripts/update_checksums.R` when required by the checks.
+7. **Keep acquisition manifests separate from core required-file status.** A downloadable source can be registered for acquisition without becoming a mandatory input to every build family.
+8. **Add behavioral validation with the change.** New registries or columns should be checked at their read/compile boundary; avoid tests that merely search CSV text.
 
-Census housing diagnostics activate Census-2001 H-04 Appendix (`PC01_H04a`, manifest table `H04A`) and Census 2011 HL-13 as a longitudinal structural-durability pair. All 35 H04A workbooks pass structural accounting and their 593 district household totals match H-09 exactly. Durability changes are retained descriptively and do not expand the fixed housing weak-IV registry.
+The repository's source/metadata preflight and domain readers enforce additional schema-specific invariants. Those checks, rather than this README, are the executable authority.
 
-- Economic Census source/measurement semantics are documented in `docs/ECONOMIC_CENSUS.md`; the active EC05 archive and Sixth-EC DDI validation are optional for the public core and required only when extended diagnostics run the EC branch. Raw EC13 Nesstar data are not a production aggregation path while the documented SHRUG Census-2011 district product remains the preferred follow-up source.
+## Related documentation
 
-- `shrug_ec05_csv_archive` and `shrug_ec13_csv_archive` are extended Economic Census district sources; EC13 is pooled from Census-2011 counts to complete Census-2001 parents before derived measures.
-
-- NSS 64 Schedule 10.2 labor/migration source semantics are documented in `docs/LABOR_MARKET.md`. Extended diagnostics register the official DDI plus Block 4 usual-activity and Block 6 migration `.sav` files under the organized `data/raw/nss/` namespace; district labor outcomes remain inactive until lineage and support rules are predeclared.
-
-NSS66 employment/unemployment registers both the official DDI and canonical `survey0/data` `.Nesstar` container. The DDI is an active extended validation source; the proprietary container is intentionally marked for standard external conversion rather than direct repository parsing.
-
-- `nesstar_conversion_contracts.csv` pins the reviewed `nesstar-converter` release,
-  exact F4/F5/F6 case counts, signature columns, and gitignored interim output
-  paths used by `scripts/materialize_nesstar.py nss66_eus`. The converted CSVs are
-  reproducible local intermediates, not tracked raw data.
-
-`plfs_labor_contracts.csv` freezes official PLFS wave structure before ingestion: catalog reference/case counts, first-visit versus revisit roles, annual usual-status source choice, design/geography fields, multiplier field, and principal/subsidiary status fields. The raw 2017-18 Nesstar binary, layout workbook, and official MoSPI DDI/XML are registered in `file_manifest.csv`. `nesstar_conversion_contracts.csv` selects only F1 (`hh_per_fv_2017-18`, 433,339 persons) for annual usual-status materialization; revisit PLFS records are intentionally excluded from that source family.
-
-
-`plfs_labor_contracts.csv` also declares the quarter/visit/segment and `NSS`/`NSC`/annual-quarter fields needed to reconstruct the official PLFS annual person weight. The PLFS 2017-18 unit-level README is registered in `file_manifest.csv` as the authority for that formula and the primary-key definition.
-
-
-`consumption_welfare_outcomes.csv` separates `transform`, which defines the survey-design welfare estimand, from `iv_analysis_transform`, which defines the downstream causal-analysis scale. This prevents already-log outcomes such as mean log MPCE from being transformed twice and allows response-definition robustness families to be compiled from metadata.
-
-
-The 1991 acquisition manifest now feeds an extended primary-source validation layer. The reviewed official B-01(S), C-02 total/urban, C-06, and C-09 workbooks under `data/raw/census_1991/` are parsed into source-district sufficient statistics and compared directly with the cached Vanneman 1991 counts before any 1991-to-2001 geography allocation. B-01(S), C-02, and C-06 are state workbooks containing district observations; C-09 is one all-India workbook containing district religion rows. C-02U remains supplementary and absent urban rows are treated as structural zero only when Vanneman independently reports zero urban population. Exact validation contracts cover population, urban population, secondary-plus counts, main workers, dependency components, Muslim population, and the C-09 religion-category population sum. Published C-09 total population remains diagnostic because the Dhule row differs from its own religion-category sum. ORGI H-4/H-5 remain excluded because the catalog exposes them only at country/state granularity. These official tables validate historical source counts; they do not silently replace the already-registered causal control family.
+- [`../../DATA_AVAILABILITY.md`](../../DATA_AVAILABILITY.md) — access and redistribution.
+- [`../../REPLICATION.md`](../../REPLICATION.md) — local setup and supported replication paths.
+- [`../../docs/ARCHITECTURE.md`](../../docs/ARCHITECTURE.md) — registry placement and module boundaries.
+- [`../../docs/IV_DIAGNOSTICS.md`](../../docs/IV_DIAGNOSTICS.md) — IV candidate/design governance.
+- [`../../docs/DISTRICT_LINEAGE.md`](../../docs/DISTRICT_LINEAGE.md) — lineage evidence and adjudication.

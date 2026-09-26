@@ -1,355 +1,170 @@
 # Architecture
 
-This repository builds the EMI and inequality paper, diagnostics, application samples, and replication artifacts. Current source files are authoritative; historical refactor evidence remains under `archive/refactoring/` and is not active build machinery.
-
-## Project structure
-
-- `_targets.R` — composition root and target-group selection.
-- `R/pipeline/` — target-family factories used by the composition root; these files declare target objects only and contain no statistical or data-construction logic. `core_consumption_targets.R` owns registered consumption ingestion, reconstruction validation, source-district identity attachment, and household deflation; `core_consumption_outcome_targets.R` owns lineage harmonization, welfare aggregation, and outcome/specification registries; `core_consumption_iv_targets.R` owns the production consumption-IV panel, coverage gate, and dynamic estimates. Extended factories own optional diagnostic families.
-- `R/io/` — raw-data readers and path handling.
-- `R/districts/` — district identities, lineage, crosswalks, and panel construction contracts.
-- `R/measures/` — analysis measures and survey-weighted aggregation.
-- `R/iv/` and `R/selection/` — estimation logic; `R/iv/specification_registry.R` remains the execution contract for IV specifications, `R/iv/analysis_design_registry.R` projects specialized registries onto one cross-family design ontology, and `R/iv/candidate_design_ledger.R` combines declarative candidate metadata with live registry counts without generating a Cartesian specification search.
-- `R/diagnostics/` — public and extended diagnostics.
-- `R/benchmarking/` — optional benchmarks.
-- `R/output/` — figures, tables, shared table contracts, report values, and render helpers.
-- `paper/`, `docs/` — current manuscript and methodological documentation sources.
-- `tests/testthat/` — behavioral and output-contract tests.
-- `archive/refactoring/` — historical proof only.
+This document describes where responsibilities belong in the active repository. It is a structural guide, not a record of research chronology or a catalog of empirical results. Domain-specific scientific choices belong in the corresponding methodological documents under `docs/`.
 
-## Dependency layers
-
-1. Readers normalize raw data and tracked metadata.
-2. District lineage maps both NSS waves to Census-2001 districts.
-3. Measures and pooled household records construct the three panel variants.
-4. The public alias selects the reviewed primary panel.
-5. Estimation and diagnostics consume the public alias or an explicitly named comparison panel.
-6. Output modules generate tables, figures, report values, and rendered documents.
-
-Reusable logic belongs in `R/`; `_targets.R`, scripts, and Make targets should coordinate rather than duplicate it. Public QMDs should contain prose and small rendering calls only.
-Source directories are loaded with `{targets}`' native `tar_source()` directory support, which recursively sources only `.R`/`.r` scripts; the composition root should not maintain a parallel file-discovery wrapper.
+## Design principles
 
+The active code follows a small set of structural rules:
 
-## Analysis-design ontology
+- define each scientific construct or finite design family once and reuse that definition downstream;
+- normalize source-specific schemas at the input boundary before estimation code sees them;
+- keep data construction, estimation, diagnostics, and presentation in separate modules;
+- use registries for finite analysis families instead of parallel hand-written specification branches;
+- keep orchestration in `{targets}` factories and scripts while reusable computation remains in `R/` functions;
+- persist intermediate files only when they are independently useful scientific summaries, publication inputs, or forensic review records;
+- let final/release mode fail on invalid scientific states instead of silently changing the estimator or design; and
+- test observable behavior, schemas, and methodological invariants rather than source layout or implementation text unless layout itself is a release requirement.
 
-`R/iv/analysis_design_registry.R` is an inventory layer above the specialized
-execution registries. It normalizes currently implemented public headline IV,
-consumption, DISE, Census mechanism, C-17, district mechanism, labor, firm,
-historical first-stage, schooling-to-welfare, social-group schooling, ST-concentration,
-and 1991 ST-language designs onto explicit outcome, treatment, instrument, vintage,
-distance-measure, language-adjustment, adjustment, control-strategy,
-control-parameterization, fixed-effect, functional-form, estimand, estimator,
-inference, sample-rule, role, and admissibility fields. Family-specific diagnostics must expose one canonical specification grid and
-use that same grid for estimation; the cross-family ontology projects those rows
-rather than reconstructing neighboring specifications independently. Public headline models are themselves declared by
-`public_iv_specification_registry()` and converted to formulas only at the final
-legacy model-interface boundary, so there is no second headline formula authority.
-The separate candidate-design ledger records bounded robustness families,
-unimplemented but theoretically admissible extensions, and explicit non-goals
-without manufacturing or estimating an indiscriminate Cartesian product.
-Scientific declarations live in `data/metadata/iv_candidate_designs.csv`;
-`R/iv/candidate_design_ledger.R` adds only counts and implementation status that
-depend on the live execution registries. The metadata file is tracked as a
-`format = "file"` target so edits invalidate the derived ledger. Its
-`admissibility_reason` and `execution_policy` fields are a decision contract:
-inadmissible rows must be `do_not_estimate`, while admissible rows cannot use
-that policy.
- Linguistic IV metadata now also separates the distance measure itself from
-included language-composition adjustment. Compatibility construction IDs remain
-stable for existing targets and outputs, but `iv_distance_measure_registry()` and
-`iv_language_adjustment_registry()` are the orthogonal semantic axes and
-`iv_instrument_construction_registry()` records their admissible pairings. This
-prevents, for example, Shastry nonzero mean with and without Hindi/Urdu controls
-from being misrepresented as two different distance measures. New
-design families should first declare why a combination is scientifically
-admissible before adding another estimator branch. The implemented analysis-design
-registry remains a cached R target; the compact candidate ledger is persisted as
-reviewer-facing extended diagnostic metadata.
+Historical refactor evidence remains under [`archive/refactoring/`](../archive/refactoring/) and is not active build machinery.
 
-The Census-2001 control registry is likewise metadata-first. Main, absorption,
-appendix, block-membership, labels, and alternative-measure relationships are
-derived from `data/metadata/census_2001_control_registry.csv`; production targets
-track that file explicitly.
+## Repository layers
 
-The extended IV pipeline owns and persists the compiled cross-family ontology at `outputs/diagnostics/extended/iv/analysis_design_registry.csv`; Census-specific pipeline modules no longer own this cross-family object. Family specification grids remain cached objects unless they are independently useful scientific artifacts: the durable cross-family registry is the preferred specification inventory, avoiding one CSV per family merely for bookkeeping. Extended diagnostic artifacts must be reachable from a `diag_ext_` target because the public audit intentionally selects that prefix.
+| Layer | Main locations | Responsibility |
+|---|---|---|
+| Configuration and metadata | `config/`, `data/metadata/` | Scientific configuration, file registries, construct/design metadata, reviewed crosswalks |
+| Input adapters | `R/io/`, `R/clean/` | Read raw/tracked inputs and normalize source-specific schemas |
+| Measure construction | `R/measures/`, `R/prices/`, `R/controls/` | Construct analysis variables, survey aggregates, prices, and baseline controls |
+| Geography and lineage | `R/districts/` | District identities, lineage evidence, crosswalks, and geographic harmonization |
+| Estimation and inference | `R/selection/`, `R/iv/` | Statistical models, registered specifications, weak-identification inference |
+| Diagnostics | `R/diagnostics/`, `R/benchmarking/` | Scientific validation, robustness checks, optional performance comparisons |
+| Presentation | `R/output/`, `R/application_samples/` | Tables, figures, report values, manuscript/sample rendering helpers |
+| Composition | `_targets.R`, `_targets_processed.R`, `R/pipeline/`, `scripts/`, `Makefile` | Declare and execute dependency structure; do not duplicate scientific logic |
+| Publication | `paper/`, `application-samples/`, `posters/` | Reader-facing documents that consume generated results |
 
-## District-panel roles
+Source directories are loaded with `{targets}`' native `tar_source()` support. The composition roots should not maintain a second source-file discovery mechanism.
 
-- `district_panel_conservative`: deterministic district specification.
-- `district_panel_primary`: reviewed public production specification.
-- `district_panel_full_reviewed`: fractional-allocation sensitivity specification.
-- `district_panel`: public alias to `district_panel_primary`.
-- `district_panel_legacy`: inherited harmonization panel used only in historical comparison diagnostics.
+## Target composition
 
-The lineage object uses matching names: `conservative_source_crosswalk`, `primary_source_crosswalk`, and `full_reviewed_source_crosswalk`.
+[`_targets.R`](../_targets.R) is the primary composition root. It sources reusable modules and target-family factories, then assembles:
 
-## Production and legacy separation
+- the core paper/release analysis;
+- optional extended diagnostics;
+- optional benchmarks;
+- application-sample rendering; and
+- optional poster rendering.
 
-`core_pipeline_targets` contains only production dependencies and composes domain target factories rather than requiring declarations to live inline. Consumption orchestration is split at real dependency boundaries: `core_consumption_target_definitions()` handles source reconstruction and deflation, `core_consumption_outcome_target_definitions()` handles lineage and welfare outcomes before panel construction, and `core_consumption_iv_target_definitions()` attaches those outcomes to the finalized district panel and estimates the registered dynamic IV specifications. The remaining production graph is similarly partitioned into measurement (`core_measurement_target_definitions()`), reviewed district lineage (`core_lineage_target_definitions()`), analysis-panel construction (`core_panel_target_definitions()`), and public estimation/rendering (`core_public_target_definitions()`).
+The environment switches `EMI_RUN_EXTENDED_DIAGNOSTICS`, `EMI_RUN_BENCHMARKS`, `EMI_RENDER_APPLICATION_SAMPLES`, and `EMI_RENDER_POSTER` control whether those optional families are included. Scientific configuration remains in `config/final.yml` or `config/fast.yml`.
 
-Bounded historical geography validation and Vanneman source QA are public-production dependencies because final-paper Appendices B/C consume them; multivintage geography comparisons and their forensic `diag_ext_*` expansions remain extended-diagnostic work. They therefore live in `extended_historical_target_definitions()` and are selected only when extended diagnostics are enabled. The canonical reviewed lineage objects they consume remain in the core graph, including `district_lineage_sources`, `district_lineage`, and the shared `district_transition_2001_2011` alias. This keeps the strict public graph lean without deleting any historical object or forensic artifact from the full audit. Legacy boundaries, the inherited harmonization crosswalk, and district tracker inputs live in `legacy_geography_targets`; the inherited legacy panel and archived review ledger live in `legacy_comparison_targets`. The geography group is available to extended diagnostics and benchmarks, while the legacy panel is constructed only for extended historical comparisons. Extended diagnostics are grouped into historical, lineage/general-diagnostic, Census, DISE/mechanism, and IV/control target factories under `R/pipeline/`; `extended_diagnostic_target_definitions()` composes those families, while `_targets.R` remains responsible for deciding whether the combined family enters the selected graph.
+[`_targets_processed.R`](../_targets_processed.R) is a separate, smaller composition root for district-level replication from tracked processed inputs. It uses its own `_targets_processed/` store and deliberately excludes source reconstruction and the individual-level selection model.
 
-The production lineage does not load `data/metadata/district_legacy_mapping_reviews.csv`, does not evaluate migration gates, and does not depend on the inherited panel.
+Target factories under `R/pipeline/` declare dependencies. They should not contain domain computation that could be called and tested independently. Moving declarations between factories should preserve target names and commands unless the scientific dependency itself changes.
 
-## Output contracts
+## Registries and semantic authorities
 
-`R/output/table_contract.R` is the single source of public table captions and notes. It is sourced both by the targets table writer and by standalone Quarto helpers. Generated CSVs retain machine-readable schemas; public rendering applies presentation labels without changing stored data.
+The repository uses tracked registries where a scientific family is finite and reviewable. Important authorities include:
 
-The repository follows an **objects first, artifacts last** retention rule. Cached target objects are the default home for intermediate calculations. A persisted diagnostic should have one of three roles: scientific summary, public/report input, or independently useful forensic QA ledger. Benchmark targets persist benchmark-specific results and reuse canonical diagnostic inputs instead of copying them. Comparison savers should likewise avoid re-serializing unchanged shared inputs under multiple prefixes.
-Post-treatment mechanism inference follows the same retention rule through `save_posttreatment_mechanism_outputs()`: registered source/sample summaries, reduced forms, and compact weak-IV/Anderson--Rubin summaries are persisted, while pointwise Anderson--Rubin inversion grids remain cached target objects. `outputs/diagnostics/extended/mechanisms/` contains the cross-family evidence grid and family summary assembled from the common inference contract; source-specific modules remain authoritative for measurement.
+- `data/metadata/file_manifest.csv` for required local files;
+- `data/metadata/variable_dictionary.csv` for shared construct semantics;
+- `data/metadata/census_2001_control_registry.csv` for Census-2001 control definitions;
+- `data/metadata/iv_candidate_designs.csv` plus the IV execution registries for bounded candidate/design governance;
+- consumption survey/outcome registries for welfare concepts and endpoint use;
+- district lineage/adjudication metadata for reviewed geographic identity decisions; and
+- `application-samples/samples.yml` for application-sample selections.
 
-Public models, tables, maps, diagnostics, processed data, and paper outputs depend on the generic production targets rather than an implementation-specific comparison target. Consumer-specific derivations stay with their optional target family: the conference poster reuses shared paper figures but constructs its second-stage specification figure only when poster rendering is enabled. Application samples likewise remain optional rendered derivatives.
+`R/iv/analysis_design_registry.R` projects specialized execution registries onto a common cross-family design schema. The projection is an inventory layer: it should reference authoritative construct/specification definitions rather than create a neighboring set of formulas or labels.
 
-## Census mechanism diagnostics
+When adding a new finite robustness family, declare the scientific dimensions and admissibility first, then make estimation consume that same declaration. Do not create a second specification grid only for output formatting or diagnostics.
 
-Census migration, worker, housing/living-standard, and household-mechanism modules share the administrative-count harmonization layer in `R/measures/census_admin_counts.R`. Census-2011 counts are aggregated to Census-2001 parents only after the common complete deterministic transition rule has certified full parent reconstruction; all ratios are computed after count pooling.
+## Geography roles
 
-The housing module keeps source decoding in `R/io/read_census_housing.R`, measure construction in `R/measures/build_census_housing.R`, and output-only QA in `R/diagnostics/diagnose_census_housing.R`. It is an extended diagnostic dependency, not a preferred-model control dependency. H-05/H-08/H-10/H-11 and HL-04/HL-06/HL-08/HL-09/HL-10 reuse that same layer: source-table room, water, sanitation/drainage, and kitchen/fuel partitions are validated before pooling; 2001 H-05's incomplete district coverage is carried as variable-specific missing baseline support; H-10 replaces H-12 as the complete baseline latrine source while H-12 remains an overlap cross-check; and richer 2011 categories are collapsed only to explicit 2001 counterparts.
+The repository distinguishes three concepts that should not be conflated:
 
-The household-capacity branch follows the same boundary: `R/io/read_census_households.R` decodes and validates 2001 HH-09/HH-13/HH-15(/Appendix) and 2011 HH-08/HH-10/HH-11 accounting; `R/measures/build_census_households.R` reconciles independent household universes, pools only 2011 counts through the shared deterministic transition, and differences only exact common concepts; `R/diagnostics/diagnose_census_households.R` persists the two vintages, change coverage, and source reconciliations. Open-ended or nonmatching worker concepts are excluded rather than imputed. HH variables remain post-treatment descriptors and do not enter preferred controls or a new estimator by default.
+1. **Source geography** — the native geography of a survey, Census table, administrative file, or boundary release.
+2. **Reference analysis geography** — Census-2001 districts used by the principal district analyses.
+3. **Alternative harmonized geography** — conservative, full-reviewed, historical, or other explicitly named specifications used for robustness or validation.
 
-## Strict final mode
+`district_panel_primary` is the reviewed production district panel and `district_panel` is its public alias. Alternative panels retain explicit names so a robustness analysis cannot silently replace the production geography.
 
-`config/final.yml` enables strict district-panel and analysis-panel validation for production panels. Strict validation stops on error-severity panel issues, including duplicated production panel units, but retains warning-severity source-key reuse for documented split/merge allocations. Final builds also fail on incomplete analysis rows, placeholder model output, missing report values, unresolved cross-references, or missing required artifacts. The inherited legacy panel is exempt from production uniqueness gates only in its optional historical-comparison target because inherited duplicate split/merge rows are themselves an object of that review.
+District identity evidence and the rules used to transform observations across vintages are documented separately in [`DISTRICT_LINEAGE.md`](DISTRICT_LINEAGE.md) and [`GEOGRAPHY_HARMONIZATION.md`](GEOGRAPHY_HARMONIZATION.md).
 
-## Target groups
+## Core, extended, and benchmark boundaries
 
-- `core_pipeline_targets` — production data, models, outputs, and documents, composed from focused measurement, lineage, panel, public-output, and consumption factories at their true dependency boundaries.
-- `legacy_geography_targets` — inherited geometry and harmonization inputs shared by optional diagnostics and benchmarks.
-- `legacy_comparison_targets` — the inherited legacy panel, archived historical reviews, and crosswalk comparisons used only by extended diagnostics.
-- `extended_diagnostic_targets` — extended diagnostic target objects composed from the five domain-oriented factories under `R/pipeline/`; target names and dependency commands remain unchanged when orchestration is moved out of `_targets.R`.
-- `benchmark_targets` — optional benchmarks.
-- `application_sample_targets` — writing and coding samples driven by `application-samples/samples.yml`; writing variants select current-paper section IDs and coding variants select R marker pairs.
-- `poster_targets` — optional poster-only derivations and rendering; shared manuscript figures remain core targets.
+A target belongs in the core graph when a paper/release result depends on it. Extended diagnostics remain available for scientific review without becoming publication dependencies merely because they exist. Benchmarks evaluate implementation choices or performance and are not scientific results.
 
-Legacy geography is appended once when either extended diagnostics or benchmarks are enabled.
+This boundary is semantic rather than a statement about whether the raw input is redistributable. The repository does not redistribute many inputs used by core work.
 
-## Build philosophy
+If an extended result becomes a manuscript input, promote the analytical dependency rather than reimplementing it in the presentation layer. Conversely, removing a table or figure from the paper does not require deleting the underlying scientific diagnostic if it remains useful for validation.
 
-`{targets}` is the build source of truth. Durable computation should be represented by functions and explicit targets. Target-family factories may reorganize declarations, but they must preserve target names and commands so caches, debugging metadata, `tar_traceback()`, and existing diagnostic entry points remain useful. A target belongs in the public core graph only when a public-production target depends on its value; diagnostic support objects and their persisted QA artifacts belong in the relevant optional family instead. Moving such a target out of the core is permitted only after checking the complete target-definition graph for public consumers, and the full audit must continue to select it. Tests that audit the target graph must inspect `_targets.R` together with `R/pipeline/*_targets.R`; physical-file placement is not a methodological invariant. `scripts/test_impact.py` maps each target-family file to its domain tests so modularization does not reduce failure localization. Avoid untracked side effects, compatibility aliases, source-text tests, and parallel implementations of the same contract. Tests should protect behavioral and methodological invariants.
+## Output conventions
 
-The final audit also writes `outputs/build/source_health.csv`, a conservative static inventory of top-level functions and direct function aliases under `R/`. It uses base R parsing for active R/test sources, explicitly traverses function defaults and bodies, and tangles QMD sources with `knitr::purl()` while enabling inline-R extraction. Exact function-name references in `data/metadata/file_manifest.csv` cover registered reader dispatch. A function with neither kind of reference is reported as `possible_orphan`, while duplicate top-level definitions are reported separately. These findings are warnings rather than build failures because R permits dynamic dispatch that static analysis cannot prove unreachable. The report is intended to make obsolete compatibility wrappers and abandoned helpers visible for review, not to authorize automatic deletion.
+The repository follows an **objects first, files last** rule.
 
-Update this document when target groups, panel roles, public-output contracts, directory ownership, or strict validation rules change.
+- Cached target values are the default home for intermediate calculations.
+- Machine-readable CSVs retain analytical schemas and identifiers.
+- Presentation labels and formatting are applied downstream in `R/output/`.
+- A persisted diagnostic file should be a scientific summary, a document input, or an independently useful review record.
+- Multi-file writers should return their emitted paths to `{targets}` as file targets so incremental builds track the files themselves.
 
+`R/output/table_contract.R` centralizes paper table captions/notes used by both target writers and QMD rendering helpers. The final audit writes `outputs/build/output_manifest.csv` from target metadata and the filesystem after the selected build families finish; the manifest is a discoverability index, while scientific design semantics remain authoritative in their registries.
 
-## Canonical construct semantics
+Generated publication PDFs are tracked intentionally. Raw data, dependency libraries, target stores, and local caches are not publication outputs.
 
-`data/metadata/variable_dictionary.csv` is the tracked authority for variables already in the common district/panel architecture. `read_analysis_construct_registry()` validates that authority, and `compile_analysis_construct_registry()` projects source-only C-17, DISE, modern consumption-welfare, migration, housing, Economic Census, labor, 1991 ST-language, and social-group-gap constructs onto the same schema without moving formulas or estimators out of their specialized modules. Consumption semantics remain normalized across `consumption_welfare_outcomes.csv` (outcome concept and unit), `consumption_survey_registry.csv` (source/vintage), and `consumption_iv_outcomes.csv` (registered endpoint/baseline use); the construct compiler joins those authorities instead of inventing labels from generated regression-column names. Source registries remain authoritative for source-only constructs and must expose stable construct IDs and human-readable labels rather than forcing the ontology layer to reverse-engineer semantics from variable names. The common schema separates construct identity from storage-variable identity, because the same storage column can represent distinct vintages (for example NSS66 versus PLFS labor outcomes); ambiguous variable lookup therefore fails closed and callers must select such rows by `construct_id`. The schema also separates domain, vintage, denominator/universe, analysis stage, analytical role, preference status, and causal-status caveats. The obsolete `used_in_main_model` flag has been removed from the variable dictionary: paper/model prominence is a design-level property represented by `analysis_role`, not a second variable-level truth that can drift from the specification registry. The extended audit persists `outputs/diagnostics/extended/iv/construct_registry.csv` as the reviewer-facing inventory.
+## Final and optional execution modes
 
-`analysis_design_registry.csv` is a relational projection over that construct inventory. Raw `outcome`, `treatment`, `effect_modifier`, and `instrument` fields remain the executable model-column/formula vocabulary for backward compatibility, while `outcome_construct_id`, `baseline_construct_id`, `treatment_construct_id`, `effect_modifier_construct_id`, and `instrument_construct_ids` are semantic foreign-key references where the design uses registered constructs. Generated welfare columns therefore point to the underlying round-specific welfare construct rather than masquerading as new scientific variables, and multi-instrument specifications carry a semicolon-delimited list of component construct IDs. An ambiguous storage variable may not be auto-linked: the originating family must provide its construct ID explicitly.
+`config/final.yml` is the release scientific configuration. `config/fast.yml` is for iteration and may reduce expensive validation work, but it should not redefine the registered estimands or variable semantics.
 
-## Public map regions
+Optional build families are orthogonal to that configuration:
 
-The public region map uses the Reserve Bank of India six-region classification,
-not the former five-way ad hoc grouping. The categories are `Northern`,
-`North Eastern`, `Central`, `Eastern`, `Western`, and `Southern`.
-`panel_state_region_crosswalk()` is the single state-to-region contract used by
-panel construction and map preparation. Historical state names are resolved
-through the project's canonical state aliases before classification. The small
-union territories omitted from some RBI state lists follow the corresponding
-RBI/Zonal-Council geography used by the project: Delhi, Chandigarh, and Jammu
-and Kashmir are Northern; Andaman and Nicobar Islands is Eastern; and
-Puducherry and Lakshadweep are Southern.
+- extended diagnostics add scientific robustness/forensic checks;
+- benchmarks add performance/implementation comparisons;
+- application samples render selected paper/code excerpts; and
+- the conference poster adds poster-only rendering dependencies.
 
-## DISE geographic harmonization
-
-Archived DISE district counts are harmonized to Census-2001 analysis units through a deterministic bridge derived from the reviewed district-lineage registry. Only exact Census-2001 identities and reviewed weight-one lineage mappings are eligible; fractional population allocations are excluded from administrative school counts. Count variables are aggregated before shares are recomputed.
-
-The paper's DISE construction section is prose-led rather than a dump of the construct and publication-check registries. Those registries remain the machine-readable source of year, sheet, medium-slot, and report-page decisions. `dise_publication_validation` is a fail-closed dependency of the final paper render: every registered report-card cell must reproduce exactly even though the validation rows are no longer printed as a manuscript table.
-
-## Census administrative-count harmonization
-
-Census-2001 worker B-04/B-25/B-26 measures are read directly on the native 593-district analytical geography and enter only predetermined IV-balance diagnostics. Census-2011 count-valued outcomes that are compared on Census-2001 analytical geography use `build_complete_deterministic_transition_2011_to_2001()`. The resulting `district_transition_2001_2011` is a first-class pipeline target, rather than repeated nested access to the larger `district_lineage` object, because C-13, migration, worker, housing, and Census-population denominators all depend on the same transition. A Census-2001 parent is retained only when every contributing 2011 district is wholly and deterministically assigned to that parent. Counts are pooled before any rates or composition shares are recomputed; partial parents and fractional territorial allocations are not silently treated as complete administrative totals. Migration D-02 through D-07 and worker B-04/B-06/B-25A/B additionally enforce source-level accounting identities before harmonization, so geography pooling cannot conceal a malformed source table. The Census-2011 all-age population denominator is read from SHRUG's district PCA and pooled through this same count contract before D-02 population rates are formed. The resulting harmonized source universe is a measurement object, not an econometric sample: downstream diagnostic branches intersect it explicitly with the canonical analysis panel and audit that attrition separately.
-
-Post-treatment district mechanism regressions use the shared post-treatment mechanism engine in `R/diagnostics/posttreatment_mechanism_inference.R`. Each module supplies a small outcome registry and harmonized source frames; the engine then audits source-to-IV-panel overlap, fixes one common support sample across the registered outcomes and six scalar-IV candidate designs, estimates reduced forms, and reuses the canonical weak-IV/Anderson-Rubin estimators. Conventional 2SLS p-values are retained for scale but Anderson-Rubin inference is the primary weak-identification safeguard. Migration D-02/D-03/D-04/D-07 outcomes and the full-support longitudinal housing-change registry use this contract. These post-treatment outcomes are mechanism diagnostics, not controls or automatically identified mediation effects.
-
-
-Census 2001 H-04 Appendix (`PC01_H04a`) and Census 2011 HL-13 structural-durability counts reuse the shared count/geography path. H04A was activated only after all 35 raw workbooks passed structural accounting and their 593 district household totals matched H-09 exactly. Longitudinal durability changes are now available descriptively and are not imputed from H-03 materials or added to the fixed weak-IV housing registry.
-
-### Cross-family inference and support semantics
-
-The cross-family analysis-design ontology retains the historical `estimator`,
-`inference`, and `sample_rule` strings for reviewer/output compatibility, but they
-are no longer the only semantic representation. `analysis_design_frame()`
-projects them onto orthogonal fields before a row enters the compiled registry:
-`estimation_scope_id`, `covariance_id`, `weak_id_inference_id`,
-`multiplicity_id`, and `support_policy_id`. Blank functional-form metadata are
-also completed from the registered estimand when the form is unambiguous. This
-keeps family-specific sample identities intact while making common-support,
-complete-case, clustered-covariance, Anderson--Rubin, and Holm choices queryable
-without parsing compound strings downstream. Unknown estimator, inference, or
-sample-rule vocabulary fails closed at this boundary; new methodological choices
-must therefore be registered rather than silently introduced as another string.
-
-### Imperfect-IV inference stays inside the shared weak-identification layer
-
-Exclusion-restriction sensitivity is implemented in `R/iv/weak_identification.R`,
-not as a parallel estimator stack. A scalar-instrument bounded direct-effect
-profile reuses the canonical IV specification, fixed effects, controls, state
-cluster, and Anderson--Rubin beta grid. Consumption-specific code only selects
-the four registered modern headline designs and supplies transparent calibration
-bounds. The cross-family design registry records this as a distinct inference
-scope (`bounded_exclusion_ar`) while retaining the underlying treatment,
-instrument, control, FE, functional-form, and sample identifiers. This keeps
-partial-identification sensitivity orthogonal to specification generation.
-### Overidentified exclusion sensitivity uses the canonical IV specification
-
-The five-share falsification-adaptive-set diagnostic is implemented in
-`R/iv/falsification_adaptive_set.R` and consumes the same canonical IV rows used
-by first-stage, weak-IV, overidentification, and monotonicity diagnostics. For one
-endogenous regressor, each registered excluded instrument is used alone while the
-other excluded instruments become included controls; the FAS is the convex hull
-(the min--max interval) of those just-identified estimates. Only the six
-region-main/state-main five-share designs are admitted. The diagnostic persists
-constituent clustered estimates and conditional first-stage diagnostics rather
-than silently dropping weak instruments, and the cross-family ontology records
-the family as `iv_falsification_adaptive_set`. This keeps exclusion sensitivity
-inside the existing specification, clustering, output, and governance layers.
-
-### Output artifact discovery
-
-The public audit writes `outputs/build/output_manifest.csv` after all requested target families and renders finish. This catalog is intentionally built **outside** the `{targets}` graph from `targets::tar_meta(fields = c("format", "path"))`: `{targets}` documents `tar_meta()` as an external inspection interface and cautions against reading pipeline metadata from inside a running target. The manifest keeps one row per filesystem artifact, uses the artifact path as its stable identity, classifies output scope/type, records byte size, and links CSVs carrying `analysis_id` back to the canonical analysis-design registry. `analysis_id` is therefore reserved for canonical design-registry keys: local diagnostic dimensions must use domain-specific names, and the manifest fails if a nonblank `analysis_id` does not resolve. Analytical families should attach that key at their canonical specification boundary and carry it into estimate outputs; derived families must replace an upstream family's key rather than inherit it when they register a distinct design row. Shared post-treatment mechanism inference uses one namespace/outcome/specification key builder for both registry rows and reduced-form/weak-IV outputs, so migration, housing, Economic Census, and labor cannot drift between ontology and persisted results. DISE first-stage and weak-IV diagnostics likewise use one construct/specification key builder for registry rows and diagnostic outputs. The district-IV diagnostic registry similarly owns `district_iv_diagnostic__<specification_id>` keys, and shared IV diagnostic runners preserve them in first-stage, weak-IV, balance, monotonicity, applicability, overidentification, and design-evidence outputs. The manifest deliberately does not infer design identity from filenames or non-unique `specification_id` values. Multi-file diagnostic writers return their emitted paths to `{targets}` as `format = "file"` targets, so incremental runs validate the reviewer-facing files themselves instead of caching only a writer-side R manifest object. Because `{targets}` file targets can track inputs, outputs, or both, `target_references` records every file target that tracks an artifact without inventing producer/owner semantics. Filesystem outputs that no file target tracks remain cataloged with blank target references.
-This artifact replaces the audit's former depth-limited `find` listing. It is a discoverability index, not another estimation registry: scientific design semantics remain authoritative in `analysis_design_registry.csv`, while target/file provenance remains authoritative in `{targets}` metadata.
-
-### Bounded paper-priority heterogeneity families
-
-Paper-facing heterogeneity is represented through the same registries and
-construct ontology as the rest of the empirical system rather than through
-standalone regression scripts. Because the main paper now reports C-17 language
-behavior directly, the minimal Census-2001 C-17 acquisition and mechanism chain
-lives in `core_census_language_target_definitions()`; extended mode only persists
-the full C-17 diagnostic bundle and retains unrelated Census diagnostics. The
-C-17 Hindi-belt check is a sample restriction
-inside `census_c17_mechanism_registry()`: it reuses the reviewed Shastry distance
-basis and the project's frozen Hindi-belt state definition instead of creating a
-new instrument. NSS schooling-access cross-cuts partition the child microdata by
-social group and either sex **or** rural/urban sector before calling the canonical
-`build_education_exposure_2007()` margin builder. This preserves age windows,
-survey weights, unknown-category handling, and denominators, and deliberately
-avoids a gender-by-sector Cartesian cube.
-
-The schooling-to-welfare bridge fixes one complete-case district sample per
-welfare estimand across all five registered schooling margins and the complete
-adjustment ladder. This makes comparisons among enrollment, public EMI, private
-EMI, and aggregate EMI support-comparable by construction. The final paper does
-not persist separate welfare and complement tables: `paper_economic_conversion`
-combines the full 5-by-4 schooling-welfare design with the eight predeclared
-complement interactions in one two-panel exhibit, while its semantic CSV keeps
-all 28 inferential cells long-form.
-
-The six-cell `schooling_consumption_conversion` family is core because Panel B of
-that exhibit reports the predeclared 2022 long-difference contingency question:
-all-child EMI and private-EMI exposure are each interacted, one modifier at a
-time, with predetermined Census-2001 secondary human capital, urbanization, and
-Scheduled-Tribe concentration. Modifiers are standardized on the common sample
-and interactions receive state-clustered inference with one family-wide Holm
-adjustment. These are descriptive heterogeneous associations, not causal
-heterogeneous treatment effects. The official EC05 Division-72 IT baseline is
-also core for the two registered IT-environment interactions. The broader
-EC05--EC13 analytical object is separately core because the local-development
-synthesis consumes its bounded sector-composition evidence; extended mode owns
-only persistence and forensic variants, not duplicate analysis definitions.
-
-Because effect modification is scientifically distinct from adjustment, the
-cross-family analysis-design schema records `effect_modifier` and
-`effect_modifier_construct_id` separately from the control strategy. This keeps
-heterogeneity searchable through canonical construct IDs and prevents a moderator
-from being hidden in an opaque specification name or misclassified as a baseline
-control choice.
-
-The bounded `census_household_capacity` synthesis reuses the exact concept-matched
-2001-to-2011 household changes rather than creating another outcome pipeline. It
-keeps four predeclared human-capital-capacity changes (literacy depth, matriculate
-access, graduate access, and female graduate access), uses one common district
-sample, and estimates linguistic distance and preferred all-child EMI separately
-with state fixed effects, compact Census-2001 adjustment, and each outcome's exact
-2001 baseline. Holm adjustment is applied within each four-outcome predictor
-family. Because the change interval begins before 2007-08 schooling is measured,
-these rows are explicitly co-evolving development evidence, not a post-treatment
-mediation design or causal schooling effect.
-
-The bounded `economic_census_it_opportunity` family reuses the exact EC05
-NIC-2004 Division-72 employment baseline as a predetermined local opportunity
-environment rather than introducing another Economic Census outcome system. It
-estimates only two 2022 long-difference interactions on common district support:
-preferred linguistic distance and preferred all-child EMI, each interacted with
-the standardized 2005 computer-related employment share of nonfarm employment.
-Both models use state fixed effects and compact Census-2001 controls, and the two
-interaction p-values receive Holm adjustment. This family is descriptive effect
-modification: EC05 IT is neither an exclusion control nor a proxy for unavailable
-2005-to-2013 IT growth.
-
-### Publication dependencies versus extended diagnostics
-
-`paper/paper.qmd` carries the final claim architecture and its Appendix A--E material in one self-contained Quarto document. It uses a raw `\appendix` boundary, so labeled appendix sections share the same cross-reference namespace as the main text. The manuscript QMD owns no estimators; it consumes generated paper inputs. The previous completed draft is frozen under `archive/legacy-paper-drafts/2026-09-previous-final/` and has no paper-render target. Application writing samples read the current paper and select complete sections by their ordinary Quarto IDs.
-Whether a raw source
-can be redistributed is not the boundary between core and extended work: the project
-does not redistribute most raw research data.
-Instead, a target is core when a public/main-paper artifact consumes it. Baseline
-DISE ingestion, deterministic lineage, the 2007-08 treatment construction, the
-DISE--NSS validation, and the schooling-market association object therefore live
-in `core_dise_target_definitions()`. Longitudinal age-denominator, school-quality,
-alternative-construct, and weak-IV permutation work remains extended until a paper
-artifact depends on it. This keeps the strict graph scientifically complete without
-turning every forensic diagnostic into a publication dependency.
-
-### Paper-facing identification versus forensic IV diagnostics
-
-The main paper and its IV appendix consume a deliberately small publication layer. The appendix now asks three questions only: how geographic fixed effects absorb first-stage relevance, whether alternative linguistic measures restore it, and what weak-IV-robust inference permits for the long-run consumption designs. `appendix_identification_exhibits` therefore builds two reader-facing summaries from the registered analytical results: a relevance table spanning modern and historical linguistic measures, and a weak-IV table spanning the 2022--23 and 2023--24 long changes.
-
-The larger analytical families remain in their owning modules. Control-block permutations, mapping-coverage sensitivity, leave-language-out checks, historical balance and pretrends, state-deletion and influence analyses, monotonicity, overidentification, multi-instrument falsification-adaptive sets, the full consumption robustness grid, and exclusion-sensitivity grids are still computed and tested where they protect the scientific conclusions. They no longer each generate a dedicated manuscript table or figure. This keeps publication dependencies tied to the claims actually made in the paper while retaining machine-readable evidence for review and replication.
-
-This boundary is semantic rather than computational. An analysis becomes a paper dependency when the manuscript directly consumes its scientific result; extended ownership means that the result remains available without requiring another reader-facing display. Shared analytical results should be summarized rather than copied into parallel presentation layers.
-
-### Paper-facing local development versus extended outcome diagnostics
-
-The main-paper local-development synthesis is built from existing domain estimators rather than a new cross-domain regression engine. `core_census_development_target_definitions()` owns only the Census migration, housing, and household-capacity analytical objects consumed by the synthesis; `core_economic_census_target_definitions()` owns the registered 2005-13 Economic Census analytical object; and `core_labor_target_definitions()` owns the primary NSS66 and PLFS 2017-18 labor objects. Their full measurement bundles, conservative geography variants, weak-IV grids, and persisted reviewer diagnostics remain in the extended factories.
-
-This boundary follows the publication-dependency rule rather than the age of a module or whether raw inputs are redistributed. The table intentionally combines heterogeneous native-unit reduced forms and retains null rows; it therefore reshapes already-registered results and never standardizes them onto a synthetic common scale. Census 2001-11 and Economic Census 2005-13 changes are documented as co-evolving local-development margins because their windows overlap the 2007 schooling measurement.
-
-### Final-paper appendix exhibits
-
-Final-paper appendix exhibits follow the same ownership rule as main-text exhibits: an
-analysis required by the published appendix is a core analytical dependency, while the
-large forensic persistence bundle may remain extended. The education-selection appendix
-therefore reuses the estimated survey-weighted probit, its `marginaleffects` results, and
-the single core missingness diagnostic. Its AME table suppresses district-level
-schooling-context coefficients from the reader-facing display without changing the fitted
-model; the complete AME output remains in `outputs/tables/main/probit_mfx.csv`. The appendix
-adds only a compact model-missingness summary. Extended mode persists the full missingness
-matrices, regional screens, benefit-variable checks, and case-study diagnostics from that
-same diagnostic result; it does not rerun the analysis.
-
-For appendix tables that remain LaTeX outputs, the shared table writer escapes both body
-cells and column headers before handing text to `kableExtra` with raw-LaTeX styling
-enabled. The older probit table remains available as a generated compatibility output; `paper.qmd` uses the
-filtered appendix rendering while sharing the same estimated AMEs.
-
-Appendix A is prose-led. `appendix_data_construction_exhibits` now generates only the
-compact district-lineage source summary. DISE, linguistic measures, and consumption
-harmonization are explained in manuscript prose. The HCES cross-round figure reuses the
-registered district-welfare estimates, while benchmark, price, geography, and survey-design
-checks remain enforced upstream rather than being printed as registry tables. The former
-lineage process diagram and generic timing/NSS/outcome inventories were removed from the
-final-paper bundle: the manuscript explains the construction decisions directly, while detailed
-source ledgers remain in the machine-readable outputs. Shared `appendix_*` output helpers continue to own the remaining appendix paths and writing,
-so manuscript-facing exhibits reuse one save path rather than duplicating save loops.
-
-Appendix artifacts are listed in `required_final_artifacts()` as soon as their
-builders exist. The exact TeX and figure inputs consumed by the in-document appendices
-of `paper/paper.qmd` are centralized in `paper_appendix_render_inputs()` and
-reused by the strict render-input contract. This keeps the full machine-readable exhibit
-inventory distinct from the smaller document-render dependency list while making every
-file consumed by the paper's appendices an explicit publication dependency. The
-standalone appendix QMD/PDF and the duplicated district-matching/8.3-filename public notes
-were removed once their material was owned by the manuscripts.
-
-
-### Final-paper measurement and identification exhibits
-
-Validation that supports a specific construction stays with that construction rather than occupying a separate manuscript appendix. `appendix_data_construction_exhibits` owns the historical linguistic-persistence and NSS--DISE agreement figures used alongside the corresponding measurement discussion. `appendix_identification_exhibits` owns only the two compact summaries used by the IV appendix. Historical balance, pretrends, source reconciliations, lineage readiness gates, and broader identification checks remain enforced by their analytical modules and persisted as machine-readable results rather than being repackaged for the manuscript.
-
-### Migration publication boundary
-
-The final paper gives migration its own prose-led appendix because migration changes the interpretation of later district outcomes. `R/output/appendix_migration_exhibits.R` now contains only the bounded migration summary used by the manuscript. Housing/assets, Economic Census, labor, household-capacity, heterogeneity, and spatial analyses remain available as analytical and extended-diagnostic outputs; they are no longer reshaped into a second local-development appendix. This keeps the manuscript aligned with Prompt 10 without deleting the underlying evidence.
+See [`BUILD.md`](BUILD.md) for the human-facing command and flag reference.
+
+## Error and status conventions
+
+Required core inputs, invalid schemas, impossible accounting identities, and invalid final scientific states should fail the selected build rather than trigger silent estimator or specification substitution.
+
+Optional analyses may return explicit status/reason rows when non-applicability is itself a meaningful result. Those schemas must distinguish expected non-applicability from computational failure, and downstream summaries must not treat status rows as estimates.
+
+Static maintenance reports such as `outputs/build/source_health.csv` are advisory where R's dynamic dispatch prevents proof of reachability. Hard scientific or output-structure checks remain build failures.
+
+## Where new work belongs
+
+Use the narrowest existing layer that owns the responsibility:
+
+| Change | Preferred location |
+|---|---|
+| New raw format or input reader | `R/io/` |
+| Source-specific cleaning/normalization | `R/clean/` or the relevant input adapter |
+| New constructed variable or survey aggregate | `R/measures/` |
+| Price/deflator construction | `R/prices/` |
+| Baseline-control construction | `R/controls/` |
+| District identity/linkage rule | `R/districts/` |
+| New IV specification/inference method | `R/iv/` |
+| Selection-model logic | `R/selection/` |
+| Scientific diagnostic | `R/diagnostics/` |
+| Performance comparison | `R/benchmarking/` |
+| Figure/table/report-value formatting | `R/output/` |
+| Application-sample assembly | `R/application_samples/` |
+| Target declaration only | `R/pipeline/` |
+| Build/maintenance entry point | `scripts/` or `Makefile` |
+| Methodological rationale | the corresponding domain document under `docs/` |
+
+Before adding a helper, search the shared modules and registries for an existing semantic authority. Before adding a new configuration flag or specification dimension, check whether it belongs in an existing registry rather than another branch of control flow.
+
+## Documentation ownership
+
+Documentation follows the same separation of concerns:
+
+- [`../README.md`](../README.md) orients first-time readers;
+- [`../REPLICATION.md`](../REPLICATION.md) describes supported replication paths and required environment/data setup;
+- [`../DATA_AVAILABILITY.md`](../DATA_AVAILABILITY.md) records access and redistribution status;
+- [`BUILD.md`](BUILD.md) documents commands and build options;
+- this file documents structural ownership;
+- domain documents explain scientific constructions and inferential boundaries; and
+- [`plan/roadmap.md`](plan/roadmap.md) should contain unfinished work rather than implementation history.
+
+The pre-rewrite architecture/status narrative is retained under [`../archive/refactoring/docs/architecture-before-documentation-rewrite.md`](../archive/refactoring/docs/architecture-before-documentation-rewrite.md) for historical reference only.
+
+## Related documentation
+
+- [`BUILD.md`](BUILD.md) — execution modes and build sequence.
+- [`../REPLICATION.md`](../REPLICATION.md) — replication paths and prerequisites.
+- [`../data/metadata/README.md`](../data/metadata/README.md) — metadata file roles and editing rules.
+- [`DISTRICT_LINEAGE.md`](DISTRICT_LINEAGE.md) — district identity evidence and adjudication.
+- [`GEOGRAPHY_HARMONIZATION.md`](GEOGRAPHY_HARMONIZATION.md) — transformation across geographic definitions.
+- [`IV_DIAGNOSTICS.md`](IV_DIAGNOSTICS.md) — IV design, weak-identification, and robustness methodology.
+- [`EDUCATION_SELECTION.md`](EDUCATION_SELECTION.md) — selection-model methodology.
+- [`CONSUMPTION_AND_PRICES.md`](CONSUMPTION_AND_PRICES.md) — current consumption/price reference pending its planned split.
