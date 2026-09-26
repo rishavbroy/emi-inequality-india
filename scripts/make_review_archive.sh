@@ -76,15 +76,16 @@ else
   out_path="$PWD/$out"
 fi
 
-application_sample_outputs() {
-  Rscript -e 'source("R/io/utils_data_frame.R"); source("R/application_samples/sample_manifest.R"); writeLines(application_sample_expected_outputs())'
-}
-
 tmpdir="$(mktemp -d)"
 out_dir="$(dirname "$out_path")"
 archive_tmpdir="$(mktemp -d "${out_dir}/.review-archive.XXXXXX")"
 tmp_archive="${archive_tmpdir}/review.zip"
+sample_outputs_file="${archive_tmpdir}/application-sample-outputs.txt"
 trap 'rm -rf "$tmpdir" "$archive_tmpdir"' EXIT
+
+if [[ "$include_samples" == "true" ]]; then
+  Rscript -e 'source("R/io/utils_data_frame.R"); source("R/application_samples/sample_manifest.R"); writeLines(application_sample_expected_outputs())' > "$sample_outputs_file"
+fi
 
 # Copy the current working-tree versions of tracked files. This intentionally
 # avoids git archive HEAD because public QMDs/outputs may have just been
@@ -120,7 +121,7 @@ if [[ "$include_samples" == "true" ]]; then
       mkdir -p "$tmpdir/$(dirname "$sample_output")"
       cp -f "$sample_output" "$tmpdir/$sample_output"
     fi
-  done < <(application_sample_outputs)
+  done < "$sample_outputs_file"
 else
   rm -rf "$tmpdir/application-samples/output"
 fi
@@ -194,7 +195,7 @@ required_public=(
 if [[ "$include_samples" == "true" ]]; then
   while IFS= read -r sample_output; do
     [[ -n "$sample_output" ]] && required_public+=("$sample_output")
-  done < <(application_sample_outputs)
+  done < "$sample_outputs_file"
 fi
 if [[ "$include_poster" == "true" ]]; then
   required_public+=(

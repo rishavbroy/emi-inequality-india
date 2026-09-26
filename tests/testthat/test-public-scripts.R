@@ -321,6 +321,7 @@ test_that("review archives include every manifest-declared application sample", 
     "  fixture:",
     "    type: latex",
     "    file: outputs/fixture.tex",
+    "    paper_label: tbl-fixture",
     "coding:",
     "  - id: long",
     "    outputs: [fixture]",
@@ -366,6 +367,23 @@ test_that("review archives include every manifest-declared application sample", 
   expect_null(attr(output, "status"))
   listing <- utils::unzip("review.zip", list = TRUE)$Name
   expect_true(all(expected %in% listing))
+
+  manifest_path <- file.path("application-samples", "samples.yml")
+  manifest_lines <- readLines(manifest_path, warn = FALSE)
+  writeLines(manifest_lines[!grepl("paper_label:", manifest_lines, fixed = TRUE)], manifest_path)
+  invalid <- suppressWarnings(system2(
+    "bash",
+    c(
+      "scripts/make_review_archive.sh",
+      "--with-samples",
+      "--allow-incomplete",
+      "--output", "invalid-review.zip"
+    ),
+    stdout = TRUE,
+    stderr = TRUE
+  ))
+  expect_true(!is.null(attr(invalid, "status")))
+  expect_false(file.exists("invalid-review.zip"))
 })
 
 test_that("selected target warning scope includes executed dependencies", {
