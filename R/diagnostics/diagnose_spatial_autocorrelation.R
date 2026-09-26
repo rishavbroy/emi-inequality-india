@@ -164,6 +164,7 @@ spatial_model_rows <- function(model, district_panel) {
   unique(rows)
 }
 
+# sample-start: code-spatial-residual-moran
 spatial_moran_test_from_model_residuals <- function(model, district_panel, weights, legacy_name, estimand, variable, source) {
   if (!inherits(model, "ivreg")) {
     return(spatial_autocorrelation_status_row("out_of_active_pipeline", paste0("No active IV model for ", estimand, ".")))
@@ -256,6 +257,7 @@ compute_moran_tests <- function(x, spatial_weights, legacy_name = NA_character_,
     stringsAsFactors = FALSE
   )
 }
+# sample-end: code-spatial-residual-moran
 
 spatial_legacy_note <- function(legacy_name) {
   notes <- c(

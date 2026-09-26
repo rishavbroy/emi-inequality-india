@@ -24,6 +24,7 @@ writing:
     sections:
       - sec-intro
       - sec-schooling-menu
+      - sec-schooling-market
       - sec-social-access
   - id: 15pg
     target_pages: 15
@@ -32,6 +33,7 @@ writing:
       - sec-language-persistence
       - sec-language-behavior
       - sec-schooling-menu
+      - sec-schooling-market
       - sec-social-access
   - id: full
     mode: full
@@ -63,9 +65,15 @@ coding:
       - id: code-mop-effective-f
         file: R/iv/weak_identification.R
         title: Montiel Olea--Pflueger effective-F calculation
+      - id: code-anderson-rubin
+        file: R/iv/weak_identification.R
+        title: Anderson--Rubin inference and bounded exclusion sensitivity
       - id: code-temporal-price-series
         file: R/prices/build_temporal_price_series.R
         title: Linked state-sector price series
+      - id: code-state-sector-deflator
+        file: R/prices/price_deflators.R
+        title: State-sector real-consumption deflator construction
   - id: long
     outputs:
       - selection_ame
@@ -87,6 +95,12 @@ coding:
       - id: code-temporal-price-series
         file: R/prices/build_temporal_price_series.R
         title: Linked state-sector price series
+      - id: code-state-sector-deflator
+        file: R/prices/price_deflators.R
+        title: State-sector real-consumption deflator construction
       - id: code-lineage-candidate-scoring
         file: R/districts/lineage_matching.R
         title: Cross-vintage district candidate scoring
+      - id: code-spatial-residual-moran
+        file: R/diagnostics/diagnose_spatial_autocorrelation.R
+        title: Residual spatial-autocorrelation diagnostics

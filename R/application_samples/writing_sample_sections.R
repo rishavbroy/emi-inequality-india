@@ -308,15 +308,18 @@ writing_sample_notice <- function(spec, variant, manifest, source_lines, referen
     paste0(
       "This document contains ",
       writing_sample_contents(spec, source_lines, reference_labels),
-      "."
+      " of the titular paper."
     )
   }
+  availability <- if (identical(variant, "named")) {
+    application_sample_availability_sentence(variant, manifest, also = is_full)
+  } else if (is_full) {
+    "The full paper and repository are also available online, and I would be happy to provide links for them if desired."
+  } else {
+    "The full paper and repository are available online, and I would be happy to provide links for them if desired."
+  }
   text <- paste(
-    c(
-      description,
-      application_sample_availability_sentence(variant, manifest),
-      application_sample_build_sentence(variant, manifest)
-    ),
+    c(description, availability, application_sample_build_sentence(variant, manifest)),
     collapse = " "
   )
 

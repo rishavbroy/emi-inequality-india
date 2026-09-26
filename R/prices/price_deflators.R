@@ -293,6 +293,7 @@ apply_price_state_rules <- function(
   direct
 }
 
+# sample-start: code-state-sector-deflator
 build_state_sector_deflator <- function(
     temporal_index, spatial_relatives, reference_period = NULL, reference_index = NULL) {
   idx <- safe_df(temporal_index)
@@ -391,6 +392,7 @@ build_state_sector_price_deflators <- function(
     reference_index = reference_index
   )
 }
+# sample-end: code-state-sector-deflator
 
 validate_consumption_price_window <- function(deflators, price_window) {
   d <- safe_df(deflators)

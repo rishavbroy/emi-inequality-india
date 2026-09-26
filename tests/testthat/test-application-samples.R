@@ -27,6 +27,18 @@ test_that("application-sample manifest references current paper sections and cod
 })
 
 
+test_that("long coding sample contains every short-sample excerpt plus additional material", {
+  env <- sample_test_env()
+  manifest <- env$read_application_sample_manifest(repo_file("application-samples", "samples.yml"))
+  specs <- setNames(manifest$coding, vapply(manifest$coding, `[[`, character(1), "id"))
+  short_ids <- vapply(specs$short$excerpts, `[[`, character(1), "id")
+  long_ids <- vapply(specs$long$excerpts, `[[`, character(1), "id")
+
+  expect_true(all(short_ids %in% long_ids))
+  expect_gt(length(long_ids), length(short_ids))
+})
+
+
 test_that("paper cross-references use Quarto identifiers", {
   paper <- readLines(repo_file("paper", "paper.qmd"), warn = FALSE)
   raw_refs <- grep("(?:Table|Figure|Section|Equation) \\\\ref\\{(?:tbl|fig|sec|eq)-", paper, perl = TRUE, value = TRUE)
@@ -134,6 +146,7 @@ test_that("writing sample assembly derives identity and section selection from o
   expect_identical(selector$path, "../filters/select-sections.lua")
   expect_match(named, "Rishav Roy", fixed = TRUE)
   expect_match(named, manifest$paper$repository_url, fixed = TRUE)
+  expect_match(named, env$application_sample_makefile_url(manifest), fixed = TRUE)
   expect_match(named, env$application_sample_build_script_url(manifest), fixed = TRUE)
   expect_false(grepl(env$quoted_paper_title(env$read_qmd_metadata(readLines(source, warn = FALSE))), named, fixed = TRUE))
   expect_false(grepl("bash scripts/run_full_build.sh", named, fixed = TRUE))
@@ -176,7 +189,7 @@ test_that("writing sample notices use current paper numbers and abstract styling
   named <- paste(env$writing_sample_notice(spec, "named", manifest, source, labels), collapse = "\n")
   anonymous <- paste(env$writing_sample_notice(spec, "anonymous", manifest, source, labels), collapse = "\n")
 
-  expect_match(named, "This document contains the Introduction, Conclusion, and Sections 3.1 and 3.2.", fixed = TRUE)
+  expect_match(named, "This document contains the Introduction, Conclusion, and Sections 3.1 and 3.2 of the titular paper.", fixed = TRUE)
   expect_false(grepl("Fixture Paper", named, fixed = TRUE))
   expect_match(named, "\\renewcommand{\\abstractname}{WRITING SAMPLE: 5-PAGE COPY}", fixed = TRUE)
   expect_match(named, "\\begin{abstract}", fixed = TRUE)
@@ -184,14 +197,23 @@ test_that("writing sample notices use current paper numbers and abstract styling
   expect_false(grepl("bash scripts/run_full_build.sh", named, fixed = TRUE))
   expect_false(grepl("Fixture Paper", anonymous, fixed = TRUE))
   expect_false(grepl("https://", anonymous, fixed = TRUE))
-  expect_match(anonymous, "`scripts/run_full_build.sh`", fixed = TRUE)
+  expect_match(anonymous, "The full paper and repository are available online, and I would be happy to provide links for them if desired.", fixed = TRUE)
+  expect_match(anonymous, "To generate this PDF, run `make samples` or `scripts/run_full_build.sh` from the repo root.", fixed = TRUE)
 
   full <- paste(
     env$writing_sample_notice(list(id = "full", mode = "full"), "named", manifest, source),
     collapse = "\n"
   )
   expect_false(grepl("This document contains", full, fixed = TRUE))
+  expect_match(full, "The full [paper](https://example.com/paper.pdf) and [repository](https://github.com/example/repository) are also available online.", fixed = TRUE)
   expect_match(full, "WRITING SAMPLE: FULL PAPER", fixed = TRUE)
+
+  full_anonymous <- paste(
+    env$writing_sample_notice(list(id = "full", mode = "full"), "anonymous", manifest, source),
+    collapse = "\n"
+  )
+  expect_match(full_anonymous, "The full paper and repository are also available online, and I would be happy to provide links for them if desired.", fixed = TRUE)
+  expect_false(grepl("https://", full_anonymous, fixed = TRUE))
 })
 
 
@@ -241,6 +263,7 @@ test_that("coding sample assembly uses paper typography and wrapped highlighted 
   expect_false(grepl("```{r}", rendered, fixed = TRUE))
   expect_false(grepl("CODING SAMPLE:", rendered, fixed = TRUE))
   expect_match(rendered, "the paper “Fixture Paper: Fixture Subtitle”", fixed = TRUE)
+  expect_match(rendered, env$application_sample_makefile_url(manifest), fixed = TRUE)
   expect_match(rendered, env$application_sample_build_script_url(manifest), fixed = TRUE)
   expect_false(grepl("bash scripts/run_full_build.sh", rendered, fixed = TRUE))
   meta <- env$read_qmd_metadata(readLines(out, warn = FALSE))
