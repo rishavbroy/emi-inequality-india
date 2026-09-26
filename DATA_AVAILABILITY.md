@@ -1,6 +1,6 @@
 # Data availability
 
-This repository does not track raw microdata whose redistribution is restricted or uncertain. The machine-readable authority for expected files is [`data/metadata/file_manifest.csv`](data/metadata/file_manifest.csv); [`data/metadata/data_sources.csv`](data/metadata/data_sources.csv) records source-level acquisition and methodological roles. This document explains access and redistribution at a human-readable level. Replication commands and system requirements belong in [`REPLICATION.md`](REPLICATION.md).
+This repository does not track raw microdata whose redistribution is restricted or uncertain. [`data/metadata/file_manifest.csv`](data/metadata/file_manifest.csv) lists the files expected by the build, and [`data/metadata/data_sources.csv`](data/metadata/data_sources.csv) records acquisition details and methodological roles. This document explains how those data are obtained and redistributed. Replication commands and system requirements are in [`REPLICATION.md`](REPLICATION.md).
 
 ## Availability classes
 
@@ -30,16 +30,16 @@ The table below summarizes active source families. Exact filenames, checksums, a
 | Census Language Atlas 1991 and historical language references | Historical linguistic-distance validation | Local required for historical validation where declared strict | registered language-source paths | [`docs/HISTORICAL_LANGUAGE_DATA.md`](docs/HISTORICAL_LANGUAGE_DATA.md) |
 | Glottolog / Dyen / reviewed language crosswalks | Preferred and alternative linguistic-distance measures | Mixed tracked/local | registered metadata/source paths | [`docs/LINGUISTIC_DISTANCE.md`](docs/LINGUISTIC_DISTANCE.md) |
 | SHRUG Economic Census 2005/2013 and official EC05 material | Local-development measures and predetermined IT opportunity baseline | Local required where declared strict | `data/raw/shrug/` and registered EC paths | [`docs/ECONOMIC_CENSUS.md`](docs/ECONOMIC_CENSUS.md) |
-| NSS 64 / NSS 66 / PLFS 2017-18 labor files | Near-treatment, early-post, and long-run labor outcomes | Local required where declared strict | `data/raw/nss/`, `data/raw/plfs/` | [`docs/LABOR_MARKET.md`](docs/LABOR_MARKET.md) |
+| NSS 64 / NSS 66 / PLFS 2017-18 labor files | Labor outcomes in 2007-08, 2009-10, and 2017-18 | Local required where declared strict | `data/raw/nss/`, `data/raw/plfs/` | [`docs/LABOR_MARKET.md`](docs/LABOR_MARKET.md) |
 | District-lineage evidence and boundary files | Reviewed geographic harmonization | Mixed tracked/local | `data/metadata/district_lineage/`, registered boundary paths | [`docs/DISTRICT_LINEAGE.md`](docs/DISTRICT_LINEAGE.md), [`docs/GEOGRAPHY_HARMONIZATION.md`](docs/GEOGRAPHY_HARMONIZATION.md) |
-| Natural Earth boundaries | Spatial diagnostics | Automatic | registered spatial path | [`docs/SPATIAL_ANALYSIS.md`](docs/SPATIAL_ANALYSIS.md) |
+| Natural Earth boundaries | Spatial autocorrelation checks | Automatic | registered spatial path | [`docs/SPATIAL_ANALYSIS.md`](docs/SPATIAL_ANALYSIS.md) |
 | Processed replication inputs | Reproduction without restricted raw microdata | Tracked | `data/processed/replication/` | [`REPLICATION.md`](REPLICATION.md) |
 
 ## Automatic downloads
 
 `make prepare-data` invokes the supported acquisition scripts. At present these cover Census table downloads registered for automatic retrieval and Natural Earth boundaries. The scripts preserve the repository's expected filenames and do not replace local restricted inputs.
 
-Automatic retrieval is a convenience, not a second metadata authority. New downloadable files should still be declared in `file_manifest.csv` and described in `data_sources.csv`.
+Automatically downloadable files are still declared in `file_manifest.csv` and described in `data_sources.csv`.
 
 ## Restricted and local inputs
 
@@ -49,15 +49,15 @@ For Nesstar-packaged NSS66 and PLFS files, follow the materialization commands i
 
 ## Derived and processed data
 
-Tracked processed files are limited to data that can be redistributed and are needed for review or the processed-data replication route. They are not substitutes for the full raw-source reconstruction. Generated diagnostics, tables, figures, and paper/sample PDFs are documented by the output-manifest and build machinery rather than by the raw-file manifest.
+Tracked processed files contain redistributable inputs needed for review and the replication route from processed inputs. The full reconstruction additionally uses the raw inputs listed in the file manifest. Generated checks, tables, figures, and paper/sample PDFs are recorded in the build output manifest.
 
-The processed replication deliberately covers shared district-level results that can be regenerated without restricted microdata. See [`REPLICATION.md`](REPLICATION.md) for its scope and verification step.
+The processed replication covers shared district-level results that can be regenerated from redistributable inputs. See [`REPLICATION.md`](REPLICATION.md) for its scope and verification step.
 
 ## District-lineage inputs
 
-The paper uses the reviewed district-lineage system rather than fuzzy matches as final identities. Candidate sources, reviewed decisions, boundary evidence, and unresolved cases have different authority levels. Do not promote a locally available source to authoritative status merely because it exists. The evidence hierarchy and crosswalk roles are defined in [`docs/DISTRICT_LINEAGE.md`](docs/DISTRICT_LINEAGE.md).
+Final district identities follow the reviewed lineage system and its documented evidence hierarchy. Fuzzy matches can identify candidates, while reviewed decisions and boundary evidence determine accepted links; unresolved cases remain unresolved. The evidence hierarchy and crosswalk roles are defined in [`docs/DISTRICT_LINEAGE.md`](docs/DISTRICT_LINEAGE.md).
 
-## Redistribution and provenance policy
+## Redistribution and source records
 
 - Do not commit raw microdata or archival files unless redistribution is explicitly permitted.
 - Preserve original provider filenames and formats where practical; normalized derivatives belong in generated/interim locations.

@@ -1,6 +1,6 @@
 # Data metadata
 
-This directory contains tracked registries, reviewed crosswalks, acquisition manifests, and validation metadata used by the active analysis. The files here should describe stable data/design facts rather than duplicate methodological prose from `docs/`.
+This directory contains the tracked tables that define files, variables, reviewed crosswalks, and finite analysis choices used by the active analysis. Methodological explanations belong in `docs/`; these files record the corresponding structured definitions.
 
 ## General files
 
@@ -9,8 +9,8 @@ This directory contains tracked registries, reviewed crosswalks, acquisition man
 | `file_manifest.csv` | Required/local input registry used by source preflight, including expected paths and optional byte/hash identities |
 | `data_sources.csv` | Source catalog and acquisition/reference notes, including optional/review inputs |
 | `checksums.csv` | SHA-256 registry for tracked metadata files |
-| `variable_dictionary.csv` | Shared analysis-construct semantics for variables in the common panel architecture |
-| `iv_candidate_designs.csv` | Declarative candidate-design/admissibility ledger for the bounded IV program |
+| `variable_dictionary.csv` | Shared variable definitions used across analyses |
+| `iv_candidate_designs.csv` | IV candidates and the combinations allowed by the analysis |
 
 Raw-data access and redistribution belong in [`../../DATA_AVAILABILITY.md`](../../DATA_AVAILABILITY.md); execution requirements belong in [`../../REPLICATION.md`](../../REPLICATION.md).
 
@@ -21,7 +21,7 @@ Raw-data access and redistribution belong in [`../../DATA_AVAILABILITY.md`](../.
 - `census_2011_download_manifest.tsv`
 - `census_2001_control_registry.csv`
 
-The download manifests define maintained acquisition destinations and source URLs. The control registry is the authority for Census-2001 control membership, labels, blocks, and alternative relationships used by the analysis.
+The download manifests define maintained acquisition destinations and URLs. The control registry defines 2001 Census control membership, labels, blocks, and alternative relationships used by the analysis.
 
 See the Census domain documents under `docs/` for table-specific construction and comparability rules.
 
@@ -33,7 +33,7 @@ See the Census domain documents under `docs/` for table-specific construction an
 - `district_match_gold.csv` — reviewed matching reference set;
 - `district_allocation_weights.csv` — reviewed fractional allocations where the named specification permits them;
 - `district_geometry_carrybacks.csv` — reviewed geometry carryback decisions;
-- `district_harmonization_crosswalk.csv` — tracked harmonization authority used by processed replication;
+- `district_harmonization_crosswalk.csv` — district harmonization crosswalk used by the processed replication;
 - `district_legacy_mapping_reviews.csv` and `manual_district_corrections.csv` — historical/legacy comparison support;
 - `map_disputed_areas.csv` — display classifications for manuscript cartography.
 
@@ -91,8 +91,8 @@ These files record reviewed identities, source selections, crosswalks, and valid
 
 ## Labor and source materialization
 
-- `nesstar_conversion_contracts.csv` — reviewed external-conversion contracts for supported Nesstar containers;
-- `plfs_labor_contracts.csv` — PLFS wave/source/design-field contract.
+- `nesstar_conversion_contracts.csv` — reviewed conversion specifications for supported Nesstar containers;
+- `plfs_labor_contracts.csv` — PLFS wave, input, and survey-design definitions.
 
 See [`../../docs/LABOR_MARKET.md`](../../docs/LABOR_MARKET.md).
 
@@ -102,14 +102,14 @@ When changing metadata:
 
 1. **Preserve stable IDs.** IDs referenced by code, outputs, or review histories should not be renamed merely for presentation.
 2. **Keep paths repository-relative.** Local-machine absolute paths do not belong in tracked metadata.
-3. **Use one authoritative file per fact.** Do not duplicate a source path, construct definition, or finite design declaration in a second CSV for convenience; project it downstream instead.
+3. **Define each shared fact once.** Reuse the same path, construct definition, or finite design declaration downstream.
 4. **Separate scientific declarations from run results.** Metadata may declare admissibility, source meaning, or expected identities. Realized estimates/counts that depend on execution belong in generated outputs unless they are reviewed external facts.
-5. **Do not infer missing semantics from filenames.** Add an explicit stable ID/label/role field when downstream code needs a scientific meaning.
+5. **Record scientific meaning explicitly.** Add a stable ID, label, or role field when downstream code needs it.
 6. **Update dependent hashes deliberately.** After intentional tracked-metadata edits, refresh the digest registry with `Rscript scripts/update_checksums.R` when required by the checks.
 7. **Keep acquisition manifests separate from core required-file status.** A downloadable source can be registered for acquisition without becoming a mandatory input to every build family.
 8. **Add behavioral validation with the change.** New registries or columns should be checked at their read/compile boundary; avoid tests that merely search CSV text.
 
-The repository's source/metadata preflight and domain readers enforce additional schema-specific invariants. Those checks, rather than this README, are the executable authority.
+The input-validation scripts and domain readers enforce additional schema-specific requirements. This README summarizes their roles.
 
 ## Related documentation
 
