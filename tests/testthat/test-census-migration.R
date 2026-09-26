@@ -647,6 +647,7 @@ test_that("migration mechanism diagnostics use one common support sample", {
   skip_if_not_installed("lmtest")
   skip_if_not_installed("momentfit")
   skip_if_not_installed("sandwich")
+  skip_if_not_installed("clubSandwich")
   set.seed(321)
   n <- 120L
   state <- sprintf("%02d", rep(1:12, each = 10))

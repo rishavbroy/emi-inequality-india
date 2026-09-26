@@ -152,13 +152,13 @@ clustered_lm_term_inference <- function(fit, term, cluster, inference = NULL) {
       p.value = coefs[row, "Pr(>|t|)"], partial_f = coefs[row, "t value"]^2
     ))
   }
-  table <- tryCatch(lmtest::coeftest(fit, vcov. = inference$vcov), error = function(e) NULL)
-  row <- if (!is.null(table)) match(term, rownames(table)) else NA_integer_
-  if (is.na(row)) return(c(std.error = NA_real_, statistic = NA_real_, p.value = NA_real_, partial_f = NA_real_))
-  statistic <- suppressWarnings(as.numeric(table[row, 3]))
+  term_inference <- model_term_inference(fit, term, inference$vcov)
+  statistic <- suppressWarnings(as.numeric(term_inference[["statistic"]]))
   c(
-    std.error = suppressWarnings(as.numeric(table[row, 2])), statistic = statistic,
-    p.value = suppressWarnings(as.numeric(table[row, 4])), partial_f = statistic^2
+    std.error = suppressWarnings(as.numeric(term_inference[["std.error"]])),
+    statistic = statistic,
+    p.value = suppressWarnings(as.numeric(term_inference[["p.value"]])),
+    partial_f = statistic^2
   )
 }
 

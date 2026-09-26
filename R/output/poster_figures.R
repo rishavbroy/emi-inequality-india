@@ -7,7 +7,7 @@
 poster_second_stage_data <- function(district_panel) {
   need_pkg("ivreg", "poster second-stage specifications")
   need_pkg("marginaleffects", "poster second-stage predictions")
-  need_pkg("sandwich", "poster second-stage clustered covariance")
+  need_pkg("clubSandwich", "poster second-stage clustered covariance")
   data <- as.data.frame(district_panel)
   outcome <- "real_log_consumption_change"
   treatment <- "emi_exposure_all_children_0708"
@@ -36,7 +36,7 @@ poster_second_stage_data <- function(district_panel) {
       x = TRUE,
       y = TRUE
     )
-    vcov <- sandwich::vcovCL(fit, cluster = data$state_code_2001, type = "HC1")
+    vcov <- clubSandwich::vcovCR(fit, cluster = data$state_code_2001, type = "CR2")
     pred <- marginaleffects::avg_predictions(
       fit,
       newdata = data,

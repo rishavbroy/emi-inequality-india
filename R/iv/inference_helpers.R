@@ -1,32 +1,61 @@
-# Shared clustered Wald inference helpers for IV estimation and diagnostics.
+# Shared small-sample cluster-robust inference helpers for IV estimation and diagnostics.
 
-wald_f_from_vcov <- function(fit, terms, vcov) {
-  coefficients <- stats::coef(fit)
-  available <- terms[
-    terms %in% names(coefficients) &
-      terms %in% rownames(vcov) &
-      terms %in% colnames(vcov) &
-      is.finite(coefficients[terms])
-  ]
-  if (!length(available) || length(available) != length(terms)) {
+clustered_coefficient_frame <- function(fit, vcov) {
+  if (is.null(vcov) || !inherits(vcov, "clubSandwich")) return(data.frame())
+  out <- tryCatch(
+    clubSandwich::coef_test(
+      fit,
+      vcov = vcov,
+      test = "Satterthwaite"
+    ),
+    error = function(e) NULL
+  )
+  if (is.null(out) || !nrow(out)) return(data.frame())
+
+  result <- data.frame(
+    Estimate = suppressWarnings(as.numeric(out$beta)),
+    `Std. Error` = suppressWarnings(as.numeric(out$SE)),
+    statistic = suppressWarnings(as.numeric(out$tstat)),
+    `Pr(>|t|)` = suppressWarnings(as.numeric(out$p_Satt)),
+    check.names = FALSE,
+    stringsAsFactors = FALSE
+  )
+  rownames(result) <- as.character(out$Coef)
+  attr(result, "df") <- stats::setNames(
+    suppressWarnings(as.numeric(out$df_Satt)),
+    as.character(out$Coef)
+  )
+  result
+}
+
+wald_test_from_vcov <- function(fit, terms, vcov) {
+  coefficients <- tryCatch(stats::coef(fit), error = function(e) NULL)
+  if (is.null(coefficients) || !length(terms) || any(!terms %in% names(coefficients))) {
+    return(c(statistic = NA_real_, p.value = NA_real_, df = length(terms)))
+  }
+  if (is.null(vcov) || !inherits(vcov, "clubSandwich")) {
     return(c(statistic = NA_real_, p.value = NA_real_, df = length(terms)))
   }
 
-  beta <- unname(coefficients[available])
-  variance <- vcov[available, available, drop = FALSE]
-  if (!all(is.finite(variance)) || qr(variance)$rank != length(available)) {
+  constraints <- clubSandwich::constrain_zero(terms, coefs = coefficients)
+  out <- tryCatch(
+    clubSandwich::Wald_test(
+      fit,
+      constraints = constraints,
+      vcov = vcov,
+      test = "HTZ",
+      tidy = TRUE
+    ),
+    error = function(e) NULL
+  )
+  if (is.null(out) || !nrow(out)) {
     return(c(statistic = NA_real_, p.value = NA_real_, df = length(terms)))
   }
-
-  q <- length(available)
-  statistic <- as.numeric(crossprod(beta, solve(variance, beta)) / q)
-  residual_df <- stats::df.residual(fit)
-  p_value <- if (is.finite(statistic) && is.finite(residual_df) && residual_df > 0) {
-    stats::pf(statistic, q, residual_df, lower.tail = FALSE)
-  } else {
-    NA_real_
-  }
-  c(statistic = statistic, p.value = p_value, df = q)
+  c(
+    statistic = suppressWarnings(as.numeric(out$Fstat[[1L]])),
+    p.value = suppressWarnings(as.numeric(out$p_val[[1L]])),
+    df = suppressWarnings(as.numeric(out$df_num[[1L]]))
+  )
 }
 
 clustered_joint_wald_test <- function(fit, terms, cluster, inference = NULL) {
@@ -36,7 +65,7 @@ clustered_joint_wald_test <- function(fit, terms, cluster, inference = NULL) {
   if (is.null(inference) || is.null(inference$vcov)) {
     return(c(statistic = NA_real_, p.value = NA_real_, df = length(terms)))
   }
-  wald_f_from_vcov(fit, terms, inference$vcov)
+  wald_test_from_vcov(fit, terms, inference$vcov)
 }
 
 joint_wald_estimability <- function(fit, terms, joint) {
@@ -103,6 +132,23 @@ model_term_inference <- function(fit, term, vcov = NULL) {
     return(c(
       estimate = NA_real_, std.error = NA_real_,
       statistic = NA_real_, p.value = NA_real_
+    ))
+  }
+
+  clustered_requested <- !is.null(vcov) && inherits(vcov, "clubSandwich")
+  clustered <- clustered_coefficient_frame(fit, vcov)
+  if (nrow(clustered) && term %in% rownames(clustered)) {
+    return(c(
+      estimate = clustered[term, "Estimate"],
+      std.error = clustered[term, "Std. Error"],
+      statistic = clustered[term, "statistic"],
+      p.value = clustered[term, "Pr(>|t|)"]
+    ))
+  }
+  if (clustered_requested) {
+    return(c(
+      estimate = unname(coefficients[[term]]),
+      std.error = NA_real_, statistic = NA_real_, p.value = NA_real_
     ))
   }
 

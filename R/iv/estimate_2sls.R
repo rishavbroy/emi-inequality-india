@@ -74,11 +74,11 @@ iv_structural_model_matrix <- function(model) {
 }
 
 iv_clustered_inference <- function(model, cluster) {
-  if (!requireNamespace("sandwich", quietly = TRUE)) {
+  if (!requireNamespace("clubSandwich", quietly = TRUE)) {
     return(list(
       vcov = NULL,
       status = "unavailable",
-      reason = "Package 'sandwich' is not installed."
+      reason = "Package 'clubSandwich' is not installed."
     ))
   }
   cluster <- as.vector(cluster)
@@ -94,7 +94,7 @@ iv_clustered_inference <- function(model, cluster) {
     ))
   }
   out <- tryCatch(
-    sandwich::vcovCL(model, cluster = cluster, type = "HC1"),
+    clubSandwich::vcovCR(model, cluster = cluster, type = "CR2"),
     error = function(e) e
   )
   if (inherits(out, "error")) {

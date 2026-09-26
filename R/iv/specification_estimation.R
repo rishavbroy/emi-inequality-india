@@ -145,10 +145,9 @@ estimate_weak_iv_specification <- function(
       overidentification = data.frame()
     ))
   }
-  ct <- lmtest::coeftest(fit, vcov. = inference$vcov)
-  row <- match(treatment, rownames(ct))
-  if (is.na(row)) {
-    stop("Endogenous treatment coefficient is absent from the IV fit.", call. = FALSE)
+  treatment_inference <- model_term_inference(fit, treatment, inference$vcov)
+  if (!all(is.finite(treatment_inference[c("estimate", "std.error", "p.value")]))) {
+    stop("Endogenous treatment coefficient inference is unavailable from the IV fit.", call. = FALSE)
   }
 
   reduced <- stats::lm(
@@ -184,9 +183,9 @@ estimate_weak_iv_specification <- function(
       specification_id = spec$specification_id[[1L]],
       adjustment_id = spec$adjustment_id[[1L]],
       construction_id = spec$construction_id[[1L]],
-      estimate_2sls = unname(stats::coef(fit)[treatment]),
-      std_error_clustered = ct[row, 2],
-      p_value_clustered = ct[row, 4],
+      estimate_2sls = treatment_inference[["estimate"]],
+      std_error_clustered = treatment_inference[["std.error"]],
+      p_value_clustered = treatment_inference[["p.value"]],
       effective_f = effective$statistic,
       effective_f_critical_value = effective$critical_value,
       effective_f_p_value = effective$p.value,

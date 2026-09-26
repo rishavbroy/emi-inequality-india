@@ -472,6 +472,7 @@ test_that("IV formula helpers reject multi-row specifications explicitly", {
 test_that("registered consumption IV dynamics share one specification sample across estimators", {
   skip_if_not_installed("ivreg")
   skip_if_not_installed("sandwich")
+  skip_if_not_installed("clubSandwich")
   set.seed(503)
   n <- 96
   panel <- data.frame(
@@ -527,6 +528,7 @@ test_that("registered consumption IV dynamics share one specification sample acr
 
 test_that("consumption reduced forms preserve canonical controls and fixed effects", {
   skip_if_not_installed("sandwich")
+  skip_if_not_installed("clubSandwich")
   set.seed(504)
   n <- 72
   panel <- data.frame(
@@ -766,6 +768,7 @@ test_that("consumption distribution benchmark preserves serial/configured estima
 test_that("dynamic consumption IV estimation is stable across multiple registered specifications", {
   skip_if_not_installed("ivreg")
   skip_if_not_installed("sandwich")
+  skip_if_not_installed("clubSandwich")
   skip_if_not_installed("car")
 
   set.seed(507)

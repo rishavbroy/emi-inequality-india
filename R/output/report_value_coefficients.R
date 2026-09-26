@@ -1,8 +1,9 @@
 # Model coefficient and first-stage helpers for public report values.
 
 report_coefficient_frame <- function(model, data = NULL) {
+  clustered_required <- identical(attr(model, "cluster_inference_status"), "estimated")
   coefs <- clustered_model_coefficients(model, data)
-  if (!nrow(coefs)) coefs <- plain_model_coefficients(model)
+  if (!nrow(coefs) && !clustered_required) coefs <- plain_model_coefficients(model)
   if (!nrow(coefs)) return(data.frame())
 
   out <- data.frame(

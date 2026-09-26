@@ -295,6 +295,7 @@ test_that("Census housing change mechanisms reuse the common IV inference engine
   skip_if_not_installed("lmtest")
   skip_if_not_installed("momentfit")
   skip_if_not_installed("sandwich")
+  skip_if_not_installed("clubSandwich")
   set.seed(733)
   n <- 120L
   state <- sprintf("%02d", rep(1:12, each = 10))

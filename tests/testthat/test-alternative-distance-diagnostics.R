@@ -820,6 +820,7 @@ test_that("Anderson-Rubin inference accepts scalar and multi-instrument registry
 
 test_that("bounded exclusion AR nests exact exclusion and expands monotonically", {
   skip_if_not_installed("sandwich")
+  skip_if_not_installed("clubSandwich")
   set.seed(905)
   n <- 120L
   panel <- data.frame(
@@ -856,6 +857,7 @@ test_that("bounded exclusion AR nests exact exclusion and expands monotonically"
 
 test_that("headline consumption exclusion sensitivity is bounded and transparent", {
   skip_if_not_installed("sandwich")
+  skip_if_not_installed("clubSandwich")
   set.seed(906)
   root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
   registry <- read_consumption_iv_outcome_registry(

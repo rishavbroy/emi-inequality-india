@@ -698,7 +698,7 @@ first_stage_absorption_bins <- function(x, y, bins = 20L) {
 }
 
 first_stage_absorption_data <- function(district_panel, bins = 20L) {
-  need_pkg("sandwich", "first-stage absorption figure")
+  need_pkg("clubSandwich", "first-stage absorption figure")
   df <- as.data.frame(district_panel)
   y <- "emi_exposure_all_children_0708"
   z <- "ling_distance_nonzero_mean"
@@ -721,9 +721,11 @@ first_stage_absorption_data <- function(district_panel, bins = 20L) {
       intercept <- 0
       slope_index <- 1L
     }
-    vcov <- sandwich::vcovCL(fit, cluster = dat$state_code_2001, type = "HC1")
-    beta <- unname(stats::coef(fit)[[slope_index]])
-    se <- sqrt(vcov[slope_index, slope_index])
+    vcov <- clubSandwich::vcovCR(fit, cluster = dat$state_code_2001, type = "CR2")
+    term <- names(stats::coef(fit))[[slope_index]]
+    inference <- model_term_inference(fit, term, vcov)
+    beta <- inference[["estimate"]]
+    se <- inference[["std.error"]]
     binned <- first_stage_absorption_bins(x, response, bins = bins)
     data.frame(
       specification_id = id,

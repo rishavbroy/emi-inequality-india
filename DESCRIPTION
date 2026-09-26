@@ -43,6 +43,7 @@ Imports:
     data.table,
     digest,
     car,
+    clubSandwich,
     knitr
 Suggests:
     testthat

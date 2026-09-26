@@ -71,12 +71,12 @@ estimate_first_stage <- function(iv_models, district_panel, cfg) {
 
     vc <- first_stage_vcov(fit, analysis_data)
     coef_mat <- tryCatch({
-      if (is.null(vc)) summary(fit)$coefficients else lmtest::coeftest(fit, vcov. = vc)
+      if (is.null(vc)) summary(fit)$coefficients else clustered_coefficient_frame(fit, vc)
     }, error = function(e) NULL)
-    if (is.null(coef_mat) || !NROW(coef_mat)) return(first_stage_status_row(model_name, "First-stage coefficient table is empty."))
+    if (is.null(coef_mat) || !NROW(coef_mat)) return(first_stage_status_row(model_name, "First-stage coefficient inference is unavailable."))
 
     coef_terms <- rownames(coef_mat)
-    coefs <- as.data.frame(unclass(coef_mat), check.names = FALSE)
+    coefs <- as.data.frame(coef_mat, check.names = FALSE)
     if (is.null(coef_terms) || !length(coef_terms) || all(grepl("^[0-9]+$", coef_terms))) {
       coef_terms <- names(stats::coef(fit))
     }
@@ -196,26 +196,43 @@ first_stage_vcov <- function(fit, district_panel) {
 }
 
 first_stage_wald_test <- function(fit, excluded_term, vc) {
-  if (is.na(excluded_term) || is.null(vc) || !requireNamespace("car", quietly = TRUE)) {
+  if (is.na(excluded_term) || is.null(vc)) {
     return(list(partial_f = NA_real_, partial_p = NA_real_))
   }
-  out <- tryCatch(
-    car::linearHypothesis(fit, paste0(excluded_term, " = 0"), vcov. = vc, test = "F"),
-    error = function(e) NULL
+  out <- wald_test_from_vcov(fit, excluded_term, vc)
+  list(
+    partial_f = suppressWarnings(as.numeric(out[["statistic"]])),
+    partial_p = suppressWarnings(as.numeric(out[["p.value"]]))
   )
-  if (is.null(out) || !all(c("F", "Pr(>F)") %in% names(out)) || nrow(out) < 2L) {
-    return(list(partial_f = NA_real_, partial_p = NA_real_))
-  }
-  list(partial_f = suppressWarnings(as.numeric(out[["F"]][[2]])), partial_p = suppressWarnings(as.numeric(out[["Pr(>F)"]][[2]])))
 }
 
 parse_iv_formula_terms <- function(model) {
+  if (inherits(model, "ivreg")) {
+    regressors <- tryCatch(
+      attr(stats::terms(model, component = "regressors"), "term.labels"),
+      error = function(e) NULL
+    )
+    instruments <- tryCatch(
+      attr(stats::terms(model, component = "instruments"), "term.labels"),
+      error = function(e) NULL
+    )
+    if (!is.null(regressors) && !is.null(instruments)) {
+      return(list(regressors = regressors, instruments = instruments))
+    }
+  }
+
+  # Experimental formula builders are inspected before fitting. Preserve full
+  # term labels so transformations and factor expressions are not collapsed to
+  # bare variable names. Fitted ivreg objects use the package's component terms
+  # method above.
   f <- tryCatch(stats::formula(model), error = function(e) NULL)
   if (is.null(f) || length(f) < 3L || !is.call(f[[3]]) || !identical(f[[3]][[1]], as.name("|"))) {
     return(NULL)
   }
+  reg_formula <- stats::as.formula(call("~", f[[2]], f[[3]][[2]]), env = environment(f))
+  inst_formula <- stats::as.formula(call("~", f[[2]], f[[3]][[3]]), env = environment(f))
   list(
-    regressors = all.vars(f[[3]][[2]]),
-    instruments = all.vars(f[[3]][[3]])
+    regressors = attr(stats::terms(reg_formula), "term.labels"),
+    instruments = attr(stats::terms(inst_formula), "term.labels")
   )
 }

@@ -18,9 +18,9 @@ New candidates should enter because they represent a distinct identification or 
 
 ## First-stage checks
 
-Registered relevance checks include the excluded-instrument first-stage Wald statistic, individual first-stage coefficients, partial R-squared, and Montiel Olea--Pflueger effective F where the structural IV model makes that statistic applicable. The effective-F calculation uses `momentfit::MOPtest()` on the fitted structural specification and sample.
+Registered relevance checks include the excluded-instrument first-stage Wald statistic, individual first-stage coefficients, partial R-squared, and Montiel Olea--Pflueger effective F where the structural IV model makes that statistic applicable. State-clustered coefficient tests use `clubSandwich` CR2 covariance with Satterthwaite degrees of freedom; joint Wald tests use its HTZ small-sample correction. The effective-F calculation uses `momentfit::MOPtest()` on the fitted structural specification and sample.
 
-The project reports the MOP statistic and the ordinary clustered first-stage statistic side by side because their covariance conventions need not coincide. Thresholds summarize instrument relevance; instrument constructions are chosen from the predeclared design.
+The project reports the MOP statistic and the CR2 first-stage statistic side by side because their covariance conventions need not coincide. Thresholds summarize instrument relevance; instrument constructions are chosen from the predeclared design.
 
 ## Weak-identification-robust inference
 

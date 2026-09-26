@@ -1,6 +1,7 @@
 test_that("FAS components match the corresponding just-identified IV regressions", {
   testthat::skip_if_not_installed("ivreg")
   testthat::skip_if_not_installed("sandwich")
+  skip_if_not_installed("clubSandwich")
   set.seed(271)
   n <- 360L
   data <- data.frame(
@@ -38,6 +39,7 @@ test_that("FAS components match the corresponding just-identified IV regressions
 test_that("FAS is exactly the interval spanned by all registered just-identified constituents", {
   testthat::skip_if_not_installed("ivreg")
   testthat::skip_if_not_installed("sandwich")
+  skip_if_not_installed("clubSandwich")
   set.seed(272)
   n <- 300L
   data <- data.frame(
@@ -76,6 +78,7 @@ test_that("FAS is exactly the interval spanned by all registered just-identified
 test_that("FAS does not silently discard weak constituent instruments", {
   testthat::skip_if_not_installed("ivreg")
   testthat::skip_if_not_installed("sandwich")
+  skip_if_not_installed("clubSandwich")
   set.seed(273)
   n <- 400L
   data <- data.frame(

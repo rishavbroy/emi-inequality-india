@@ -133,6 +133,7 @@ test_that("MOP effective F fails explicitly when the IV formula is unavailable",
 test_that("serialized IV models retain inputs required by diagnostics and clustered inference", {
   skip_if_not_installed("ivreg")
   skip_if_not_installed("sandwich")
+  skip_if_not_installed("clubSandwich")
   set.seed(2)
   n <- 80
   state <- rep(LETTERS[1:8], each = 10)
@@ -273,6 +274,7 @@ test_that("first-stage covariance declines incomplete clusters without error", {
 test_that("cluster alignment follows fitted model row names", {
   skip_if_not_installed("ivreg")
   skip_if_not_installed("sandwich")
+  skip_if_not_installed("clubSandwich")
   set.seed(42)
   n <- 60
   dat <- data.frame(
@@ -333,6 +335,7 @@ test_that("cluster alignment follows complete-case model rows", {
 test_that("data-aware IV summaries recover clustered inference without cached attributes", {
   skip_if_not_installed("ivreg")
   skip_if_not_installed("sandwich")
+  skip_if_not_installed("clubSandwich")
   set.seed(44)
   n <- 72
   dat <- data.frame(
@@ -393,6 +396,7 @@ test_that("IV summaries expose unavailable inference instead of comparability", 
 test_that("public report coefficients recover clusters from panel data", {
   skip_if_not_installed("ivreg")
   skip_if_not_installed("sandwich")
+  skip_if_not_installed("clubSandwich")
   set.seed(45)
   n <- 72
   dat <- data.frame(
@@ -423,6 +427,7 @@ test_that("public report coefficients recover clusters from panel data", {
 test_that("public second-stage tables recover clusters from panel data", {
   skip_if_not_installed("ivreg")
   skip_if_not_installed("sandwich")
+  skip_if_not_installed("clubSandwich")
   set.seed(46)
   n <- 72
   dat <- data.frame(
@@ -571,6 +576,7 @@ test_that("first-stage diagnostics use the fitted IV estimation sample", {
 
 test_that("generic model-term inference reports clustered coefficient statistics", {
   skip_if_not_installed("sandwich")
+  skip_if_not_installed("clubSandwich")
   set.seed(502)
   dat <- data.frame(
     y = rnorm(60), z = rnorm(60),
@@ -615,4 +621,71 @@ test_that("shared IV residualization reuses one nuisance projection without chan
     unname(data$z - mean(data$z)),
     tolerance = 1e-12
   )
+})
+
+test_that("clustered coefficient inference matches clubSandwich CR2 Satterthwaite tests", {
+  skip_if_not_installed("clubSandwich")
+  set.seed(8801)
+  dat <- data.frame(
+    y = stats::rnorm(120),
+    z = stats::rnorm(120),
+    cluster = rep(seq_len(12), each = 10)
+  )
+  dat$y <- 0.7 * dat$z + dat$y
+  fit <- stats::lm(y ~ z, data = dat)
+
+  inference <- iv_clustered_inference(fit, dat$cluster)
+  observed <- model_term_inference(fit, "z", inference$vcov)
+  direct <- clubSandwich::coef_test(
+    fit, vcov = "CR2", cluster = dat$cluster,
+    test = "Satterthwaite", coefs = "z"
+  )
+
+  expect_equal(observed[["estimate"]], direct$beta[[1L]], tolerance = 1e-12)
+  expect_equal(observed[["std.error"]], direct$SE[[1L]], tolerance = 1e-12)
+  expect_equal(observed[["statistic"]], direct$tstat[[1L]], tolerance = 1e-12)
+  expect_equal(observed[["p.value"]], direct$p_Satt[[1L]], tolerance = 1e-12)
+})
+
+test_that("clustered joint inference matches clubSandwich HTZ tests", {
+  skip_if_not_installed("clubSandwich")
+  set.seed(8802)
+  dat <- data.frame(
+    y = stats::rnorm(160),
+    z1 = stats::rnorm(160),
+    z2 = stats::rnorm(160),
+    cluster = rep(seq_len(16), each = 10)
+  )
+  dat$y <- 0.4 * dat$z1 - 0.3 * dat$z2 + dat$y
+  fit <- stats::lm(y ~ z1 + z2, data = dat)
+
+  observed <- clustered_joint_wald_test(fit, c("z1", "z2"), dat$cluster)
+  direct <- clubSandwich::Wald_test(
+    fit,
+    constraints = clubSandwich::constrain_zero(c("z1", "z2"), coefs = stats::coef(fit)),
+    vcov = "CR2",
+    cluster = dat$cluster,
+    test = "HTZ",
+    tidy = TRUE
+  )
+
+  expect_equal(observed[["statistic"]], direct$Fstat[[1L]], tolerance = 1e-12)
+  expect_equal(observed[["p.value"]], direct$p_val[[1L]], tolerance = 1e-12)
+  expect_equal(observed[["df"]], direct$df_num[[1L]], tolerance = 1e-12)
+})
+
+test_that("fitted IV term parsing preserves ivreg component terms", {
+  skip_if_not_installed("ivreg")
+  set.seed(8803)
+  dat <- data.frame(
+    y = stats::rnorm(80), x = stats::rnorm(80), z = stats::rnorm(80),
+    state = factor(rep(letters[1:8], each = 10))
+  )
+  fit <- ivreg::ivreg(y ~ x + factor(state) | z + factor(state), data = dat)
+  parsed <- parse_iv_formula_terms(fit)
+
+  expect_identical(parsed$regressors, attr(stats::terms(fit, component = "regressors"), "term.labels"))
+  expect_identical(parsed$instruments, attr(stats::terms(fit, component = "instruments"), "term.labels"))
+  expect_true("factor(state)" %in% parsed$regressors)
+  expect_true("factor(state)" %in% parsed$instruments)
 })

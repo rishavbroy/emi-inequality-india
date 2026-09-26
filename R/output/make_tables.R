@@ -287,7 +287,7 @@ clustered_model_coefficients <- function(model, data = NULL) {
   tryCatch({
     vc_fun <- clustered_model_vcov(model, data)
     if (is.null(vc_fun)) return(data.frame())
-    coefficient_frame(model, vc_fun(model))
+    clustered_coefficient_frame(model, vc_fun(model))
   }, error = function(e) data.frame())
 }
 
@@ -317,10 +317,16 @@ tidy_iv_models <- function(iv_models, data = NULL) {
     if (is_model_status_payload(model)) {
       return(table_status_row(name, as.character(model$status[[1]]), model_status_reason(model)))
     }
+    clustered_required <- identical(attr(model, "cluster_inference_status"), "estimated")
     coefs <- clustered_model_coefficients(model, data)
-    if (!nrow(coefs)) coefs <- plain_model_coefficients(model)
+    if (!nrow(coefs) && !clustered_required) coefs <- plain_model_coefficients(model)
     if (!nrow(coefs)) {
-      return(table_status_row(name, "unavailable", "Model coefficients are unavailable."))
+      reason <- if (clustered_required) {
+        "Required small-sample clustered coefficient inference is unavailable."
+      } else {
+        "Model coefficients are unavailable."
+      }
+      return(table_status_row(name, "unavailable", reason))
     }
 
     estimate_col <- first_existing_column(coefs, c("Estimate", "estimate"))

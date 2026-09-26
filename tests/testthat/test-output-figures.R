@@ -207,6 +207,7 @@ test_that("map adjustment omits fixed effects with one observed level", {
 
 test_that("first-stage absorption specifications use one common sample", {
   skip_if_not_installed("sandwich")
+  skip_if_not_installed("clubSandwich")
   set.seed(23)
   panel <- poster_map_fixture(90L)
   panel$state_code_2001 <- rep(sprintf("%02d", 1:9), each = 10L)
@@ -243,6 +244,7 @@ test_that("first-stage absorption residualization omits one-level fixed effects"
 
 test_that("first-stage absorption figure is a binned view of registered common-support specifications", {
   skip_if_not_installed("sandwich")
+  skip_if_not_installed("clubSandwich")
   set.seed(24)
   panel <- poster_map_fixture(120L)
   panel$state_code_2001 <- rep(sprintf("%02d", 1:12), each = 10L)
@@ -320,6 +322,7 @@ test_that("poster second-stage specifications use preferred variables and one sa
   skip_if_not_installed("ivreg")
   skip_if_not_installed("marginaleffects")
   skip_if_not_installed("sandwich")
+  skip_if_not_installed("clubSandwich")
 
   set.seed(623)
   panel <- poster_map_fixture(120L)
