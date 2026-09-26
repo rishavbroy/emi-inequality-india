@@ -1,7 +1,0 @@
-"source_family","coverage","role"
-"Census and NSS district records","Census 2001 and 2011; NSS 64th and 75th rounds","Define reference districts and resolve survey identities"
-"Local Government Directory","2001 onward","Verify district creation, renaming, and Census-code continuity"
-"Kumar and Somanathan district histories","1961-2001","Benchmark historical partitions and population transfers"
-"India State Stories / District Changes Tracker","1951 onward / 2001-2020","Cross-check district histories and predecessor relationships"
-"SHRUG locality and district keys","Population Censuses 1991-2011","Measure locality-based overlap when later districts cross 2001 boundaries"
-"Published survey concordances","Census, NSS, and PLFS district codes","Cross-check survey-to-Census district links"

@@ -1,0 +1,6 @@
+"construct_id","variable","numerator","denominator","interpretation"
+"enrollment","enrollment_rate_0708","Enrolled children","Eligible children age 5-19","Extensive schooling participation"
+"emi_enrolled","emi_share_enrolled_0708","English-medium enrolled children","Enrolled children with known medium","Medium conditional on schooling"
+"emi_all_children","emi_exposure_all_children_0708","English-medium enrolled children","Eligible children age 5-19","Population exposure to EMI"
+"public_emi","public_emi_exposure_all_children_0708","Public English-medium enrolled children","Eligible children age 5-19","Public-sector EMI exposure"
+"private_emi","private_emi_exposure_all_children_0708","Private English-medium enrolled children","Eligible children age 5-19","Private-sector EMI exposure"

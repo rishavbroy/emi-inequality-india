@@ -1,4 +1,4 @@
-"row_index","n_neighbors","district_panel_id","state_std","district_std"
-524,0,"2001__31__01","lakshadweep","lakshadweep"
-572,0,"2001__35__01","andaman and nicobar islands","south andaman"
-573,0,"2001__35__02","andaman and nicobar islands","nicobars"
+"row_index","n_neighbors","district_panel_id","state_code_2001","district_code_2001","state_std","district_std"
+524,0,"2001__31__01","31","01","lakshadweep","lakshadweep"
+572,0,"2001__35__01","35","01","andaman and nicobar islands","south andaman"
+573,0,"2001__35__02","35","02","andaman and nicobar islands","nicobars"

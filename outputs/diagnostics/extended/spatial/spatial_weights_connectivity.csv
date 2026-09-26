@@ -1,2 +1,2 @@
-"n","n_islands","n_subgraphs","snap","snap_investigation_needed","recommendation"
-573,3,4,NA,TRUE,"Inspect geometry validity and sensitivity to a documented poly2nb snap value before interpreting spatial results."
+"n","n_islands","n_subgraphs","offshore_islands_expected","snap","snap_investigation_needed","recommendation"
+573,3,4,TRUE,NA,FALSE,"Disconnected components are the mainland plus expected offshore island districts; zero.policy = TRUE handles their no-neighbour rows, so no snap adjustment is indicated."

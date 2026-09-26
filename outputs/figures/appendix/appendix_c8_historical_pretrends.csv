@@ -1,0 +1,55 @@
+"predictor","sample_id","period_id","domain","tested_measures","joint_f","joint_p","n","n_states","population_1961","status","reason","predictor_id","predictor_label","period_label","domain_label","cell","minus_log10_p","p_label"
+"emie_exposure","historical_ld_support","1961_1971","demography","log_population;urban_share",0.181598562469831,0.834544145544973,59,12,68802676,"estimated",,"eventual_emie","Eventual EMI exposure","1961-1971","Demography","1961-1971
+Demography",0.0785506851567048,".835"
+"ling_distance_nonzero_mean_2001","historical_ld_support","1961_1971","demography","log_population;urban_share",3.06439986972244,0.0565334659680161,59,12,68802676,"estimated",,"census_2001_ld","2001 linguistic distance","1961-1971","Demography","1961-1971
+Demography",1.24769438788782,".057"
+"ling_distance_helms_lim_1991","historical_ld_support","1961_1971","demography","log_population;urban_share",1.9386424000803,0.155730054015941,59,12,68802676,"estimated",,"helms_lim_ld_1991","1991 Helms-Lim distance","1961-1971","Demography","1961-1971
+Demography",0.807627565763711,".156"
+"emie_exposure","historical_ld_support","1971_1981","demography","log_population;urban_share",0.128668194173821,0.879587975624799,59,12,68802676,"estimated",,"eventual_emie","Eventual EMI exposure","1971-1981","Demography","1971-1981
+Demography",0.0557207162774732,".880"
+"ling_distance_nonzero_mean_2001","historical_ld_support","1971_1981","demography","log_population;urban_share",0.243175117400391,0.785157913574926,59,12,68802676,"estimated",,"census_2001_ld","2001 linguistic distance","1971-1981","Demography","1971-1981
+Demography",0.105042987717007,".785"
+"ling_distance_helms_lim_1991","historical_ld_support","1971_1981","demography","log_population;urban_share",1.12143238977078,0.334746847070668,59,12,68802676,"estimated",,"helms_lim_ld_1991","1991 Helms-Lim distance","1971-1981","Demography","1971-1981
+Demography",0.475283504849962,".335"
+"emie_exposure","historical_ld_support","1981_1991","demography","log_population;urban_share",7.40130751797473,0.00166370997043719,59,12,68802676,"estimated",,"eventual_emie","Eventual EMI exposure","1981-1991","Demography","1981-1991
+Demography",2.77892238069977,".002"
+"ling_distance_nonzero_mean_2001","historical_ld_support","1981_1991","demography","log_population;urban_share",21.6773306606722,2.55339829369438e-07,59,12,68802676,"estimated",,"census_2001_ld","2001 linguistic distance","1981-1991","Demography","1981-1991
+Demography",6.59288143617029,"<.001"
+"ling_distance_helms_lim_1991","historical_ld_support","1981_1991","demography","log_population;urban_share",13.19541695572,3.09261831497694e-05,59,12,68802676,"estimated",,"helms_lim_ld_1991","1991 Helms-Lim distance","1981-1991","Demography","1981-1991
+Demography",4.5096736764818,"<.001"
+"emie_exposure","historical_ld_support","1961_1971","labor","main_worker_share;nonfarm_worker_share_main_workers",0.558165898845908,0.576168575937786,59,12,68802676,"estimated",,"eventual_emie","Eventual EMI exposure","1961-1971","Labor","1961-1971
+Labor",0.239450431701166,".576"
+"ling_distance_nonzero_mean_2001","historical_ld_support","1961_1971","labor","main_worker_share;nonfarm_worker_share_main_workers",1.38280195094264,0.261329188214747,59,12,68802676,"estimated",,"census_2001_ld","2001 linguistic distance","1961-1971","Labor","1961-1971
+Labor",0.58281208061841,".261"
+"ling_distance_helms_lim_1991","historical_ld_support","1961_1971","labor","main_worker_share;nonfarm_worker_share_main_workers",0.396319818096612,0.675116614681474,59,12,68802676,"estimated",,"helms_lim_ld_1991","1991 Helms-Lim distance","1961-1971","Labor","1961-1971
+Labor",0.170621203852843,".675"
+"emie_exposure","historical_ld_support","1971_1981","labor","main_worker_share;nonfarm_worker_share_main_workers",0.297392664328699,0.744200771698633,59,12,68802676,"estimated",,"eventual_emie","Eventual EMI exposure","1971-1981","Labor","1971-1981
+Labor",0.128309883972797,".744"
+"ling_distance_nonzero_mean_2001","historical_ld_support","1971_1981","labor","main_worker_share;nonfarm_worker_share_main_workers",1.28358740956261,0.28698949945577,59,12,68802676,"estimated",,"census_2001_ld","2001 linguistic distance","1971-1981","Labor","1971-1981
+Labor",0.542133993202743,".287"
+"ling_distance_helms_lim_1991","historical_ld_support","1971_1981","labor","main_worker_share;nonfarm_worker_share_main_workers",1.13482671597318,0.330504327791195,59,12,68802676,"estimated",,"helms_lim_ld_1991","1991 Helms-Lim distance","1971-1981","Labor","1971-1981
+Labor",0.480822849269025,".331"
+"emie_exposure","historical_ld_support","1981_1991","labor","main_worker_share;nonfarm_worker_share_main_workers",2.46015830870003,0.0968370628544914,59,12,68802676,"estimated",,"eventual_emie","Eventual EMI exposure","1981-1991","Labor","1981-1991
+Labor",1.01395839152927,".097"
+"ling_distance_nonzero_mean_2001","historical_ld_support","1981_1991","labor","main_worker_share;nonfarm_worker_share_main_workers",2.52137561207223,0.0916442144416154,59,12,68802676,"estimated",,"census_2001_ld","2001 linguistic distance","1981-1991","Labor","1981-1991
+Labor",1.03789494712721,".092"
+"ling_distance_helms_lim_1991","historical_ld_support","1981_1991","labor","main_worker_share;nonfarm_worker_share_main_workers",1.71537797320989,0.191449167310479,59,12,68802676,"estimated",,"helms_lim_ld_1991","1991 Helms-Lim distance","1981-1991","Labor","1981-1991
+Labor",0.717946518233768,".191"
+"emie_exposure","historical_ld_support","1961_1971","education","literate_share_population;primary_plus_share_population;matriculate_plus_share_population",4.60838294445614,0.00687211243996577,59,12,68802676,"estimated",,"eventual_emie","Eventual EMI exposure","1961-1971","Education","1961-1971
+Education",2.16290974328956,".007"
+"ling_distance_nonzero_mean_2001","historical_ld_support","1961_1971","education","literate_share_population;primary_plus_share_population;matriculate_plus_share_population",3.87209803371275,0.0152968495219212,59,12,68802676,"estimated",,"census_2001_ld","2001 linguistic distance","1961-1971","Education","1961-1971
+Education",1.81539800553099,".015"
+"ling_distance_helms_lim_1991","historical_ld_support","1961_1971","education","literate_share_population;primary_plus_share_population;matriculate_plus_share_population",4.41053510507224,0.00850175925123033,59,12,68802676,"estimated",,"helms_lim_ld_1991","1991 Helms-Lim distance","1961-1971","Education","1961-1971
+Education",2.07049119733909,".009"
+"emie_exposure","historical_ld_support","1971_1981","education","literate_share_population;primary_plus_share_population;matriculate_plus_share_population",4.87361037938372,0.00517987901730808,59,12,68802676,"estimated",,"eventual_emie","Eventual EMI exposure","1971-1981","Education","1971-1981
+Education",2.28568038363876,".005"
+"ling_distance_nonzero_mean_2001","historical_ld_support","1971_1981","education","literate_share_population;primary_plus_share_population;matriculate_plus_share_population",0.671192062098406,0.574288832678084,59,12,68802676,"estimated",,"census_2001_ld","2001 linguistic distance","1971-1981","Education","1971-1981
+Education",0.240869628701316,".574"
+"ling_distance_helms_lim_1991","historical_ld_support","1971_1981","education","literate_share_population;primary_plus_share_population;matriculate_plus_share_population",1.1034485604303,0.357869581559814,59,12,68802676,"estimated",,"helms_lim_ld_1991","1991 Helms-Lim distance","1971-1981","Education","1971-1981
+Education",0.446275214496682,".358"
+"emie_exposure","historical_ld_support","1981_1991","education","literate_share_population;primary_plus_share_population;matriculate_plus_share_population",12.0927815106256,8.31445935908178e-06,54,10,64441939,"estimated",,"eventual_emie","Eventual EMI exposure","1981-1991","Education","1981-1991
+Education",5.08016598516978,"<.001"
+"ling_distance_nonzero_mean_2001","historical_ld_support","1981_1991","education","literate_share_population;primary_plus_share_population;matriculate_plus_share_population",6.74898499653497,0.000835265492226866,54,10,64441939,"estimated",,"census_2001_ld","2001 linguistic distance","1981-1991","Education","1981-1991
+Education",3.07817546046535,"<.001"
+"ling_distance_helms_lim_1991","historical_ld_support","1981_1991","education","literate_share_population;primary_plus_share_population;matriculate_plus_share_population",1.36039120986206,0.268326408336171,54,10,64441939,"estimated",,"helms_lim_ld_1991","1991 Helms-Lim distance","1981-1991","Education","1981-1991
+Education",0.57133658252644,".268"
