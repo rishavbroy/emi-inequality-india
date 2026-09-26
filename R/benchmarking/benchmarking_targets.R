@@ -10,15 +10,6 @@ with_diagnostic_enabled <- function(cfg, name) {
   cfg
 }
 
-run_ame_methods_benchmark <- function(selection_model, cfg) {
-  save_ame_benchmark(
-    diagnose_ame_benchmark(
-      selection_model,
-      with_diagnostic_enabled(cfg, "ame_benchmark")
-    )
-  )
-}
-
 
 run_fuzzy_matching_benchmark <- function(district_tracker = data.frame(), district_join_map = data.frame(), cfg = list()) {
   pairs <- fuzzy_candidate_pairs(district_tracker, district_join_map)

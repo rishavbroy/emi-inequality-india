@@ -18,12 +18,6 @@ test_that("district and fuzzy matching diagnostics return table counts", {
   expect_equal(fuzzy_out$n_tracker_rows, 1L)
 })
 
-test_that("AME benchmark diagnostic is skipped unless enabled", {
-  out <- diagnose_ame_benchmark(list(), list(run_diagnostics = list(ame_benchmark = FALSE)))
-
-  expect_equal(out$status, "skipped")
-})
-
 test_that("rendered PDF text checks use the system extractor contract", {
   skipped <- "paper/paper.pdf"
 

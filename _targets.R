@@ -170,7 +170,6 @@ legacy_comparison_targets <- list(
 extended_diagnostic_targets <- extended_diagnostic_target_definitions()
 
 benchmark_targets <- list(
-  tar_target(bench_ame_methods, run_ame_methods_benchmark(selection_model, cfg)),
   tar_target(
     bench_consumption_distribution_domains,
     run_consumption_distribution_benchmark(
