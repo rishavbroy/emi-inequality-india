@@ -39,8 +39,14 @@ if (dir.exists(table_dir)) {
       for (col in intersect(required, names(ame))) {
         if (all(is.na(ame[[col]][estimated]))) add_failure("AME results have no final values in column: ", col)
       }
-      if ("method" %in% names(ame) && any(ame$method[estimated] %in% c("coefficient_fallback"), na.rm = TRUE)) {
-        add_failure("Final AME results still use draft/fallback methods: ", paste(unique(ame$method[estimated]), collapse = ", "))
+      if ("method" %in% names(ame)) {
+        methods <- unique(stats::na.omit(ame$method[estimated]))
+        if (!length(methods) || any(methods != "marginaleffects")) {
+          add_failure(
+            "Final AME results must come from marginaleffects; found: ",
+            paste(methods, collapse = ", ")
+          )
+        }
       }
     }
   }
