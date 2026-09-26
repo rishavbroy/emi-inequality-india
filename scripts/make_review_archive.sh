@@ -12,8 +12,9 @@ Usage: bash scripts/make_review_archive.sh [--with-samples|--no-samples] [--with
        bash scripts/make_review_archive.sh OUT.zip
 
 Creates a public review archive from the current working tree. By default the
-archive is written to review.zip and includes application-sample PDFs. Conference
-poster renders are included only when explicitly requested. Use --allow-incomplete
+archive is written to review.zip and includes current analysis notebooks plus
+application-sample PDFs. Conference poster renders are included only when
+explicitly requested. Use --allow-incomplete
 only for debugging failed builds; it packages the current state without requiring
 final deliverables.
 USAGE
@@ -94,6 +95,15 @@ while IFS= read -r -d '' file; do
   mkdir -p "$tmpdir/$(dirname "$file")"
   if [[ -f "$file" ]]; then cp -p "$file" "$tmpdir/$file"; fi
 done < <(git ls-files -z)
+
+# `analysis/` is intentionally ignored by Git while notebooks are still being
+# developed, but it is valuable review context. Include the current working-tree
+# notebooks even when they are absent from `git ls-files`. Generic cache cleanup
+# below still removes Quarto/Python intermediates from this copy.
+if [[ -d analysis ]]; then
+  rm -rf "$tmpdir/analysis"
+  cp -R analysis "$tmpdir/analysis"
+fi
 
 # Include regenerated public artifacts whether tracked or not.
 mkdir -p "$tmpdir/paper" "$tmpdir/docs" "$tmpdir/outputs"

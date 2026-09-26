@@ -217,6 +217,7 @@ test_that("debug review archives retain intermediate diagnostics but exclude raw
   dir.create(file.path(root, "data", "raw"), recursive = TRUE)
   dir.create(file.path(root, "application-samples", "filters"), recursive = TRUE)
   dir.create(file.path(root, "application-samples", "output"), recursive = TRUE)
+  dir.create(file.path(root, "analysis", "benchmarking"), recursive = TRUE)
   file.copy(
     repo_file("scripts", "make_review_archive.sh"),
     file.path(root, "scripts", "make_review_archive.sh")
@@ -239,6 +240,7 @@ test_that("debug review archives retain intermediate diagnostics but exclude raw
   writeLines("schema_version: 1", file.path(root, "application-samples", "samples.yml"))
   writeLines("-- filter", file.path(root, "application-samples", "filters", "select-sections.lua"))
   writeLines("generated", file.path(root, "application-samples", "output", "sample.pdf"))
+  writeLines("# ignored analysis notebook", file.path(root, "analysis", "benchmarking", "ame-benchmark.qmd"))
 
   system2("git", c("-C", shQuote(root), "init", "-q"))
   system2(
@@ -273,6 +275,7 @@ test_that("debug review archives retain intermediate diagnostics but exclude raw
   expect_true("data/processed/panel.csv" %in% listing)
   expect_true("application-samples/samples.yml" %in% listing)
   expect_true("application-samples/filters/select-sections.lua" %in% listing)
+  expect_true("analysis/benchmarking/ame-benchmark.qmd" %in% listing)
   expect_false(any(grepl("^application-samples/output/", listing)))
   expect_false("data/raw/private.csv" %in% listing)
 })

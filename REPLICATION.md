@@ -141,7 +141,7 @@ The full build also writes build and output metadata under `outputs/build/`, inc
 
 ## Review archive
 
-[`scripts/make_review_archive.sh`](scripts/make_review_archive.sh) packages tracked source material and selected review outputs while excluding raw data, dependency libraries, target stores, and local caches. The ordinary full build writes `review.zip` on success and also packages the current failed state when possible.
+[`scripts/make_review_archive.sh`](scripts/make_review_archive.sh) packages tracked source material, the current `analysis/` notebooks, and selected review outputs while excluding raw data, dependency libraries, target stores, and local caches. The notebooks are included from the working tree even though `analysis/` is intentionally Git-ignored. The ordinary full build writes `review.zip` on success and also packages the current failed state when possible.
 
 For an immediate snapshot after an interrupted or incomplete run:
 

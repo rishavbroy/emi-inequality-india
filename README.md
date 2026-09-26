@@ -120,7 +120,7 @@ For a quick review, see the named [`10-page writing sample`](application-samples
 
 The ordinary complete build checks source syntax, the `renv` lockfile and project library, unit tests, target execution, report values, cross-references, required rendered outputs, and the processed replication. Additional validation checks and benchmarks can be enabled separately without changing the selected research configuration.
 
-The repository also records build metadata and packages a review archive while excluding local raw data and caches. See [`docs/BUILD.md`](docs/BUILD.md) for the validation sequence and optional steps.
+The repository also records build metadata and packages a review archive with the current `analysis/` notebooks while excluding local raw data and caches. See [`docs/BUILD.md`](docs/BUILD.md) for the validation sequence and optional steps.
 
 ## Documentation
 
