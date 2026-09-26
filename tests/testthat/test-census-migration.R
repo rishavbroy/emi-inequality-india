@@ -608,7 +608,7 @@ test_that("migration first-stage sensitivity uses one common sample for baseline
   for (variable in census_2001_diagnostic_controls()) {
     panel[[variable]] <- stats::rnorm(n)
   }
-  for (variable in census_migration_balance_variables()) {
+  for (variable in census_d02_population_rate_columns()) {
     panel[[variable]] <- stats::runif(n, 0, 0.4)
   }
   treatment <- preferred_iv_variables()$treatment

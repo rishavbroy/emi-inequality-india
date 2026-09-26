@@ -32,6 +32,14 @@ test_that("first_col finds exact and canonicalized names", {
   expect_null(first_col(data.frame(), c("district")))
 })
 
+
+test_that("first_existing_column uses exact external column names", {
+  df <- data.frame("Std. Error" = 1, std_error = 2, check.names = FALSE)
+
+  expect_identical(first_existing_column(df, c("missing", "Std. Error")), "Std. Error")
+  expect_true(is.na(first_existing_column(df, "std.error")))
+})
+
 test_that("weighted mean and gini handle weights and invalid values", {
   expect_equal(wmean(c(1, 3), c(1, 3)), 2.5)
   expect_true(is.na(wmean(c(NA, 3), c(0, 0))))
@@ -50,6 +58,21 @@ test_that("duplicate-key collapsing permits exact repeats and rejects conflicts"
   expect_error(
     collapse_identical_key_rows(conflict, "id", context = "fixture"),
     "fixture has duplicate keys with non-identical rows"
+  )
+})
+
+
+test_that("shared Census district reader enforces one row per district", {
+  reader <- function(path) {
+    code <- basename(path)
+    data.frame(state_code = "01", district_code = code, stringsAsFactors = FALSE)
+  }
+
+  out <- read_census_district_files(c("001", "002"), reader, "fixture")
+  expect_identical(out$district_code, c("001", "002"))
+  expect_error(
+    read_census_district_files(c("001", "001"), reader, "fixture"),
+    "one row per district"
   )
 })
 

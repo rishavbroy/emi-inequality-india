@@ -95,6 +95,13 @@ first_col <- function(df, candidates) {
   if (length(idx)) names(df)[idx[[1]]] else NULL
 }
 
+# Exact-name lookup for tables whose column names are part of an external API.
+# Unlike first_col(), this deliberately does not normalize spelling or punctuation.
+first_existing_column <- function(df, candidates) {
+  hit <- intersect(candidates, names(df))
+  if (length(hit)) hit[[1L]] else NA_character_
+}
+
 num <- function(x) {
   suppressWarnings(as.numeric(plain_chr(x)))
 }

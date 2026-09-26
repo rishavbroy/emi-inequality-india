@@ -225,10 +225,6 @@ table_status_row <- function(model, status = "unavailable", reason = NA_characte
   )
 }
 
-table_first_existing_column <- function(df, candidates) {
-  hit <- intersect(candidates, names(df))
-  if (length(hit)) hit[[1]] else NA_character_
-}
 
 table_column_or_na <- function(df, column) {
   if (length(column) != 1L || is.na(column) || !column %in% names(df)) {
@@ -327,10 +323,10 @@ tidy_iv_models <- function(iv_models, data = NULL) {
       return(table_status_row(name, "unavailable", "Model coefficients are unavailable."))
     }
 
-    estimate_col <- table_first_existing_column(coefs, c("Estimate", "estimate"))
-    se_col <- table_first_existing_column(coefs, c("Std. Error", "std.error", "Std.Error"))
-    statistic_col <- table_first_existing_column(coefs, c("t value", "z value", "t", "z", "statistic"))
-    p_col <- table_first_existing_column(coefs, c("Pr(>|t|)", "Pr(>|z|)", "p.value", "p", "P>|t|", "P>|z|"))
+    estimate_col <- first_existing_column(coefs, c("Estimate", "estimate"))
+    se_col <- first_existing_column(coefs, c("Std. Error", "std.error", "Std.Error"))
+    statistic_col <- first_existing_column(coefs, c("t value", "z value", "t", "z", "statistic"))
+    p_col <- first_existing_column(coefs, c("Pr(>|t|)", "Pr(>|z|)", "p.value", "p", "P>|t|", "P>|z|"))
 
     if (is.na(estimate_col)) {
       return(table_status_row(name, "unavailable", paste("Model coefficient table lacks an estimate column. Columns:", paste(names(coefs), collapse = ", "))))

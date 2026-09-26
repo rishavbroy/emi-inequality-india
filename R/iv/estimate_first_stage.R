@@ -171,10 +171,6 @@ first_stage_status_row <- function(model_name, reason) {
   )
 }
 
-first_existing_column <- function(df, candidates) {
-  hit <- intersect(candidates, names(df))
-  if (length(hit)) hit[[1]] else NA_character_
-}
 
 column_or_na <- function(df, col) {
   if (is.na(col) || !col %in% names(df)) return(rep(NA_real_, nrow(df)))

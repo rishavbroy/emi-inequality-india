@@ -228,15 +228,9 @@ estimate_nss_labor_district_outcomes <- function(
 nss64_design_psu_key <- nss_labor_design_psu_key
 nss64_design_stratum_key <- nss_labor_design_stratum_key
 nss64_support_rule <- nss_labor_support_rule
-nss64_employed_status_codes <- nss_labor_employed_status_codes
-nss64_unemployed_status_codes <- nss_labor_unemployed_status_codes
 nss64_labor_status_flags <- nss_labor_status_flags
-nss64_survey_design_from_rows <- nss_labor_survey_design_from_rows
 nss64_target_support_classification <- nss_labor_target_support_classification
 nss64_outcome_domain <- nss_labor_outcome_domain
-nss64_domain_support <- nss_labor_domain_support
-
-estimate_nss64_district_outcome <- estimate_nss_labor_district_outcome
 estimate_nss64_district_outcomes <- function(
     lineaged_usual_activity, migration, target_support,
     registry = nss64_outcome_registry(), rule = nss64_support_rule()) {

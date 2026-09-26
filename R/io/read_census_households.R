@@ -211,11 +211,8 @@ summarise_census_hh11_2011_district <- function(rows) {
 }
 
 read_census_household_district_files <- function(files, parser, summariser, label) {
-  out <- safe_bind_rows(lapply(files, function(path) summariser(parser(read_census_household_sheet(path)))))
-  if (!nrow(out) || anyDuplicated(out[c("state_code", "district_code")])) {
-    stop(label, " files must yield one row per district.", call. = FALSE)
-  }
-  out[order(out$state_code, out$district_code), , drop = FALSE]
+  reader <- function(path) summariser(parser(read_census_household_sheet(path)))
+  read_census_district_files(files, reader, label)
 }
 
 read_census_hh08_2011_district <- function(files) read_census_household_district_files(files, parse_census_hh08_2011_sheet, summarise_census_hh08_2011_district, "Census HH08")

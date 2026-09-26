@@ -103,3 +103,15 @@ read_shrug_district_archive <- function(path, member, source = "SHRUG Census arc
   if (length(hit) != 1L) stop(source, " must contain exactly one ", member, ".", call. = FALSE)
   utils::read.csv(unz(path, hit[[1L]]), stringsAsFactors = FALSE, check.names = FALSE)
 }
+
+# Read one already-normalized district row from each registered Census file.
+# Domain-specific readers own parsing; this helper owns the repeated file-set
+# invariant used by housing, worker, and household tables.
+read_census_district_files <- function(files, reader, label) {
+  out <- safe_bind_rows(lapply(files, reader))
+  keys <- c("state_code", "district_code")
+  if (!nrow(out) || !all(keys %in% names(out)) || anyDuplicated(out[keys])) {
+    stop(label, " files must yield one row per district.", call. = FALSE)
+  }
+  out[order(out$state_code, out$district_code), , drop = FALSE]
+}

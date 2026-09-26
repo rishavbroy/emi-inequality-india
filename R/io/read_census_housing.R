@@ -894,13 +894,6 @@ parse_census_hl13_2011_sheet <- function(raw) {
   out
 }
 
-read_census_housing_district_files <- function(files, reader, label) {
-  out <- safe_bind_rows(lapply(files, reader))
-  if (!nrow(out) || anyDuplicated(out[c("state_code", "district_code")])) {
-    stop(label, " files must yield one row per district.", call. = FALSE)
-  }
-  out[order(out$state_code, out$district_code), , drop = FALSE]
-}
 
 read_census_h04a_2001_file <- function(path) parse_census_h04a_2001_sheet(read_census_housing_sheet(path, 6L))
 read_census_h05_2001_file <- function(path) parse_census_h05_2001_sheet(read_census_housing_sheet(path, 5L))
@@ -920,20 +913,20 @@ read_census_hl11_2011_file <- function(path) parse_census_hl11_2011_sheet(read_c
 read_census_hl12_2011_file <- function(path) parse_census_hl12_2011_sheet(read_census_housing_sheet(path, 6L))
 read_census_hl13_2011_file <- function(path) parse_census_hl13_2011_sheet(read_census_housing_sheet(path, 7L))
 
-read_census_h04a_2001_district <- function(files) read_census_housing_district_files(files, read_census_h04a_2001_file, "Census H04A")
-read_census_h05_2001_district <- function(files) read_census_housing_district_files(files, read_census_h05_2001_file, "Census H05")
-read_census_h08_2001_district <- function(files) read_census_housing_district_files(files, read_census_h08_2001_file, "Census H08")
-read_census_h09_2001_district <- function(files) read_census_housing_district_files(files, read_census_h09_2001_file, "Census H09")
-read_census_h10_2001_district <- function(files) read_census_housing_district_files(files, read_census_h10_2001_file, "Census H10")
-read_census_h11_2001_district <- function(files) read_census_housing_district_files(files, read_census_h11_2001_file, "Census H11")
-read_census_h12_2001_district <- function(files) read_census_housing_district_files(files, read_census_h12_2001_file, "Census H12")
-read_census_h13_2001_district <- function(files) read_census_housing_district_files(files, read_census_h13_2001_file, "Census H13")
-read_census_hl04_2011_district <- function(files) read_census_housing_district_files(files, read_census_hl04_2011_file, "Census HL04")
-read_census_hl06_2011_district <- function(files) read_census_housing_district_files(files, read_census_hl06_2011_file, "Census HL06")
-read_census_hl07_2011_district <- function(files) read_census_housing_district_files(files, read_census_hl07_2011_file, "Census HL07")
-read_census_hl08_2011_district <- function(files) read_census_housing_district_files(files, read_census_hl08_2011_file, "Census HL08")
-read_census_hl09_2011_district <- function(files) read_census_housing_district_files(files, read_census_hl09_2011_file, "Census HL09")
-read_census_hl10_2011_district <- function(files) read_census_housing_district_files(files, read_census_hl10_2011_file, "Census HL10")
-read_census_hl11_2011_district <- function(files) read_census_housing_district_files(files, read_census_hl11_2011_file, "Census HL11")
-read_census_hl12_2011_district <- function(files) read_census_housing_district_files(files, read_census_hl12_2011_file, "Census HL12")
-read_census_hl13_2011_district <- function(files) read_census_housing_district_files(files, read_census_hl13_2011_file, "Census HL13")
+read_census_h04a_2001_district <- function(files) read_census_district_files(files, read_census_h04a_2001_file, "Census H04A")
+read_census_h05_2001_district <- function(files) read_census_district_files(files, read_census_h05_2001_file, "Census H05")
+read_census_h08_2001_district <- function(files) read_census_district_files(files, read_census_h08_2001_file, "Census H08")
+read_census_h09_2001_district <- function(files) read_census_district_files(files, read_census_h09_2001_file, "Census H09")
+read_census_h10_2001_district <- function(files) read_census_district_files(files, read_census_h10_2001_file, "Census H10")
+read_census_h11_2001_district <- function(files) read_census_district_files(files, read_census_h11_2001_file, "Census H11")
+read_census_h12_2001_district <- function(files) read_census_district_files(files, read_census_h12_2001_file, "Census H12")
+read_census_h13_2001_district <- function(files) read_census_district_files(files, read_census_h13_2001_file, "Census H13")
+read_census_hl04_2011_district <- function(files) read_census_district_files(files, read_census_hl04_2011_file, "Census HL04")
+read_census_hl06_2011_district <- function(files) read_census_district_files(files, read_census_hl06_2011_file, "Census HL06")
+read_census_hl07_2011_district <- function(files) read_census_district_files(files, read_census_hl07_2011_file, "Census HL07")
+read_census_hl08_2011_district <- function(files) read_census_district_files(files, read_census_hl08_2011_file, "Census HL08")
+read_census_hl09_2011_district <- function(files) read_census_district_files(files, read_census_hl09_2011_file, "Census HL09")
+read_census_hl10_2011_district <- function(files) read_census_district_files(files, read_census_hl10_2011_file, "Census HL10")
+read_census_hl11_2011_district <- function(files) read_census_district_files(files, read_census_hl11_2011_file, "Census HL11")
+read_census_hl12_2011_district <- function(files) read_census_district_files(files, read_census_hl12_2011_file, "Census HL12")
+read_census_hl13_2011_district <- function(files) read_census_district_files(files, read_census_hl13_2011_file, "Census HL13")

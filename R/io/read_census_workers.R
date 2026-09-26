@@ -175,20 +175,13 @@ read_census_b06_2011_file <- function(path) {
   )
 }
 
-read_census_worker_district_files <- function(files, reader, label) {
-  out <- safe_bind_rows(lapply(files, reader))
-  if (!nrow(out) || anyDuplicated(out[c("state_code", "district_code")])) {
-    stop(label, " files must yield one row per district.", call. = FALSE)
-  }
-  out[order(out$state_code, out$district_code), , drop = FALSE]
-}
 
 read_census_b04_2011_district <- function(files) {
-  read_census_worker_district_files(files, read_census_b04_2011_file, "Census B04")
+  read_census_district_files(files, read_census_b04_2011_file, "Census B04")
 }
 
 read_census_b06_2011_district <- function(files) {
-  read_census_worker_district_files(files, read_census_b06_2011_file, "Census B06")
+  read_census_district_files(files, read_census_b06_2011_file, "Census B06")
 }
 
 census_occupation_divisions <- function() c(as.character(1:9), "X")
@@ -269,13 +262,13 @@ read_census_b25_2011_file <- function(path, worker_type) {
 }
 
 read_census_b25a_2011_district <- function(files) {
-  read_census_worker_district_files(
+  read_census_district_files(
     files, function(path) read_census_b25_2011_file(path, "main"), "Census B25A"
   )
 }
 
 read_census_b25b_2011_district <- function(files) {
-  read_census_worker_district_files(
+  read_census_district_files(
     files, function(path) read_census_b25_2011_file(path, "marginal"), "Census B25B"
   )
 }
@@ -341,7 +334,7 @@ read_census_b04_2001_file <- function(path) {
 }
 
 read_census_b04_2001_district <- function(files) {
-  read_census_worker_district_files(files, read_census_b04_2001_file, "Census 2001 B04")
+  read_census_district_files(files, read_census_b04_2001_file, "Census 2001 B04")
 }
 
 parse_census_2001_worker_label <- function(x, state_code) {
@@ -426,7 +419,7 @@ read_census_b25_2001_file <- function(path) {
 }
 
 read_census_b25_2001_district <- function(files) {
-  read_census_worker_district_files(files, read_census_b25_2001_file, "Census 2001 B25")
+  read_census_district_files(files, read_census_b25_2001_file, "Census 2001 B25")
 }
 
 parse_census_b26_2001_sheet <- function(raw, state_code) {
@@ -504,5 +497,5 @@ read_census_b26_2001_file <- function(path) {
 }
 
 read_census_b26_2001_district <- function(files) {
-  read_census_worker_district_files(files, read_census_b26_2001_file, "Census 2001 B26")
+  read_census_district_files(files, read_census_b26_2001_file, "Census 2001 B26")
 }

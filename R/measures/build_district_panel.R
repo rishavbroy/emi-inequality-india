@@ -231,7 +231,7 @@ analysis_panel_validation_failures <- function(out, control_registry = NULL) {
   }
 
   for (flag in c(".matched_2001", ".matched_2007", ".matched_2017")) {
-    if (flag %in% names(df) && any(!isTRUEish(df[[flag]]), na.rm = TRUE)) {
+    if (flag %in% names(df) && any(!is_trueish(df[[flag]]), na.rm = TRUE)) {
       add("district_panel contains rows without ", flag, " after final core filtering.")
     }
   }
@@ -252,7 +252,7 @@ analysis_panel_validation_failures <- function(out, control_registry = NULL) {
   failures
 }
 
-isTRUEish <- function(x) {
+is_trueish <- function(x) {
   if (is.logical(x)) return(!is.na(x) & x)
   tolower(as.character(x)) %in% c("true", "1")
 }

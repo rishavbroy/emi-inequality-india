@@ -1,14 +1,5 @@
 # Extended diagnostics for Census migration source measures and IV validity.
 
-census_migration_balance_variables <- function() {
-  c(
-    "migrant_stock_share_population",
-    "recent_0_9_migrant_share_population",
-    "interdistrict_migrant_share_population",
-    "interstate_migrant_share_population"
-  )
-}
-
 census_migration_first_stage_controls <- function() {
   c(
     "migrant_stock_share_population",
@@ -21,7 +12,7 @@ prepare_census_migration_validity_panel <- function(panel, d02_2001) {
   prepare_census_2001_balance_panel(
     panel,
     d02_2001,
-    census_migration_balance_variables(),
+    census_d02_population_rate_columns(),
     "Census migration validity"
   )
 }
@@ -314,13 +305,13 @@ build_census_migration_diagnostics <- function(
     run_iv_balance_diagnostics(
       validity_panel,
       specifications = validity_specs,
-      variables = census_migration_balance_variables()
+      variables = census_d02_population_rate_columns()
     )
   )
   joint_balance <- run_iv_joint_balance_diagnostics(
     validity_panel,
     specifications = validity_specs,
-    variables = census_migration_balance_variables()
+    variables = census_d02_population_rate_columns()
   )
   mechanism_registry <- census_migration_mechanism_registry()
   mechanism_panel <- prepare_census_migration_mechanism_panel(

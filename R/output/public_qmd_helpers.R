@@ -1,10 +1,5 @@
 # Shared helpers used by public Quarto documents and extracted samples.
 
-if (!exists("%||%", mode = "function")) {
-  `%||%` <- function(x, y) if (is.null(x)) y else x
-}
-
-
 source_table_contract <- function(start = getwd(), env = parent.frame()) {
   here <- normalizePath(start, mustWork = TRUE)
   repeat {
