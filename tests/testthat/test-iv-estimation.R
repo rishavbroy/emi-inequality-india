@@ -199,16 +199,24 @@ test_that("experimental spatial IV returns explicit inactive status", {
 })
 
 
-test_that("spatial IV formula attempts use current IV formula adapter", {
-  path <- if (file.exists("R/iv/estimate_spatial_iv_experimental.R")) "R/iv/estimate_spatial_iv_experimental.R" else file.path("..", "..", "R", "iv", "estimate_spatial_iv_experimental.R")
-  src <- paste(readLines(path, warn = FALSE), collapse = "\n")
+test_that("spatial IV attempts use the registered endogenous variables and instruments", {
+  panel <- data.frame(
+    npeople_0708 = 1, W_npeople_0708 = 1, pct_urban = 1,
+    stringsAsFactors = FALSE
+  )
+  forms <- spatial_iv_attempt_formulas(panel)
 
-  expect_match(src, "make_iv_formula", fixed = TRUE)
-  expect_match(src, "instruments = c(\"wavg_ling_degrees\", \"W_wLing\", \"W2_wLing\")", fixed = TRUE)
-  expect_false(grepl("exog =", src, fixed = TRUE))
-  expect_false(grepl("inst =", src, fixed = TRUE))
-  expect_match(src, "cluster_se_status", fixed = TRUE)
-  expect_match(src, "tidy_spatial_iv_diagnostics", fixed = TRUE)
+  expect_named(forms, c("model_sdm2sls_cons", "model_sdm2sls_gini"))
+  parsed <- lapply(forms, parse_iv_formula_terms)
+  expect_true(all(vapply(parsed, function(x) {
+    all(c("EMIE", "W_EMIE") %in% x$regressors) &&
+      all(c("wavg_ling_degrees", "W_wLing", "W2_wLing") %in% x$instruments)
+  }, logical(1))))
+  expect_true(all(vapply(parsed, function(x) {
+    all(c("npeople_0708", "W_npeople_0708", "pct_urban") %in% x$regressors)
+  }, logical(1))))
+  expect_true("W_consY" %in% parsed$model_sdm2sls_cons$regressors)
+  expect_true("W_giniY" %in% parsed$model_sdm2sls_gini$regressors)
 })
 
 

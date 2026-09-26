@@ -54,6 +54,36 @@ spatial_lag_name <- function(v) {
   )
 }
 
+
+spatial_iv_attempt_formulas <- function(panel) {
+  panel <- as.data.frame(panel, stringsAsFactors = FALSE)
+  controls_needlag <- intersect(
+    c("npeople_0708", "nhouses_0708", "consumption_0708", "gini_cons_0708"),
+    names(panel)
+  )
+  controls_lagged <- intersect(paste0("W_", controls_needlag), names(panel))
+  controls_nolag <- intersect(
+    c(
+      "pct_urban", "pct_head_secondary_plus", "pct_muslim", "pct_st",
+      "pct_obc", "pct_fem_head", "pct_medium_land", "pct_large_land"
+    ),
+    names(panel)
+  )
+  controls <- unique(c(controls_needlag, controls_nolag, controls_lagged))
+  make <- function(dep, spatial_y) {
+    make_iv_formula(
+      dep = dep,
+      endog = c(spatial_y, "EMIE", "W_EMIE"),
+      instruments = c("wavg_ling_degrees", "W_wLing", "W2_wLing"),
+      controls = controls
+    )
+  }
+  list(
+    model_sdm2sls_cons = make("consumption_pct_change", "W_consY"),
+    model_sdm2sls_gini = make("gini_change", "W_giniY")
+  )
+}
+
 fit_spatial_lag_iv_attempts <- function(panel, spatial_weights = NULL, cfg = list()) {
   panel <- as.data.frame(panel, stringsAsFactors = FALSE)
   need <- c("consumption_pct_change", "gini_change", "W_consY", "W_giniY", "EMIE", "W_EMIE", "wavg_ling_degrees", "W_wLing", "W2_wLing")
@@ -62,22 +92,7 @@ fit_spatial_lag_iv_attempts <- function(panel, spatial_weights = NULL, cfg = lis
     status <- data.frame(model = c("model_sdm2sls_cons", "model_sdm2sls_gini"), status = "not_estimated", reason = paste("Missing variables:", paste(missing, collapse = ", ")), stringsAsFactors = FALSE)
     return(list(model_status = status, coefficient_summary = data.frame(), clustered_coefficient_summary = data.frame(), diagnostics_summary = data.frame()))
   }
-  controls_needlag <- intersect(c("npeople_0708", "nhouses_0708", "consumption_0708", "gini_cons_0708"), names(panel))
-  controls_lagged <- paste0("W_", controls_needlag)
-  controls_lagged <- intersect(controls_lagged, names(panel))
-  controls_nolag <- intersect(c("pct_urban", "pct_head_secondary_plus", "pct_muslim", "pct_st", "pct_obc", "pct_fem_head", "pct_medium_land", "pct_large_land"), names(panel))
-  safe_formula <- function(dep, spatial_y) {
-    make_iv_formula(
-      dep = dep,
-      endog = c(spatial_y, "EMIE", "W_EMIE"),
-      instruments = c("wavg_ling_degrees", "W_wLing", "W2_wLing"),
-      controls = unique(c(controls_needlag, controls_nolag, controls_lagged))
-    )
-  }
-  forms <- list(
-    model_sdm2sls_cons = safe_formula("consumption_pct_change", "W_consY"),
-    model_sdm2sls_gini = safe_formula("gini_change", "W_giniY")
-  )
+  forms <- spatial_iv_attempt_formulas(panel)
 
   model_rows <- list()
   coef_rows <- list()

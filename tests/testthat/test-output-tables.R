@@ -319,6 +319,31 @@ test_that("fallback regression TeX output does not expose placeholder term rows"
   expect_false(grepl(">~<|& ~ &|^~$", tex))
 })
 
+
+test_that("modelsummary LaTeX context restores process-global rendering state", {
+  old_knit_to <- knitr::opts_knit$get("rmarkdown.pandoc.to")
+  old_options <- options(
+    modelsummary_format_numeric_latex = "fixture-format",
+    modelsummary_stars_note = TRUE
+  )
+  on.exit({
+    knitr::opts_knit$set(rmarkdown.pandoc.to = old_knit_to)
+    options(old_options)
+  }, add = TRUE)
+  knitr::opts_knit$set(rmarkdown.pandoc.to = "html")
+
+  inside <- with_modelsummary_latex_context(list(
+    to = knitr::opts_knit$get("rmarkdown.pandoc.to"),
+    format = getOption("modelsummary_format_numeric_latex"),
+    stars = getOption("modelsummary_stars_note")
+  ))
+
+  expect_identical(inside, list(to = "latex", format = "plain", stars = FALSE))
+  expect_identical(knitr::opts_knit$get("rmarkdown.pandoc.to"), "html")
+  expect_identical(getOption("modelsummary_format_numeric_latex"), "fixture-format")
+  expect_true(getOption("modelsummary_stars_note"))
+})
+
 test_that("modelsummary payload uses project-owned coefficient extraction", {
   model <- lm(mpg ~ wt, data = mtcars)
   vc <- stats::vcov(model) * 4

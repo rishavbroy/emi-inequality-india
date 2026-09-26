@@ -240,18 +240,25 @@ ame_modelsummary_object <- function(table) {
   native
 }
 
+with_modelsummary_latex_context <- function(expr) {
+  expr <- substitute(expr)
+  old_knit_to <- knitr::opts_knit$get("rmarkdown.pandoc.to")
+  old_options <- options(
+    modelsummary_format_numeric_latex = "plain",
+    modelsummary_stars_note = FALSE
+  )
+  knitr::opts_knit$set(rmarkdown.pandoc.to = "latex")
+  on.exit({
+    knitr::opts_knit$set(rmarkdown.pandoc.to = old_knit_to)
+    options(old_options)
+  }, add = TRUE)
+  eval(expr, envir = parent.frame())
+}
+
 ame_modelsummary_table <- function(table, name) {
   need_pkg("modelsummary", "native marginaleffects AME table rendering")
   mfx <- ame_modelsummary_object(table)
   if (is.null(mfx)) return(NULL)
-  old_knit_to <- knitr::opts_knit$get("rmarkdown.pandoc.to")
-  old_opt <- getOption("modelsummary_format_numeric_latex")
-  old_stars_note <- getOption("modelsummary_stars_note")
-  on.exit(knitr::opts_knit$set(rmarkdown.pandoc.to = old_knit_to), add = TRUE)
-  on.exit(options(modelsummary_format_numeric_latex = old_opt, modelsummary_stars_note = old_stars_note), add = TRUE)
-  knitr::opts_knit$set(rmarkdown.pandoc.to = "latex")
-  options(modelsummary_format_numeric_latex = "plain", modelsummary_stars_note = FALSE)
-
   keep_terms <- attr(table, "ame_keep_terms", exact = TRUE)
   model_name <- "Enrolled (1 = yes)"
   n <- suppressWarnings(as.numeric(attr(table, "marginaleffects_n", exact = TRUE)))
@@ -285,7 +292,9 @@ ame_modelsummary_table <- function(table, name) {
   } else {
     args$coef_rename <- ame_modelsummary_label
   }
-  tex <- suppress_modelsummary_latex_preamble_warning(do.call(modelsummary::modelsummary, args))
+  tex <- with_modelsummary_latex_context(
+    suppress_modelsummary_latex_preamble_warning(do.call(modelsummary::modelsummary, args))
+  )
   tex <- kableExtra::kable_styling(
     tex,
     latex_options = public_longtable_latex_options(),
@@ -381,20 +390,7 @@ modelsummary_payload <- function(model, vcov_matrix = NULL) {
 }
 
 public_modelsummary_table <- function(model, name, vcov_matrix = NULL, add_rows = NULL) {
-  need_pkg("modelsummary", "legacy regression table rendering")
-  old_knit_to <- knitr::opts_knit$get("rmarkdown.pandoc.to")
-  old_opt <- getOption("modelsummary_format_numeric_latex")
-  old_stars_note <- getOption("modelsummary_stars_note")
-  on.exit(knitr::opts_knit$set(rmarkdown.pandoc.to = old_knit_to), add = TRUE)
-  on.exit(options(
-    modelsummary_format_numeric_latex = old_opt,
-    modelsummary_stars_note = old_stars_note
-  ), add = TRUE)
-  knitr::opts_knit$set(rmarkdown.pandoc.to = "latex")
-  options(
-    modelsummary_format_numeric_latex = "plain",
-    modelsummary_stars_note = FALSE
-  )
+  need_pkg("modelsummary", "regression table rendering")
   args <- list(
     models = modelsummary_payload(model, vcov_matrix),
     coef_map = public_regression_coef_map(),
@@ -408,7 +404,9 @@ public_modelsummary_table <- function(model, name, vcov_matrix = NULL, add_rows 
     notes = NULL
   )
   if (!is.null(add_rows)) args$add_rows <- add_rows
-  tex <- suppress_modelsummary_latex_preamble_warning(do.call(modelsummary::modelsummary, args))
+  tex <- with_modelsummary_latex_context(
+    suppress_modelsummary_latex_preamble_warning(do.call(modelsummary::modelsummary, args))
+  )
   tex <- kableExtra::kable_styling(
     tex,
     latex_options = public_longtable_latex_options(),
@@ -620,21 +618,8 @@ paper_schooling_market_modelsummary_table <- function(table, name) {
     list(raw = "state_membership_r2", clean = "State-membership $R^2$", fmt = 3)
   )
 
-  old_knit_to <- knitr::opts_knit$get("rmarkdown.pandoc.to")
-  old_opt <- getOption("modelsummary_format_numeric_latex")
-  old_stars_note <- getOption("modelsummary_stars_note")
-  on.exit(knitr::opts_knit$set(rmarkdown.pandoc.to = old_knit_to), add = TRUE)
-  on.exit(options(
-    modelsummary_format_numeric_latex = old_opt,
-    modelsummary_stars_note = old_stars_note
-  ), add = TRUE)
-  knitr::opts_knit$set(rmarkdown.pandoc.to = "latex")
-  options(
-    modelsummary_format_numeric_latex = "plain",
-    modelsummary_stars_note = FALSE
-  )
 
-  tex <- suppress_modelsummary_latex_preamble_warning(modelsummary::modelsummary(
+  tex <- with_modelsummary_latex_context(suppress_modelsummary_latex_preamble_warning(modelsummary::modelsummary(
     models = models,
     shape = "rbind",
     coef_map = c("linguistic_distance" = "Linguistic distance from Hindi"),
@@ -648,7 +633,7 @@ paper_schooling_market_modelsummary_table <- function(table, name) {
     longtable = TRUE,
     escape = FALSE,
     notes = NULL
-  ))
+  )))
   tex <- kableExtra::kable_styling(
     tex,
     latex_options = c("repeat_header", "striped"),
@@ -803,21 +788,8 @@ paper_economic_conversion_modelsummary_table <- function(table, name) {
     list(raw = "nobs", clean = "Observations", fmt = 0)
   )
 
-  old_knit_to <- knitr::opts_knit$get("rmarkdown.pandoc.to")
-  old_opt <- getOption("modelsummary_format_numeric_latex")
-  old_stars_note <- getOption("modelsummary_stars_note")
-  on.exit(knitr::opts_knit$set(rmarkdown.pandoc.to = old_knit_to), add = TRUE)
-  on.exit(options(
-    modelsummary_format_numeric_latex = old_opt,
-    modelsummary_stars_note = old_stars_note
-  ), add = TRUE)
-  knitr::opts_knit$set(rmarkdown.pandoc.to = "latex")
-  options(
-    modelsummary_format_numeric_latex = "plain",
-    modelsummary_stars_note = FALSE
-  )
 
-  tex <- suppress_modelsummary_latex_preamble_warning(modelsummary::modelsummary(
+  tex <- with_modelsummary_latex_context(suppress_modelsummary_latex_preamble_warning(modelsummary::modelsummary(
     models = models,
     coef_map = coef_map,
     estimate = "{estimate}{stars}",
@@ -830,7 +802,7 @@ paper_economic_conversion_modelsummary_table <- function(table, name) {
     longtable = TRUE,
     escape = FALSE,
     notes = NULL
-  ))
+  )))
   tex <- kableExtra::kable_styling(
     tex,
     latex_options = c("repeat_header", "striped"),
@@ -918,18 +890,8 @@ appendix_migration_modelsummary_table <- function(table, name) {
     list(raw = "nobs", clean = "Observations", fmt = 0)
   )
 
-  old_knit_to <- knitr::opts_knit$get("rmarkdown.pandoc.to")
-  old_opt <- getOption("modelsummary_format_numeric_latex")
-  old_stars_note <- getOption("modelsummary_stars_note")
-  on.exit(knitr::opts_knit$set(rmarkdown.pandoc.to = old_knit_to), add = TRUE)
-  on.exit(options(
-    modelsummary_format_numeric_latex = old_opt,
-    modelsummary_stars_note = old_stars_note
-  ), add = TRUE)
-  knitr::opts_knit$set(rmarkdown.pandoc.to = "latex")
-  options(modelsummary_format_numeric_latex = "plain", modelsummary_stars_note = FALSE)
 
-  tex <- suppress_modelsummary_latex_preamble_warning(modelsummary::modelsummary(
+  tex <- with_modelsummary_latex_context(suppress_modelsummary_latex_preamble_warning(modelsummary::modelsummary(
     models = panels,
     shape = "rbind",
     coef_map = c("linguistic_distance" = "Linguistic distance"),
@@ -945,7 +907,7 @@ appendix_migration_modelsummary_table <- function(table, name) {
     longtable = FALSE,
     escape = FALSE,
     notes = NULL
-  ))
+  )))
   tex <- kableExtra::kable_styling(
     tex,
     latex_options = c("striped"),
@@ -1021,18 +983,8 @@ appendix_iv_weak_inference_modelsummary_table <- function(table, name) {
     list(raw = "nobs", clean = "Observations", fmt = 0)
   )
 
-  old_knit_to <- knitr::opts_knit$get("rmarkdown.pandoc.to")
-  old_opt <- getOption("modelsummary_format_numeric_latex")
-  old_stars_note <- getOption("modelsummary_stars_note")
-  on.exit(knitr::opts_knit$set(rmarkdown.pandoc.to = old_knit_to), add = TRUE)
-  on.exit(options(
-    modelsummary_format_numeric_latex = old_opt,
-    modelsummary_stars_note = old_stars_note
-  ), add = TRUE)
-  knitr::opts_knit$set(rmarkdown.pandoc.to = "latex")
-  options(modelsummary_format_numeric_latex = "plain", modelsummary_stars_note = FALSE)
 
-  tex <- suppress_modelsummary_latex_preamble_warning(modelsummary::modelsummary(
+  tex <- with_modelsummary_latex_context(suppress_modelsummary_latex_preamble_warning(modelsummary::modelsummary(
     models = models,
     coef_map = c("emi_exposure" = "EMI exposure"),
     estimate = "{estimate}",
@@ -1045,7 +997,7 @@ appendix_iv_weak_inference_modelsummary_table <- function(table, name) {
     longtable = FALSE,
     escape = FALSE,
     notes = NULL
-  ))
+  )))
   tex <- kableExtra::kable_styling(
     tex,
     latex_options = c("striped"),
@@ -1179,21 +1131,8 @@ paper_local_development_modelsummary_table <- function(table, name) {
     list(raw = "nobs", clean = "Observations", fmt = 0)
   )
 
-  old_knit_to <- knitr::opts_knit$get("rmarkdown.pandoc.to")
-  old_opt <- getOption("modelsummary_format_numeric_latex")
-  old_stars_note <- getOption("modelsummary_stars_note")
-  on.exit(knitr::opts_knit$set(rmarkdown.pandoc.to = old_knit_to), add = TRUE)
-  on.exit(options(
-    modelsummary_format_numeric_latex = old_opt,
-    modelsummary_stars_note = old_stars_note
-  ), add = TRUE)
-  knitr::opts_knit$set(rmarkdown.pandoc.to = "latex")
-  options(
-    modelsummary_format_numeric_latex = "plain",
-    modelsummary_stars_note = FALSE
-  )
 
-  tex <- suppress_modelsummary_latex_preamble_warning(modelsummary::modelsummary(
+  tex <- with_modelsummary_latex_context(suppress_modelsummary_latex_preamble_warning(modelsummary::modelsummary(
     models = panels,
     shape = "rbind",
     coef_map = c("linguistic_distance" = "Linguistic distance"),
@@ -1207,7 +1146,7 @@ paper_local_development_modelsummary_table <- function(table, name) {
     longtable = TRUE,
     escape = FALSE,
     notes = NULL
-  ))
+  )))
   tex <- kableExtra::kable_styling(
     tex,
     latex_options = c("repeat_header", "striped"),
@@ -1292,21 +1231,8 @@ paper_language_behavior_modelsummary_table <- function(table, name) {
     )
   }
 
-  old_knit_to <- knitr::opts_knit$get("rmarkdown.pandoc.to")
-  old_opt <- getOption("modelsummary_format_numeric_latex")
-  old_stars_note <- getOption("modelsummary_stars_note")
-  on.exit(knitr::opts_knit$set(rmarkdown.pandoc.to = old_knit_to), add = TRUE)
-  on.exit(options(
-    modelsummary_format_numeric_latex = old_opt,
-    modelsummary_stars_note = old_stars_note
-  ), add = TRUE)
-  knitr::opts_knit$set(rmarkdown.pandoc.to = "latex")
-  options(
-    modelsummary_format_numeric_latex = "plain",
-    modelsummary_stars_note = FALSE
-  )
 
-  tex <- suppress_modelsummary_latex_preamble_warning(modelsummary::modelsummary(
+  tex <- with_modelsummary_latex_context(suppress_modelsummary_latex_preamble_warning(modelsummary::modelsummary(
     models = models,
     coef_map = c(
       "shastry_degree" = "Linguistic distance",
@@ -1323,7 +1249,7 @@ paper_language_behavior_modelsummary_table <- function(table, name) {
     longtable = FALSE,
     escape = FALSE,
     notes = NULL
-  ))
+  )))
   tex <- kableExtra::kable_styling(
     tex,
     latex_options = c("striped"),
