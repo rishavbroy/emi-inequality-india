@@ -69,7 +69,7 @@ clustered_joint_wald_test <- function(fit, terms, cluster, inference = NULL) {
   wald_test_from_vcov(fit, terms, inference$vcov)
 }
 
-clustered_lm_inference <- function(model, cluster) {
+many_cluster_lm_inference <- function(model, cluster) {
   cluster <- as.vector(cluster)
   n_clusters <- length(unique(cluster))
   if (
@@ -106,7 +106,7 @@ clustered_lm_inference <- function(model, cluster) {
   )
 }
 
-clustered_lm_joint_test <- function(model, terms, inference) {
+many_cluster_lm_joint_test <- function(model, terms, inference) {
   if (
     !length(terms) || is.null(inference$vcov) ||
       !is.finite(inference$df) || inference$df <= 0
@@ -129,13 +129,13 @@ clustered_lm_joint_test <- function(model, terms, inference) {
     return(c(statistic = NA_real_, p.value = NA_real_, df = length(terms)))
   }
   f_col <- grep("^F$", names(out), value = TRUE)
-  p_col <- grep("Pr\(>F\)", names(out), value = TRUE)
-  if (!length(f_col) || !length(p_col)) {
+  p_col <- match("Pr(>F)", names(out))
+  if (!length(f_col) || is.na(p_col)) {
     return(c(statistic = NA_real_, p.value = NA_real_, df = length(terms)))
   }
   c(
     statistic = suppressWarnings(as.numeric(out[[f_col[[1L]]]][[2L]])),
-    p.value = suppressWarnings(as.numeric(out[[p_col[[1L]]]][[2L]])),
+    p.value = suppressWarnings(as.numeric(out[[p_col]][[2L]])),
     df = length(terms)
   )
 }

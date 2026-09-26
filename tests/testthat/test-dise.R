@@ -1215,7 +1215,7 @@ test_that("dynamic event study recovers changes relative to the reference-year g
 })
 
 
-test_that("dynamic event-study inference matches standard HC1 cluster tests", {
+test_that("dynamic event-study inference matches many-cluster HC1 tests", {
   set.seed(11)
   districts <- paste0("d", 1:30)
   years <- c("2006-07", "2007-08", "2008-09")

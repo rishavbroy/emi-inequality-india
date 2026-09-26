@@ -523,7 +523,7 @@ estimate_dise_dynamic_spec <- function(
   # These event studies cluster by district, yielding hundreds of clusters.
   # Use the standard large-cluster HC1 path here; CR2 is reserved for the
   # state-clustered IV models where small-cluster correction is material.
-  inf <- clustered_lm_inference(fit, cluster)
+  inf <- many_cluster_lm_inference(fit, cluster)
   coef_rows <- safe_bind_rows(lapply(seq_len(nrow(terms)), function(i) {
     term <- terms$term[[i]]
     row <- inf$coefficients[term, , drop = FALSE]
@@ -538,16 +538,16 @@ estimate_dise_dynamic_spec <- function(
       stringsAsFactors = FALSE
     )
   }))
-  joint <- clustered_lm_joint_test(fit, terms$term, inf)
+  joint <- many_cluster_lm_joint_test(fit, terms$term, inf)
   pre_terms <- terms$term[terms$academic_year < reference_year]
   post_terms <- terms$term[terms$academic_year > reference_year]
   pre_joint <- if (length(pre_terms)) {
-    clustered_lm_joint_test(fit, pre_terms, inf)
+    many_cluster_lm_joint_test(fit, pre_terms, inf)
   } else {
     c(statistic = NA_real_, p.value = NA_real_)
   }
   post_joint <- if (length(post_terms)) {
-    clustered_lm_joint_test(fit, post_terms, inf)
+    many_cluster_lm_joint_test(fit, post_terms, inf)
   } else {
     c(statistic = NA_real_, p.value = NA_real_)
   }
