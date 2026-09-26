@@ -136,11 +136,58 @@ test_that("writing sample assembly derives identity and section selection from o
   expect_identical(selector$path, "../filters/select-sections.lua")
   expect_match(named, "Rishav Roy", fixed = TRUE)
   expect_match(named, manifest$paper$repository_url, fixed = TRUE)
+  expect_match(named, env$application_sample_build_script_url(manifest), fixed = TRUE)
+  expect_match(named, env$quoted_paper_title(env$read_qmd_metadata(readLines(source, warn = FALSE))), fixed = TRUE)
+  expect_false(grepl("bash scripts/run_full_build.sh", named, fixed = TRUE))
   expect_match(anonymous, "author: Anonymous", fixed = TRUE)
   expect_false(grepl(manifest$paper$repository_url, anonymous, fixed = TRUE))
   expect_false(grepl(manifest$paper$full_paper_url, anonymous, fixed = TRUE))
+  expect_false(grepl("http://", anonymous, fixed = TRUE))
+  expect_false(grepl("https://", anonymous, fixed = TRUE))
   expect_match(anonymous, "make samples", fixed = TRUE)
+  expect_match(anonymous, "`scripts/run_full_build.sh`", fixed = TRUE)
+  expect_false(grepl("bash scripts/run_full_build.sh", anonymous, fixed = TRUE))
 })
+
+test_that("writing sample notices use current paper numbers and title metadata", {
+  env <- sample_test_env()
+  source <- c(
+    "---",
+    "title: Fixture Paper",
+    "subtitle: Fixture Subtitle",
+    "---",
+    "# Introduction {#sec-intro}",
+    "",
+    "# Parent {#sec-parent}",
+    "",
+    "## First selected section {#sec-first}",
+    "",
+    "## Second selected section {#sec-second}",
+    "",
+    "# Conclusion {#sec-discussion}"
+  )
+  meta <- env$read_qmd_metadata(source)
+  spec <- list(id = "fixture", target_pages = 5L, sections = c("sec-intro", "sec-first", "sec-second", "sec-discussion"))
+  manifest <- list(
+    paper = list(
+      full_paper_url = "https://example.com/paper.pdf",
+      repository_url = "https://github.com/example/repository"
+    )
+  )
+  labels <- c(`sec-first` = "3.1", `sec-second` = "3.2")
+
+  named <- paste(env$writing_sample_notice(spec, "named", manifest, source, meta, labels), collapse = "\n")
+  anonymous <- paste(env$writing_sample_notice(spec, "anonymous", manifest, source, meta, labels), collapse = "\n")
+
+  expect_match(named, "the Introduction, Conclusion, and Sections 3.1 and 3.2", fixed = TRUE)
+  expect_match(named, "the paper “Fixture Paper: Fixture Subtitle”", fixed = TRUE)
+  expect_match(named, env$application_sample_build_script_url(manifest), fixed = TRUE)
+  expect_false(grepl("bash scripts/run_full_build.sh", named, fixed = TRUE))
+  expect_match(anonymous, "a paper titled “Fixture Paper: Fixture Subtitle”", fixed = TRUE)
+  expect_false(grepl("https://", anonymous, fixed = TRUE))
+  expect_match(anonymous, "`scripts/run_full_build.sh`", fixed = TRUE)
+})
+
 
 test_that("coding sample assembly uses paper typography and wrapped highlighted code", {
   env <- sample_test_env()
@@ -149,6 +196,7 @@ test_that("coding sample assembly uses paper typography and wrapped highlighted 
   writeLines(c(
     "---",
     "title: Fixture Paper",
+    "subtitle: Fixture Subtitle",
     "format:",
     "  pdf:",
     "    pdf-engine: xelatex",
@@ -185,7 +233,9 @@ test_that("coding sample assembly uses paper typography and wrapped highlighted 
   expect_match(rendered, "answer <- 42", fixed = TRUE)
   expect_false(grepl("```{r}", rendered, fixed = TRUE))
   expect_false(grepl("CODING SAMPLE:", rendered, fixed = TRUE))
-  expect_match(rendered, "the paper titled *Fixture Paper*", fixed = TRUE)
+  expect_match(rendered, "the paper “Fixture Paper: Fixture Subtitle”", fixed = TRUE)
+  expect_match(rendered, env$application_sample_build_script_url(manifest), fixed = TRUE)
+  expect_false(grepl("bash scripts/run_full_build.sh", rendered, fixed = TRUE))
   meta <- env$read_qmd_metadata(readLines(out, warn = FALSE))
   expect_identical(meta$subtitle, "Short Version")
   expect_identical(meta$format$pdf$documentclass, "article")
@@ -194,6 +244,14 @@ test_that("coding sample assembly uses paper typography and wrapped highlighted 
   headers <- unlist(meta$`header-includes`, use.names = FALSE)
   expect_true(any(grepl("usepackage{fvextra}", headers, fixed = TRUE)))
   expect_true(any(grepl("RecustomVerbatimEnvironment{Highlighting}", headers, fixed = TRUE)))
+
+  anon_out <- tempfile(fileext = ".qmd")
+  manifest$identity$anonymous <- list(author = "Anonymous")
+  env$assemble_coding_sample_qmd(spec, "anonymous", manifest, body, anon_out)
+  anonymous <- paste(readLines(anon_out, warn = FALSE), collapse = "\n")
+  expect_match(anonymous, "a paper titled “Fixture Paper: Fixture Subtitle”", fixed = TRUE)
+  expect_false(grepl("https://", anonymous, fixed = TRUE))
+  expect_match(anonymous, "`scripts/run_full_build.sh`", fixed = TRUE)
 })
 
 

@@ -8,17 +8,17 @@ Coding samples continue to use `sample-start`/`sample-end` comments because R fi
 
 Run:
 
-```bash
+```sh
 make samples
 ```
 
 or run the ordinary full build, which includes application samples by default:
 
-```bash
-bash scripts/run_full_build.sh
+```sh
+scripts/run_full_build.sh
 ```
 
-The first-page sample notice is generated from the manifest and the current paper headings. The full-paper render keeps `paper.tex` and makes a separate XeLaTeX label pass that writes `paper-reference-labels.aux`. Before an excerpt is rendered, references to omitted sections, tables, figures, and equations are replaced with their current full-paper labels from that file. Named copies link the displayed label to the hosted paper; anonymous copies display the same label without an identity-bearing URL. References whose targets remain in the excerpt stay as ordinary Quarto cross-references. The Pandoc filter is responsible only for retaining the selected sections and their ancestor headings.
+The first-page sample notice is generated from the manifest, the current paper title and subtitle, and the full-paper section labels. The full-paper render keeps `paper.tex` and makes a separate XeLaTeX label pass that writes `paper-reference-labels.aux`. Before an excerpt is rendered, references to omitted sections, tables, figures, and equations are replaced with their current full-paper labels from that file. Named copies link the displayed label to the hosted paper; anonymous copies display the same label without an identity-bearing URL. References whose targets remain in the excerpt stay as ordinary Quarto cross-references. The Pandoc filter is responsible only for retaining the selected sections and their ancestor headings.
 
 The 5-, 10-, and 15-page values in `samples.yml` are current page targets. During the remaining formatting pass, a mismatch is reported as a `WARNING:` line in the build output while the rendered PDF is retained and the build continues. The targets can return to strict validation once sample presentation is settled.
 

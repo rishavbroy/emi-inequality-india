@@ -55,7 +55,7 @@ coding_sample_output_lines <- function(spec, manifest) {
   })
   c(
     "", "# Selected Paper Outputs", "",
-    "These outputs are the same formatted table and figure files used by the paper.",
+    "These outputs are the same formatted table and figure files used by the paper; their presentation is assembled in `R/output/make_tables.R` and `R/output/make_figures.R`.",
     unlist(pieces, use.names = FALSE)
   )
 }

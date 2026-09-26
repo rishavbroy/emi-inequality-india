@@ -33,38 +33,30 @@ extract_between_sample_markers <- function(file, id) {
   text[(start + 1L):(end - 1L)]
 }
 
-coding_sample_notice <- function(spec, variant, manifest) {
-  paper_meta <- read_qmd_metadata(readLines(manifest$paper$source, warn = FALSE))
-  paper_title <- paper_meta$title %||% ""
-  article <- if (identical(variant, "anonymous")) "a paper titled" else "the paper titled"
+coding_sample_notice <- function(spec, variant, manifest, source_metadata) {
+  paper_title <- quoted_paper_title(source_metadata)
   description <- paste0(
-    "These excerpts are selected from the replication code for ", article,
-    " *", paper_title, "*. Selected paper-formatted outputs appear at the end of the document. "
+    "This document contains excerpts from the replication code of ",
+    if (identical(variant, "anonymous")) "a paper titled " else "the paper ",
+    paper_title,
+    ". Selected outputs are rendered at the end."
   )
 
-  assembly_note <- if (identical(variant, "named")) {
-    paste0(
-      "The [full paper](", manifest$paper$full_paper_url, ") and [repository](",
-      manifest$paper$repository_url, ") are available online. Paper-facing tables and figures are assembled in ",
-      "[`R/output/make_tables.R`](", manifest$paper$repository_url, "/blob/main/R/output/make_tables.R) and ",
-      "[`R/output/make_figures.R`](", manifest$paper$repository_url, "/blob/main/R/output/make_figures.R). "
-    )
-  } else {
-    "Paper-facing tables and figures are assembled in `R/output/make_tables.R` and `R/output/make_figures.R`. "
-  }
-
   c(
-    paste0(
-      description, assembly_note,
-      "This PDF can be generated using `make samples` or `bash scripts/run_full_build.sh`."
+    paste(
+      c(
+        description,
+        application_sample_availability_sentence(variant, manifest),
+        application_sample_build_sentence(variant, manifest)
+      ),
+      collapse = " "
     ),
     ""
   )
 }
 
-coding_sample_metadata <- function(spec, variant, manifest) {
-  source_meta <- read_qmd_metadata(readLines(manifest$paper$source, warn = FALSE))
-  meta <- paper_sample_metadata(source_meta, variant, manifest)
+coding_sample_metadata <- function(spec, variant, manifest, source_metadata) {
+  meta <- paper_sample_metadata(source_metadata, variant, manifest)
   meta$title <- "Code Sample"
   meta$subtitle <- if (identical(spec$id, "short")) "Short Version" else "Long Version"
   meta$abstract <- NULL
@@ -97,9 +89,10 @@ coding_sample_metadata <- function(spec, variant, manifest) {
 }
 
 assemble_coding_sample_qmd <- function(spec, variant, manifest, body, output_qmd) {
-  meta <- coding_sample_metadata(spec, variant, manifest)
+  source_metadata <- read_qmd_metadata(readLines(manifest$paper$source, warn = FALSE))
+  meta <- coding_sample_metadata(spec, variant, manifest, source_metadata)
   yaml_lines <- quarto_yaml_lines(meta, indent.mapping.sequence = TRUE)
-  lines <- c("---", yaml_lines, "---", "", coding_sample_notice(spec, variant, manifest), body)
+  lines <- c("---", yaml_lines, "---", "", coding_sample_notice(spec, variant, manifest, source_metadata), body)
   dir.create(dirname(output_qmd), recursive = TRUE, showWarnings = FALSE)
   writeLines(lines, output_qmd)
   invisible(output_qmd)

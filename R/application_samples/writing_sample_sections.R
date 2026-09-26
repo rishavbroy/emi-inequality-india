@@ -215,46 +215,75 @@ writing_section_titles <- function(source_lines, section_ids) {
   setNames(index$title[match(section_ids, index$id)], section_ids)
 }
 
-format_sample_title_list <- function(titles) {
-  titles <- as.character(titles)
-  if (length(titles) == 1L) return(titles)
-  if (length(titles) == 2L) return(paste(titles, collapse = " and "))
-  paste0(paste(titles[-length(titles)], collapse = ", "), ", and ", titles[[length(titles)]])
+format_english_list <- function(items) {
+  items <- as.character(items)
+  if (!length(items)) return("")
+  if (length(items) == 1L) return(items[[1L]])
+  if (length(items) == 2L) return(paste(items, collapse = " and "))
+  paste0(paste(items[-length(items)], collapse = ", "), ", and ", items[[length(items)]])
 }
 
-writing_sample_notice <- function(spec, variant, manifest, source_lines) {
+writing_sample_contents <- function(spec, source_lines, reference_labels) {
+  if (identical(spec$mode %||% "excerpt", "full")) return("the full paper")
+
+  section_ids <- unname(unlist(spec$sections, use.names = FALSE))
+  titles <- unname(writing_section_titles(source_lines, section_ids))
+  special <- titles %in% c("Introduction", "Conclusion")
+
+  named_sections <- titles[special]
+  named_sections[named_sections == "Introduction"] <- "the Introduction"
+
+  numbered_ids <- section_ids[!special]
+  numbered <- character()
+  if (length(numbered_ids)) {
+    missing <- setdiff(numbered_ids, names(reference_labels %||% character()))
+    if (length(missing)) {
+      stop(
+        "Full-paper reference index has no section number for writing-sample section(s): ",
+        paste(missing, collapse = ", "),
+        call. = FALSE
+      )
+    }
+    numbers <- unname(reference_labels[numbered_ids])
+    prefix <- if (length(numbers) == 1L) "Section " else "Sections "
+    numbered <- paste0(prefix, format_english_list(numbers))
+  }
+
+  format_english_list(c(named_sections, numbered))
+}
+
+writing_sample_notice <- function(spec, variant, manifest, source_lines, source_metadata, reference_labels = NULL) {
   is_full <- identical(spec$mode %||% "excerpt", "full")
   label <- if (is_full) "FULL PAPER" else paste0(spec$target_pages, "-PAGE COPY")
   heading <- paste0("**WRITING SAMPLE: ", label, "**")
+  paper_title <- quoted_paper_title(source_metadata)
 
-  if (is_full) {
-    description <- "This is the full paper prepared as a writing sample."
+  description <- if (is_full) {
+    paste0("This document contains the full paper ", paper_title, ".")
   } else {
-    titles <- unname(writing_section_titles(source_lines, unlist(spec$sections, use.names = FALSE)))
-    description <- paste0(
-      "This excerpt contains ",
-      format_sample_title_list(titles),
-      " from the full paper."
-    )
-  }
-
-  availability_note <- if (identical(variant, "named")) {
     paste0(
-      "The [full paper](", manifest$paper$full_paper_url, ") and [repository](",
-      manifest$paper$repository_url, ") are available online."
+      "This document contains ",
+      writing_sample_contents(spec, source_lines, reference_labels),
+      " of ",
+      if (identical(variant, "anonymous")) "a paper titled " else "the paper ",
+      paper_title,
+      "."
     )
-  } else {
-    # Keep anonymous first-page layout comparable to the named copy without
-    # exposing identity-bearing URLs.  The parallel notice prevents anonymity
-    # itself from changing a fixed-length sample's pagination.
-    "Links to the full paper and repository are omitted here."
   }
-  description <- paste(
-    description,
-    availability_note,
-    "This writing sample can be generated using `make samples` or `bash scripts/run_full_build.sh`."
+
+  c(
+    heading,
+    "",
+    paste(
+      c(
+        description,
+        application_sample_availability_sentence(variant, manifest),
+        application_sample_build_sentence(variant, manifest)
+      ),
+      collapse = " "
+    ),
+    ""
   )
-  c(heading, "", description, "")
 }
 
 sample_metadata <- function(source_metadata, spec, variant, manifest) {
@@ -296,7 +325,8 @@ normalize_sample_resource_paths <- function(lines) {
 assemble_writing_sample_qmd <- function(source, spec, variant, manifest, output_qmd, reference_labels = NULL) {
   source_lines <- readLines(source, warn = FALSE)
   parts <- split_qmd_front_matter(source_lines)
-  prepared <- sample_metadata(read_qmd_metadata(source_lines), spec, variant, manifest)
+  source_metadata <- read_qmd_metadata(source_lines)
+  prepared <- sample_metadata(source_metadata, spec, variant, manifest)
   yaml_lines <- quarto_yaml_lines(prepared$metadata, indent.mapping.sequence = TRUE)
   body <- normalize_sample_resource_paths(parts$body)
   if (!identical(spec$mode %||% "excerpt", "full")) {
@@ -310,7 +340,7 @@ assemble_writing_sample_qmd <- function(source, spec, variant, manifest, output_
   }
 
   preamble <- c(
-    writing_sample_notice(spec, variant, manifest, source_lines),
+    writing_sample_notice(spec, variant, manifest, source_lines, source_metadata, reference_labels),
     "```{=latex}",
     "\\begin{abstract}",
     "```",
