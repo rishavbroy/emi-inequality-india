@@ -97,7 +97,35 @@ test_that("AME benchmark data are exactly the model estimation rows and fitted w
 
   expect_equal(nrow(amed$data), stats::nobs(model))
   expect_equal(length(amed$wts), stats::nobs(model))
-  expect_equal(amed$wts, stats::weights(model))
+  expect_equal(amed$wts, as.numeric(stats::weights(model, type = "prior")))
+})
+
+test_that("survey AMEs use the fitted design's sampling weights", {
+  skip_if_not_installed("survey")
+  selection_data <- data.frame(
+    enrolled = c(0, 1, 0, 1, 0, 1, 1, 0),
+    AGE = 6:13,
+    psu = seq_len(8),
+    strata = rep(c("a", "b"), each = 4),
+    weight = c(1, 2, 3, 4, 2, 3, 4, 5)
+  )
+  design <- survey::svydesign(
+    ids = ~psu,
+    strata = ~strata,
+    weights = ~weight,
+    data = selection_data,
+    nest = TRUE
+  )
+  model <- survey::svyglm(
+    enrolled ~ AGE,
+    design = design,
+    family = stats::quasibinomial(link = "probit")
+  )
+
+  amed <- ame_model_data_and_weights(model)
+
+  expect_equal(nrow(amed$data), stats::nobs(model))
+  expect_equal(amed$wts, as.numeric(survey::weights(model$survey.design)))
 })
 
 test_that("programmatic selection formulas remain reconstructable", {
@@ -129,6 +157,7 @@ test_that("AME benchmark exercises the production marginaleffects wrapper", {
   out <- benchmark_ame_methods(model, list(), sample_sizes = 20L)
 
   expect_setequal(out$method, c("avg_slopes_centered_default", "avg_slopes_fdforward"))
+  expect_true(all(out$n_numeric_variables == 1L))
   expect_true(all(out$status == "estimated"))
   expect_true(all(is.na(out$reason)))
   expect_true(all(out$n_estimates > 0L))

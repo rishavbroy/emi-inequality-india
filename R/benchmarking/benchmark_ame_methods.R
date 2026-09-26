@@ -70,9 +70,11 @@ benchmark_ame_methods <- function(selection_model, cfg, sample_sizes = NULL) {
     return(data.frame(method = "avg_slopes", sample_size = NA_integer_, elapsed_seconds = NA_real_, status = "skipped", reason = "No model-frame rows.", stringsAsFactors = FALSE))
   }
 
-  response_name <- as.character(stats::formula(selection_model)[[2]])
-  weight_name <- if (is.character(amed$wts) && length(amed$wts) == 1L) amed$wts else "weight"
-  numeric_variables <- setdiff(names(data)[vapply(data, is.numeric, logical(1))], c(response_name, weight_name))
+  predictor_names <- all.vars(stats::delete.response(stats::terms(selection_model)))
+  numeric_variables <- intersect(
+    predictor_names,
+    names(data)[vapply(data, is.numeric, logical(1))]
+  )
   n_observations <- nrow(data)
   n_numeric_variables <- length(numeric_variables)
   centered_predict_calls <- n_numeric_variables * n_observations * 2L

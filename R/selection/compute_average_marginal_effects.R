@@ -49,11 +49,23 @@ ame_out_of_pipeline <- function(status, reason) {
 #'
 ame_model_data_and_weights <- function(model) {
   model_data <- as.data.frame(stats::model.frame(model))
-  model_weights <- tryCatch(stats::weights(model), error = function(e) NULL)
-  if (!is.null(model_weights) && length(model_weights) != nrow(model_data)) {
-    stop("Fitted-model weights do not align with the estimation sample.", call. = FALSE)
+
+  model_weights <- if (inherits(model, "svyglm") && !is.null(model$survey.design)) {
+    survey::weights(model$survey.design)
+  } else {
+    tryCatch(stats::weights(model, type = "prior"), error = function(e) NULL)
   }
-  list(data = model_data, wts = model_weights %||% FALSE)
+
+  if (is.null(model_weights)) model_weights <- rep(1, nrow(model_data))
+  model_weights <- as.numeric(model_weights)
+  if (length(model_weights) != nrow(model_data)) {
+    stop("AME averaging weights do not align with the estimation sample.", call. = FALSE)
+  }
+  if (any(!is.finite(model_weights)) || any(model_weights < 0) || sum(model_weights) <= 0) {
+    stop("AME averaging weights must be finite, nonnegative, and have positive total weight.", call. = FALSE)
+  }
+
+  list(data = model_data, wts = model_weights)
 }
 
 #' run the standard marginaleffects implementation
@@ -73,10 +85,12 @@ run_avg_slopes <- function(model, newdata = NULL, wts = TRUE, numderiv = NULL) {
 #' compute AMEs with marginaleffects
 #'
 compute_ames_marginaleffects <- function(model) {
-  # marginaleffects supports svyglm directly. `wts = TRUE` asks the package to
-  # obtain fitted-model weights for the averaging step, while the model's own
-  # covariance matrix supplies survey-design uncertainty.
-  run_avg_slopes(model, wts = TRUE)
+  # marginaleffects supports svyglm directly, but automatic weight discovery is
+  # not reliable for all fitted survey objects. Supply the observed model frame
+  # and its sampling weights explicitly; vcov(model) still supplies the
+  # design-based covariance used by marginaleffects' delta method.
+  amed <- ame_model_data_and_weights(model)
+  run_avg_slopes(model, newdata = amed$data, wts = amed$wts)
 }
 # sample-end: code-ame-estimation
 
