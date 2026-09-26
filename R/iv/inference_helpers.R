@@ -69,6 +69,77 @@ clustered_joint_wald_test <- function(fit, terms, cluster, inference = NULL) {
   wald_test_from_vcov(fit, terms, inference$vcov)
 }
 
+clustered_lm_inference <- function(model, cluster) {
+  cluster <- as.vector(cluster)
+  n_clusters <- length(unique(cluster))
+  if (
+    length(cluster) != stats::nobs(model) ||
+      anyNA(cluster) ||
+      n_clusters < 2L
+  ) {
+    return(list(
+      vcov = NULL, coefficients = data.frame(), df = NA_real_,
+      status = "unavailable",
+      reason = "Cluster vector is incomplete or not aligned to fitted observations."
+    ))
+  }
+
+  vc <- tryCatch(
+    sandwich::vcovCL(model, cluster = cluster, type = "HC1"),
+    error = function(e) e
+  )
+  if (inherits(vc, "error")) {
+    return(list(
+      vcov = NULL, coefficients = data.frame(), df = NA_real_,
+      status = "unavailable", reason = conditionMessage(vc)
+    ))
+  }
+
+  df <- n_clusters - 1
+  coefficients <- tryCatch(
+    as.data.frame(lmtest::coeftest(model, vcov. = vc, df = df)),
+    error = function(e) data.frame()
+  )
+  list(
+    vcov = vc, coefficients = coefficients, df = df,
+    status = "estimated", reason = NA_character_
+  )
+}
+
+clustered_lm_joint_test <- function(model, terms, inference) {
+  if (
+    !length(terms) || is.null(inference$vcov) ||
+      !is.finite(inference$df) || inference$df <= 0
+  ) {
+    return(c(statistic = NA_real_, p.value = NA_real_, df = length(terms)))
+  }
+  coefficients <- tryCatch(stats::coef(model), error = function(e) NULL)
+  if (is.null(coefficients) || any(!terms %in% names(coefficients))) {
+    return(c(statistic = NA_real_, p.value = NA_real_, df = length(terms)))
+  }
+
+  out <- tryCatch(
+    car::linearHypothesis(
+      model, terms, vcov. = inference$vcov, test = "F",
+      error.df = inference$df, singular.ok = TRUE
+    ),
+    error = function(e) NULL
+  )
+  if (is.null(out) || nrow(out) < 2L) {
+    return(c(statistic = NA_real_, p.value = NA_real_, df = length(terms)))
+  }
+  f_col <- grep("^F$", names(out), value = TRUE)
+  p_col <- grep("Pr\(>F\)", names(out), value = TRUE)
+  if (!length(f_col) || !length(p_col)) {
+    return(c(statistic = NA_real_, p.value = NA_real_, df = length(terms)))
+  }
+  c(
+    statistic = suppressWarnings(as.numeric(out[[f_col[[1L]]]][[2L]])),
+    p.value = suppressWarnings(as.numeric(out[[p_col[[1L]]]][[2L]])),
+    df = length(terms)
+  )
+}
+
 joint_wald_estimability <- function(fit, terms, joint) {
   residual_df <- tryCatch(stats::df.residual(fit), error = function(e) NA_real_)
   if (!is.finite(residual_df) || residual_df <= 0) {

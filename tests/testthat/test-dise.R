@@ -1215,6 +1215,58 @@ test_that("dynamic event study recovers changes relative to the reference-year g
 })
 
 
+test_that("dynamic event-study inference matches standard HC1 cluster tests", {
+  set.seed(11)
+  districts <- paste0("d", 1:30)
+  years <- c("2006-07", "2007-08", "2008-09")
+  x <- expand.grid(
+    target_unit_2001 = districts, academic_year = years,
+    stringsAsFactors = FALSE
+  )
+  x$state_code_2001 <- rep(c("01", "02", "03"), each = 10)[match(x$target_unit_2001, districts)]
+  z <- setNames(seq(-1, 1, length.out = length(districts)), districts)
+  x$ling_distance_nonzero_mean <- z[x$target_unit_2001]
+  x$dise_emi_enrollment_share_total <-
+    2 * (x$academic_year == "2008-09") * x$ling_distance_nonzero_mean +
+    stats::rnorm(nrow(x), sd = 0.2)
+
+  out <- estimate_dise_dynamic_spec(
+    x, "ling_distance_nonzero_mean", "district_year", "2007-08"
+  )
+
+  terms <- dise_year_interaction_terms(x$academic_year, "ling_distance_nonzero_mean", "2007-08")
+  for (i in seq_len(nrow(terms))) {
+    x[[terms$term[[i]]]] <- ifelse(
+      x$academic_year == terms$academic_year[[i]],
+      x$ling_distance_nonzero_mean, 0
+    )
+  }
+  fit <- stats::lm(
+    stats::reformulate(
+      c("factor(target_unit_2001)", "factor(academic_year)", terms$term),
+      response = "dise_emi_enrollment_share_total"
+    ),
+    data = x
+  )
+  vc <- sandwich::vcovCL(fit, cluster = x$target_unit_2001, type = "HC1")
+  oracle <- lmtest::coeftest(
+    fit, vcov. = vc, df = length(unique(x$target_unit_2001)) - 1
+  )
+  term <- terms$term[[1L]]
+  row <- out$coefficients[out$coefficients$academic_year == terms$academic_year[[1L]], ]
+  expect_equal(row$estimate, unname(oracle[term, "Estimate"]))
+  expect_equal(row$std.error, unname(oracle[term, "Std. Error"]))
+  expect_equal(row$p.value, unname(oracle[term, "Pr(>|t|)"]))
+
+  joint <- car::linearHypothesis(
+    fit, terms$term, vcov. = vc, test = "F",
+    error.df = length(unique(x$target_unit_2001)) - 1, singular.ok = TRUE
+  )
+  expect_equal(out$summary$joint_distance_year_f[[1]], unname(joint[2, "F"]))
+  expect_equal(out$summary$joint_distance_year_p[[1]], unname(joint[2, "Pr(>F)"]))
+})
+
+
 test_that("DISE Anderson-Rubin grids remain cached objects but are not persisted artifacts", {
   constructs <- data.frame(construct_id = "emi", stringsAsFactors = FALSE)
   nss <- data.frame(status = "ok", stringsAsFactors = FALSE)

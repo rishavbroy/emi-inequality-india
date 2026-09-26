@@ -57,3 +57,15 @@ The relevant code is in the DISE input and measure modules, with shared report-g
 - [`EMI_MEASUREMENT.md`](EMI_MEASUREMENT.md)
 - [`IV_DIAGNOSTICS.md`](IV_DIAGNOSTICS.md)
 - [`DISTRICT_LINEAGE.md`](DISTRICT_LINEAGE.md)
+
+### Dynamic relevance inference
+
+The longitudinal DISE event studies cluster uncertainty by 2001 district. Because
+these regressions have hundreds of district clusters and high-dimensional district
+and year fixed effects, they use the conventional large-cluster HC1 covariance
+from `sandwich::vcovCL()`. Coefficient tests use `lmtest::coeftest()` with
+cluster degrees of freedom (`G - 1`), and joint event-study tests use
+`car::linearHypothesis()` with the same denominator degrees of freedom. The CR2
+small-cluster correction is reserved for the state-clustered IV specifications,
+where the number of clusters is modest and the correction is substantively
+important.

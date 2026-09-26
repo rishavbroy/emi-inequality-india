@@ -520,34 +520,34 @@ estimate_dise_dynamic_spec <- function(
   if (length(cluster) != stats::nobs(fit)) {
     stop("Dynamic DISE cluster vector is not aligned to fitted observations.", call. = FALSE)
   }
-  inf <- iv_clustered_inference(fit, cluster)
-  vc <- inf$vcov
+  # These event studies cluster by district, yielding hundreds of clusters.
+  # Use the standard large-cluster HC1 path here; CR2 is reserved for the
+  # state-clustered IV models where small-cluster correction is material.
+  inf <- clustered_lm_inference(fit, cluster)
   coef_rows <- safe_bind_rows(lapply(seq_len(nrow(terms)), function(i) {
     term <- terms$term[[i]]
-    estimate <- unname(stats::coef(fit)[term])
-    se <- if (!is.null(vc) && term %in% rownames(vc)) sqrt(vc[term, term]) else NA_real_
-    statistic <- estimate / se
+    row <- inf$coefficients[term, , drop = FALSE]
     data.frame(
       academic_year = terms$academic_year[[i]],
       reference_year = reference_year,
-      estimate = estimate,
-      std.error = se,
-      statistic = statistic,
-      p.value = if (is.finite(statistic)) 2 * stats::pnorm(abs(statistic), lower.tail = FALSE) else NA_real_,
+      estimate = if (nrow(row)) row[["Estimate"]][[1L]] else NA_real_,
+      std.error = if (nrow(row)) row[["Std. Error"]][[1L]] else NA_real_,
+      statistic = if (nrow(row)) row[["t value"]][[1L]] else NA_real_,
+      p.value = if (nrow(row)) row[["Pr(>|t|)"]][[1L]] else NA_real_,
       outcome = outcome,
       stringsAsFactors = FALSE
     )
   }))
-  joint <- clustered_joint_wald_test(fit, terms$term, cluster)
+  joint <- clustered_lm_joint_test(fit, terms$term, inf)
   pre_terms <- terms$term[terms$academic_year < reference_year]
   post_terms <- terms$term[terms$academic_year > reference_year]
   pre_joint <- if (length(pre_terms)) {
-    clustered_joint_wald_test(fit, pre_terms, cluster)
+    clustered_lm_joint_test(fit, pre_terms, inf)
   } else {
     c(statistic = NA_real_, p.value = NA_real_)
   }
   post_joint <- if (length(post_terms)) {
-    clustered_joint_wald_test(fit, post_terms, cluster)
+    clustered_lm_joint_test(fit, post_terms, inf)
   } else {
     c(statistic = NA_real_, p.value = NA_real_)
   }
