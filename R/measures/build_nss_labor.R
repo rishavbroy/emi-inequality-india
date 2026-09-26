@@ -193,7 +193,7 @@ estimate_nss_labor_district_outcome <- function(rows, design, rule, outcome_id) 
   support <- nss_labor_target_support_classification(nss_labor_domain_support(rows, domain$rows), rule)
   domain_design <- design[domain$rows, ]
   domain_design <- update(domain_design, .outcome = as.numeric(domain$value[domain$rows]))
-  result <- with_survey_lonely_psu_adjustment(survey::svyby(
+  result <- with_survey_lonely_psu(survey::svyby(
     ~.outcome, ~target_unit_2001, domain_design, survey::svymean,
     na.rm = TRUE, vartype = "se", keep.names = FALSE, drop.empty.groups = FALSE
   ))

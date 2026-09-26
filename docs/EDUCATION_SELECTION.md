@@ -16,7 +16,7 @@ Final mode should fail when the required survey design cannot be constructed; it
 
 ## Average marginal effects
 
-AMEs reported in the paper are evaluated on the fitted model's estimation sample with the corresponding survey weights. The preferred implementation should use one standard, verified marginal-effects method. If that method fails, final mode should report the failure rather than silently substitute a different approximation. Any custom delta-method calculation must include the full derivative of the nonlinear estimand with respect to the coefficient vector and use the full covariance matrix.
+AMEs reported in the paper are evaluated on the fitted model's estimation sample with the corresponding survey weights. The implementation uses `marginaleffects::avg_slopes()` directly on the fitted model and relies on its delta-method uncertainty. Final mode stops if that calculation fails; it does not substitute a local approximation.
 
 `config/fast.yml` may omit expensive paper quantities for iteration, but it should not redefine the final estimand.
 

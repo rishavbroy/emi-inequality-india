@@ -93,12 +93,13 @@ benchmark_ame_methods <- function(selection_model, cfg, sample_sizes = NULL) {
     set.seed(999)
     rows <- if (n < n_observations) sample(seq_len(n_observations), n) else seq_len(n_observations)
     newdata_sub <- data[rows, , drop = FALSE]
+    weights_sub <- if (is.numeric(amed$wts)) amed$wts[rows] else amed$wts
 
     safe_bind_rows(lapply(names(methods), function(label) {
       result <- NULL
       elapsed <- system.time({
         result <- tryCatch(
-          run_avg_slopes(selection_model, newdata_sub, amed$wts, numderiv = methods[[label]]),
+          run_avg_slopes(selection_model, newdata_sub, weights_sub, numderiv = methods[[label]]),
           error = function(e) e
         )
       })[["elapsed"]]

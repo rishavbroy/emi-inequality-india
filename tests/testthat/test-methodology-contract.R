@@ -11,7 +11,7 @@ test_that("selection probit uses the documented active covariate set", {
     stats::setNames(replicate(length(expected_vars), numeric(), simplify = FALSE), expected_vars)
   )
 
-  expect_equal(selection_probit_variables(selection_data), expected_vars)
+  expect_equal(selection_probit_variables(selection_data, require_all = TRUE), expected_vars)
 })
 
 test_that("selection survey design preserves documented stratification without global side effects", {

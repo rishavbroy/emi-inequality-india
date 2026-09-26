@@ -278,13 +278,7 @@ test_that("missingness diagnostics report enrolled schooling-benefit missingness
 })
 
 
-test_that("survey selection estimation restores lonely-PSU option", {
-  testthat::skip_if_not_installed("survey")
-  old <- getOption("survey.lonely.psu")
-  on.exit(options(survey.lonely.psu = old), add = TRUE)
-  options(survey.lonely.psu = "fail")
-
-  n <- 24L
+test_that("final selection estimation rejects an incomplete scientific specification", {
   dat <- data.frame(
     enrolled = factor(rep(c("Yes", "No"), 12), levels = c("Yes", "No")),
     AGE = rep(8:13, 4),
@@ -296,8 +290,24 @@ test_that("survey selection estimation restores lonely-PSU option", {
     stringsAsFactors = FALSE
   )
 
-  expect_silent(estimate_selection_probit(dat, list(mode = "final")))
+  expect_error(
+    estimate_selection_probit(dat, list(mode = "final")),
+    "missing required covariates"
+  )
+})
+
+test_that("survey option context restores caller settings", {
+  old <- options(survey.lonely.psu = "fail", survey.adjust.domain.lonely = FALSE)
+  on.exit(options(old), add = TRUE)
+
+  observed <- with_survey_lonely_psu(
+    c(getOption("survey.lonely.psu"), as.character(getOption("survey.adjust.domain.lonely"))),
+    lonely_psu = "average"
+  )
+
+  expect_identical(observed, c("average", "TRUE"))
   expect_identical(getOption("survey.lonely.psu"), "fail")
+  expect_identical(getOption("survey.adjust.domain.lonely"), FALSE)
 })
 
 test_that("selection sample takes schooling attributes from Block 5", {

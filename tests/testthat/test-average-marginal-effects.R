@@ -1,4 +1,4 @@
-test_that("AME fallback returns a typed out-of-pipeline row", {
+test_that("AME unavailable-model rows preserve their reason", {
   out <- compute_average_marginal_effects(
     list(status = "out_of_active_pipeline", reason = "No enrolled variable."),
     list(run_full_ame = FALSE)
@@ -9,19 +9,20 @@ test_that("AME fallback returns a typed out-of-pipeline row", {
   expect_equal(out$reason, "No enrolled variable.")
 })
 
-test_that("draft AME path uses toy glm coefficient fallback", {
+test_that("fast mode does not substitute coefficients for AMEs", {
   selection_data <- data.frame(
     enrolled = c(0, 1, 0, 1, 0, 1),
-    age = c(6, 7, 8, 9, 10, 11),
-    weight = rep(1, 6)
+    age = c(6, 7, 8, 9, 10, 11)
   )
   model <- stats::glm(enrolled ~ age, data = selection_data, family = stats::binomial(link = "probit"))
 
   out <- compute_average_marginal_effects(model, list(run_full_ame = FALSE))
 
-  expect_equal(out$method, rep("coefficient_fallback", length(stats::coef(model))))
-  expect_equal(out$status, rep("estimated", length(stats::coef(model))))
-  expect_equal(out$term, names(stats::coef(model)))
+  expect_equal(nrow(out), 1L)
+  expect_equal(out$method, "not_run")
+  expect_equal(out$status, "not_run")
+  expect_match(out$reason, "disabled outside the full analysis configuration")
+  expect_true(is.na(out$estimate))
 })
 
 test_that("AME results keep the active pipeline schema stable", {
@@ -38,8 +39,6 @@ test_that("AME results keep the active pipeline schema stable", {
     )
   )
 })
-
-
 
 test_that("AME formatting normalizes marginaleffects snake_case uncertainty columns", {
   out <- format_ame_results(data.frame(
@@ -62,14 +61,14 @@ test_that("AME formatting normalizes marginaleffects snake_case uncertainty colu
   expect_equal(out$p.value, 0.001)
   expect_equal(out$conf.low, 0.06)
   expect_equal(out$conf.high, 0.14)
+  expect_equal(out$method, "marginaleffects")
 })
 
-test_that("full AME path uses marginaleffects uncertainty when available", {
+test_that("full AME path uses marginaleffects uncertainty", {
   skip_if_not_installed("marginaleffects")
   selection_data <- data.frame(
     enrolled = c(0, 1, 0, 1, 0, 1, 1, 0),
-    age = c(6, 7, 8, 9, 10, 11, 12, 13),
-    weight = rep(1, 8)
+    age = c(6, 7, 8, 9, 10, 11, 12, 13)
   )
   model <- stats::glm(enrolled ~ age, data = selection_data, family = stats::binomial(link = "probit"))
 
@@ -77,9 +76,10 @@ test_that("full AME path uses marginaleffects uncertainty when available", {
 
   expect_true(any(is.finite(out$std.error)))
   expect_equal(unique(out$status), "estimated")
+  expect_equal(unique(out$method), "marginaleffects")
 })
 
-test_that("AME newdata uses model estimation rows and explicit model weights", {
+test_that("AME benchmark data are exactly the model estimation rows and fitted weights", {
   selection_data <- data.frame(
     enrolled = c(0, 1, 0, 1, 0, 1),
     age = c(6, 7, NA, 9, 10, 11),
@@ -96,17 +96,14 @@ test_that("AME newdata uses model estimation rows and explicit model weights", {
   amed <- ame_model_data_and_weights(model)
 
   expect_equal(nrow(amed$data), stats::nobs(model))
-  expect_equal(amed$wts, ".ame_weight")
-  expect_true(".ame_weight" %in% names(amed$data))
-  expect_equal(amed$data$.ame_weight, selection_data$weight[!is.na(selection_data$age)])
+  expect_equal(length(amed$wts), stats::nobs(model))
+  expect_equal(amed$wts, stats::weights(model))
 })
-
 
 test_that("programmatic selection formulas remain reconstructable", {
   selection_data <- data.frame(
     enrolled = c(0, 1, 0, 1, 0, 1, 1, 0),
-    AGE = 6:13,
-    weight = rep(1, 8)
+    AGE = 6:13
   )
   model <- estimate_selection_probit(selection_data, list(mode = "fast"))
 
@@ -122,7 +119,12 @@ test_that("AME benchmark exercises the production marginaleffects wrapper", {
     AGE = seq_len(40),
     weight = rep(c(1, 2), 20)
   )
-  model <- estimate_selection_probit(selection_data, list(mode = "fast"))
+  model <- stats::glm(
+    enrolled ~ AGE,
+    data = selection_data,
+    weights = weight,
+    family = stats::binomial(link = "probit")
+  )
 
   out <- benchmark_ame_methods(model, list(), sample_sizes = 20L)
 

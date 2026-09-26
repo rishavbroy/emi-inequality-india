@@ -1,7 +1,12 @@
-# Shared helpers for design-based survey estimation across consumption and labor.
+# Shared helpers for design-based survey estimation across consumption, labor,
+# and education-selection analyses.
 
-with_survey_lonely_psu_adjustment <- function(expr) {
-  old_options <- options(survey.lonely.psu = "adjust", survey.adjust.domain.lonely = TRUE)
+with_survey_lonely_psu <- function(expr, lonely_psu = c("adjust", "average"), adjust_domain = TRUE) {
+  lonely_psu <- match.arg(lonely_psu)
+  old_options <- options(
+    survey.lonely.psu = lonely_psu,
+    survey.adjust.domain.lonely = isTRUE(adjust_domain)
+  )
   on.exit(options(old_options), add = TRUE)
   withCallingHandlers(
     expr,
