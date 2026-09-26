@@ -615,7 +615,7 @@ paper_schooling_market_modelsummary_table <- function(table, name) {
     list(raw = "state_fe", clean = "State fixed effects", fmt = yes_no),
     list(raw = "controls", clean = "Predetermined controls", fmt = yes_no),
     list(raw = "nobs", clean = "Observations", fmt = 0),
-    list(raw = "state_membership_r2", clean = "State-membership $R^2$", fmt = 3)
+    list(raw = "state_membership_r2", clean = "State membership $R^2$", fmt = 3)
   )
 
 
@@ -687,7 +687,7 @@ paper_economic_conversion_modelsummary_table <- function(table, name) {
   )
   complement_labels <- c()
   for (predictor in c("all_child_emi", "private_emi")) {
-    prefix <- if (predictor == "all_child_emi") "All-child EMI" else "Private EMI"
+    prefix <- if (predictor == "all_child_emi") "EMI exposure among all children" else "Private EMI"
     for (i in seq_len(nrow(complement_registry))) {
       modifier <- complement_registry$modifier_id[[i]]
       term <- paste("interaction", predictor, modifier, sep = "__")

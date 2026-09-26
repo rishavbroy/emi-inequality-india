@@ -428,7 +428,7 @@ paper_schooling_welfare_treatment_labels <- function() {
   c(
     enrollment = "Enrollment",
     emi_among_enrolled = "EMI among enrolled",
-    emi_all_children = "All-child EMI",
+    emi_all_children = "EMI exposure among all children",
     public_emi_all_children = "Public EMI",
     private_emi_all_children = "Private EMI"
   )
@@ -592,7 +592,7 @@ paper_control_summary <- function(panel, control_registry = NULL) {
 
   get <- function(variable) if (variable %in% names(panel)) panel[[variable]] else numeric()
   rows <- c(
-    list(paper_summary_group("Panel B. Baseline Census-2001 covariates")),
+    list(paper_summary_group("Panel B. Baseline 2001 Census covariates")),
     lapply(seq_len(nrow(registry)), function(i) {
       paper_summary_row(
         registry$label[[i]], get(registry$variable[[i]]), "2001",

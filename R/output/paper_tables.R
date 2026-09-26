@@ -325,7 +325,7 @@ paper_economic_conversion_csv_data <- function(bridge, conversion) {
 
   complements <- paper_conversion_complement_csv_data(conversion)
   complement_label <- ifelse(
-    complements$predictor_id == "all_child_emi", "All-child EMI", "Private EMI"
+    complements$predictor_id == "all_child_emi", "EMI exposure among all children", "Private EMI"
   )
   complement_out <- data.frame(
     panel = "predetermined_complements",

@@ -149,7 +149,7 @@ emi_exposure_map_style <- function(title) {
 public_map_style <- function(variable) {
   switch(
     variable,
-    emi_exposure_all_children_0708 = emi_exposure_map_style("All-child EMI exposure"),
+    emi_exposure_all_children_0708 = emi_exposure_map_style("EMI exposure among all children"),
     emi_share_enrolled_0708 = emi_exposure_map_style("EMI share among enrolled"),
     public_emi_exposure_all_children_0708 = emi_exposure_map_style("Public EMI exposure"),
     private_emi_exposure_all_children_0708 = emi_exposure_map_style("Private EMI exposure"),
