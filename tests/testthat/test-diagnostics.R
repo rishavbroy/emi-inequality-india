@@ -795,3 +795,49 @@ test_that("named spatial residual diagnostics do not relabel another IV model", 
   expect_identical(spatial_iv_model(models, "consumption"), consumption)
   expect_null(spatial_iv_model(models, "gini"))
 })
+
+test_that("Anderson-Rubin point-null diagnostics do not require confidence-set inversion", {
+  skip_if_not_installed("clubSandwich")
+  set.seed(9917)
+  n <- 160L
+  z <- stats::rnorm(n)
+  d <- 0.15 * z + stats::rnorm(n)
+  y <- 0.4 * d + stats::rnorm(n)
+  panel <- data.frame(
+    y = y, d = d, z = z,
+    state_code_2001 = rep(sprintf("%02d", 1:16), each = 10),
+    stringsAsFactors = FALSE
+  )
+  spec <- data.frame(
+    specification_id = "ar_point_null",
+    outcome = "y", treatment = "d", fixed_effect = "none",
+    cluster = "state_code_2001", stringsAsFactors = FALSE
+  )
+  spec$controls <- I(list(character()))
+  spec$included_language_controls <- I(list(character()))
+  spec$excluded_instruments <- I(list("z"))
+
+  point <- estimate_anderson_rubin_spec(panel, spec, points = 41L, invert = FALSE)
+  full <- estimate_anderson_rubin_spec(panel, spec, points = 41L, invert = TRUE)
+
+  expect_equal(
+    point$summary$anderson_rubin_f_beta0,
+    full$summary$anderson_rubin_f_beta0,
+    tolerance = 1e-10
+  )
+  expect_equal(
+    point$summary$anderson_rubin_p_beta0,
+    full$summary$anderson_rubin_p_beta0,
+    tolerance = 1e-10
+  )
+  expect_equal(nrow(point$grid), 0L)
+  expect_identical(
+    point$summary$ar_95_contains_zero[[1L]],
+    point$summary$anderson_rubin_p_beta0[[1L]] >= 0.05
+  )
+  expect_true(all(is.na(point$summary[c(
+    "ar_95_lower", "ar_95_upper", "ar_95_empty", "ar_95_n_components",
+    "ar_95_disconnected", "ar_95_left_truncated", "ar_95_right_truncated",
+    "ar_95_components", "ar_95_information", "ar_95_sign_identified"
+  )])))
+})

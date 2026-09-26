@@ -104,7 +104,7 @@ weak_iv_inference_unavailable <- function(spec, effective, n, reason) {
 }
 
 estimate_weak_iv_specification <- function(
-    data, specification, cfg = list(), ar_points = 401L) {
+    data, specification, cfg = list(), ar_points = 401L, invert_ar = TRUE) {
   spec <- as_single_iv_specification(specification)
   treatment <- spec$treatment[[1L]]
   outcome <- spec$outcome[[1L]]
@@ -171,7 +171,9 @@ estimate_weak_iv_specification <- function(
     data = x
   )
   reduced_test <- clustered_joint_wald_test(reduced, excluded, cluster)
-  ar <- estimate_anderson_rubin_spec(x, spec, points = ar_points)
+  ar <- estimate_anderson_rubin_spec(
+    x, spec, points = ar_points, invert = invert_ar
+  )
   overidentification <- if (spec$n_excluded_instruments[[1L]] > spec$n_endogenous[[1L]]) {
     result <- ivreg_sargan_diagnostic(fit)
     cbind(

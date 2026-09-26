@@ -442,7 +442,8 @@ unmapped_language_decomposition <- function(
 estimate_weak_iv_outcomes <- function(
   panel,
   outcome = "real_log_consumption_change",
-  treatment = "emi_exposure_all_children_0708"
+  treatment = "emi_exposure_all_children_0708",
+  invert_ar = TRUE
 ) {
   data <- prepare_alternative_distance_panel(
     panel,
@@ -451,7 +452,9 @@ estimate_weak_iv_outcomes <- function(
   )
   registry <- iv_diagnostic_specification_registry(outcome = outcome, treatment = treatment)
   estimated <- lapply(seq_len(nrow(registry)), function(i) {
-    estimate_weak_iv_specification(data, registry[i, , drop = FALSE])
+    estimate_weak_iv_specification(
+      data, registry[i, , drop = FALSE], invert_ar = invert_ar
+    )
   })
   estimated <- Filter(Negate(is.null), estimated)
   list(

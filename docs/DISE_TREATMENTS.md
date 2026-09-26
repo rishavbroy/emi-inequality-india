@@ -69,3 +69,12 @@ cluster degrees of freedom (`G - 1`), and joint event-study tests use
 small-cluster correction is reserved for the state-clustered IV specifications,
 where the number of clusters is modest and the correction is substantively
 important.
+
+### Weak-IV computation in construct permutations
+
+The extended DISE construct permutations report the weak-IV-robust Anderson--Rubin
+test of `beta = 0`, but they do not report an inverted Anderson--Rubin confidence
+set. The DISE archive has no consumer or persisted output for the pointwise
+inversion grid, so these broad permutations skip that repeated computation.
+Publication-facing analyses that report Anderson--Rubin confidence sets continue
+to request full inversion with the same CR2/HTZ test convention.

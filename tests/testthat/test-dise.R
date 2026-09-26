@@ -384,7 +384,6 @@ test_that("DISE diagnostic saver returns the repository-standard output manifest
     first_stage = empty,
     first_stage_coefficients = empty,
     weak_iv_outcomes = empty,
-    anderson_rubin_grid = empty,
     overidentification = empty,
     monotonicity_summary = empty,
     monotonicity_bins = empty,
@@ -1269,40 +1268,13 @@ test_that("dynamic event-study inference matches many-cluster HC1 tests", {
 })
 
 
-test_that("DISE Anderson-Rubin grids remain cached objects but are not persisted artifacts", {
-  constructs <- data.frame(construct_id = "emi", stringsAsFactors = FALSE)
-  nss <- data.frame(status = "ok", stringsAsFactors = FALSE)
-  branch <- list(
-    first_stage = data.frame(), first_stage_coefficients = data.frame(),
-    weak_iv_outcomes = data.frame(),
-    anderson_rubin_grid = data.frame(
-      construct_id = "emi", specification_id = "state_main", beta = c(-1, 0, 1),
-      p.value = c(0.2, 0.8, 0.2), stringsAsFactors = FALSE
-    ),
-    overidentification = data.frame(), monotonicity_summary = data.frame(),
-    monotonicity_bins = data.frame(), monotonicity_state_slopes = data.frame(),
-    balance = data.frame(), joint_balance = data.frame()
-  )
-  permutations <- assemble_dise_iv_permutations(constructs, nss, list(branch))
-  expect_equal(nrow(permutations$anderson_rubin_grid), 3L)
-
-  empty <- data.frame()
-  archive <- list(year_summary = empty, treatment_summary = empty, publication_checks = empty)
-  dir <- tempfile("dise-ar-retention-")
-  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
-  manifest <- save_dise_diagnostics(archive, permutations, empty, empty, dir = dir)
-
-  expect_false("dise_anderson_rubin_grid.csv" %in% basename(manifest$path))
-  expect_false(file.exists(file.path(dir, "dise_anderson_rubin_grid.csv")))
-})
-
 test_that("DISE diagnostic saver includes longitudinal outputs", {
   empty <- data.frame()
   archive <- list(year_summary = empty, treatment_summary = empty, publication_checks = empty)
   permutations <- list(
     construct_registry = empty, nss_validation = empty,
     first_stage = empty, first_stage_coefficients = empty,
-    weak_iv_outcomes = empty, anderson_rubin_grid = empty,
+    weak_iv_outcomes = empty,
     overidentification = empty, monotonicity_summary = empty,
     monotonicity_bins = empty, monotonicity_state_slopes = empty,
     balance = empty, joint_balance = empty

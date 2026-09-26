@@ -470,7 +470,8 @@ estimate_bounded_exclusion_ar_profile_spec <- function(
   profile
 }
 
-estimate_anderson_rubin_spec <- function(data, specification, level = 0.95, points = 401L) {
+estimate_anderson_rubin_spec <- function(
+    data, specification, level = 0.95, points = 401L, invert = TRUE) {
   specification <- as_single_iv_specification(specification)
   controls <- unlist(specification$controls[[1]], use.names = FALSE)
   included <- unlist(specification$included_language_controls[[1]], use.names = FALSE)
@@ -506,12 +507,20 @@ estimate_anderson_rubin_spec <- function(data, specification, level = 0.95, poin
     x, outcome, treatment, excluded, included, controls, fixed_effect,
     cluster = cluster, beta0 = 0
   )
-  grid <- anderson_rubin_grid(
-    x, outcome, treatment, excluded, included, controls, fixed_effect,
-    cluster = cluster, level = level, points = points
-  )
-  components <- anderson_rubin_acceptance_components(grid)
-  grid$specification_id <- specification$specification_id
+  grid <- if (isTRUE(invert)) {
+    anderson_rubin_grid(
+      x, outcome, treatment, excluded, included, controls, fixed_effect,
+      cluster = cluster, level = level, points = points
+    )
+  } else {
+    data.frame()
+  }
+  components <- if (nrow(grid)) {
+    anderson_rubin_acceptance_components(grid)
+  } else {
+    data.frame()
+  }
+  if (nrow(grid)) grid$specification_id <- specification$specification_id
 
   if (nrow(components)) {
     components$lower <- num(components$lower)
@@ -525,11 +534,21 @@ estimate_anderson_rubin_spec <- function(data, specification, level = 0.95, poin
     components$contains_zero <- as.logical(plain_chr(components$contains_zero))
   }
 
-  bounded_interval <- nrow(components) == 1L &&
+  bounded_interval <- isTRUE(invert) && nrow(components) == 1L &&
     !components$touches_left_grid_edge[[1]] &&
     !components$touches_right_grid_edge[[1]]
-  contains_zero <- if (nrow(components)) any(components$contains_zero) else FALSE
-  information <- classify_anderson_rubin_information(components)
+  contains_zero <- if (isTRUE(invert)) {
+    if (nrow(components)) any(components$contains_zero) else FALSE
+  } else if (is.finite(ar0[["p.value"]])) {
+    ar0[["p.value"]] >= 1 - level
+  } else {
+    NA
+  }
+  information <- if (isTRUE(invert)) {
+    classify_anderson_rubin_information(components)
+  } else {
+    NA_character_
+  }
 
   list(
     summary = data.frame(
@@ -538,17 +557,25 @@ estimate_anderson_rubin_spec <- function(data, specification, level = 0.95, poin
       anderson_rubin_p_beta0 = ar0[["p.value"]],
       ar_95_lower = if (bounded_interval) components$lower[[1]] else NA_real_,
       ar_95_upper = if (bounded_interval) components$upper[[1]] else NA_real_,
-      ar_95_empty = !nrow(components),
-      ar_95_n_components = nrow(components),
-      ar_95_disconnected = nrow(components) > 1L,
+      ar_95_empty = if (isTRUE(invert)) !nrow(components) else NA,
+      ar_95_n_components = if (isTRUE(invert)) nrow(components) else NA_integer_,
+      ar_95_disconnected = if (isTRUE(invert)) nrow(components) > 1L else NA,
       ar_95_contains_zero = contains_zero,
       ar_95_grid_accepted_min = if (nrow(components)) min(components$lower) else NA_real_,
       ar_95_grid_accepted_max = if (nrow(components)) max(components$upper) else NA_real_,
-      ar_95_left_truncated = nrow(components) && any(components$touches_left_grid_edge),
-      ar_95_right_truncated = nrow(components) && any(components$touches_right_grid_edge),
-      ar_95_components = format_anderson_rubin_components(components),
+      ar_95_left_truncated = if (isTRUE(invert)) {
+        nrow(components) > 0L && any(components$touches_left_grid_edge)
+      } else NA,
+      ar_95_right_truncated = if (isTRUE(invert)) {
+        nrow(components) > 0L && any(components$touches_right_grid_edge)
+      } else NA,
+      ar_95_components = if (isTRUE(invert)) {
+        format_anderson_rubin_components(components)
+      } else NA_character_,
       ar_95_information = information,
-      ar_95_sign_identified = information %in% c("positive_sign_only", "negative_sign_only"),
+      ar_95_sign_identified = if (isTRUE(invert)) {
+        information %in% c("positive_sign_only", "negative_sign_only")
+      } else NA,
       n = nrow(x), status = "estimated", reason = NA_character_,
       stringsAsFactors = FALSE
     ),

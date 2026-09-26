@@ -254,8 +254,8 @@ diagnose_dise_iv_construct <- function(
   if (!variable %in% names(panel)) {
     return(list(
       first_stage = data.frame(), first_stage_coefficients = data.frame(),
-      weak_iv_outcomes = data.frame(), anderson_rubin_grid = data.frame(),
-      overidentification = data.frame(), monotonicity_summary = data.frame(),
+      weak_iv_outcomes = data.frame(), overidentification = data.frame(),
+      monotonicity_summary = data.frame(),
       monotonicity_bins = data.frame(), monotonicity_state_slopes = data.frame(),
       balance = data.frame(), joint_balance = data.frame()
     ))
@@ -264,15 +264,18 @@ diagnose_dise_iv_construct <- function(
   out <- list(
     first_stage = fs$summary,
     first_stage_coefficients = fs$coefficients,
-    weak_iv_outcomes = data.frame(), anderson_rubin_grid = data.frame(),
-    overidentification = data.frame(), monotonicity_summary = data.frame(),
+    weak_iv_outcomes = data.frame(), overidentification = data.frame(),
+    monotonicity_summary = data.frame(),
     monotonicity_bins = data.frame(), monotonicity_state_slopes = data.frame(),
     balance = data.frame(), joint_balance = data.frame()
   )
   if (!identical(construct$analysis_scope[[1]], "structural_iv")) return(out)
-  weak <- estimate_weak_iv_outcomes(panel, outcome = outcome, treatment = variable)
+  # DISE consumes the beta-zero AR test but has no confidence-set/grid output.
+  # Skip inversion across this broad construct-by-specification diagnostic.
+  weak <- estimate_weak_iv_outcomes(
+    panel, outcome = outcome, treatment = variable, invert_ar = FALSE
+  )
   out$weak_iv_outcomes <- add_dise_construct_id(weak$summary, construct, "dise_weak_iv")
-  out$anderson_rubin_grid <- add_dise_construct_id(weak$ar_grid, construct, "dise_weak_iv")
   out$overidentification <- add_dise_construct_id(
     weak$overidentification, construct, "dise_weak_iv"
   )
@@ -307,7 +310,6 @@ assemble_dise_iv_permutations <- function(constructs, nss_validation, branches) 
     first_stage = collect("first_stage"),
     first_stage_coefficients = collect("first_stage_coefficients"),
     weak_iv_outcomes = collect("weak_iv_outcomes"),
-    anderson_rubin_grid = collect("anderson_rubin_grid"),
     overidentification = collect("overidentification"),
     monotonicity_summary = collect("monotonicity_summary"),
     monotonicity_bins = collect("monotonicity_bins"),
