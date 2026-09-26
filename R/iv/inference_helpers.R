@@ -69,6 +69,22 @@ clustered_joint_wald_test <- function(fit, terms, cluster, inference = NULL) {
   wald_test_from_vcov(fit, terms, inference$vcov)
 }
 
+lmtest_coefficient_frame <- function(test) {
+  if (is.null(test) || length(dim(test)) != 2L || ncol(test) != 4L) {
+    return(data.frame())
+  }
+  out <- data.frame(
+    Estimate = suppressWarnings(as.numeric(test[, 1L])),
+    `Std. Error` = suppressWarnings(as.numeric(test[, 2L])),
+    statistic = suppressWarnings(as.numeric(test[, 3L])),
+    p.value = suppressWarnings(as.numeric(test[, 4L])),
+    check.names = FALSE,
+    stringsAsFactors = FALSE
+  )
+  rownames(out) <- rownames(test)
+  out
+}
+
 many_cluster_lm_inference <- function(model, cluster) {
   cluster <- as.vector(cluster)
   n_clusters <- length(unique(cluster))
@@ -97,7 +113,7 @@ many_cluster_lm_inference <- function(model, cluster) {
 
   df <- n_clusters - 1
   coefficients <- tryCatch(
-    as.data.frame(lmtest::coeftest(model, vcov. = vc, df = df)),
+    lmtest_coefficient_frame(lmtest::coeftest(model, vcov. = vc, df = df)),
     error = function(e) data.frame()
   )
   list(

@@ -1254,9 +1254,11 @@ test_that("dynamic event-study inference matches many-cluster HC1 tests", {
   )
   term <- terms$term[[1L]]
   row <- out$coefficients[out$coefficients$academic_year == terms$academic_year[[1L]], ]
-  expect_equal(row$estimate, unname(oracle[term, "Estimate"]))
-  expect_equal(row$std.error, unname(oracle[term, "Std. Error"]))
-  expect_equal(row$p.value, unname(oracle[term, "Pr(>|t|)"]))
+  oracle_row <- lmtest_coefficient_frame(oracle)[term, , drop = FALSE]
+  expect_equal(row$estimate, oracle_row$Estimate)
+  expect_equal(row$std.error, oracle_row$`Std. Error`)
+  expect_equal(row$statistic, oracle_row$statistic)
+  expect_equal(row$p.value, oracle_row$p.value)
 
   joint <- car::linearHypothesis(
     fit, terms$term, vcov. = vc, test = "F",

@@ -532,8 +532,8 @@ estimate_dise_dynamic_spec <- function(
       reference_year = reference_year,
       estimate = if (nrow(row)) row[["Estimate"]][[1L]] else NA_real_,
       std.error = if (nrow(row)) row[["Std. Error"]][[1L]] else NA_real_,
-      statistic = if (nrow(row)) row[["t value"]][[1L]] else NA_real_,
-      p.value = if (nrow(row)) row[["Pr(>|t|)"]][[1L]] else NA_real_,
+      statistic = if (nrow(row)) row[["statistic"]][[1L]] else NA_real_,
+      p.value = if (nrow(row)) row[["p.value"]][[1L]] else NA_real_,
       outcome = outcome,
       stringsAsFactors = FALSE
     )
