@@ -49,7 +49,7 @@ paper_map_boundary_note <- function() {
   paste(
     "@datameetCensus2001Districts and @naturalearthDisputedBoundaries provide geospatial data.",
     "District boundaries reflect 2001 geography.",
-    "Politically disputed regions are identified using Natural Earth, and those which lack data—Aksai Chin, Azad Kashmir, Gilgit-Baltistan, the Trans-Karakoram Tract, and Siachen Glacier—are colored light gray.",
+    "Politically disputed regions are identified using Natural Earth, and those for which we lack data—Aksai Chin, Azad Kashmir, Gilgit-Baltistan, the Trans-Karakoram Tract, and Siachen Glacier—are colored light gray.",
     "Their inclusion does not imply a position on territorial disputes."
   )
 }
