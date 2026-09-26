@@ -1,27 +1,60 @@
 # Application samples
 
-Application samples are generated from the current paper and current R files. The single configuration file, `samples.yml`, specifies writing-sample section IDs and coding-sample marker IDs. Generated working files are written to `.work/`; every other file under `application-samples/`, including the reviewer-facing PDFs in `output/`, is intended to be tracked.
+Application samples are generated from the current paper and R code. [`samples.yml`](samples.yml) is the single configuration file for sample content, identity variants, paper/repository links, and selected code outputs.
 
-Writing excerpts use the ordinary Quarto section IDs already present in `paper/paper.qmd`. The 5-page version contains the Introduction. The 10-page version adds the complete main-text sequence on measuring EMI access, institutional factors, and social factors. The 15-page version also includes the persistence and reported-language subsections from the inherited-linguistic-conditions section. The full variant uses the complete paper. Excerpts suppress the repeated bibliography while retaining rendered in-text citations; the linked full paper contains complete references. Named and anonymous versions use the same substantive selections and comparable first-page notices so anonymity does not alter pagination.
+## Outputs
 
-Coding samples continue to use `sample-start`/`sample-end` comments because R files do not have an equivalent section-ID system. The short sample covers survey-weighted enrollment, average marginal effects, weak-identification diagnostics and Anderson--Rubin inference, and the linked temporal and state-sector price construction used for real consumption. The long sample adds cross-vintage district matching and residual Moran diagnostics for the IV and first-stage models. Both append paper-formatted empirical outputs from the same analyses and are rendered in named and anonymous forms.
+The build writes named and anonymous variants under [`output/`](output/):
 
-Run:
+- writing samples targeting 5, 10, and 15 pages plus the full paper;
+- short and long coding samples.
+
+Generated PDFs are reviewer-facing publication files. Intermediate Markdown/LaTeX files are temporary and are not separately maintained documents.
+
+## Content selection
+
+Writing samples select ordinary Quarto section IDs from `paper/paper.qmd`. Their content therefore remains part of the paper rather than being copied into parallel sample documents.
+
+Coding samples use paired `sample-start:` / `sample-end:` comments in active R files because R has no document-section analogue. Marker IDs are declared in `samples.yml`, and validation requires each selected marker pair to be unique and well formed.
+
+## Build
+
+From the repository root:
 
 ```sh
 make samples
 ```
 
-or run the ordinary full build, which includes application samples by default:
+The standard complete build also renders samples unless sample rendering is explicitly disabled for a maintainer-only run. Build flags belong in [`../docs/BUILD.md`](../docs/BUILD.md).
 
-```sh
-scripts/run_full_build.sh
-```
+## Named and anonymous variants
 
-The first-page writing-sample notice is generated from the manifest and the full-paper section labels. The full-paper render keeps `paper.tex` and makes a separate XeLaTeX label pass that writes `paper-reference-labels.aux`. Before an excerpt is rendered, references to omitted sections, tables, figures, and equations are replaced with their current full-paper labels from that file. Named copies link the displayed label to the hosted paper; anonymous copies display the same label without an identity-bearing URL. References whose targets remain in the excerpt stay as ordinary Quarto cross-references. The Pandoc filter retains the selected sections and their ancestor headings and resets LaTeX counters so retained section headings, tables, figures, and equations keep their full-paper numbers.
+Both variants are generated from the same selected content. Named samples may link to the hosted paper, repository, Makefile, and build script. Anonymous samples omit identifying names and repository URLs and are checked against the forbidden strings declared in `samples.yml`.
 
-The 5-, 10-, and 15-page values in `samples.yml` are current page targets. During the remaining formatting pass, a mismatch is reported as a `WARNING:` line in the build output while the rendered PDF is retained and the build continues. The targets can return to strict validation once sample presentation is settled.
+Identity changes belong in the manifest/rendering helpers, not in duplicate prose files.
 
-Named paper and application-sample PDFs are published from the tracked rendered files at <https://rishavbroy.github.io/emi-inequality-india/>. The Pages job does not rerun the empirical build. Anonymous variants are intended for direct application uploads and are deliberately not published on the identity-revealing Pages site.
+## Writing-sample numbering and references
 
-Coding samples use Pandoc's `tango` syntax highlighting with `fvextra` line wrapping and a smaller code font. Tables are included from the same generated LaTeX files used by the paper. Each selected table declares the paper cross-reference ID whose number it should retain; this is distinct from any internal label in the included TeX, which Quarto may treat as a subtable when the paper chunk itself owns the displayed table number. Float barriers keep later outputs from passing earlier ones. Figures reuse the paper's generated PDF files.
+Writing excerpts preserve the current full paper's section, table, figure, and equation numbering. References to omitted material are displayed using the current full-paper labels rather than a second hard-coded numbering scheme. This keeps excerpts synchronized when the paper structure changes.
+
+The low-level LaTeX/reference extraction is an implementation detail of the renderer; maintainers normally change section selections only in `samples.yml`.
+
+## Coding-sample outputs
+
+Selected code excerpts may include paper-formatted tables or figures listed under `coding_outputs`. A selected LaTeX table declares the paper cross-reference whose displayed number it should retain. Output composition does not re-estimate results independently of the main analysis.
+
+## Page-count policy
+
+Writing-sample target lengths are checked after rendering. During the typography pass, a mismatch is a visible warning rather than a release failure. Strict enforcement should be enabled only after the paper/sample layout is considered final.
+
+## Publication
+
+GitHub Pages publishes the tracked reviewer-facing PDFs from this repository; it does not rerun restricted-data analyses in CI. Anonymous files are published only when that is explicitly intended by the Pages configuration and review policy.
+
+## Maintenance
+
+- Change writing/code selections in `samples.yml`.
+- Add or remove code markers in the active R implementation that the sample should display.
+- Keep selected paper/table labels stable through ordinary Quarto IDs rather than sample-only IDs.
+- Test anonymity, marker uniqueness, numbering behavior, and output existence as behavioral invariants; avoid tests that freeze explanatory prose.
+- Review generated PDFs after changes to selections, typography, or paper numbering.
