@@ -1,101 +1,135 @@
 # Inequality in a Potential Equalizer of Opportunity
 
-This repository contains the code, metadata, processed outputs, and build instructions for my paper, "Inequality in a Potential Equalizer of Opportunity: Variation in the Accessibility and Net Benefits of English-Medium Instruction in India."
+This repository contains the research code, processed outputs, paper source, and replication materials for *Inequality in a Potential Equalizer of Opportunity: Variation in the Accessibility and Net Benefits of English-Medium Instruction in India*. The project studies how inherited linguistic conditions, access to English-medium instruction (EMI), and local economic conditions vary across Indian districts and relate to inequality.
 
-For build and replication commands, see [`docs/BUILD.md`](docs/BUILD.md) and [`REPLICATION.md`](REPLICATION.md).
-A raw-data-less district analysis replication is available with `make replicate-processed`; `make verify-processed-replication` checks its shared empirical targets against the full-source target store. Full reconstruction still requires the source files documented in `REPLICATION.md`.
+[Paper](paper/paper.pdf) · [Replication guide](REPLICATION.md) · [Data availability](DATA_AVAILABILITY.md) · [Application samples](application-samples/README.md)
 
-## Key files
+A browser-hosted copy of the current paper is available at <https://rishavbroy.github.io/emi-inequality-india/paper.pdf>.
 
-- **[`paper/paper.pdf`](paper/paper.pdf): Current paper.** Its tables, figures, and reported quantities are generated from the repository. A direct browser-hosted copy is available at <https://rishavbroy.github.io/emi-inequality-india/paper.pdf>.
-- [`paper/paper.qmd`](paper/paper.qmd): Current paper source.
-- [`archive/legacy-paper-drafts/2026-09-previous-final/`](archive/legacy-paper-drafts/2026-09-previous-final/): Frozen previous paper source and PDF.
-- [`REPLICATION.md`](REPLICATION.md): Replication guide.
-- [`DATA_AVAILABILITY.md`](DATA_AVAILABILITY.md): Source-by-source data availability and redistribution notes.
+## Research overview
 
-- [`docs/plan/roadmap.md`](docs/plan/roadmap.md): Current empirical roadmap and source-first priorities.
-- [`application-samples/samples.yml`](application-samples/samples.yml): Single tracked configuration for writing and coding samples.
-- [`application-samples/output/RishavRoy_WritingSample_10pg.pdf`](application-samples/output/RishavRoy_WritingSample_10pg.pdf): Named 10-page writing sample generated from current-paper section IDs.
-- [`application-samples/output/RishavRoy_CodeSample_Long.pdf`](application-samples/output/RishavRoy_CodeSample_Long.pdf): Named long code sample generated from selected R-file markers.
+The analysis uses Census-2001 districts as the principal geographic unit. It combines NSS education and consumer-expenditure surveys, Census language and socioeconomic tables, DISE/UDISE schooling data, modern HCES data, reviewed district-lineage harmonization, and spatial and temporal price adjustments.
 
-## Research question
+The empirical work examines three margins: inherited linguistic conditions, access to EMI, and local economic conditions associated with the potential gains from EMI. The repository contains descriptive analysis, survey-weighted models, selection analysis, instrumental-variable specifications, weak-identification-robust inference, historical validation, district-lineage checks, and robustness analyses. The paper is the primary guide to the economic argument and interpretation; the documentation linked below describes the implementation in more detail.
 
-How are inherited linguistic conditions, access to English-medium instruction (EMI), and the later local economic setting distributed across Indian districts, and how do these conditions relate to inequality?
+## Start here
 
-## Empirical design and current status
+**To read the research:** open [`paper/paper.pdf`](paper/paper.pdf) or the [browser-hosted paper](https://rishavbroy.github.io/emi-inequality-india/paper.pdf).
 
-The analytical geography is Census-2001 districts. The pipeline combines NSS education surveys, historical NSS consumer-expenditure rounds, modern HCES 2022-23/2023-24, Census language and socioeconomic tables, reviewed district lineage, and price indices. District-level EMI exposure is instrumented with population-weighted linguistic distance from Hindi, with alternative constructions, historical balance checks, weak-IV-robust inference, monotonicity diagnostics, and extensive source-specific mechanism diagnostics. Consumption outcomes are price-adjusted and estimated under their survey designs before harmonization to the analytical geography.
+**To reproduce the analysis:** start with [`REPLICATION.md`](REPLICATION.md) and [`DATA_AVAILABILITY.md`](DATA_AVAILABILITY.md). The former gives the supported replication paths and system requirements; the latter records source-by-source access and redistribution information.
 
-The paper text can lag the active pipeline, so empirical claims should be checked against generated tables/diagnostics and the current roadmap rather than older prose. [`docs/plan/roadmap.md`](docs/plan/roadmap.md) records the remaining source-first work.
+**To inspect the code:** start with [`_targets.R`](_targets.R), [`R/`](R/), and [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). The target script defines the main research computation, while the architecture guide explains the module boundaries and analysis-design registries.
 
-Current build status:
+**To review application materials:** see [`application-samples/output/`](application-samples/output/) for the generated PDFs and [`application-samples/README.md`](application-samples/README.md) for how they are selected and rendered.
 
-- report values are generated through [`R/output/build_report_values.R`](R/output/build_report_values.R) and checked before final rendering;
-- accepted historical refactor warnings are frozen in the refactor-proof tag rather than enforced in active builds;
-- lengthy diagnostics and benchmarks are optional, not part of ordinary public builds;
-- several optional diagnostic/benchmarking artifacts are still investigative rather than final empirical claims, especially district-matching diagnostics, fuzzy-matching benchmarks, AME benchmarks, and experimental spatial-IV attempts.
+## Reproducing the project
 
-## For faculty reviewers and hiring/admissions committees
+There are two supported replication paths.
 
-I believe the [current paper](paper/paper.pdf) displays multiple traits that are essential to high-quality economics research: a commitment to institutional knowledge and literature reviews, a deep understanding of econometrics, and meticulous empirical judgement.
+### Processed-data replication
 
-This repository, on the other hand, is intended to signal more than just one PDF. Its current state contains the following:
+The tracked processed inputs can reproduce the district-level consumption, conversion-gradient, linguistic-distance first-stage, and weak-IV analyses without the restricted raw microdata used elsewhere in the project.
 
-- **Completed refactor proof.** The legacy-to-Quarto migration and parity machinery has been frozen under `archive/refactoring/` and the `archive/refactoring-complete` branch/tag workflow. Active paper and research modules are now edited directly.
-- **Targets-based research build.** [`_targets.R`](_targets.R) organizes raw-data readers, district tracking, measure construction, IV/probit models, figures, tables, diagnostics, report rendering, and application samples.
-- **Verified final outputs.** [`scripts/run_full_build.sh`](scripts/run_full_build.sh) checks source whitespace without modifying the working tree, runs tests and final checks, optionally runs extended research checks and benchmarks, records machine-readable build status, and packages `review.zip`.
-- **Review archives without raw data.** [`scripts/make_review_archive.sh`](scripts/make_review_archive.sh) packages source, rendered outputs, and selected research checks into `review.zip` while omitting local raw data and caches.
-- **Application-sample automation.** Writing and coding samples are generated from the same source and target build used for the paper rather than hand-maintained as separate PDFs.
-
-## Repository map
-
-- [`R/`](R/): function-based research code.
-- [`R/diagnostics/`](R/diagnostics/): core and extended research checks.
-- [`R/benchmarking/`](R/benchmarking/): opt-in benchmarking/tuning target helpers.
-- [`config/`](config/): `fast.yml` for iteration and `final.yml` for paper/release calculations.
-- [`_targets.R`](_targets.R): dependency graph for data cleaning, modeling, diagnostics, benchmarks, figures, tables, report rendering, and application samples.
-- [`paper/`](paper/): Quarto source and rendered paper output.
-- [`application-samples/`](application-samples/): tracked sample configuration, section-selection filter, documentation, and generated writing/coding samples.
-- `outputs/build/`: short-lived build metadata and warnings, regenerated by full builds and intentionally untracked.
-- `outputs/diagnostics/public/`: short-lived core research checks, regenerated by builds and intentionally untracked.
-- [`outputs/diagnostics/extended/`](outputs/diagnostics/extended/): opt-in diagnostic artifacts preserved across ordinary public builds.
-- [`outputs/benchmarking/`](outputs/benchmarking/): opt-in method/timing/tuning benchmark artifacts.
-- [`data/metadata/`](data/metadata/): tracked source catalog, manifests, checksums, current crosswalk, and district-lineage adjudication ledgers; see [`data/metadata/README.md`](data/metadata/README.md).
-- [`docs/DISTRICT_LINEAGE.md`](docs/DISTRICT_LINEAGE.md): durable data and methodology handoff for the Census 2001 district panel.
-- [`docs/EDUCATION_SELECTION.md`](docs/EDUCATION_SELECTION.md): enrollment selection and average marginal effects.
-- [`docs/SPATIAL_ANALYSIS.md`](docs/SPATIAL_ANALYSIS.md): spatial weights, Moran tests, and the boundary around experimental spatial IV work.
-- [`data/processed/`](data/processed/): processed analysis exports and reproducible processed geography used downstream.
-- `data/raw/`, `data/raw_future/`, `data/interim/`: local-only, gitignored data folders.
-- [`docs/`](docs/): methodological notes and project planning documents.
-- [`archive/`](archive/): legacy drafts, rendered artifacts, source samples, and extracted legacy Rmd chunks.
-
-## Quickstart
-
-```bash
-make restore   # restore the R library recorded in renv.lock
-make test      # unit tests
-make pipeline  # final research targets, without samples or poster
-make paper     # render and validate the paper
-make samples   # application samples
-make all       # ordinary full build; equivalent to scripts/run_full_build.sh
+```sh
+make restore
+make replicate-processed
 ```
 
-The full command reference and the distinction between `config/fast.yml`, `config/final.yml`, and optional build families are in [`docs/BUILD.md`](docs/BUILD.md).
+If a full-source `_targets/` store is also available, compare the shared reported results from the processed-data build with the full analysis using:
 
-Raw data are not tracked. The full build first runs `make prepare-data`, which downloads any missing Census tables listed in the Census acquisition manifests. Sources that cannot be redistributed or downloaded automatically must be placed at the paths in [`data/metadata/file_manifest.csv`](data/metadata/file_manifest.csv); see [`DATA_AVAILABILITY.md`](DATA_AVAILABILITY.md).
-
-For the usual no-samples review run used during development:
-
-```bash
-caffeinate -dimsu bash scripts/run_full_build.sh \
-  --no-samples \
-  --with-extended-diagnostics \
-  --with-benchmarks \
-  2>&1 | tee full_output.txt
+```sh
+make verify-processed-replication
 ```
 
-The ordinary script invocation includes application samples but does not render the conference poster. Add `--with-poster` when that output is wanted. Use `--from-clean-slate` only when you specifically want to destroy the `{targets}` store and generated outputs before reconstruction.
+The processed-data build uses `_targets_processed.R` and its own `_targets_processed/` store, so it does not modify the full analysis store. See [`REPLICATION.md`](REPLICATION.md) for its exact scope and exclusions.
 
-## Behavior without raw data
+### Full reconstruction
 
-The pipeline should fail gracefully when required raw data are absent: it reads [`data/metadata/file_manifest.csv`](data/metadata/file_manifest.csv), checks the listed paths, and reports the exact missing files before attempting to call readers like `read_sav()`, `read_excel()`, or `sf::st_read()`. A cryptic raw-reader path error should be treated as a bug.
+The ordinary complete build is:
+
+```sh
+make all
+```
+
+`make all` uses `config/final.yml`, restores the project library from `renv.lock`, prepares automatically retrievable inputs, runs the validated research build, renders the paper and application samples, performs final checks, verifies the processed-data replication against the full analysis, and writes `review.zip`. Inputs that cannot be redistributed or downloaded automatically must already be present at the paths documented in [`REPLICATION.md`](REPLICATION.md) and [`data/metadata/file_manifest.csv`](data/metadata/file_manifest.csv).
+
+A fresh clone has no `{targets}` store. Ordinary builds keep the store and let `{targets}` rerun only computations that are out of date; use the destructive clean-slate option only for an explicit reconstruction check. Advanced build modes and options are documented in [`docs/BUILD.md`](docs/BUILD.md).
+
+## Common commands
+
+| Command | Purpose |
+|---|---|
+| `make restore` | Restore the R project library from `renv.lock` |
+| `make test` | Run the unit tests |
+| `make pipeline` | Run the final research targets without application samples or the poster |
+| `make pipeline-fast` | Run the faster development configuration |
+| `make paper` | Build and validate the paper without application samples |
+| `make samples` | Build the named and anonymous application samples |
+| `make replicate-processed` | Reproduce the supported district-level analyses from tracked processed inputs |
+| `make verify-processed-replication` | Compare shared processed-tier results with an existing full-source build |
+| `make all` | Run the ordinary complete build |
+
+Optional diagnostics, benchmarks, poster rendering, clean-slate reconstruction, and other maintainer-oriented commands are documented in [`docs/BUILD.md`](docs/BUILD.md).
+
+## Data requirements
+
+Raw microdata are not committed to the repository. The project distinguishes among tracked processed inputs, inputs that can be downloaded automatically, and local files whose redistribution rights are not asserted here.
+
+`make prepare-data` downloads the Census workbooks covered by the tracked acquisition manifests and the Natural Earth boundary data used for manuscript cartography. Other required inputs must be placed at the paths declared in [`data/metadata/file_manifest.csv`](data/metadata/file_manifest.csv). The build validates required inputs before downstream readers run and reports missing required paths explicitly.
+
+See [`DATA_AVAILABILITY.md`](DATA_AVAILABILITY.md) for source-by-source access and redistribution notes and [`REPLICATION.md`](REPLICATION.md) for local file requirements, system dependencies, and expected behavior when raw inputs are absent.
+
+## Repository structure
+
+```text
+R/                    Research functions
+data/                 Tracked metadata/processed data; local raw data are gitignored
+config/               Final and development research configurations
+paper/                Paper source and rendered PDF
+application-samples/  Sample definitions, rendering support, and generated PDFs
+outputs/              Generated tables, figures, diagnostics, and replication results
+docs/                 Build, architecture, and methodological documentation
+scripts/              Build, validation, acquisition, and maintenance entry points
+archive/              Frozen historical material
+tests/                testthat suite
+```
+
+[`_targets.R`](_targets.R) defines the main research dependency structure. [`_targets_processed.R`](_targets_processed.R) defines the separate processed-data replication. Local raw-data and working directories such as `data/raw/`, `data/raw_future/`, and `data/interim/` are gitignored.
+
+## Analysis architecture
+
+The implementation is organized around input adapters, harmonized measures, district-lineage construction, model estimation and inference, and generated research outputs. Cross-cutting empirical specifications are centralized in analysis-design registries rather than repeated inside individual figure, table, or diagnostic functions.
+
+See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the module structure, target families, analysis-design ontology, output conventions, and strict final-mode behavior.
+
+## Main outputs
+
+- [`paper/paper.pdf`](paper/paper.pdf) — current paper.
+- [`application-samples/output/`](application-samples/output/) — named and anonymous writing and coding samples.
+- [`outputs/tables/main/`](outputs/tables/main/) — principal generated tables used by the paper.
+- [`outputs/figures/main/`](outputs/figures/main/) — principal generated figures used by the paper.
+- [`outputs/replication/processed/verification.csv`](outputs/replication/processed/verification.csv) — comparison of the shared processed-data and full-source reported results when both builds are available.
+
+## Application samples
+
+Writing and coding samples are generated from the same paper and research code used by the main build rather than maintained as independent documents. [`application-samples/samples.yml`](application-samples/samples.yml) contains the sample definitions, and [`application-samples/output/`](application-samples/output/) contains the generated PDFs.
+
+For a quick review, see the named [`10-page writing sample`](application-samples/output/RishavRoy_WritingSample_10pg.pdf) and [`long code sample`](application-samples/output/RishavRoy_CodeSample_Long.pdf). [`application-samples/README.md`](application-samples/README.md) documents section selection, code markers, anonymity rules, paper numbering, and publication behavior.
+
+## Validation
+
+The ordinary complete build checks source syntax, the `renv` lockfile and project library, unit tests, target execution, report-value consistency, cross-references, required rendered outputs, and processed-data replication. Optional extended diagnostics and benchmarks can be enabled separately without changing the selected research configuration.
+
+The repository also records machine-readable build metadata and packages a review archive while excluding local raw data and caches. See [`docs/BUILD.md`](docs/BUILD.md) for the exact validation stages and optional build families.
+
+## Documentation
+
+- [`REPLICATION.md`](REPLICATION.md) — supported replication paths, required local inputs, and system dependencies.
+- [`DATA_AVAILABILITY.md`](DATA_AVAILABILITY.md) — data access, redistribution status, and reconstruction notes.
+- [`docs/BUILD.md`](docs/BUILD.md) — build configurations, commands, and optional build families.
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — code organization, registries, target groups, and output conventions.
+- [`docs/DISTRICT_LINEAGE.md`](docs/DISTRICT_LINEAGE.md) — district harmonization and reviewed lineage construction.
+- [`docs/EDUCATION_SELECTION.md`](docs/EDUCATION_SELECTION.md) — enrollment selection and average marginal effects.
+- [`docs/IV_DIAGNOSTICS.md`](docs/IV_DIAGNOSTICS.md) — identification and weak-instrument diagnostics.
+- [`docs/SPATIAL_ANALYSIS.md`](docs/SPATIAL_ANALYSIS.md) — spatial weights and residual spatial-dependence checks.
+- [`application-samples/README.md`](application-samples/README.md) — application-sample generation and publication.
