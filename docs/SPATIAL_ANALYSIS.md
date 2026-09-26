@@ -1,14 +1,48 @@
 # Spatial analysis
 
-Spatial analysis uses the reviewed Census-2001 district geometry carried by the main district panel. The principal implementation is in:
+## Purpose
 
-- `R/diagnostics/diagnose_spatial_weights.R`, which constructs polygon-contiguity neighbours and row-standardized weights;
-- `R/diagnostics/diagnose_spatial_autocorrelation.R`, which computes Moran tests for selected variables and model residuals;
-- `R/benchmarking/benchmarking_targets.R`, which exposes the optional rook/queen timing comparison; and
-- `R/iv/estimate_spatial_iv_experimental.R`, which remains experimental and is not part of the paper's preferred estimation strategy.
+Spatial diagnostics test whether district variables or fitted-model residuals retain geographic autocorrelation on the reviewed Census-2001 geometry. They are model-adequacy and descriptive dependence checks; the preferred paper estimator is not a spatial IV model.
 
-The preferred spatial weights use rook contiguity and `style = "W"`. Three districts in the reference geometry are genuine offshore islands: Lakshadweep, South Andaman, and Nicobars. They are retained with `zero.policy = TRUE`; their lack of polygon-contiguous neighbours is not, by itself, treated as evidence that the polygon snap tolerance should be increased. Queen contiguity is used as a sensitivity check for the residual Moran tests.
+## Geometry
 
-The paper reports spatial clustering descriptively and uses residual Moran tests as a model-adequacy check. The spatial-IV code is intentionally separate because adding spatially lagged endogenous variables changes the identifying requirements and the current experimental specifications do not support promotion to the main analysis.
+The analysis uses the reviewed Census-2001 district polygons attached to the main district panel. Geometry preparation and district identity are governed by the lineage/geography modules rather than by spatial diagnostics.
 
-Tests for the spatial-weight construction are in `tests/testthat/test-spatial-weights.R`; the broader spatial and residual checks are covered in `tests/testthat/test-diagnostics.R`.
+## Weight construction
+
+The preferred neighborhood definition is rook contiguity with row-standardized weights (`style = "W"`). Queen contiguity is a sensitivity check for residual Moran results.
+
+## Islands and zero-neighbor policy
+
+Lakshadweep, South Andaman, and Nicobars are genuine offshore islands in the reference geometry. They remain in the dataset with `zero.policy = TRUE`. Their zero-neighbor status is not evidence that polygon snap tolerance should be inflated until every district receives a neighbor.
+
+## Moran diagnostics
+
+The diagnostic layer computes Moran tests for selected variables and model residuals on the exact fitted rows. Residual alignment should reuse the shared fitted-sample/index machinery so factor/transformation handling and row exclusions match the fitted model.
+
+Asymptotic Moran tests are the routine diagnostic. Monte Carlo checks may be used as sensitivity analysis when computationally justified; if reported, the simulation count and random-seed policy should be explicit.
+
+## Experimental spatial IV
+
+`R/iv/estimate_spatial_iv_experimental.R` is experimental. Spatially lagged endogenous variables change the identifying assumptions, so these estimates are not promoted to the paper merely because residual spatial dependence is detected.
+
+## Interpretation boundary
+
+Spatial autocorrelation can reveal omitted geographic structure or residual dependence. It does not by itself identify the correct spatial causal model, nor does a non-significant residual Moran test prove the absence of spatial confounding.
+
+## Outputs and tests
+
+Spatial-weight and residual diagnostics are retained under the diagnostic output tree. Tests should protect neighbor/weight behavior, island handling, fitted-row alignment, and model residual use rather than implementation text.
+
+## Implementation
+
+- `R/diagnostics/diagnose_spatial_weights.R`
+- `R/diagnostics/diagnose_spatial_autocorrelation.R`
+- `R/iv/estimate_spatial_iv_experimental.R`
+- optional timing comparisons under `R/benchmarking/`
+
+## Related documentation
+
+- [`DISTRICT_LINEAGE.md`](DISTRICT_LINEAGE.md)
+- [`GEOGRAPHY_HARMONIZATION.md`](GEOGRAPHY_HARMONIZATION.md)
+- [`IV_DIAGNOSTICS.md`](IV_DIAGNOSTICS.md)

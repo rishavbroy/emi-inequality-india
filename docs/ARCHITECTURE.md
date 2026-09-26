@@ -167,4 +167,6 @@ The pre-rewrite architecture/status narrative is retained under [`../archive/ref
 - [`GEOGRAPHY_HARMONIZATION.md`](GEOGRAPHY_HARMONIZATION.md) — transformation across geographic definitions.
 - [`IV_DIAGNOSTICS.md`](IV_DIAGNOSTICS.md) — IV design, weak-identification, and robustness methodology.
 - [`EDUCATION_SELECTION.md`](EDUCATION_SELECTION.md) — selection-model methodology.
-- [`CONSUMPTION_AND_PRICES.md`](CONSUMPTION_AND_PRICES.md) — current consumption/price reference pending its planned split.
+- [`CONSUMPTION_MEASUREMENT.md`](CONSUMPTION_MEASUREMENT.md), [`PRICE_DEFLATION.md`](PRICE_DEFLATION.md), and [`CONSUMPTION_ANALYSIS.md`](CONSUMPTION_ANALYSIS.md) — consumption construction, price adjustment, and paper-facing consumption analysis.
+- [`LINGUISTIC_DISTANCE.md`](LINGUISTIC_DISTANCE.md) and [`EMI_MEASUREMENT.md`](EMI_MEASUREMENT.md) — inherited linguistic conditions and EMI measurement.
+- [`HISTORICAL_LANGUAGE_DATA.md`](HISTORICAL_LANGUAGE_DATA.md), [`HISTORICAL_GEOGRAPHY.md`](HISTORICAL_GEOGRAPHY.md), and [`HISTORICAL_BASELINE_VALIDATION.md`](HISTORICAL_BASELINE_VALIDATION.md) — historical validation layers.

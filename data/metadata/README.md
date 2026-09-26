@@ -59,7 +59,7 @@ Consumption metadata separate source identity, welfare concepts, registered anal
 - `hces_2022_24_district_codebook.csv`
 - `hces_summary_items.csv`
 
-See [`../../docs/CONSUMPTION_AND_PRICES.md`](../../docs/CONSUMPTION_AND_PRICES.md) while the planned split into measurement/price/analysis documents is pending.
+See [`../../docs/CONSUMPTION_MEASUREMENT.md`](../../docs/CONSUMPTION_MEASUREMENT.md), [`../../docs/PRICE_DEFLATION.md`](../../docs/PRICE_DEFLATION.md), and [`../../docs/CONSUMPTION_ANALYSIS.md`](../../docs/CONSUMPTION_ANALYSIS.md).
 
 ## DISE/UDISE and EMI metadata
 
@@ -69,7 +69,7 @@ See [`../../docs/CONSUMPTION_AND_PRICES.md`](../../docs/CONSUMPTION_AND_PRICES.m
 - `dise_report_language_enrollment.csv`, `dise_report_total_enrollment_2010_11.csv`, and `dise_report_school_quality_2011_15.csv` — reviewed report extraction metadata;
 - `english_opportunity_measures.csv` — stable EMI/opportunity construct definitions.
 
-See [`../../docs/DISE_TREATMENTS.md`](../../docs/DISE_TREATMENTS.md) and [`../../docs/LINGUISTIC_DISTANCE_AND_EMI.md`](../../docs/LINGUISTIC_DISTANCE_AND_EMI.md).
+See [`../../docs/DISE_TREATMENTS.md`](../../docs/DISE_TREATMENTS.md), [`../../docs/EMI_MEASUREMENT.md`](../../docs/EMI_MEASUREMENT.md), and [`../../docs/LINGUISTIC_DISTANCE.md`](../../docs/LINGUISTIC_DISTANCE.md).
 
 ## Linguistic and historical metadata
 
@@ -87,7 +87,7 @@ See [`../../docs/DISE_TREATMENTS.md`](../../docs/DISE_TREATMENTS.md) and [`../..
 - `vanneman_panel4_dist91_adjudications.csv`
 - `vanneman_panel_state_crosswalk.csv`
 
-These files record reviewed identities, source selections, crosswalks, and validation anchors. See [`../../docs/LINGUISTIC_DISTANCE_AND_EMI.md`](../../docs/LINGUISTIC_DISTANCE_AND_EMI.md) and [`../../docs/HISTORICAL_LINGUISTIC_VALIDATION.md`](../../docs/HISTORICAL_LINGUISTIC_VALIDATION.md) pending their planned splits.
+These files record reviewed identities, source selections, crosswalks, and validation anchors. See [`../../docs/LINGUISTIC_DISTANCE.md`](../../docs/LINGUISTIC_DISTANCE.md), [`../../docs/HISTORICAL_LANGUAGE_DATA.md`](../../docs/HISTORICAL_LANGUAGE_DATA.md), [`../../docs/HISTORICAL_GEOGRAPHY.md`](../../docs/HISTORICAL_GEOGRAPHY.md), and [`../../docs/HISTORICAL_BASELINE_VALIDATION.md`](../../docs/HISTORICAL_BASELINE_VALIDATION.md).
 
 ## Labor and source materialization
 

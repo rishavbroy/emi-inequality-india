@@ -1,65 +1,43 @@
-# Census household human-capital and worker-intensity diagnostics
+# Census household capacity
 
-This module constructs concept-matched Census-2001 to Census-2011 household-capacity changes from HH-09/HH-13/HH-15 and HH-08/HH-10/HH-11. Table-specific readers validate the native published accounting before any geography operation. Census-2011 counts are then pooled only through the common complete deterministic 2011-to-2001 transition; Census-2001 rows already live on the target geography. Shares are constructed only after the relevant counts have been validated and, for 2011, pooled.
+## Purpose
 
-The raw 2001 workbooks confirm exact matches for literacy-count categories, matriculate/graduate household access, and household worker-count categories across all 593 Census-2001 districts. HH-15 Appendix independently reproduces the HH-15 worker-count partition and is used as a source-integrity check. HH-13 normally publishes a row total plus six age-15+ household-count buckets (`1`, `2`, `3-6`, `7-10`, `11+`, `None`), which must exhaust that total. The Odisha workbook uses a shifted layout instead: column 8 is blank, column 9 contains the row total, columns 10--14 contain the five positive age-15+ buckets, and the `None` bucket is omitted. The reader detects that variant from the accounting identity itself rather than from the state code, canonicalizes it to the common schema with `None = 0`, and then applies the same validation as every other workbook. Longitudinal age-15+ counts sum only the five positive buckets. The longitudinal registry deliberately excludes `workers_per_household`, marginal-worker shares, and short-marginal shares: 2001 HH-15 top-codes worker counts at `4+` and does not publish the 2011 HH-11 marginal-worker decomposition, so those changes cannot be recovered exactly.
+This module constructs concept-matched 2001-to-2011 changes in household literacy depth, matriculate/graduate access, and worker intensity from HH-08/HH-10/HH-11 and their 2001 counterparts.
 
-These household-capacity changes remain descriptive co-evolving development evidence. They are **not** preferred controls or identified mediation effects. A bounded paper-facing synthesis uses selected predeclared human-capital-capacity changes and ordinary OLS/reduced-form associations; it does not create another weak-IV outcome family.
+## Tables used
 
-## HH-08: literacy depth
+The 2011 family uses HH-08, HH-10, and HH-11. The matched 2001 baseline uses the registered HH-09/HH-13/HH-15 material and independent appendix checks where available. Exact filenames and acquisition status are declared in the metadata manifest.
 
-HH-08 classifies ordinary households by the number of literate members age 7 years and above: none, 1, 2, 3, and 4+. The reader requires those categories to exhaust total households exactly. It also checks that the published household-size cells exhaust every literacy-count row.
+## Geography
 
-The harmonized measures retain deliberately coarse margins that do not assign a synthetic value to the open-ended `4+` category:
+Native table accounting is validated before any geography transformation. Census-2011 counts are pooled to Census-2001 parents only through complete deterministic lineage relationships. Shares are calculated after counts are pooled.
 
-- no-literate households / households;
-- households with at least two literates / households;
-- households with at least four literates / households.
+## Constructed measures
 
-The module therefore measures literacy depth without pretending that an average number of literates can be recovered from an open-ended category.
+- **Literacy depth:** shares of households with none, one, two, three, or four-plus literate members, plus coarse summaries that do not assign a synthetic value to the open-ended `4+` category.
+- **Matriculate/graduate access:** household shares with matriculate/graduate access using the table's substantive age-eligible denominator; overlapping sex-specific categories are never added as though mutually exclusive.
+- **Worker intensity:** workerless and multi-worker household shares/intensities from the exhaustive worker-count categories.
 
-## HH-10: matriculate and graduate access
+## Accounting and validation
 
-HH-10 reports household counts with no matriculate, at least one matriculate, sex-specific matriculate access, and graduate access. Male and female access categories overlap when a household contains both, so they are never added together.
+HH-08 and HH-11 must reconcile their household totals. HH-10's relevant partitions must reconcile with the same household universe and its own published subtotals. Worker counts and main/marginal components are checked where the table publishes both. Cross-table disagreement is surfaced before harmonization.
 
-HH-10 supplies the substantive denominator directly: the age-15+ counts in the mutually exclusive `no matriculate` and `at least one matriculate` rows sum to households with at least one member age 15+. Matriculate and graduate access shares use that denominator. Separately, the all-household counts in those same two rows exactly reproduce the ordinary-household universe independently published by HH-08/HH-11, while HH-10's `at least one literate` count exactly matches HH-08 total households minus HH-08 no-literate households. The broader universe is therefore a source-integrity check, not the denominator substituted into the age-15+ access measures.
+## Longitudinal comparability
 
-The retained measures are household shares with:
+Only concepts with defensible 2001/2011 counterparts enter changes. The module avoids imposing cardinal values on open-ended household categories or summing overlapping access categories.
 
-- at least one matriculate / households with a member age 15+;
-- at least one female matriculate / households with a member age 15+;
-- at least one graduate / households with a member age 15+;
-- at least one female graduate / households with a member age 15+.
+## Inferential role
 
-## HH-11: worker intensity
+Household-capacity changes are descriptive co-evolving development evidence. A bounded paper-facing synthesis uses predeclared changes, but these outcomes are not preferred controls and are not interpreted as identified mediation effects.
 
-HH-11 partitions households by number of workers: none, 1, 2, 3, and 4+. Those categories must exhaust households. Independently, published total workers must equal main workers plus marginal workers working 3-6 months plus marginal workers working less than 3 months.
+## Outputs
 
-The retained measures are:
+Validated baseline, harmonized 2011, and change files are retained under `outputs/diagnostics/extended/census_households/` together with compact inference summaries where registered.
 
-- workerless households / households;
-- households with at least two workers / households;
-- households with at least four workers / households;
-- workers per household;
-- marginal workers / workers;
-- less-than-3-month marginal workers / marginal workers.
+## Limitations
 
-`workers_per_household` is a count intensity rather than a share, so it is intentionally not constrained to `[0,1]`.
+Household-capacity measures describe household composition/access, not individual schooling quality or earnings. Post-treatment changes may reflect many local-development channels.
 
-## Cross-table source validation
+## Implementation
 
-HH-08 and HH-11 must agree exactly on total households for every native Census-2011 district. HH-10's matriculation partition must agree with that same household total, and HH-10's literate-household count must agree with HH-08's independently implied literate-household count. These checks occur before geography harmonization so pooling cannot conceal a malformed source table.
-
-All three attached table families contain all 640 Census-2011 districts. After source validation, count columns are passed to `harmonize_census_2011_counts_to_2001()` and shares/intensities are constructed from pooled numerators and pooled denominators. Partial parent reconstructions remain withheld under the same rule used by migration, workers, housing, and the Census-2011 population denominator.
-
-## Persisted diagnostics
-
-The branch persists a compact measurement bundle under `outputs/diagnostics/extended/census_households/`:
-
-- `household_2001.csv`: validated 2001 baseline counts and shares;
-- `household_2011_harmonized_2001.csv`: harmonized 2011 counts and shares;
-- `household_change_2011_2001.csv`: exact common-concept share changes;
-- `change_coverage.csv`: finite baseline/follow-up/change coverage by concept;
-- `source_validation_2001.csv` and `source_validation_2011.csv`: exact within-vintage source reconciliations.
-
-The same directory also contains `household_capacity_trajectory_specifications.csv` and `household_capacity_trajectory_estimates.csv`. This eight-cell synthesis crosses four predeclared human-capital-capacity changes with preferred linguistic distance and preferred all-child EMI separately on one common district sample. Models condition on the exact 2001 outcome level, compact Census-2001 controls, and state fixed effects; inference is state-clustered with Holm adjustment within each four-outcome predictor family. Because the 2001-2011 change interval begins before 2007-08 EMI is measured, the schooling rows are descriptive associations and the linguistic-distance rows are co-evolving reduced forms, not post-treatment mediation.
+Table-specific readers and measure builders live under Census I/O/measure modules; pooling uses the shared 2011-to-2001 harmonization utilities.

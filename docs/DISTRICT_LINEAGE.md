@@ -1,110 +1,58 @@
-# District Lineage System
+# District lineage
 
-This document describes the production district-tracking system used to place the NSS 2007–08 and NSS 2017–18 data on Census-2001 district geography.
+## Purpose
 
-## Production status
+The district-lineage system links source districts across vintages to the Census-2001 analysis geography. It provides reviewed identity evidence and deterministic aggregation rules; it is not a fuzzy matching shortcut.
 
-District lineage is part of the production pipeline. The public `district_panel` target uses `district_panel_primary`. The other two panels remain explicit comparison specifications; current source and two-wave district counts are generated in `panel_variant_summary.csv` rather than hard-coded here:
+## Reference geography
 
-| Panel | Target | Rule |
-|---|---|---|
-| Conservative | `district_panel_conservative` | Deterministic official, registry, alias, and accepted single-parent evidence |
-| Primary | `district_panel_primary` | Conservative mappings plus reviewed near-complete, single-parent NSS-75 mappings not already promoted by stronger evidence |
-| Full reviewed | `district_panel_full_reviewed` | Primary mappings plus reviewed multi-parent fractional allocations |
-
-The full reviewed panel is a sensitivity specification. Fractional allocations do not enter public production unless future territorial evidence resolves them.
+Census-2001 districts are the primary paper geography. Later-source districts may be pooled back to a 2001 parent only when the reviewed transition evidence supports a complete deterministic relationship. Historical analyses may use separate constant-boundary/harmonized geographies documented elsewhere.
 
 ## Evidence hierarchy
 
-Accepted lineage decisions should use the strongest available source in this order:
+Final identities prioritize official codes/names and reviewed transition evidence, followed by corroborated external lineage sources and boundary evidence. Fuzzy string similarity is candidate-generation evidence only. A fuzzy-only candidate is never promoted to a production identity.
 
-1. official Census identifiers and LGD identifiers or modification records that resolve to valid Census units;
-2. official district histories, gazettes, or administrative atlases;
-3. India State Stories district-change records;
-4. SHRUG locality transitions and coverage;
-5. published concordances or other documented secondary sources.
+## Matching stages
 
-Names and fuzzy scores generate candidates only. They do not establish geographic continuity.
+1. Normalize state/district identifiers and names without changing substantive identity.
+2. Resolve exact code/name evidence and registered aliases.
+3. Generate candidate matches for unresolved cases using the centralized fuzzy-distance machinery.
+4. Review candidates against independent lineage/boundary evidence.
+5. Record the accepted relationship, evidence class, and unresolved status in tracked metadata.
 
-## Core invariants
+## Adjudication rules
 
-The production lineage is ready only when all of the following hold:
-
-- every NSS source identity is accepted or explicitly excluded;
-- Census-2001 and Census-2011 unit identifiers are unique;
-- every target emitted by the 2011-to-2001 district transition exists in the authoritative Census-2001 district registry; reviewed one-parent ancestry supersedes an LGD historical code when the latter does not correspond to an actual Census-2001 district;
-- SHRUG transition weights are finite, nonnegative, and do not overallocate a source unit;
-- accepted allocation weights sum to one within source unit;
-- every accepted decision cites a registered source;
-- duplicate registry keys are absent or identical; repeated source district keys created by documented split/merge allocations remain warning-severity review information rather than fatal panel errors;
-- every accepted identity has a conservative-panel disposition;
-- every accepted identity appears in the full reviewed crosswalk or has an explicit exclusion;
-- DataMeet Census-2001 analytical geometry has no missing, unexpected, duplicate, empty, or invalid units after excluding its noncanonical 99/99 "Data Not Available" feature; that feature is retained separately as a display-only map scaffold and never enters lineage, estimation, or spatial-weight construction.
-
-These invariants are reported in `readiness.csv` and `completion_status.csv` under `outputs/diagnostics/extended/district_lineage/`.
+Reviewed decisions are data. They belong in the district-lineage metadata rather than hidden conditional branches. Multi-parent, cross-cutting, or incomplete transitions remain unresolved unless an explicit allocation rule is substantively justified and registered.
 
 ## Crosswalk roles
 
-The lineage bundle exposes three semantically distinct crosswalks:
+Crosswalks have explicit purposes: source-vintage identity, deterministic 2011-to-2001 pooling, historical constant-boundary construction, geometry attachment, or validation. A crosswalk valid for one role is not assumed valid for another.
 
-- `conservative_source_crosswalk`: deterministic specification;
-- `primary_source_crosswalk`: production specification;
-- `full_reviewed_source_crosswalk`: fractional-allocation sensitivity specification.
+## Aggregation rules
 
-The names describe analysis roles rather than implementation history. Production code should depend on `district_panel`, not directly on an implementation-specific panel target.
+Counts are pooled before shares/rates. Means or percentages are never averaged across child districts without the underlying numerator/denominator or another declared weighting rule. Incomplete parent coverage is withheld rather than treated as a complete parent total.
 
-## Statistical aggregation
+## Unresolved districts
 
-- Additive counts are summed.
-- Means and shares are reconstructed from pooled numerators and denominators or pooled records.
-- Gini coefficients are reconstructed from pooled household microdata; district Ginis are never averaged.
-- Multi-parent allocations use tracked weights whose source-unit total is one.
+The system intentionally tolerates a bounded unresolved set. Full coverage is not a goal if achieving it would require unsupported assignments. Downstream analyses declare their support requirement and lose observations transparently when lineage is unavailable.
 
-All three panel variants use the same panel builder, pooled-Gini reconstruction, preferred public IV formulas, 2SLS estimator, and first-stage diagnostics. The lineage sensitivity therefore changes the geography while holding the current treatment, instrument, outcome, controls, and fixed effects fixed.
+## Validation
 
-## Tracked metadata
+Lineage checks cover key uniqueness, one-to-one/one-to-many role constraints, complete-parent conditions, evidence consistency, geometry attachment, and downstream support. The review archive retains lineage diagnostics needed to understand unresolved cases.
 
-The durable production ledgers are:
+## Metadata and outputs
 
-- `data/metadata/district_adjudications.csv`
-- `data/metadata/district_admin_events.csv`
-- `data/metadata/district_allocation_weights.csv`
-- `data/metadata/district_primary_reviews.csv`
-- `data/metadata/district_geometry_carrybacks.csv`
-- `data/metadata/district_lineage_sources.csv`
+Tracked lineage inputs live under `data/metadata/district_lineage/` and related geography metadata. Derived lineage review files are written under diagnostic outputs. The full data-access inventory is in [`../DATA_AVAILABILITY.md`](../DATA_AVAILABILITY.md).
 
-`data/metadata/district_legacy_mapping_reviews.csv` is archived provenance. It is loaded only by `legacy_comparison_targets` during extended diagnostics and is not a production lineage input.
+## Legacy comparison
 
-An `accepted_primary` review records an adjudication, not a permanent claim that the source must remain primary-only. If stronger official or reviewed deterministic evidence later promotes the same source into the conservative crosswalk, the review becomes redundant; the build still requires its Census-2001 target to agree with the stronger mapping.
+Older lineage variants may be retained for explicit sensitivity comparison, but they are isolated from the preferred reviewed lineage and must be labeled as legacy variants in outputs.
 
-## Remaining bounded work
+## Implementation
 
-District tracking is complete for the current analysis. Remaining work is limited and explicitly queued:
+Primary code is under `R/districts/`, lineage/geography helpers, and the lineage target modules. The canonical audit command and build behavior are documented in [`BUILD.md`](BUILD.md) and [`../REPLICATION.md`](../REPLICATION.md).
 
-- `multi_parent_review_queue.csv` contains 46 proposed target shares for 21 NSS-75 identities that require official territorial validation before primary use;
-- six Census-2001 districts lack 2007–08 support and therefore cannot enter the current two-wave panel without new source evidence;
-- a more authoritative code-complete Census-2001 boundary release may replace DataMeet through the same validated geometry interface.
+## Related documentation
 
-These items do not block use of the reviewed production panel.
-
-## Legacy comparison isolation
-
-The inherited harmonization crosswalk and 2020 boundaries are constructed only when extended diagnostics or benchmarks require them. The legacy panel and historical review ledger are constructed only for extended historical comparisons. None is an upstream dependency of the production district panel, models, tables, maps, paper, poster, or application samples.
-
-Historical outputs are written separately, including `legacy_crosswalk_comparison.csv`. They provide provenance and regression comparison, not production gates. The inherited legacy panel is therefore constructed with strict panel validation disabled: duplicated historical split/merge rows remain visible for comparison instead of aborting the optional diagnostic build. Historical regression comparisons use `build_legacy_iv_formulas()` on both the inherited and lineage panels so that those diagnostics isolate geography under the archived specification; the conservative/primary/full-reviewed panel-variant review instead uses the preferred public formulas.
-
-## Main diagnostics
-
-The extended lineage diagnostic writes:
-
-- source inventory and evidence registry;
-- Census registries and transition QA;
-- conservative, primary, and full reviewed crosswalks;
-- panel-variant counts, coefficients, first stages, and Gini audits;
-- district-loss and identity-reclassification audits;
-- multi-parent review queue;
-- geometry QA and unit coverage;
-- readiness, blockers, and six-step completion status;
-- legacy comparisons when the legacy target group is enabled.
-
-The canonical audit command is documented in `REPLICATION.md` and `docs/BUILD.md`.
+- [`GEOGRAPHY_HARMONIZATION.md`](GEOGRAPHY_HARMONIZATION.md)
+- [`HISTORICAL_GEOGRAPHY.md`](HISTORICAL_GEOGRAPHY.md)

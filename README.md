@@ -1,14 +1,14 @@
 # Inequality in a Potential Equalizer of Opportunity
 
-This repository contains the research code, processed outputs, paper source, and replication materials for *Inequality in a Potential Equalizer of Opportunity: Variation in the Accessibility and Net Benefits of English-Medium Instruction in India*. The project studies how inherited linguistic conditions, access to English-medium instruction (EMI), and local economic conditions vary across Indian districts and relate to inequality.
+This repository contains the code, outputs, and replication materials for *Inequality in a Potential Equalizer of Opportunity: Variation in the Accessibility and Net Benefits of English-Medium Instruction in India*. The project studies how inherited linguistic conditions, access to English-medium instruction (EMI), and local economic conditions vary across Indian districts and relate to inequality.
 
 [Paper](paper/paper.pdf) · [Replication guide](REPLICATION.md) · [Data availability](DATA_AVAILABILITY.md) · [Application samples](application-samples/README.md)
 
-A browser-hosted copy of the current paper is available at <https://rishavbroy.github.io/emi-inequality-india/paper.pdf>.
+The current paper is available at <https://rishavbroy.github.io/emi-inequality-india/paper.pdf>.
 
 ## Research overview
 
-The analysis uses Census-2001 districts as the principal geographic unit. It combines NSS education and consumer-expenditure surveys, Census language and socioeconomic tables, DISE/UDISE schooling data, modern HCES data, reviewed district-lineage harmonization, and spatial and temporal price adjustments.
+2001 Census districts are used as the principal geographic unit. I combine them with NSS surveys on education and consumer expenditure, Census tables on linguistic and socioeconomic variables, DISE/UDISE schooling censuses, and HCES data alongside a validated tracker of district lineage across decades and both spatial and temporal price adjustments.
 
 The empirical work examines three margins: inherited linguistic conditions, access to EMI, and local economic conditions associated with the potential gains from EMI. The repository contains descriptive analysis, survey-weighted models, selection analysis, instrumental-variable specifications, weak-identification-robust inference, historical validation, district-lineage checks, and robustness analyses. The paper is the primary guide to the economic argument and interpretation; the documentation linked below describes the implementation in more detail.
 
@@ -131,5 +131,7 @@ The repository also records machine-readable build metadata and packages a revie
 - [`docs/DISTRICT_LINEAGE.md`](docs/DISTRICT_LINEAGE.md) — district harmonization and reviewed lineage construction.
 - [`docs/EDUCATION_SELECTION.md`](docs/EDUCATION_SELECTION.md) — enrollment selection and average marginal effects.
 - [`docs/IV_DIAGNOSTICS.md`](docs/IV_DIAGNOSTICS.md) — identification and weak-instrument diagnostics.
+- [`docs/CONSUMPTION_MEASUREMENT.md`](docs/CONSUMPTION_MEASUREMENT.md), [`docs/PRICE_DEFLATION.md`](docs/PRICE_DEFLATION.md), and [`docs/CONSUMPTION_ANALYSIS.md`](docs/CONSUMPTION_ANALYSIS.md) — consumption construction, prices, and paper-facing welfare analysis.
+- [`docs/LINGUISTIC_DISTANCE.md`](docs/LINGUISTIC_DISTANCE.md) and [`docs/EMI_MEASUREMENT.md`](docs/EMI_MEASUREMENT.md) — core treatment/instrument measurement.
 - [`docs/SPATIAL_ANALYSIS.md`](docs/SPATIAL_ANALYSIS.md) — spatial weights and residual spatial-dependence checks.
 - [`application-samples/README.md`](application-samples/README.md) — application-sample generation and publication.

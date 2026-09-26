@@ -1,0 +1,284 @@
+# Instrumental-variable diagnostic architecture
+
+The extended IV diagnostics use one canonical specification layer rather than reconstructing fixed effects, controls, language adjustments, and excluded instruments inside each diagnostic.
+
+`R/iv/specification_registry.R` defines:
+
+- admissible fixed-effect terms;
+- Census-2001 control blocks, the historical absorption ladder, symmetric block interventions, and finite alternative-control parameterizations;
+- the main and expanded adjustment sets;
+- orthogonal linguistic-distance-measure and language-adjustment registries,
+  with the historical construction IDs retained as admissible compatibility
+  pairings rather than treated as primitive measures;
+- structural specification metadata with treatment, outcome, excluded instruments, included language controls, clustering variable, sample rule, panel variant, and diagnostic tier;
+- a de-duplicated diagnostic specification registry combining the alternative-instrument grid with the additional absorption/control-block specifications;
+- a diagnostic registry and saved applicability relation.
+
+`iv_distance_measure_registry()` owns the excluded linguistic variables and
+construction-specific coverage fields. `iv_language_adjustment_registry()` owns
+included Hindi/Urdu, native-English, and unresolved-share adjustments.
+`iv_instrument_construction_registry()` then names only the 15 pairings actually
+used by the project. Consequently `nonzero_mean`, `nonzero_mean_hindi_urdu`, and
+`nonzero_mean_shastry` share one `distance_measure_id` and differ only in
+`language_adjustment_id`; the same separation holds for Glottolog and
+Dyen/noncognate variants. Existing `construction_id` values remain stable so
+cached targets, reviewer-facing output IDs, and historical comparisons do not
+change.
+
+The registry is intentionally not the Cartesian product of every imaginable project option. Comprehensiveness is defined by scientific rationale, not by a target number of specifications: theoretically distinct relevance questions are made visible even when that enlarges the diagnostic universe, while mechanically crossable dimensions are excluded unless the interaction itself has a substantive interpretation. Specifications that are algebraically identical are de-duplicated before the general diagnostic suite runs.
+
+All adjustment registries now use one named execution contract: `label`, `fixed_effect`, and `controls`, with optional family-specific metadata. Older absorption and parameterization builders previously emitted anonymous positional triples, while canonical IV adjustments used named fields; that split allowed a valid parameterization design to fail only when it reached the consumption compiler. Keeping one schema makes diagnostic, governance, and causal adjustment families interchangeable at the compiler boundary and removes positional `[[1]]`/`[[2]]`/`[[3]]` coupling.
+
+The absorption diagnostics therefore retain the historical cumulative ladder **and** add two symmetric families. `iv_block_intervention_adjustments()` estimates every main theoretical control block on its own and omits every block from the main set under both region and state fixed effects. `iv_main_parameterization_adjustments()` exhausts the finite substitutions already declared by the control metadata: secondary-plus versus literacy and compact versus decomposed economic structure. These families answer interpretable questions about attenuation and measurement without enumerating arbitrary individual-covariate subsets.
+
+Scientific questions and execution cells are intentionally distinct. A symmetric intervention can be algebraically identical to an older diagnostic (for example, the first cumulative block is also that block alone, and the historical human-capital omission already answers one leave-one-block-out question). `iv_absorption_specification_candidates()` retains every named scientific question, `iv_absorption_specification_registry()` de-duplicates formula/sample signatures for execution, and `iv_absorption_specification_aliases()` records the semantic-to-execution mapping. The current 55 named absorption questions reduce to 49 unique first-stage executions; after overlap with the five canonical nonzero-mean adjustment cells, the general diagnostic registry contains 119 unique IV designs. `first_stage_absorption_aliases.csv` preserves those aliases for reviewer audit rather than recomputing identical regressions under different labels.
+
+The candidate-design ledger correspondingly separates `candidate_cells`, `implemented_cells`, and `execution_cells`: a scientific question can be implemented by an already-existing execution cell. This keeps governance comprehensive without making estimation duplicate work.
+Because DISE crosses each of its eight registered treatment constructs with the unique diagnostic registry, this implies 952 first-stage treatment-definition cells at the current 119-design universe rather than 984 cells from double-counting semantic aliases.
+
+The `cluster` field is part of that self-describing specification contract. Registry-driven relevance, balance, reduced-form, and Anderson-Rubin inference use the declared cluster variable directly rather than substituting a hard-coded state column. The current registry declares `state_code_2001` throughout, so this is a structural invariant rather than a change to the preferred inference.
+
+The effective-F statistic is computed with the standard `momentfit::MOPtest()` implementation of Montiel Olea and Pflueger (2013). The project uses the simplified TSLS test with the conventional 10% relative-bias tolerance (`tau = 0.10`) and 5% test size, and records the effective F, effective degrees of freedom, critical value, and p-value. The wrapper reconstructs the moment model from the already-fitted canonical `ivreg` formula and exact fitted sample; `ivreg` remains the source of record for 2SLS coefficients and conventional clustered inference.
+
+For the registered state-clustered specifications, `momentfit` uses clustered moment covariance (`vcov = "CL"`) with HC0 and its finite-cluster adjustment. The existing excluded-instrument Wald F deliberately remains the project's HC1 `sandwich::vcovCL()` statistic. The two relevance diagnostics are therefore reported side by side rather than forced to coincide. In a just-identified model the effective F equals the appropriately robust first-stage F when covariance conventions are matched; the test suite verifies that documented identity under unclustered HC0, but the project does not assert equality between its clustered HC0 MOP statistic and HC1 Wald F. Weak-identification-robust Anderson-Rubin inference remains the inferential safeguard when relevance is weak.
+
+MOP effective F is attached only to outcome-defined structural IV specifications because its standard definition uses the structural IV model. Outcome-free absorption ladders and alternative first-stage-only comparisons continue to report their clustered excluded-instrument F and partial R-squared without inventing an outcome solely to obtain an effective F.
+
+## Diagnostic families
+
+The current registry distinguishes:
+
+- **relevance**: clustered excluded-instrument Wald tests, Montiel Olea–Pflueger effective F, individual first-stage coefficients, and partial R-squared;
+- **independence evidence**: specification-matched covariate balance plus an omnibus holdout-covariate balance test;
+- **weak-identification-robust inference**: Anderson-Rubin tests and inverted grids for structural IV specifications;
+- **monotonicity evidence**: residualized scalar first-stage shape, isotonic fit, binned means, and state-specific slopes;
+- **overidentification**: the standard Sargan overidentifying-restrictions diagnostic for specifications with more excluded instruments than endogenous regressors.
+
+Applicability and implementation are separate fields. `will_run` is true only when a diagnostic is methodologically applicable and implemented. Scalar first-stage shape is explicitly inapplicable to multi-instrument constructions rather than being silently coerced into a one-dimensional ordering.
+
+Balance is evidence about the independence argument, not a separate IV identifying assumption. Exogeneity and exclusion are not directly testable from observed data; historical balance, placebo outcomes, migration, geography, and related exercises provide cumulative evidence rather than proof.
+
+## Relevance and specification contract
+
+The alternative linguistic-distance grid and the richer first-stage absorption ladder now obtain their specification metadata from the same IV registry layer. Historical output files are retained where useful for compatibility, but fixed effects, controls, instrument sets, and control-block definitions are no longer independently declared inside the two diagnostic modules.
+
+### Anderson--Rubin artifact retention
+
+Anderson--Rubin grids are computational inputs to confidence-set inversion, not automatically reportable artifacts. The diagnostic objects retain the pointwise grids so validation and downstream inference can inspect them. The broad alternative-distance permutation universe no longer writes its full grid to disk; its persisted weak-IV summary already records the beta-zero test and the inverted confidence-set components for every registered design. Raw grids remain persisted only for compact, predeclared candidate/preferred analyses where the pointwise acceptance path is itself a useful review artifact.
+
+Anderson--Rubin inversion is interpreted through its acceptance-set topology, not only through the beta-zero p-value. The shared weak-identification module classifies each estimated 95% set as `empty_acceptance_set`, `zero_included`, `positive_sign_only`, `negative_sign_only`, or `zero_excluded_both_signs` (with a defensive unclassified state). `ar_95_sign_identified` is true only when every accepted component lies strictly on one side of zero. This follows the weak-IV principle that conventional IV point estimates are unreliable under weak relevance while identification-robust confidence sets can still contain structural information; see Andrews, Stock, and Sun (2019), *Annual Review of Economics*, DOI 10.1146/annurev-economics-080218-025643. A disconnected set with negative and positive branches therefore rejects beta zero under the maintained IV model without identifying the sign.
+
+This semantic layer is deliberately added before new imperfect-IV estimators. The next sensitivity phase will relax exclusion explicitly rather than infer bias direction from unstable 2SLS/OLS comparisons: Conley, Hansen, and Rossi (2012), *Review of Economics and Statistics*, DOI 10.1162/REST_a_00139, motivates bounded direct-effect sensitivity for plausibly exogenous instruments; Masten and Poirier (2021), *Econometrica*, DOI 10.3982/ECTA17969, motivates falsification-adaptive sets for overidentified linear IV models. These are bounded future sensitivity families, not licenses to mechanically cross every outcome, treatment, and instrument.
+
+### Candidate-design governance
+
+`candidate_design_ledger.csv` is an explicit map from the project's methodological reference plan to the executable design space. Each row records the motivating reference section, scientific question, design axis, execution policy, multiplicity family, prerequisites, admissibility, an explicit admissibility reason, and implementation status. It separates:
+
+- **relevance diagnostics**, where broad variation across geography, control blocks, treatment definitions, linguistic-distance bases, and historical vintages is itself scientifically informative;
+- **causal robustness families**, where response definitions, treatment margins, instrument bases, control parameterizations, and horizons are admitted only when the estimand remains interpretable;
+- **mechanism/falsification designs**, including the distinct C-17 state-by-language registry and the predeclared three-geography district-schooling grid;
+- **data-dependent candidates**, such as Shastry-style major-city/coast controls, which remain visible without fabricating inputs;
+- **non-goals**, including post-treatment mechanisms as baseline controls and mechanical Cartesian products of individually defensible robustness axes.
+
+This ledger is deliberately broader than the paper-facing model family. Visibility is not execution: `diagnostic_only`, `estimate_if_registered`, `requires_data`, and `do_not_estimate` are distinct policies. A design may therefore be scientifically justified and visible without being automatically dispatched. The schema fails closed if admissibility and execution policy disagree, so a row cannot be simultaneously labeled scientifically admissible and governed as `do_not_estimate`.
+
+Control adjustment is also split into two machine-readable axes in canonical IV rows. `control_strategy_id` records the conditioning philosophy (for example geography-only, observed exclusion-threat adjustment, or potential-pathway robustness), while `control_parameterization_id` records how a concept is measured (for example secondary-plus with compact agricultural structure versus literacy/decomposed alternatives). This prevents the old `main`/`expanded` shorthand from standing in for two distinct methodological decisions.
+
+### Alternative-distance candidate-design comparison
+
+The Glottolog and Dyen constructions are robustness measurements of linguistic
+distance, not candidate instruments to promote merely because a particular
+fixed-effect specification produces a larger first stage. The diagnostic layer
+therefore compares the shared candidate construction set registered by
+`iv_candidate_design_constructions()` under both main-control designs from
+`iv_candidate_design_adjustments()`: six-region fixed effects and Census-2001
+state fixed effects. The same two-by-three contract is reused by post-treatment
+mechanisms and the candidate-design governance ledger.
+
+`alternative_distance_design_evidence.csv` places the Shastry nonzero-mean,
+Glottolog, and Dyen constructions under both candidate adjustments side by
+side, with clustered first-stage strength, partial R-squared, Montiel
+Olea--Pflueger effective F and its critical value, and Anderson--Rubin
+confidence-set diagnostics. `alternative_distance_design_comparison.csv`
+summarizes relevance separately within each FE design.
+
+No diagnostic rule chooses between region and state fixed effects. State FE
+remove more state-level confounding but also absorb substantial linguistic
+variation; region FE preserve more cross-state variation but leave more
+state-level institutional and historical heterogeneity available to correlate
+with the instrument. Relative or absolute first-stage strength is evidence
+about relevance, not a sufficient criterion for choosing the identifying
+design.
+
+A robustness construction is likewise not promoted because it has a larger
+conventional F statistic. Weak-identification screens and Anderson--Rubin
+inference remain conditional on the candidate design. Final methodology should
+integrate relevance with historical balance and pretrends, migration/sorting,
+spatial evidence, mechanism evidence, and the substantive interpretation of
+the remaining variation.
+
+### Scientific questions versus fitted first-stage models
+
+The expanded control-intervention family distinguishes **semantic specifications** from **execution specifications**. Fifty-five named absorption questions are retained for scientific governance, but exact formula/sample aliases are fitted only once through the canonical IV-signature de-duplicator. The current registry therefore maps 55 scientific questions to 49 unique executions. `first_stage_absorption_aliases.csv` records the mapping, while `first_stage_absorption_semantic_summary.csv` joins every named question back to the corresponding fitted estimate, partial R-squared, excluded-instrument F statistic, and other execution diagnostics. This keeps the specification audit comprehensive without duplicating regressions or forcing reviewers to join artifacts manually.
+
+
+## Final-paper identification summaries
+
+The final appendix does not expose the analysis directory one CSV at a time. Its publication layer consists of two summaries built from registered results. The relevance table compares the preferred and alternative linguistic measures across no-FE, region-FE, and state-FE specifications and adds the validated historical 1991 measure on its common support. The weak-inference table combines the two long-change 2SLS estimates with effective-F, Anderson--Rubin, and bounded-exclusion information.
+
+`augment_alternative_distance_measurement_diagnostics()` and `augment_alternative_distance_inference_diagnostics()` still own the richer language-measurement and multi-instrument calculations. Extended mode persists those results for review. The paper-facing builder selects only the scientific quantities needed for the appendix argument and contains no regression estimator.
+
+## Symmetric control evidence and bounded consumption robustness
+
+The expanded first-stage control audit is diagnostic rather than a model-selection exercise. In the realized 2007-08 EMI first stage, theory-motivated substitutions can materially improve the six-region specification (for example, literacy plus decomposed economic structure produces an excluded-instrument F near 10, and omitting the human-capital block produces an F near 6.4), but the corresponding state-FE designs remain weak (roughly 1.8 and 1.6). The registered scalar linguistic alternatives are weaker still by the effective-F criterion: the six region/state × Shastry/Glottolog/Dyen candidate designs have effective F statistics of roughly 0.07--3.33 against a critical value near 23.1. These results are evidence about where relevance is absorbed; they do not justify promoting the strongest region/control specification.
+
+The predeclared consumption robustness family therefore keeps exactly the six serious scalar-IV/geography designs for each of the eight registered endpoint/estimand specifications: region and state **compact-2001** adjustment (the historical `main` IDs) crossed with Shastry, Glottolog, and Dyen distance. Holding that adjustment vector fixed is an axis-isolation rule for the instrument/geography robustness family; it is **not** a claim that the compact-2001 vector is uniquely justified. Each endpoint/estimand is estimated on one common district sample across its six designs so instrument comparisons do not silently change support. Reduced-form and Anderson--Rubin beta-zero p-values receive Holm correction both within each six-design endpoint/estimand family and across the full 48-cell family. Conventional 2SLS estimates remain reported, but weak-IV-robust Anderson--Rubin inference governs causal interpretation.
+
+Control choice is governed separately. The candidate ledger distinguishes a finite causal control-strategy family—geography FE only, compact-2001 adjustment, and compact-2001 adjustment without human capital, each under region/state FE—from the separate finite measurement-parameterization family that substitutes literacy for secondary-plus attainment and decomposed for compact economic structure. This prevents the older `main`/`expanded` labels from masquerading as a causal hierarchy and avoids automatic Cartesian crossing of response, instrument, treatment, and control robustness axes.
+
+The full 119-design diagnostic IV universe remains a relevance/validity diagnostic and is not crossed with consumption outcomes. The 48-cell family is the registered causal robustness boundary for the instrument-definition/geography axis.
+
+
+### Extended-target reachability
+
+The extended audit invokes targets by the `diag_ext_` prefix. Durable extended-IV artifacts therefore terminate in `diag_ext_` file targets; their upstream specification and estimation objects remain ordinary internal targets. The compiled cross-family design ontology is persisted as `outputs/diagnostics/extended/iv/analysis_design_registry.csv`, while the scalar-consumption robustness bundle is reached through `diag_ext_consumption_scalar_iv_robustness_files`. This naming rule is part of the pipeline contract, not a cosmetic convention.
+
+
+The realized 48-cell scalar-consumption family confirms pervasive weak identification: no effective-F value approaches the registered critical value. One 2022-23 change/state-FE/preferred-distance Anderson-Rubin beta-zero test survives Holm correction across the 48-cell family, while most specifications do not and many AR sets are disconnected or grid-truncated. This pattern motivates the next predeclared robustness axis—response definition—without changing the preferred instrument or control specification. The 120-cell alternative-welfare family therefore reuses the same six scalar designs and weak-IV-robust inference, with its own separately frozen Holm family.
+
+The realized 120-cell response-definition family does not strengthen that claim at the family level. No mean-log, weighted-median, or bottom-40 cell survives Holm correction across all 120 response-definition specifications. Four 2022-23 cells survive only their six-design within-template correction, while effective-F statistics remain far below the critical value and most AR sets are grid-truncated. This closes the response-definition gate without promoting a different welfare outcome.
+
+The next registered axis is therefore causal control strategy with the preferred Shastry scalar instrument held fixed. For each of the eight primary mean-MPCE endpoint/estimand designs, six theory-defined adjustments compare region/state geography-only, compact-2001, and compact-2001-without-human-capital strategies on one common sample. Holm correction is frozen within each six-strategy endpoint/estimand and across the full 48-cell `consumption_control_strategy` family. This family tests alternative exclusion/conditioning philosophies; it is not a search for the adjustment set with the largest first-stage F.
+
+The realized control-strategy family leaves the weak-identification warning intact. Two 2022-23 change/state-FE cells survive family-wide Holm-adjusted AR inference (geography-only and compact-2001), while the no-human-capital state-FE cell survives only the within-endpoint family. Their effective-F values remain far below the registered critical value and their AR confidence sets are disconnected and grid-truncated. The next axis therefore holds the compact-2001 conditioning philosophy fixed and varies only its registered proxy parameterization. The parameterization family includes the benchmark plus all three literacy/economic-structure substitutions under both region and state FE, yielding eight adjustments per endpoint and 64 cells total on common support.
+
+The realized 64-cell parameterization family also leaves the weak-identification warning intact: no cell survives family-wide Holm adjustment, even though three 2022-23 state-FE cells survive their within-endpoint correction. The next causal-control axis therefore compares the compact-2001 benchmark with a more remote PCA91 baseline. `production_historical_baseline_1991_controls()` promotes only the already validated G2 population-interpolated PCA91 controls at the frozen 99% source-coverage threshold to production-analysis geography. `iv_historical_adjustment_comparison_adjustments()` then pairs those controls with the compact-2001 benchmark under region/state FE. Each endpoint uses a common four-design sample, so any difference is not induced by support drift. Because the 1991 and 2001 concept sets are not identical, this is an historical-adjustment robustness family rather than a pure same-variable vintage test.
+
+### Concept-matched Census-1991 controls from Vanneman
+
+The remote PCA91 adjustment deliberately uses a thin, independently constructed Census-1991 vector.  A separate extended robustness family now uses the verified Vanneman-Barnes `dist91` archive to recover closer 1991 analogues of the compact-2001 concepts: log population, urban share, SC/ST and Muslim shares, matriculate-or-higher attainment among the population age 10+, agricultural workers among main workers, the 0-14/65+ dependency ratio relative to ages 15-64, and household electricity access.  These are source-defined historical controls rather than claims of exact variable identity with the 2001 measures.
+
+All Census-control shares used in regression specifications are stored in **percentage points** (0--100 for bounded shares); dependency ratios use the same 100-times-ratio convention and may exceed 100.  This matches the existing Census-2001 and PCA91 control contracts.  Count-accounting helpers that return 0--1 proportions are intentionally separate and must not be substituted into model-variable construction.
+
+Vanneman source districts are promoted with the same frozen G2 population-allocation crosswalk and 99% source-coverage rule used for PCA91.  The `dist91` control reader excludes state/national aggregate records (`00` administrative codes) before standardized district-key normalization, so only genuine district rows can enter the historical-control sufficient statistics.  Extensive counts are allocated before ratios are formed; ratios are never directly averaged across split source districts.  The resulting `consumption_historical_concept_matched` family re-estimates compact-2001, PCA91, and Vanneman adjustments under region/state FE on one six-design common sample per endpoint.  It uses the preferred Shastry scalar instrument, Anderson--Rubin inference, and Holm adjustment within endpoint and across all 48 cells.  This family is kept separate from the already-observed PCA91 family so its multiplicity rule is fixed before the Vanneman estimates are inspected.
+
+
+The realized concept-matched family now motivates primary ORGI validation rather than another immediate robustness axis. On common support, the 2022-23 state-FE change design rejects beta zero after family-wide Holm adjustment under compact-2001, PCA91, and Vanneman adjustment; 2023-24 survives under PCA91 and Vanneman but not compact-2001. Effective F remains extremely weak (maximum about 2.82), so these results are interpreted as historical-control/source robustness under weak identification, not as a repaired first stage. The registered 1991 ORGI acquisition set therefore targets the concepts most useful for independent validation: C-02 education, C-06 age structure, B-01(S) worker status, and C-09 religion. C-02U is supplementary. State-level H-series files are explicitly excluded from district control construction; electricity validation should instead use the available district-level Vanneman and SHRUG village/town evidence unless a primary district housing table is found.
+
+The downloaded ORGI workbooks now make that gate executable rather than acquisition-only. Extended diagnostics compare source-district sufficient statistics against the cached Vanneman `dist91` counts **before** any G2 allocation. Some official small-UT workbooks contain only a state aggregate (`district_code = 00`) even though the ORGI catalog describes the series as district-capable. Such aggregate-only files contribute zero district rows: they are never coerced into a synthetic district, and completeness is enforced only after all workbooks are combined on the registered Vanneman validation universe. Across the 397 Vanneman districts, the reviewed contracts require exact equality for C-02 total population, C-02U urban population (with structural zero only for independently zero-urban districts), C-02 secondary-plus counts, B-01(S) main workers, C-06 dependent and working-age aggregates, C-09 Muslim population, and the C-09 religion-category population sum. The published C-09 total population is deliberately diagnostic rather than an exact contract because the Dhule row differs from its own religion-category sum while the religion-category sum and Muslim count reconcile to the independent source. These checks validate source concepts; they do not retrospectively replace the already-observed Vanneman/PCA91 causal family or change its multiplicity correction.
+
+### Intensive-margin EMI treatment robustness
+
+The registered treatment-definition robustness family holds the welfare endpoint/estimand registry fixed and replaces preferred all-child EMI exposure with `emi_share_enrolled_0708`, the survey-weighted English-medium share among enrolled age-eligible children with observed medium. This is a substantive intensive-margin estimand, not a preferred-treatment replacement: all-child exposure incorporates both enrollment and medium choice, while the enrolled-child share conditions on enrollment and observed medium. The family therefore remains Tier C.
+
+The intensive-margin family uses exactly the same six scalar IV designs as the frozen scalar robustness family (region/state adjustment crossed with Shastry, Glottolog, and Dyen scalar constructions), giving 48 cells across the eight registered primary-welfare endpoint/estimand designs. The six designs share one complete-case sample within endpoint/estimand, and Holm adjustment is applied within endpoint and across the full 48-cell family. It is not retrospectively merged with the already-observed preferred-treatment scalar family.
+
+### Shastry Hindi-belt relevance comparison
+
+The last predeclared executable relevance diagnostic adds Shastry's state-level `Hindi Belt` control to the preferred nonzero-mean linguistic-distance first stage. The definition is frozen to the states named by Shastry (2012): Bihar, Uttar Pradesh/Uttaranchal, Madhya Pradesh/Chhattisgarh, Haryana, Punjab, Rajasthan, Himachal Pradesh, Jharkhand, Chandigarh, and Delhi. The implementation stores that definition on Census-2001 state codes, so later state renamings cannot change the historical specification.
+
+Only two new cells are admissible: main Census-2001 controls plus the Hindi-belt indicator with (i) no geographic fixed effects and (ii) six-region fixed effects. They are estimated on one common support and reported against otherwise identical baselines without the indicator. State fixed effects are deliberately not estimated because any state-level Hindi-belt indicator is exactly absorbed by state FE. The diagnostic is a relevance/omitted-institutional-environment check, not a new preferred first stage and not a multiplicity family for causal outcome selection. District Hindi/Urdu composition remains conceptually distinct from the independently defined state-level Hindi-belt indicator.
+
+
+### Shastry child-population comparison
+
+The Shastry-comparison relevance diagnostics also register `log_child_population_5_19_2001`. It is constructed directly from Census-2001 C-14 as the log of the sum of the district populations in the 5-9, 10-14, and 15-19 five-year age bands. The attached official C-14 workbooks expose those exact district age bands, so no interpolation or proxy age window is used. It is an appendix comparison control, not part of the preferred compact-2001 vector or the general absorption search. Two paired first stages add it to the main controls under no geographic FE and six-region FE on common support.
+
+The realized 573-district comparison is essentially null as an explanation for first-stage attenuation. With no geographic FE, the excluded-instrument F changes from about 14.29 to 13.61; with six-region FE it changes from about 3.238 to 3.227. The child-population control therefore does not explain the weak conditional relevance and is not promoted into the preferred control vector. The Hindi-belt and child-population checks now share the generic `diagnose_shastry_control_first_stage.R` module rather than source-specific estimation code.
+
+### Genuine EMI school supply
+
+The archived DISE district-report-card files do **not** identify the number of schools offering English-medium instruction. Their medium block reports enrollment by medium, and the DISE documentation warns that medium enrollment is incomplete and applies only to schools that reported the item. Consequently `dise_emi_enrollment_share` remains an administrative-equilibrium measure rather than a school-supply measure. A genuine school-supply share is retained in the candidate ledger as data-dependent future work and must not be approximated by enrollment shares.
+
+### Normalized inference metadata
+
+`analysis_design_registry.csv` preserves executable outcome/treatment/instrument strings for existing estimators while linking them, when applicable, to the canonical construct registry through stable construct-ID columns. This follows ordinary relational-registry practice: scientific identity is keyed separately from a storage name that may be generated, repeated across vintages, or contain a multi-instrument expression. The same file preserves the legacy `inference` labels used by
+existing outputs, but also separates their methodological components. State
+clustering is recorded in `covariance_id`; Anderson--Rubin or the broader weak-IV
+diagnostic suite is recorded in `weak_id_inference_id`; Holm adjustment is
+recorded independently in `multiplicity_id`. `support_policy_id` similarly
+separates the common support/complete-case principle from the family-specific
+`sample_rule` identifier. These fields are ontology metadata only: they do not
+change estimation. Their purpose is to make later exclusion-sensitivity methods
+explicit additions to the inference axis rather than new parallel diagnostic
+families.
+
+### Bounded exclusion-restriction sensitivity
+
+The preferred consumption IV is now accompanied by a deliberately narrow
+Conley--Hansen--Rossi-style exclusion-sensitivity diagnostic. The maintained
+linear model is written as
+
+`Y = beta D + gamma Z + W delta + error`,
+
+where `gamma` is the direct/non-EMI effect of the scalar linguistic-distance
+instrument on the welfare outcome. The generic implementation does not assume
+`gamma = 0`: for each candidate `beta`, it estimates the coefficient on `Z` in
+`Y - beta D` using the registered nuisance terms and state-clustered covariance,
+and then asks whether that coefficient is compatible with a user-supplied
+interval `[gamma_lower, gamma_upper]`. Because subtracting a fixed `gamma Z`
+changes the tested coefficient but not the regression residuals, the union over
+all `gamma` in the interval is available analytically from one clustered
+Anderson--Rubin profile rather than a second numerical gamma grid. At the point
+interval `[0, 0]`, this procedure is exactly the existing Anderson--Rubin test.
+
+This is a weak-identification-robust implementation of the bounded direct-effect
+idea in Conley, Hansen, and Rossi (2012), *Plausibly Exogenous*, Review of
+Economics and Statistics 94(1):260--272. It is intentionally not a conventional
+2SLS delta-method sensitivity calculation: the project's preferred first stage
+is too weak for conventional structural standard errors to be the inferential
+foundation.
+
+A standard implementation was checked before adding project code. CRAN's
+`ivmodel::ARsens.test()` implements invalid-IV Anderson--Rubin sensitivity for
+one instrument, but its current sensitivity routine operates on residualized
+`Yadj`, `Dadj`, and `Zadj` and does not accept or propagate the package's
+`clusterID` argument; `clusterID` is passed to k-class/LIML routines instead.
+Because state-clustered inference is a primary project contract, replacing the
+shared clustered AR layer with that routine would silently change the inferential
+problem. The local implementation is therefore a thin clustered extension of the
+already-tested AR machinery, not a duplicate general IV package.
+
+The first registered application is restricted to the four modern HCES
+real-mean-MPCE designs: 2022--23 and 2023--24, each under ANCOVA and long change,
+with the preferred state-main adjustment and preferred scalar Shastry distance.
+For reviewer-facing fragility calibration, the diagnostic reports exact
+exclusion plus symmetric and same-sign direct-effect intervals whose radii are
+25, 50, and 100 percent of the *observed reduced-form estimate*. Those
+reduced-form-scaled intervals are explicitly diagnostic scale anchors, not a
+precommitted substantive prior and therefore not advertised as having a nominal
+coverage interpretation for a data-selected gamma support. The generic bounded
+AR functions accept externally justified fixed gamma bounds when such a support
+can be defended independently.
+
+The summary also reports the smallest same-direction direct-effect magnitude
+that would make `beta = 0` enter the 95-percent bounded-AR set, both in outcome
+units and as a fraction of the observed reduced form. This turns exclusion
+concerns into a transparent fragility quantity without interpreting an unstable
+2SLS point estimate as an upper or lower bound. Durable outputs are
+`consumption_exclusion_sensitivity_summary.csv` and
+`consumption_exclusion_sensitivity_grid.csv`; both are required by the extended
+audit. The second imperfect-IV step is now implemented for the genuinely overidentified
+five-share language-distance systems. Following Masten and Poirier (2021), with
+one endogenous regressor each share is used as the sole excluded instrument in
+turn while the remaining four shares enter as controls; the falsification-adaptive
+set is the interval between the smallest and largest of those five just-identified
+IV estimands. The implementation is restricted to region-main and state-main
+adjustments for the all-speaker, all-speaker-plus-unresolved-controls, and
+mapped-speaker five-share systems (six designs total). It reports every
+constituent estimate, state-clustered standard error, and conditional first-stage
+F statistic. Weak constituents are not screened out: population relevance is an
+assumption of the FAS theorem, whereas a sample F threshold would redefine the
+set in a data-dependent way. The estimated FAS is therefore an identified-set
+diagnostic, not a weak-IV-robust confidence interval. Durable outputs are
+`iv_falsification_adaptive_set_summary.csv` and
+`iv_falsification_adaptive_set_components.csv`, and both are required by the
+extended audit.
+
+### Final IV appendix publication summaries
+
+The final manuscript does not maintain a separate main-text identification table or first-stage figure. The scientific first-stage absorption ladder remains part of the diagnostic layer and is saved in extended mode, while the Prompt-10 IV appendix owns the reader-facing identification summaries. This avoids maintaining two publication representations of the same evidence.
+
+The final IV appendix no longer mirrors the full analytical inventory. It consumes two compact summaries. `appendix_iv_relevance_summary` compares the registered modern linguistic constructions under no geographic fixed effects, region fixed effects, and state fixed effects, and appends the validated 1991 historical comparison on its own common support. `appendix_iv_weak_inference` reports the two long-change 2SLS estimates together with Montiel Olea--Pflueger effective F, Anderson--Rubin confidence-set topology, and the registered exclusion-sensitivity threshold.
+
+The larger evidence families remain in their analytical modules. Mapping coverage, language omission, historical balance and pretrends, monotonicity, overidentification, falsification-adaptive sets, all registered consumption robustness families, and the full exclusion-sensitivity grid continue to be saved in extended mode. The appendix builders validate the cross-family conclusions they state but do not generate one paper display per analytical family. This prevents the final paper from turning the robustness inventory into a sequence of editorially numbered tables and figures while keeping the underlying evidence reproducible.
