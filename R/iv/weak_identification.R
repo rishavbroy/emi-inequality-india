@@ -149,14 +149,16 @@ bounded_exclusion_ar_profile <- function(
     fit <- stats::lm(stats::reformulate(rhs, response = transformed), data = x)
     inference <- iv_clustered_inference(fit, cluster)
     term <- model_term_inference(fit, instrument, inference$vcov)
+    joint <- clustered_joint_wald_test(fit, instrument, cluster, inference)
     data.frame(
       beta = beta0,
       direct_effect_estimate = term[["estimate"]],
       direct_effect_std.error = term[["std.error"]],
-      residual_df = stats::df.residual(fit),
+      reference_df = joint[["df_denom"]],
       status = if (
         identical(inference$status, "estimated") &&
           all(is.finite(term[c("estimate", "std.error")])) &&
+          is.finite(joint[["df_denom"]]) && joint[["df_denom"]] > 0 &&
           term[["std.error"]] > 0
       ) "estimated" else "inference_unavailable",
       reason = if (identical(inference$status, "unavailable")) inference$reason else NA_character_,
@@ -171,7 +173,7 @@ bounded_exclusion_ar_grid <- function(
   x <- safe_df(profile)
   required <- c(
     "beta", "direct_effect_estimate", "direct_effect_std.error",
-    "residual_df", "status"
+    "reference_df", "status"
   )
   missing <- setdiff(required, names(x))
   if (length(missing)) {
@@ -191,7 +193,7 @@ bounded_exclusion_ar_grid <- function(
 
   estimate <- num(x$direct_effect_estimate)
   se <- num(x$direct_effect_std.error)
-  df <- num(x$residual_df)
+  df <- num(x$reference_df)
   closest <- pmin(pmax(estimate, gamma_lower), gamma_upper)
   distance <- estimate - closest
   statistic <- ifelse(
@@ -264,7 +266,7 @@ bounded_exclusion_ar_minimum_gamma_for_zero <- function(profile, level = 0.95) {
   if (nrow(zero) != 1L) zero <- zero[1L, , drop = FALSE]
   estimate <- num(zero$direct_effect_estimate[[1L]])
   se <- num(zero$direct_effect_std.error[[1L]])
-  df <- num(zero$residual_df[[1L]])
+  df <- num(zero$reference_df[[1L]])
   if (!all(is.finite(c(estimate, se, df))) || se <= 0 || df <= 0) return(NA_real_)
   critical <- stats::qt((1 + level) / 2, df = df)
   magnitude <- max(abs(estimate) - critical * se, 0)

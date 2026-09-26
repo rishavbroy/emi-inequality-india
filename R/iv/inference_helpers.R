@@ -31,10 +31,10 @@ clustered_coefficient_frame <- function(fit, vcov) {
 wald_test_from_vcov <- function(fit, terms, vcov) {
   coefficients <- tryCatch(stats::coef(fit), error = function(e) NULL)
   if (is.null(coefficients) || !length(terms) || any(!terms %in% names(coefficients))) {
-    return(c(statistic = NA_real_, p.value = NA_real_, df = length(terms)))
+    return(c(statistic = NA_real_, p.value = NA_real_, df = length(terms), df_denom = NA_real_))
   }
   if (is.null(vcov) || !inherits(vcov, "clubSandwich")) {
-    return(c(statistic = NA_real_, p.value = NA_real_, df = length(terms)))
+    return(c(statistic = NA_real_, p.value = NA_real_, df = length(terms), df_denom = NA_real_))
   }
 
   constraints <- clubSandwich::constrain_zero(terms, coefs = coefficients)
@@ -49,12 +49,13 @@ wald_test_from_vcov <- function(fit, terms, vcov) {
     error = function(e) NULL
   )
   if (is.null(out) || !nrow(out)) {
-    return(c(statistic = NA_real_, p.value = NA_real_, df = length(terms)))
+    return(c(statistic = NA_real_, p.value = NA_real_, df = length(terms), df_denom = NA_real_))
   }
   c(
     statistic = suppressWarnings(as.numeric(out$Fstat[[1L]])),
     p.value = suppressWarnings(as.numeric(out$p_val[[1L]])),
-    df = suppressWarnings(as.numeric(out$df_num[[1L]]))
+    df = suppressWarnings(as.numeric(out$df_num[[1L]])),
+    df_denom = suppressWarnings(as.numeric(out$df_denom[[1L]]))
   )
 }
 
@@ -63,7 +64,7 @@ clustered_joint_wald_test <- function(fit, terms, cluster, inference = NULL) {
     inference <- tryCatch(iv_clustered_inference(fit, cluster), error = function(e) NULL)
   }
   if (is.null(inference) || is.null(inference$vcov)) {
-    return(c(statistic = NA_real_, p.value = NA_real_, df = length(terms)))
+    return(c(statistic = NA_real_, p.value = NA_real_, df = length(terms), df_denom = NA_real_))
   }
   wald_test_from_vcov(fit, terms, inference$vcov)
 }

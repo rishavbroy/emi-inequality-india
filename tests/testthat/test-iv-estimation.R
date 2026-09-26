@@ -672,6 +672,7 @@ test_that("clustered joint inference matches clubSandwich HTZ tests", {
   expect_equal(observed[["statistic"]], direct$Fstat[[1L]], tolerance = 1e-12)
   expect_equal(observed[["p.value"]], direct$p_val[[1L]], tolerance = 1e-12)
   expect_equal(observed[["df"]], direct$df_num[[1L]], tolerance = 1e-12)
+  expect_equal(observed[["df_denom"]], direct$df_denom[[1L]], tolerance = 1e-12)
 })
 
 test_that("fitted IV term parsing preserves ivreg component terms", {
