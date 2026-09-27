@@ -21,24 +21,22 @@ mop_effective_f <- function(
     return(unavailable("Montiel Olea-Pflueger tau and size must be valid probabilities."))
   }
 
-  terms <- parse_iv_formula_terms(model)
-  if (is.null(terms)) {
-    return(unavailable("Could not parse IV formula for Montiel Olea-Pflueger effective F."))
-  }
-  endogenous <- setdiff(terms$regressors, terms$instruments)
-  if (length(endogenous) != 1L) {
+  endogenous <- suppressWarnings(as.integer(model$endogenous))
+  if (length(endogenous) != 1L || !is.finite(endogenous)) {
     return(unavailable("Montiel Olea-Pflueger effective F requires exactly one endogenous regressor."))
   }
 
-  formula <- stats::formula(model)
-  regression_formula <- stats::as.formula(
-    call("~", formula[[2L]], formula[[3L]][[2L]]),
-    env = environment(formula)
+  regression_formula <- tryCatch(
+    stats::formula(model, component = "regressors"),
+    error = function(e) NULL
   )
-  instrument_formula <- stats::as.formula(
-    call("~", formula[[3L]][[3L]]),
-    env = environment(formula)
+  instrument_formula <- tryCatch(
+    stats::formula(stats::delete.response(stats::terms(model, component = "instruments"))),
+    error = function(e) NULL
   )
+  if (is.null(regression_formula) || is.null(instrument_formula)) {
+    return(unavailable("Could not recover ivreg component formulas for Montiel Olea-Pflueger effective F."))
+  }
   needed <- unique(c(all.vars(regression_formula), all.vars(instrument_formula)))
   data <- iv_analysis_frame(analysis_data, needed)
   missing <- setdiff(needed, names(data))

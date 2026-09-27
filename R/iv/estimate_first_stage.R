@@ -41,8 +41,6 @@ estimate_first_stage <- function(iv_models, district_panel, cfg) {
     }
     fit <- first_stage$model
     analysis_data <- first_stage$data
-    iv_terms <- parse_iv_formula_terms(model)
-
     vc <- first_stage_vcov(fit, analysis_data)
     coef_mat <- tryCatch({
       if (is.null(vc)) summary(fit)$coefficients else clustered_coefficient_frame(fit, vc)
@@ -61,10 +59,9 @@ estimate_first_stage <- function(iv_models, district_panel, cfg) {
     statistic_col <- first_existing_column(coefs, c("t value", "z value", "t", "statistic"))
     p_col <- first_existing_column(coefs, c("Pr(>|t|)", "Pr(>|z|)", "p.value", "Pr(>F)"))
 
-    excluded <- setdiff(iv_terms$instruments, iv_terms$regressors)
-    excluded_term <- if (length(excluded)) excluded[[1]] else NA_character_
-    excluded_row <- if (!is.na(excluded_term)) match(excluded_term, coefs$term) else NA_integer_
-    wald <- first_stage_wald_test(fit, excluded_term, vc)
+    excluded_terms <- first_stage$excluded
+    excluded_rows <- match(excluded_terms, coefs$term)
+    wald <- first_stage_wald_test(fit, excluded_terms, vc)
     effective <- mop_effective_f(model, analysis_data)
     if (is_final_mode(cfg) && !identical(effective$status, "estimated")) {
       stop(
@@ -84,8 +81,17 @@ estimate_first_stage <- function(iv_models, district_panel, cfg) {
 
     statistic_values <- column_or_na(coefs, statistic_col)
     p_values <- column_or_na(coefs, p_col)
-    partial_f <- wald$partial_f %||% if (!is.na(excluded_row) && excluded_row <= length(statistic_values)) statistic_values[[excluded_row]]^2 else NA_real_
-    partial_p <- wald$partial_p %||% if (!is.na(excluded_row) && excluded_row <= length(p_values)) p_values[[excluded_row]] else NA_real_
+    fallback_row <- excluded_rows[is.finite(excluded_rows)][1L]
+    fallback_f <- if (
+      length(excluded_terms) == 1L && length(fallback_row) &&
+        fallback_row <= length(statistic_values)
+    ) statistic_values[[fallback_row]]^2 else NA_real_
+    fallback_p <- if (
+      length(excluded_terms) == 1L && length(fallback_row) &&
+        fallback_row <= length(p_values)
+    ) p_values[[fallback_row]] else NA_real_
+    partial_f <- if (is.finite(wald$partial_f)) wald$partial_f else fallback_f
+    partial_p <- if (is.finite(wald$partial_p)) wald$partial_p else fallback_p
 
     data.frame(
       model = model_name,
@@ -128,11 +134,18 @@ iv_first_stage_fit <- function(model, data) {
     stats::model.matrix(model, component = "regressors"),
     error = function(e) NULL
   )
+  instruments <- tryCatch(
+    stats::model.matrix(model, component = "instruments"),
+    error = function(e) NULL
+  )
   endogenous_index <- suppressWarnings(as.integer(model$endogenous))
+  excluded_index <- suppressWarnings(as.integer(model$instruments))
   if (
-    is.null(regressors) || length(endogenous_index) != 1L ||
+    is.null(regressors) || is.null(instruments) ||
+      length(endogenous_index) != 1L ||
       !is.finite(endogenous_index) || endogenous_index < 1L ||
-      endogenous_index > ncol(regressors)
+      endogenous_index > ncol(regressors) ||
+      !nrow(instruments) || nrow(instruments) != nrow(regressors)
   ) {
     return(NULL)
   }
@@ -142,50 +155,52 @@ iv_first_stage_fit <- function(model, data) {
   if (!length(rows)) return(NULL)
   analysis_data <- panel[rows, , drop = FALSE]
 
-  # ivreg stores `endogenous` as column positions in its regressor matrix, not
-  # variable names. Use the fitted matrix itself as the stage-one response so
-  # transformed regressors and factor expansions stay exactly aligned with the
-  # fitted IV model.
-  model_frame <- tryCatch(as.data.frame(stats::model.frame(model)), error = function(e) NULL)
-  instrument_formula <- tryCatch(
-    stats::formula(model, component = "instruments"),
-    error = function(e) NULL
-  )
-  if (is.null(model_frame) || is.null(instrument_formula) || nrow(model_frame) != nrow(regressors)) {
-    return(NULL)
-  }
-  model_frame$.iv_first_stage_response <- regressors[, endogenous_index[[1L]]]
+  response <- regressors[, endogenous_index[[1L]]]
+  weights <- tryCatch(stats::weights(model, type = "working"), error = function(e) NULL)
+  if (!is.null(weights) && length(weights) != nrow(instruments)) return(NULL)
 
-  # formula.ivreg(component = "instruments") returns the one-sided instrument
-  # formula. Preserve its RHS expression verbatim and add only the fitted
-  # endogenous regressor as the response. Replacing [[2L]] directly would
-  # overwrite the RHS and silently discard every instrument.
-  instrument_rhs <- if (length(instrument_formula) == 2L) {
-    instrument_formula[[2L]]
+  # Fit directly on ivreg's expanded instrument matrix. This makes ivreg the
+  # single owner of factor expansion, interactions, transformations, contrasts,
+  # and complete-case selection while retaining an lm object for CR2 inference.
+  fit <- if (is.null(weights)) {
+    stats::lm.fit(x = instruments, y = response)
   } else {
-    instrument_formula[[3L]]
+    stats::lm.wfit(x = instruments, y = response, w = weights)
   }
-  first_stage_formula <- stats::as.formula(
-    call("~", as.name(".iv_first_stage_response"), instrument_rhs),
-    env = environment(instrument_formula)
+  class(fit) <- "lm"
+  fit$x <- instruments
+  fit$y <- response
+  fit$model <- data.frame(
+    .iv_first_stage_response = response,
+    row.names = rownames(instruments),
+    check.names = FALSE
   )
-
-  fit <- tryCatch(
-    stats::lm(
-      first_stage_formula,
-      data = model_frame,
-      weights = stats::weights(model, type = "working"),
-      na.action = stats::na.fail,
-      contrasts = model$contrasts$instruments %||% NULL
-    ),
-    error = function(e) NULL
+  fit$terms <- stats::terms(
+    if ("(Intercept)" %in% colnames(instruments)) {
+      .iv_first_stage_response ~ 1
+    } else {
+      .iv_first_stage_response ~ 0
+    }
   )
-  if (is.null(fit) || stats::nobs(fit) != stats::nobs(model)) return(NULL)
+  fit$call <- match.call()
+  fit$contrasts <- attr(instruments, "contrasts")
+  fit$xlevels <- list()
+  fit$assign <- attr(instruments, "assign")
+  fit$offset <- NULL
+  fit$na.action <- NULL
 
+  if (stats::nobs(fit) != stats::nobs(model)) return(NULL)
+
+  excluded_index <- excluded_index[
+    is.finite(excluded_index) &
+      excluded_index >= 1L &
+      excluded_index <= ncol(instruments)
+  ]
   list(
     model = fit,
     data = analysis_data,
-    endogenous = colnames(regressors)[endogenous_index[[1L]]]
+    endogenous = colnames(regressors)[endogenous_index[[1L]]],
+    excluded = unique(colnames(instruments)[excluded_index])
   )
 }
 
@@ -241,11 +256,13 @@ first_stage_vcov <- function(fit, district_panel) {
   iv_clustered_inference(fit, cluster)$vcov
 }
 
-first_stage_wald_test <- function(fit, excluded_term, vc) {
-  if (is.na(excluded_term) || is.null(vc)) {
+first_stage_wald_test <- function(fit, excluded_terms, vc) {
+  excluded_terms <- plain_chr(excluded_terms)
+  excluded_terms <- excluded_terms[!is.na(excluded_terms) & nzchar(excluded_terms)]
+  if (!length(excluded_terms) || is.null(vc)) {
     return(list(partial_f = NA_real_, partial_p = NA_real_))
   }
-  out <- wald_test_from_vcov(fit, excluded_term, vc)
+  out <- wald_test_from_vcov(fit, excluded_terms, vc)
   list(
     partial_f = suppressWarnings(as.numeric(out[["statistic"]])),
     partial_p = suppressWarnings(as.numeric(out[["p.value"]]))

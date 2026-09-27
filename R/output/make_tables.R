@@ -882,12 +882,8 @@ first_stage_table_model <- function(iv_models, district_panel) {
   }
   fit <- first_stage$model
   analysis_data <- first_stage$data
-  terms <- parse_iv_formula_terms(model)
-  if (is.null(terms)) return(list(model = NULL, vcov = NULL, add_rows = NULL))
   vc <- first_stage_vcov(fit, analysis_data)
-  excluded <- setdiff(terms$instruments, terms$regressors)
-  excluded_term <- if (length(excluded)) excluded[[1]] else NA_character_
-  wald <- first_stage_wald_test(fit, excluded_term, vc)
+  wald <- first_stage_wald_test(fit, first_stage$excluded, vc)
   effective <- mop_effective_f(model, analysis_data)
   add_rows <- data.frame(
     term = c(

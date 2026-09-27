@@ -747,6 +747,10 @@ test_that("first-stage refits preserve ivreg's instrument design and fitted samp
     colnames(stats::model.matrix(first_stage$model)),
     colnames(stats::model.matrix(fit, component = "instruments"))
   )
+  expect_identical(
+    first_stage$excluded,
+    colnames(stats::model.matrix(fit, component = "instruments"))[as.integer(fit$instruments)]
+  )
   expect_equal(
     unname(stats::residuals(first_stage$model)),
     unname(as.matrix(stats::residuals(fit, type = "stage1"))[, 1L]),
