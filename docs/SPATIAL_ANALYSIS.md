@@ -20,7 +20,7 @@ Lakshadweep, South Andaman, and Nicobars are genuine offshore islands in the ref
 
 The spatial-analysis code computes Moran tests for selected variables and model residuals on the exact fitted rows. Residual alignment should reuse the shared fitted-sample/index machinery so factor/transformation handling and row exclusions match the fitted model.
 
-Asymptotic Moran tests are the routine check. Monte Carlo versions are used as sensitivity analyses when reported, with the simulation count and random-seed policy recorded.
+The reported residual p-values use `spdep::moran.mc()` with 9,999 permutations and a fixed seed. The corresponding analytical randomisation result from `spdep::moran.test()` is retained in the diagnostic table for comparison. This follows `spdep`'s recommendation to check the analytical result against permutation inference when graph structure may affect the reference distribution.
 
 ## Experimental spatial IV
 

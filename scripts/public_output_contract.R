@@ -145,7 +145,6 @@ required_final_artifacts <- function(require_poster = FALSE) {
     "outputs/figures/main/consumption_iv_dynamics.pdf",
     "outputs/figures/main/poster_first_stage_specs.pdf",
     "outputs/diagnostics/public/spatial_moran_tests.csv",
-    "outputs/diagnostics/public/spatial_moran_mc_reference.csv",
     "outputs/diagnostics/public/multicollinearity_diagnostics.csv",
     "outputs/diagnostics/public/anderson_rubin_candidate_designs.csv"
   )

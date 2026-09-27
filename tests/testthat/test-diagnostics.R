@@ -66,34 +66,50 @@ test_that("landscape requests use rendered TeX when section filters remove sourc
   expect_true(source_requests_landscape(tex))
 })
 
-test_that("Moran diagnostics compute legacy asymptotic p-values from spatial weights", {
+test_that("Moran diagnostics match spdep permutation inference without changing RNG state", {
   testthat::skip_if_not_installed("spdep")
+  testthat::skip_if_not_installed("withr")
 
-  nb <- spdep::cell2nb(2, 2, type = "rook")
+  nb <- spdep::cell2nb(3, 3, type = "rook")
   weights <- list(
     status = "constructed",
     contiguity = "rook",
     style = "W",
     matrix_style = "B",
     zero_policy = TRUE,
-    row_index = 1:4,
+    row_index = 1:9,
     nb = nb,
     W = spdep::nb2mat(nb, style = "B", zero.policy = TRUE),
     listw = spdep::nb2listw(nb, style = "W", zero.policy = TRUE),
     neighbor_counts = spdep::card(nb),
-    n = 4L,
+    n = 9L,
     n_islands = 0L,
     mean_neighbors = mean(spdep::card(nb)),
     warnings = character()
   )
   class(weights) <- c("emi_spatial_weights", class(weights))
 
-  out <- compute_moran_tests(c(1, 2, 3, 4), weights, legacy_name = "m_cons", estimand = "consumption_growth", variable = "consumption_pct_change", source = "outcome")
+  x <- seq_len(9)
+  set.seed(42)
+  rng_before <- .Random.seed
+  out <- compute_moran_tests(
+    x, weights, legacy_name = "m_cons", estimand = "consumption_growth",
+    variable = "consumption_pct_change", source = "outcome", run_permutation = TRUE,
+    permutation_nsim = 99L, permutation_seed = 7L
+  )
+  expected <- withr::with_seed(
+    7L,
+    spdep::moran.mc(x, weights$listw, nsim = 99L, zero.policy = TRUE)
+  )
 
   expect_equal(out$status, "estimated")
   expect_equal(out$legacy_name, "m_cons")
   expect_equal(out$contiguity %||% "rook", "rook")
   expect_true(is.finite(out$p.value))
+  expect_equal(out$permutation_p.value, expected$p.value)
+  expect_equal(out$permutation_nsim, 99L)
+  expect_equal(out$permutation_seed, 7L)
+  expect_identical(.Random.seed, rng_before)
 })
 
 
@@ -111,8 +127,8 @@ test_that("public spatial autocorrelation diagnostics return tracked files", {
   paths <- save_spatial_autocorrelation_diagnostics(diagnostics, dir = dir)
 
   expect_type(paths, "character")
-  expect_setequal(basename(paths), c("spatial_moran_tests.csv", "spatial_moran_mc_reference.csv"))
-  expect_true(all(file.exists(paths)))
+  expect_identical(basename(paths), "spatial_moran_tests.csv")
+  expect_true(file.exists(paths))
 })
 
 test_that("report values read Moran estimates by contiguity definition", {
@@ -123,14 +139,15 @@ test_that("report values read Moran estimates by contiguity definition", {
     contiguity = c("rook", "queen", "rook"),
     estimate = c(0.0026, 0.0031, 0.3071),
     p.value = c(0.4349, 0.4212, 5.736e-31),
+    permutation_p.value = c(0.4412, 0.4278, 0.0001),
     stringsAsFactors = FALSE
   )
 
   values <- build_report_values(data.frame(), data.frame(), list(), data.frame(), data.frame(), diag, list())
 
   expect_equal(values[["moran_iv_residual_i"]], signif(0.0026, 3))
-  expect_equal(values[["moran_iv_residual_p"]], signif(0.4349, 3))
-  expect_equal(values[["moran_iv_residual_p_queen"]], signif(0.4212, 3))
+  expect_equal(values[["moran_iv_residual_p"]], signif(0.4412, 3))
+  expect_equal(values[["moran_iv_residual_p_queen"]], signif(0.4278, 3))
   expect_equal(values[["moran_consumption_growth_i"]], signif(0.3071, 3))
   expect_equal(values[["moran_consumption_growth_p"]], signif(5.736e-31, 3))
 })

@@ -135,6 +135,10 @@ spatial_autocorrelation_status_row <- function(status, reason) {
     p.value = NA_real_,
     method = NA_character_,
     alternative = NA_character_,
+    permutation_p.value = NA_real_,
+    permutation_method = NA_character_,
+    permutation_nsim = NA_integer_,
+    permutation_seed = NA_integer_,
     n = NA_integer_,
     contiguity = NA_character_,
     weights_style = NA_character_,
@@ -176,7 +180,9 @@ spatial_moran_test_from_model_residuals <- function(model, district_panel, weigh
     )
   }
   x <- tryCatch(stats::residuals(model), error = function(e) NA_real_)
-  compute_moran_tests(x, weights, legacy_name, estimand, variable, source)
+  compute_moran_tests(
+    x, weights, legacy_name, estimand, variable, source, run_permutation = TRUE
+  )
 }
 
 spatial_moran_test_from_first_stage_residuals <- function(model, district_panel, weights, legacy_name, estimand, variable, source) {
@@ -210,16 +216,21 @@ spatial_moran_test_from_first_stage_residuals <- function(model, district_panel,
     )
   }
   compute_moran_tests(
-    residuals[, 1L], weights, legacy_name, estimand, variable, source
+    residuals[, 1L], weights, legacy_name, estimand, variable, source,
+    run_permutation = TRUE
   )
 }
 
-#' compute moran tests
+#' compute Moran tests
 #'
-#' @return A data frame containing the statistic, Moran's I estimate, expected
-#' value, variance, and p-value.  `moran.test()` is the asymptotic-normal test
-#' used by the legacy Rmd.
-compute_moran_tests <- function(x, spatial_weights, legacy_name = NA_character_, estimand = NA_character_, variable = NA_character_, source = NA_character_) {
+#' @return A one-row data frame containing Moran's I and the analytical
+#' randomisation-test result from `spdep::moran.test()`. Residual checks also
+#' report the fixed-seed permutation p-value from `spdep::moran.mc()`; raw
+#' variable checks retain the analytical test only.
+compute_moran_tests <- function(
+    x, spatial_weights, legacy_name = NA_character_, estimand = NA_character_,
+    variable = NA_character_, source = NA_character_, run_permutation = FALSE,
+    permutation_nsim = 9999L, permutation_seed = 1L) {
   if (!inherits(spatial_weights, "emi_spatial_weights") || !identical(spatial_weights$status, "constructed")) {
     return(spatial_autocorrelation_status_row("out_of_active_pipeline", "Spatial weights were not constructed."))
   }
@@ -230,10 +241,42 @@ compute_moran_tests <- function(x, spatial_weights, legacy_name = NA_character_,
   if (any(!is.finite(x))) {
     return(spatial_autocorrelation_status_row("out_of_active_pipeline", paste0("Non-finite values prevent Moran's I for ", variable, ".")))
   }
-  test <- tryCatch(spdep::moran.test(x, spatial_weights$listw, zero.policy = TRUE), error = function(e) e)
+  run_permutation <- isTRUE(run_permutation)
+  permutation_nsim <- as.integer(permutation_nsim)
+  permutation_seed <- as.integer(permutation_seed)
+  if (run_permutation && (length(permutation_nsim) != 1L || !is.finite(permutation_nsim) || permutation_nsim < 1L)) {
+    stop("Moran permutation count must be one positive integer.", call. = FALSE)
+  }
+  if (run_permutation && (length(permutation_seed) != 1L || !is.finite(permutation_seed))) {
+    stop("Moran permutation seed must be one finite integer.", call. = FALSE)
+  }
+
+  test <- tryCatch(
+    spdep::moran.test(x, spatial_weights$listw, zero.policy = TRUE),
+    error = function(e) e
+  )
   if (inherits(test, "error")) {
     return(spatial_autocorrelation_status_row("out_of_active_pipeline", conditionMessage(test)))
   }
+  permutation_test <- NULL
+  if (run_permutation) {
+    permutation_test <- tryCatch(
+      withr::with_seed(
+        permutation_seed,
+        spdep::moran.mc(
+          x, spatial_weights$listw, nsim = permutation_nsim, zero.policy = TRUE
+        )
+      ),
+      error = function(e) e
+    )
+    if (inherits(permutation_test, "error")) {
+      return(spatial_autocorrelation_status_row(
+        "out_of_active_pipeline",
+        paste0("Moran permutation test failed: ", conditionMessage(permutation_test))
+      ))
+    }
+  }
+
   estimate <- suppressWarnings(as.numeric(test$estimate))
   estimate_value <- function(i) if (length(estimate) >= i && is.finite(estimate[[i]])) estimate[[i]] else NA_real_
   data.frame(
@@ -250,6 +293,10 @@ compute_moran_tests <- function(x, spatial_weights, legacy_name = NA_character_,
     p.value = suppressWarnings(as.numeric(test$p.value)),
     method = test$method %||% "Moran I test under randomisation",
     alternative = test$alternative %||% NA_character_,
+    permutation_p.value = if (is.null(permutation_test)) NA_real_ else suppressWarnings(as.numeric(permutation_test$p.value)),
+    permutation_method = if (is.null(permutation_test)) NA_character_ else permutation_test$method %||% "Monte-Carlo simulation of Moran I",
+    permutation_nsim = if (is.null(permutation_test)) NA_integer_ else permutation_nsim,
+    permutation_seed = if (is.null(permutation_test)) NA_integer_ else permutation_seed,
     n = length(x),
     contiguity = spatial_weights$contiguity %||% NA_character_,
     weights_style = spatial_weights$style %||% NA_character_,
@@ -279,25 +326,14 @@ spatial_legacy_note <- function(legacy_name) {
   unname(notes[legacy_name]) %||% NA_character_
 }
 
-spatial_moran_mc_reference <- function() {
-  data.frame(
-    scaffold = "moran.mc(resid_cons, listw_2020, nsim = 9999)",
-    status = "documented_not_run_by_default",
-    reason = "Legacy Chunk 29 kept this as a Monte Carlo robustness scaffold. The current pipeline deliberately documents this deviation instead of maintaining full-sample Monte Carlo benchmark functionality; active results use the asymptotic moran.test() path used by report_values.",
-    stringsAsFactors = FALSE
-  )
-}
-
-
 #' save spatial autocorrelation diagnostics
 #'
 #' @return Character vector of diagnostic CSV paths written for public review.
 save_spatial_autocorrelation_diagnostics <- function(diagnostics, dir = "outputs/diagnostics/public") {
-  paths <- c(
-    moran_tests = write_diagnostic_csv(as.data.frame(diagnostics), file.path(dir, "spatial_moran_tests.csv")),
-    moran_mc_reference = write_diagnostic_csv(spatial_moran_mc_reference(), file.path(dir, "spatial_moran_mc_reference.csv"))
+  write_diagnostic_csv(
+    as.data.frame(diagnostics),
+    file.path(dir, "spatial_moran_tests.csv")
   )
-  unname(unlist(paths, use.names = FALSE))
 }
 
 # sample-end: code-spatial-autocorrelation

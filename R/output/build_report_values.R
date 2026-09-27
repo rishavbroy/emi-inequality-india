@@ -39,11 +39,11 @@ build_report_values <- function(ame_results, first_stage_tests, iv_models, selec
     moran_consumption_growth_p = c("m_cons", "p.value", "rook"),
     moran_gini_change_i = c("m_gini", "estimate", "rook"),
     moran_iv_residual_i = c("m_cons_resid", "estimate", "rook"),
-    moran_iv_residual_p = c("m_cons_resid", "p.value", "rook"),
+    moran_iv_residual_p = c("m_cons_resid", "permutation_p.value", "rook"),
     moran_first_stage_residual_i = c("m_fscons_resid", "estimate", "rook"),
-    moran_first_stage_residual_p = c("m_fscons_resid", "p.value", "rook"),
-    moran_iv_residual_p_queen = c("m_cons_resid", "p.value", "queen"),
-    moran_first_stage_residual_p_queen = c("m_fscons_resid", "p.value", "queen")
+    moran_first_stage_residual_p = c("m_fscons_resid", "permutation_p.value", "rook"),
+    moran_iv_residual_p_queen = c("m_cons_resid", "permutation_p.value", "queen"),
+    moran_first_stage_residual_p_queen = c("m_fscons_resid", "permutation_p.value", "queen")
   )
   for (key in names(spatial_keys)) {
     entry <- spatial_keys[[key]]

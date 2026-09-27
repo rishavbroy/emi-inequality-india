@@ -5,9 +5,8 @@ This file lists unfinished work only. Completed implementation history is retain
 ## Open methodological issues
 
 1. **Anderson--Rubin tail classification.** Interior confidence-set boundaries are root-refined, but accepted components that reach the finite topology-search range are still reported as search-truncated. Add adaptive range expansion or another defensible stopping rule before classifying a tail as genuinely unbounded, and benchmark the ordinary homoskedastic special case against an independent implementation.
-2. **Price-deflator sensitivity.** The production link now consumes the shared `price_link_factor()` rule and diagnostics report first/last-overlap alternatives with their exact pre-switch real-consumption scaling. Remaining work is to decide, from those diagnostics and the 2011--12 spatial-normalization evidence, whether a materially different registered price construction warrants full outcome re-estimation.
-3. **Moran inference convention.** Decide whether the public spatial residual check is intentionally the asymptotic `spdep::moran.test()` or whether a fixed-seed `spdep::moran.mc()` permutation result should be the reported robustness check. Remove the inactive 9,999-draw scaffold once that choice is documented.
-4. **District fuzzy-candidate scoring.** Reassess hand-set similarity weights and thresholds against the reviewed adjudication set; final identities must continue to require deterministic/reviewed evidence rather than fuzzy scores alone.
+2. **Price-deflator sensitivity.** The production link now consumes the shared `price_link_factor()` rule. The first/last-overlap diagnostic shows non-negligible scaling in some state-sector cells (up to roughly nine percent in the current build), so the next price step is to re-estimate the registered consumption results under a defensible alternative link construction and compare the reported coefficients before closing this issue.
+3. **District fuzzy-candidate scoring.** Reassess hand-set similarity weights and thresholds against the reviewed adjudication set; final identities must continue to require deterministic/reviewed evidence rather than fuzzy scores alone.
 
 ## Open engineering issues
 
