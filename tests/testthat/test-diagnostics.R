@@ -579,6 +579,46 @@ test_that("Anderson-Rubin inversion preserves disconnected confidence sets", {
   expect_false(any(components$contains_zero))
 })
 
+test_that("Anderson-Rubin inversion refines interior transition boundaries", {
+  skip_if_not_installed("clubSandwich")
+  set.seed(452)
+  n <- 240L
+  z <- stats::rnorm(n)
+  d <- 0.35 * z + stats::rnorm(n)
+  y <- 0.6 * d + stats::rnorm(n)
+  panel <- data.frame(
+    y = y, d = d, z = z,
+    state_code_2001 = rep(sprintf("%02d", 1:24), each = 10),
+    stringsAsFactors = FALSE
+  )
+  spec <- data.frame(
+    specification_id = "ar_refinement", outcome = "y", treatment = "d",
+    fixed_effect = "none", cluster = "state_code_2001",
+    stringsAsFactors = FALSE
+  )
+  spec$controls <- I(list(character()))
+  spec$included_language_controls <- I(list(character()))
+  spec$excluded_instruments <- I(list("z"))
+
+  out <- estimate_anderson_rubin_spec(panel, spec, points = 41L)
+  refined <- out$grid[out$grid$boundary_refined %in% TRUE, , drop = FALSE]
+
+  expect_true(nrow(refined) >= 1L)
+  expect_equal(refined$p.value, rep(0.05, nrow(refined)), tolerance = 1e-5)
+
+  components <- anderson_rubin_acceptance_components(out$grid)
+  interior <- components[
+    !components$touches_left_grid_edge & !components$touches_right_grid_edge,
+    , drop = FALSE
+  ]
+  if (nrow(interior)) {
+    boundaries <- unique(c(interior$lower, interior$upper))
+    expect_true(all(vapply(boundaries, function(value) {
+      any(abs(refined$beta - value) < 1e-6)
+    }, logical(1))))
+  }
+})
+
 test_that("Anderson-Rubin summaries do not collapse noninterval sets to min-max bounds", {
   set.seed(451)
   n <- 180L

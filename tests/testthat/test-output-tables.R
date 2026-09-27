@@ -737,7 +737,7 @@ test_that("public table sources live in bottom notes rather than titles", {
   expect_match(note, "\\citeproc{ref-nationalsamplesurveyoffice2008}", fixed = TRUE)
   weak_note <- public_table_note("appendix_iv_weak_inference")
   expect_match(weak_note, "95\\%", fixed = TRUE)
-  expect_match(weak_note, "grid boundary", fixed = TRUE)
+  expect_match(weak_note, "search boundary", fixed = TRUE)
   expect_false(grepl("\\\\mathrm", weak_note))
   expect_false(grepl("95%", weak_note, fixed = TRUE))
 })
@@ -1159,8 +1159,8 @@ iv_weak_fixture <- function() {
     effective_f = c(.69, .41),
     anderson_rubin_p_beta0 = c(.001, .08),
     ar_95_components = c(
-      "[grid<= -.2, -.07] U [.03, .2 <=grid]",
-      "[grid<= -.19, .19 <=grid]"
+      "[-.2, -.07] [grid-truncated] U [.03, .2] [grid-truncated]",
+      "[-.19, .19] [grid-truncated]"
     ),
     ar_95_n_components = c(2L, 1L),
     ar_95_disconnected = c(TRUE, FALSE),
@@ -1240,6 +1240,8 @@ test_that("IV appendix weak-inference summary preserves returned AR topology", {
   expect_identical(csv$ar_contains_zero, c(FALSE, TRUE))
   expect_true(all(csv$ar_left_truncated))
   expect_true(all(csv$ar_right_truncated))
+  expect_true(all(grepl("\\\\dagger", csv$ar_95_latex)))
+  expect_false(any(grepl("\\\\mathrm\\{grid\\}", csv$ar_95_latex)))
 
   inconsistent <- fixture$dynamics
   inconsistent$summary$ar_95_n_components[[2L]] <- 2L
@@ -1292,7 +1294,8 @@ test_that("weak-IV appendix table renders through modelsummary", {
   expect_match(tex, "EMI exposure", fixed = TRUE)
   expect_match(tex, "MOP effective $F$", fixed = TRUE)
   expect_match(tex, "\\cup", fixed = TRUE)
-  expect_match(tex, "grid boundary", fixed = TRUE)
+  expect_match(tex, "\\dagger", fixed = TRUE)
+  expect_match(tex, "search boundary", fixed = TRUE)
   expect_match(tex, "41.7\\%", fixed = TRUE)
   expect_false(grepl("grid<=", tex, fixed = TRUE))
   expect_false(grepl("41.7%", tex, fixed = TRUE))

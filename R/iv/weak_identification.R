@@ -365,16 +365,10 @@ classify_anderson_rubin_information <- function(components) {
 
 format_anderson_rubin_components <- function(components) {
   if (!nrow(components)) return(NA_character_)
-  paste(
-    sprintf(
-      "%s%.6g, %.6g%s",
-      ifelse(components$touches_left_grid_edge, "[grid<= ", "["),
-      components$lower,
-      components$upper,
-      ifelse(components$touches_right_grid_edge, " <=grid]", "]")
-    ),
-    collapse = " U "
-  )
+  intervals <- sprintf("[%.6g, %.6g]", components$lower, components$upper)
+  truncated <- components$touches_left_grid_edge | components$touches_right_grid_edge
+  intervals[truncated] <- paste0(intervals[truncated], " [grid-truncated]")
+  paste(intervals, collapse = " U ")
 }
 
 anderson_rubin_beta_values <- function(data, outcome, treatment, points = 401L) {
@@ -392,18 +386,61 @@ anderson_rubin_grid <- function(
   controls = character(), fixed_effect = "none", cluster,
   level = 0.95, points = 401L
 ) {
-  beta <- anderson_rubin_beta_values(data, outcome, treatment, points)
-  rows <- safe_bind_rows(lapply(beta, function(value) {
+  alpha <- 1 - level
+  evaluate <- function(value) {
     test <- anderson_rubin_test(
       data, outcome, treatment, excluded, included, controls, fixed_effect,
       cluster = cluster, beta0 = value
     )
+    c(statistic = test[["statistic"]], p.value = test[["p.value"]])
+  }
+
+  beta <- anderson_rubin_beta_values(data, outcome, treatment, points)
+  rows <- safe_bind_rows(lapply(beta, function(value) {
+    test <- evaluate(value)
     data.frame(
       beta = value, statistic = test[["statistic"]], p.value = test[["p.value"]],
-      stringsAsFactors = FALSE
+      boundary_refined = FALSE, stringsAsFactors = FALSE
     )
   }))
-  rows$accepted <- is.finite(rows$p.value) & rows$p.value >= 1 - level
+  rows$accepted <- is.finite(rows$p.value) & rows$p.value >= alpha
+
+  # The regular grid discovers confidence-set topology. Endpoints are then
+  # numerical roots of p(beta) - alpha, not whichever grid point happened to
+  # fall closest to the transition. stats::uniroot() is the standard base-R
+  # one-dimensional root finder and f.lower/f.upper avoid repeating the two
+  # expensive clustered tests that already bracket each transition.
+  transitions <- which(rows$accepted[-nrow(rows)] != rows$accepted[-1L])
+  if (length(transitions)) {
+    refined <- lapply(transitions, function(i) {
+      lower <- rows$beta[[i]]
+      upper <- rows$beta[[i + 1L]]
+      f_lower <- rows$p.value[[i]] - alpha
+      f_upper <- rows$p.value[[i + 1L]] - alpha
+      if (!all(is.finite(c(f_lower, f_upper))) || f_lower * f_upper > 0) return(NULL)
+
+      objective <- function(value) evaluate(value)[["p.value"]] - alpha
+      root <- tryCatch(
+        stats::uniroot(
+          objective, interval = c(lower, upper),
+          f.lower = f_lower, f.upper = f_upper, tol = 1e-8, check.conv = TRUE
+        )$root,
+        error = function(e) NA_real_
+      )
+      if (!is.finite(root)) return(NULL)
+      test <- evaluate(root)
+      data.frame(
+        beta = root, statistic = test[["statistic"]], p.value = test[["p.value"]],
+        boundary_refined = TRUE, accepted = TRUE, stringsAsFactors = FALSE
+      )
+    })
+    refined <- safe_bind_rows(refined)
+    if (nrow(refined)) {
+      rows <- safe_bind_rows(list(rows, refined))
+      rows <- rows[order(rows$beta, !rows$boundary_refined), , drop = FALSE]
+      rownames(rows) <- NULL
+    }
+  }
 
   components <- anderson_rubin_acceptance_components(rows)
   rows$acceptance_component <- NA_integer_

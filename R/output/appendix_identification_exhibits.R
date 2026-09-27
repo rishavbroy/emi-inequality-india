@@ -206,15 +206,15 @@ appendix_iv_weak_inference <- function(
   format_components <- function(components) {
     if (!nrow(components)) return("$\\varnothing$")
     intervals <- vapply(seq_len(nrow(components)), function(i) {
-      lower <- sprintf("%.3f", components$lower[[i]])
-      upper <- sprintf("%.3f", components$upper[[i]])
-      if (isTRUE(components$touches_left_grid_edge[[i]])) {
-        lower <- paste0("\\mathrm{grid}\\le ", lower)
+      interval <- sprintf(
+        "\\left[%.3f,\\,%.3f\\right]",
+        components$lower[[i]], components$upper[[i]]
+      )
+      if (isTRUE(components$touches_left_grid_edge[[i]]) ||
+          isTRUE(components$touches_right_grid_edge[[i]])) {
+        interval <- paste0(interval, "^{\\dagger}")
       }
-      if (isTRUE(components$touches_right_grid_edge[[i]])) {
-        upper <- paste0(upper, " \\le \\mathrm{grid}")
-      }
-      sprintf("\\left[%s,\\,%s\\right]", lower, upper)
+      interval
     }, character(1))
     paste0("$", paste(intervals, collapse = " \\cup "), "$")
   }

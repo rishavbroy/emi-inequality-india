@@ -82,3 +82,5 @@ The specification registries and shared inference helpers are under `R/iv/`. Can
 - [`HISTORICAL_BASELINE_VALIDATION.md`](HISTORICAL_BASELINE_VALIDATION.md)
 - [`SPATIAL_ANALYSIS.md`](SPATIAL_ANALYSIS.md)
 - [pre-rewrite IV notes](../archive/research-log/documentation-before-2026-09-rewrite/docs/IV_DIAGNOSTICS.md)
+
+Interior Anderson--Rubin acceptance/rejection transitions are refined with `stats::uniroot()`, so finite confidence-set endpoints solve the AR inversion threshold rather than inheriting the nearest coarse grid point. The regular grid remains only for topology discovery; grid-edge components remain explicitly marked as search-truncated rather than extrapolated to infinity.
