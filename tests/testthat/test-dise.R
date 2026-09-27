@@ -1470,6 +1470,13 @@ test_that("tracked DISE report school-quality metadata has valid ranges and defi
 })
 
 
+test_that("DISE enrollment-to-grade ratios share one validity rule", {
+  expect_equal(
+    dise_enrollment_to_grade_ratio(c(100, 0, -1, NA, 50), c(10, 10, 10, 10, 0)),
+    c(10, 0, NA, NA, NA)
+  )
+})
+
 test_that("DISE total enrollment uses one grade-first hierarchy in all workbook generations", {
   data <- data.frame(
     enr_cy_c1 = c(60, NA, NA),

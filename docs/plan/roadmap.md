@@ -12,10 +12,9 @@ This file lists unfinished work only. Completed implementation history is retain
 ## Open engineering issues
 
 1. Remove remaining compatibility aliases/wrappers that have no non-test consumers, including old NSS naming and period-deflator wrappers where backward compatibility is not an external requirement.
-2. Consolidate the repeated candidate-IV selection logic and DISE enrollment-ratio calculation identified in the code review.
-3. Replace remaining source-text tests with behavioral tests unless the literal text is itself an interface.
-4. Remove or archive genuinely dead branches and review-only files after verifying that no active paper, sample, or replication path consumes them.
-5. Reduce noisy successful-build logging from auxiliary XeLaTeX/reference passes while preserving complete logs on failure.
+2. Replace remaining source-text tests with behavioral tests unless the literal text is itself an interface.
+3. Remove or archive genuinely dead branches and review-only files after verifying that no active paper, sample, or replication path consumes them.
+4. Reduce noisy successful-build logging from auxiliary XeLaTeX/reference passes while preserving complete logs on failure.
 
 ## Open documentation work
 

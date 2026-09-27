@@ -263,6 +263,17 @@ choose_dise_total_enrollment <- function(
   )
 }
 
+dise_enrollment_to_grade_ratio <- function(enrollment, grade_enrollment) {
+  enrollment <- num(enrollment)
+  grade_enrollment <- num(grade_enrollment)
+  ifelse(
+    is.finite(enrollment) & enrollment >= 0 &
+      is.finite(grade_enrollment) & grade_enrollment > 0,
+    enrollment / grade_enrollment,
+    NA_real_
+  )
+}
+
 dise_enrollment_total_candidates <- function(data) {
   government <- row_sum_available(data, dise_management_columns(data, "enr_govt"))
   private <- row_sum_available(data, dise_management_columns(data, "enr_pvt"))
@@ -285,14 +296,10 @@ dise_enrollment_total_candidates <- function(data) {
   )
   out$dise_total_enrollment <- preferred$dise_total_enrollment
   out$dise_total_enrollment_source <- preferred$dise_total_enrollment_source
-  out$dise_direct_to_grade_enrollment_ratio <- ifelse(
-    is.finite(direct) & direct >= 0 & is.finite(grade) & grade > 0, direct / grade, NA_real_
-  )
-  out$dise_management_to_grade_enrollment_ratio <- ifelse(
-    is.finite(management) & management >= 0 & is.finite(grade) & grade > 0,
-    management / grade,
-    NA_real_
-  )
+  out$dise_direct_to_grade_enrollment_ratio <-
+    dise_enrollment_to_grade_ratio(direct, grade)
+  out$dise_management_to_grade_enrollment_ratio <-
+    dise_enrollment_to_grade_ratio(management, grade)
   out
 }
 

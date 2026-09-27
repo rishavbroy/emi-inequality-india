@@ -256,14 +256,10 @@ harmonize_dise_counts_to_2001 <- function(district_year, bridge) {
     )
     out$dise_total_enrollment <- preferred$dise_total_enrollment
     out$dise_total_enrollment_source <- preferred$dise_total_enrollment_source
-    out$dise_direct_to_grade_enrollment_ratio <- ifelse(
-      is.finite(direct) & direct >= 0 & is.finite(grade) & grade > 0, direct / grade, NA_real_
-    )
-    out$dise_management_to_grade_enrollment_ratio <- ifelse(
-      is.finite(management) & management >= 0 & is.finite(grade) & grade > 0,
-      management / grade,
-      NA_real_
-    )
+    out$dise_direct_to_grade_enrollment_ratio <-
+      dise_enrollment_to_grade_ratio(direct, grade)
+    out$dise_management_to_grade_enrollment_ratio <-
+      dise_enrollment_to_grade_ratio(management, grade)
   }
   if (all(c(
     "dise_english_enrollment", "dise_hindi_enrollment", "dise_total_enrollment"
