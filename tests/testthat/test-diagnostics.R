@@ -658,7 +658,6 @@ test_that("Anderson-Rubin summaries do not collapse noninterval sets to min-max 
     expect_true(is.na(summary$ar_95_lower[[1]]))
     expect_true(is.na(summary$ar_95_upper[[1]]))
   }
-  expect_true("acceptance_component" %in% names(out$grid))
   expect_true(summary$ar_95_information[[1]] %in% c(
     "empty_acceptance_set", "zero_included", "positive_sign_only",
     "negative_sign_only", "zero_excluded_both_signs", "zero_excluded_unclassified"

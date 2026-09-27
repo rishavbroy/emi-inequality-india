@@ -440,16 +440,6 @@ anderson_rubin_grid <- function(
     }
   }
 
-  components <- anderson_rubin_acceptance_components(rows)
-  rows$acceptance_component <- NA_integer_
-  if (nrow(components)) {
-    for (i in seq_len(nrow(components))) {
-      inside <- rows$accepted &
-        rows$beta >= components$lower[[i]] &
-        rows$beta <= components$upper[[i]]
-      rows$acceptance_component[inside] <- components$component[[i]]
-    }
-  }
   rows
 }
 
