@@ -568,12 +568,6 @@ bounded_exclusion_ar_profile_from_inputs <- function(inputs, points = 401L) {
   profile
 }
 
-estimate_bounded_exclusion_ar_profile_spec <- function(
-    data, specification, points = 401L) {
-  inputs <- bounded_exclusion_ar_specification_inputs(data, specification)
-  bounded_exclusion_ar_profile_from_inputs(inputs, points = points)
-}
-
 estimate_anderson_rubin_spec <- function(
     data, specification, level = 0.95, points = 401L, invert = TRUE) {
   specification <- as_single_iv_specification(specification)
