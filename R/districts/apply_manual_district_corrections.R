@@ -1,19 +1,46 @@
 # This file is part of the EMI inequality research pipeline.
-# Functions are intentionally small enough to be tested and called by _targets.R.
+# Manual corrections are restricted to explicit source/target identity fields.
 
+manual_correction_field_map <- function(side) {
+  side <- tolower(trimws(plain_chr(side)[[1L]]))
+  fields <- list(
+    source = c(
+      state = "source_state_raw",
+      district = "source_district_raw",
+      year = "source_year_raw"
+    ),
+    target = c(
+      state = "target_state_raw",
+      district = "target_district_raw",
+      year = "target_year_raw"
+    )
+  )
+  fields[[side]] %||% NULL
+}
+
+manual_name_correction_types <- function() {
+  c("typo", "spelling", "standardization", "rename", "name_change")
+}
 
 #' apply manual district corrections
 #'
-apply_manual_district_corrections <- function(tracker, corrections_path = "data/metadata/manual_district_corrections.csv") {
+apply_manual_district_corrections <- function(
+    tracker,
+    corrections_path = "data/metadata/manual_district_corrections.csv") {
   tracker <- safe_df(tracker)
   if (!file.exists(corrections_path)) return(tracker)
   corrections <- utils::read.csv(corrections_path, stringsAsFactors = FALSE)
   validate_manual_corrections(corrections, tracker)
   corrections <- active_manual_corrections(corrections)
   audit <- build_manual_correction_audit(tracker, corrections)
-  tracker <- apply_typo_corrections(tracker, corrections)
-  tracker <- apply_rename_corrections(tracker, corrections)
-  tracker <- apply_split_merge_corrections(tracker, corrections)
+
+  for (i in seq_len(nrow(corrections))) {
+    tracker <- apply_single_name_correction(
+      tracker, corrections[i, , drop = FALSE]
+    )
+  }
+  tracker <- standardize_tracker_names(tracker)
+
   attr(tracker, "manual_corrections") <- corrections
   attr(tracker, "manual_correction_audit") <- audit
   tracker
@@ -22,11 +49,57 @@ apply_manual_district_corrections <- function(tracker, corrections_path = "data/
 #' validate manual corrections
 #'
 validate_manual_corrections <- function(corrections, tracker) {
-  required <- c("correction_id", "source_year", "source_dataset", "state_raw", "district_raw", "correction_type", "reason")
+  corrections <- safe_df(corrections)
+  required <- c(
+    "correction_id", "source_dataset", "match_year", "side",
+    "state_raw", "district_raw", "state_corrected", "district_corrected",
+    "correction_type", "reason"
+  )
   missing <- setdiff(required, names(corrections))
-  if (length(missing)) stop("Manual corrections missing columns: ", paste(missing, collapse = ", "))
-  if (any(!nzchar(as.character(corrections$correction_id)) & nrow(corrections))) stop("Manual corrections require non-empty correction_id values.", call. = FALSE)
-  if (any(!nzchar(as.character(corrections$reason)) & nrow(corrections))) stop("Manual corrections require documented reasons.", call. = FALSE)
+  if (length(missing)) {
+    stop("Manual corrections missing columns: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+  if (!nrow(corrections)) return(invisible(TRUE))
+  if (any(!nzchar(trimws(plain_chr(corrections$correction_id))))) {
+    stop("Manual corrections require non-empty correction_id values.", call. = FALSE)
+  }
+  if (any(!nzchar(trimws(plain_chr(corrections$reason))))) {
+    stop("Manual corrections require documented reasons.", call. = FALSE)
+  }
+  if (anyDuplicated(plain_chr(corrections$correction_id))) {
+    stop("Manual corrections require unique correction_id values.", call. = FALSE)
+  }
+  if (any(!nzchar(trimws(plain_chr(corrections$state_raw)))) ||
+      any(!nzchar(trimws(plain_chr(corrections$district_raw))))) {
+    stop("Manual corrections require explicit state_raw and district_raw match values.", call. = FALSE)
+  }
+
+  sides <- tolower(trimws(plain_chr(corrections$side)))
+  if (any(!sides %in% c("source", "target"))) {
+    stop("Manual corrections require side = 'source' or 'target'.", call. = FALSE)
+  }
+  types <- manual_correction_type(corrections)
+  invalid_types <- setdiff(unique(types), manual_name_correction_types())
+  if (length(invalid_types)) {
+    stop(
+      "Manual district corrections are identity/name corrections only; lineage events belong in reviewed lineage sources. Unsupported correction_type: ",
+      paste(invalid_types, collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  required_tracker_fields <- unique(unlist(lapply(sides, function(side) {
+    fields <- manual_correction_field_map(side)
+    unname(fields[c("state", "district", "year")])
+  }), use.names = FALSE))
+  missing_tracker <- setdiff(required_tracker_fields, names(tracker))
+  if (length(missing_tracker)) {
+    stop(
+      "Manual correction tracker is missing explicit fields: ",
+      paste(missing_tracker, collapse = ", "),
+      call. = FALSE
+    )
+  }
   invisible(TRUE)
 }
 
@@ -34,77 +107,63 @@ active_manual_corrections <- function(corrections) {
   corrections <- safe_df(corrections)
   if (!nrow(corrections)) return(corrections)
   if (!"applied" %in% names(corrections)) corrections$applied <- TRUE
-  keep <- is.na(corrections$applied) | tolower(as.character(corrections$applied)) %in% c("", "true", "t", "1", "yes", "y")
+  keep <- is.na(corrections$applied) |
+    tolower(as.character(corrections$applied)) %in% c("", "true", "t", "1", "yes", "y")
   corrections[keep, , drop = FALSE]
 }
 
-#' apply rename corrections
-#'
-apply_rename_corrections <- function(tracker, corrections) {
-  apply_name_corrections_by_type(tracker, corrections, c("rename", "name_change"))
-}
-
-#' apply split merge corrections
-#'
-apply_split_merge_corrections <- function(tracker, corrections) {
-  out <- apply_name_corrections_by_type(tracker, corrections, c("split", "merge", "split_merge", "carveout", "border_shift"))
-  if (nrow(out) && nrow(corrections)) attr(out, "manual_split_merge_corrections") <- corrections[manual_correction_type(corrections) %in% c("split", "merge", "split_merge", "carveout", "border_shift"), , drop = FALSE]
-  out
-}
-
-#' apply typo corrections
-#'
-apply_typo_corrections <- function(tracker, corrections) {
-  apply_name_corrections_by_type(tracker, corrections, c("typo", "spelling", "standardization"))
-}
-
-apply_name_corrections_by_type <- function(tracker, corrections, types) {
+manual_correction_row_match <- function(tracker, correction) {
   tracker <- safe_df(tracker)
-  corrections <- safe_df(corrections)
-  if (!nrow(tracker) || !nrow(corrections)) return(tracker)
-  corrections <- corrections[manual_correction_type(corrections) %in% types, , drop = FALSE]
-  if (!nrow(corrections)) return(tracker)
+  fields <- manual_correction_field_map(correction$side)
+  if (is.null(fields)) return(rep(FALSE, nrow(tracker)))
 
-  for (i in seq_len(nrow(corrections))) {
-    corr <- corrections[i, , drop = FALSE]
-    state_raw <- corr$state_raw %||% NA_character_
-    district_raw <- corr$district_raw %||% NA_character_
-    state_corrected <- corr$state_corrected %||% state_raw
-    district_corrected <- corr$district_corrected %||% district_raw
-    if (!manual_scalar_has_value(state_corrected)) state_corrected <- state_raw
-    if (!manual_scalar_has_value(district_corrected)) district_corrected <- district_raw
-    tracker <- apply_single_name_correction(tracker, state_raw, district_raw, state_corrected, district_corrected, corr)
+  state_key <- canonicalize_state_name(correction$state_raw)
+  district_key <- canon(correction$district_raw)
+  row_match <- canonicalize_state_name(tracker[[fields[["state"]]]]) == state_key &
+    canon(tracker[[fields[["district"]]]]) == district_key
+
+  if (manual_scalar_has_value(correction$source_dataset) &&
+      any(c("source_file_id", "source_type") %in% names(tracker))) {
+    dataset_key <- canon(correction$source_dataset)
+    dataset_match <- rep(FALSE, nrow(tracker))
+    if ("source_file_id" %in% names(tracker)) {
+      dataset_match <- dataset_match | canon(tracker$source_file_id) == dataset_key
+    }
+    if ("source_type" %in% names(tracker)) {
+      dataset_match <- dataset_match | canon(tracker$source_type) == dataset_key
+    }
+    row_match <- row_match & dataset_match
   }
-  tracker
+  if (manual_scalar_has_value(correction$match_year)) {
+    row_match <- row_match &
+      suppressWarnings(as.integer(tracker[[fields[["year"]]]])) ==
+      suppressWarnings(as.integer(correction$match_year))
+  }
+  row_match[is.na(row_match)] <- FALSE
+  row_match
 }
 
-apply_single_name_correction <- function(tracker, state_raw, district_raw, state_corrected, district_corrected, correction) {
-  state_cols <- grep("(^state(_|$)|_state$|state_raw|source_state_raw|target_state_raw)", names(tracker), value = TRUE, ignore.case = TRUE)
-  district_cols <- grep("(^district(_|$)|_district$|district_raw|source_district_raw|target_district_raw|district_name)", names(tracker), value = TRUE, ignore.case = TRUE)
-  state_key <- canonicalize_state_name(state_raw)
-  district_key <- canon(district_raw)
-  if (!manual_scalar_has_value(state_key) && !manual_scalar_has_value(district_key)) return(tracker)
+apply_single_name_correction <- function(tracker, correction) {
+  tracker <- safe_df(tracker)
+  correction <- safe_df(correction)
+  if (!nrow(tracker) || nrow(correction) != 1L) return(tracker)
 
-  row_match <- rep(TRUE, nrow(tracker))
-  if ("source_file_id" %in% names(tracker) && manual_scalar_has_value(correction$source_dataset)) {
-    dataset_key <- canon(correction$source_dataset)
-    row_match <- row_match & (canon(tracker$source_file_id) == dataset_key | canon(tracker$source_type %||% NA_character_) == dataset_key)
-  }
-  if ("source_year" %in% names(tracker) && manual_scalar_has_value(correction$source_year)) {
-    row_match <- row_match & suppressWarnings(as.integer(tracker$source_year)) == suppressWarnings(as.integer(correction$source_year))
-  }
-  state_match <- if (length(state_cols)) Reduce(`|`, lapply(state_cols, function(col) canonicalize_state_name(tracker[[col]]) == state_key)) else rep(TRUE, nrow(tracker))
-  district_match <- if (length(district_cols)) Reduce(`|`, lapply(district_cols, function(col) canon(tracker[[col]]) == district_key)) else rep(TRUE, nrow(tracker))
-  row_match <- row_match & state_match & district_match
+  fields <- manual_correction_field_map(correction$side)
+  row_match <- manual_correction_row_match(tracker, correction)
+  if (!any(row_match)) return(tracker)
 
-  for (col in state_cols) {
-    hit <- row_match & canonicalize_state_name(tracker[[col]]) == state_key
-    if (any(hit, na.rm = TRUE)) tracker[[col]][hit] <- state_corrected
+  state_corrected <- if (manual_scalar_has_value(correction$state_corrected)) {
+    plain_chr(correction$state_corrected)[[1L]]
+  } else {
+    plain_chr(correction$state_raw)[[1L]]
   }
-  for (col in district_cols) {
-    hit <- row_match & canon(tracker[[col]]) == district_key
-    if (any(hit, na.rm = TRUE)) tracker[[col]][hit] <- district_corrected
+  district_corrected <- if (manual_scalar_has_value(correction$district_corrected)) {
+    plain_chr(correction$district_corrected)[[1L]]
+  } else {
+    plain_chr(correction$district_raw)[[1L]]
   }
+  tracker[[fields[["state"]]]][row_match] <- state_corrected
+  tracker[[fields[["district"]]]][row_match] <- district_corrected
   tracker
 }
 
@@ -118,16 +177,11 @@ build_manual_correction_audit <- function(tracker, corrections) {
   if (!nrow(corrections)) return(data.frame())
   safe_bind_rows(lapply(seq_len(nrow(corrections)), function(i) {
     corr <- corrections[i, , drop = FALSE]
-    state_key <- canonicalize_state_name(corr$state_raw)
-    district_key <- canon(corr$district_raw)
-    state_cols <- grep("state", names(tracker), value = TRUE, ignore.case = TRUE)
-    district_cols <- grep("district", names(tracker), value = TRUE, ignore.case = TRUE)
-    state_hit <- if (length(state_cols)) Reduce(`|`, lapply(state_cols, function(col) canonicalize_state_name(tracker[[col]]) == state_key)) else rep(FALSE, nrow(tracker))
-    district_hit <- if (length(district_cols)) Reduce(`|`, lapply(district_cols, function(col) canon(tracker[[col]]) == district_key)) else rep(FALSE, nrow(tracker))
     data.frame(
       correction_id = corr$correction_id,
       correction_type = corr$correction_type,
-      n_matching_rows_before = sum(state_hit & district_hit, na.rm = TRUE),
+      side = corr$side,
+      n_matching_rows_before = sum(manual_correction_row_match(tracker, corr)),
       reason = corr$reason,
       stringsAsFactors = FALSE
     )
@@ -135,5 +189,5 @@ build_manual_correction_audit <- function(tracker, corrections) {
 }
 
 manual_scalar_has_value <- function(x) {
-  length(x) > 0L && !is.na(x[[1]]) && nzchar(as.character(x[[1]]))
+  length(x) > 0L && !is.na(x[[1]]) && nzchar(trimws(as.character(x[[1]])))
 }

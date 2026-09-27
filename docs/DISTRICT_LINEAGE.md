@@ -24,6 +24,8 @@ Final identities prioritize official codes/names and reviewed transition evidenc
 
 Reviewed identity decisions are recorded in district-lineage metadata and reused by the code. Multi-parent, cross-cutting, or incomplete transitions remain unresolved unless an explicit allocation rule is substantively justified and registered.
 
+Manual name corrections are deliberately narrower than lineage adjudication. Each correction declares whether it targets the source or target identity and can edit only that side's `*_state_raw` / `*_district_raw` pair; canonical keys are rebuilt afterward. Splits, merges, carve-outs, border shifts, and other lineage events are not accepted by the name-correction API and must enter through reviewed lineage sources where their source/target structure is explicit.
+
 ## Crosswalk roles
 
 Crosswalks have explicit purposes: source-vintage identity, deterministic 2011-to-2001 pooling, historical constant-boundary construction, geometry attachment, or validation. A crosswalk valid for one role is not assumed valid for another.
