@@ -30,6 +30,8 @@ Comparisons within a robustness family use an explicit common support rule so co
 
 The broad robustness families report the exact CR2/HTZ Anderson--Rubin test of beta = 0 but do not invert a confidence set for every registered sensitivity model. Those inversions are not consumed by the robustness tables or multiplicity summaries and would repeat hundreds of clustered fits per specification. The headline consumption IV specifications retain full Anderson--Rubin inversion because the appendix reports those confidence-set components.
 
+Because these registered robustness families are explicitly weak-identification diagnostics, their analysis-readiness contract is driven by the first stage, reduced form, effective-F diagnostic, and Anderson--Rubin point-null test. A finite 2SLS point estimate is retained for orientation, but a sensitivity specification is not discarded solely because CR2/Satterthwaite inference for that conventional 2SLS coefficient is unavailable. In that case the standard error and p-value remain missing and the row records `second_stage_status = "inference_unavailable"`; no alternative covariance estimator or reference distribution is substituted. Headline specifications continue to require complete second-stage inference.
+
 ## Validation
 
 The analysis checks estimation-sample identity, instrument/treatment availability, cluster support, weak-instrument statistics, and registered output completeness. Processed-data replication reruns the shared district-level consumption/IV results through a separate target store and compares them to the full-route outputs.

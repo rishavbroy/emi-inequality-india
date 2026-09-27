@@ -790,6 +790,7 @@ consumption_iv_second_stage_rows <- function(models, specifications, data) {
       vc <- inference$vcov %||% NULL
     }
     term <- model_term_inference(model, spec$treatment[[1L]], vc)
+    term_ok <- all(is.finite(term[c("estimate", "std.error", "p.value")]))
     data.frame(
       specification_id = id,
       estimate = term[["estimate"]],
@@ -797,12 +798,20 @@ consumption_iv_second_stage_rows <- function(models, specifications, data) {
       statistic = term[["statistic"]],
       p.value = term[["p.value"]],
       n = stats::nobs(model),
-      status = if (all(is.finite(term[c("estimate", "std.error", "p.value")]))) {
-        "estimated"
+      status = if (term_ok) "estimated" else "inference_unavailable",
+      reason = if (term_ok) {
+        NA_character_
+      } else if (!is.null(vc) && inherits(vc, "clubSandwich")) {
+        paste0(
+          "CR2/Satterthwaite inference is unavailable for endogenous treatment '",
+          spec$treatment[[1L]], "'."
+        )
       } else {
-        "inference_unavailable"
+        paste0(
+          "Second-stage coefficient inference is unavailable for endogenous treatment '",
+          spec$treatment[[1L]], "'."
+        )
       },
-      reason = NA_character_,
       stringsAsFactors = FALSE
     )
   }))
@@ -960,7 +969,8 @@ estimate_consumption_iv_dynamics <- function(
 
 
 validate_consumption_iv_dynamics <- function(
-    dynamics, specifications, require_ar_inversion = TRUE) {
+    dynamics, specifications, require_ar_inversion = TRUE,
+    require_second_stage_inference = TRUE) {
   specs <- as_iv_specifications(specifications)
   if (!is.list(dynamics) ||
       !all(c("summary", "anderson_rubin_grid") %in% names(dynamics))) {
@@ -1012,11 +1022,22 @@ validate_consumption_iv_dynamics <- function(
       first_stage_n == second_stage_n &
       first_stage_n == n
   )
+  second_stage_status_ok <- if (isTRUE(require_second_stage_inference)) {
+    summary$second_stage_status == "estimated"
+  } else {
+    summary$second_stage_status %in% c("estimated", "inference_unavailable")
+  }
   status_ok <- summary$first_stage_status == "estimated" &
     summary$effective_f_status == "estimated" &
     summary$reduced_form_status == "estimated" &
-    summary$second_stage_status == "estimated" &
+    second_stage_status_ok &
     summary$status == "estimated"
+  second_stage_inference_ok <- is.finite(summary$second_stage_estimate)
+  if (isTRUE(require_second_stage_inference)) {
+    second_stage_inference_ok <- second_stage_inference_ok &
+      is.finite(summary$second_stage_std.error) &
+      is.finite(summary$second_stage_p.value)
+  }
   inference_ok <- is.finite(summary$partial_f) &
     is.finite(summary$effective_f) &
     is.finite(summary$effective_f_critical_value) &
@@ -1025,9 +1046,7 @@ validate_consumption_iv_dynamics <- function(
     is.finite(summary$reduced_form_estimate) &
     is.finite(summary$reduced_form_std.error) &
     is.finite(summary$reduced_form_p.value) &
-    is.finite(summary$second_stage_estimate) &
-    is.finite(summary$second_stage_std.error) &
-    is.finite(summary$second_stage_p.value) &
+    second_stage_inference_ok &
     is.finite(summary$anderson_rubin_p_beta0)
 
   bad <- !(sample_ok & status_ok & inference_ok)
@@ -1073,7 +1092,8 @@ estimate_consumption_iv_robustness_dynamics <- function(
       panel, specifications, cfg, invert_ar = FALSE
     ),
     specifications,
-    require_ar_inversion = FALSE
+    require_ar_inversion = FALSE,
+    require_second_stage_inference = FALSE
   )
 }
 

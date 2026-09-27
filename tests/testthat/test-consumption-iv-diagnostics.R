@@ -627,6 +627,28 @@ test_that("dynamic consumption IV validation enforces the common-sample inferenc
   out <- validate_consumption_iv_dynamics(dynamics, spec)
   expect_equal(out$summary$specification_id, "consumption__toy")
 
+  weak_robustness <- dynamics
+  weak_robustness$summary$second_stage_status <- "inference_unavailable"
+  weak_robustness$summary$second_stage_std.error <- NA_real_
+  weak_robustness$summary$second_stage_p.value <- NA_real_
+  expect_error(
+    validate_consumption_iv_dynamics(weak_robustness, spec),
+    "not analysis-ready"
+  )
+  expect_identical(
+    validate_consumption_iv_dynamics(
+      weak_robustness, spec, require_second_stage_inference = FALSE
+    )$summary$second_stage_status,
+    "inference_unavailable"
+  )
+  weak_robustness$summary$second_stage_estimate <- NA_real_
+  expect_error(
+    validate_consumption_iv_dynamics(
+      weak_robustness, spec, require_second_stage_inference = FALSE
+    ),
+    "not analysis-ready"
+  )
+
   dynamics$summary$reduced_form_n <- 49L
   expect_error(
     validate_consumption_iv_dynamics(dynamics, spec),
