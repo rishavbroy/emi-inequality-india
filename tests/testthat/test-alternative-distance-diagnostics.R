@@ -851,16 +851,33 @@ test_that("bounded exclusion AR nests exact exclusion and expands monotonically"
     cluster = "state_code_2001"
   )
 
-  profile <- estimate_bounded_exclusion_ar_profile_spec(panel, spec, points = 21L)
-  exact <- bounded_exclusion_ar_grid(profile, 0, 0)
+  inputs <- bounded_exclusion_ar_specification_inputs(panel, spec)
+  profile <- bounded_exclusion_ar_profile_from_inputs(inputs, points = 21L)
+  exact <- refine_bounded_exclusion_ar_grid(
+    bounded_exclusion_ar_grid(profile, 0, 0), inputs, 0, 0
+  )
   ordinary <- estimate_anderson_rubin_spec(panel, spec, points = 21L)$grid
-  wider <- bounded_exclusion_ar_grid(profile, -0.1, 0.1)
+  wider <- refine_bounded_exclusion_ar_grid(
+    bounded_exclusion_ar_grid(profile, -0.1, 0.1), inputs, -0.1, 0.1
+  )
 
-  expect_equal(exact$beta, ordinary$beta)
+  expect_equal(exact$beta, ordinary$beta, tolerance = 1e-8)
   expect_equal(exact$statistic, ordinary$statistic, tolerance = 1e-8)
   expect_equal(exact$p.value, ordinary$p.value, tolerance = 1e-8)
-  expect_true(all(!exact$accepted | wider$accepted))
-  expect_true(all(wider$statistic <= exact$statistic + 1e-12, na.rm = TRUE))
+  expect_equal(sum(!exact$boundary_refined), 21L)
+  if (any(wider$boundary_refined)) {
+    expect_equal(
+      wider$p.value[wider$boundary_refined],
+      rep(0.05, sum(wider$boundary_refined)),
+      tolerance = 1e-5
+    )
+  }
+
+  exact_base <- exact[!exact$boundary_refined, , drop = FALSE]
+  wider_base <- wider[!wider$boundary_refined, , drop = FALSE]
+  expect_equal(exact_base$beta, wider_base$beta)
+  expect_true(all(!exact_base$accepted | wider_base$accepted))
+  expect_true(all(wider_base$statistic <= exact_base$statistic + 1e-12, na.rm = TRUE))
 })
 
 test_that("headline consumption exclusion sensitivity is bounded and transparent", {

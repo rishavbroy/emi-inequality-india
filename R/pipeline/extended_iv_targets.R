@@ -6,8 +6,7 @@ extended_iv_target_definitions <- function() {
     tar_target(
       diag_ext_consumption_scalar_iv_robustness_files,
       save_consumption_scalar_iv_robustness(
-        consumption_scalar_iv_robustness,
-        consumption_scalar_iv_robustness_support
+        consumption_scalar_iv_robustness
       ),
       format = "file"
     ),
@@ -15,7 +14,6 @@ extended_iv_target_definitions <- function() {
       diag_ext_consumption_treatment_robustness_files,
       save_consumption_iv_robustness_family(
         consumption_treatment_robustness,
-        consumption_treatment_robustness_support,
         "consumption_treatment_robustness"
       ),
       format = "file"
@@ -24,7 +22,6 @@ extended_iv_target_definitions <- function() {
       diag_ext_consumption_alternative_welfare_files,
       save_consumption_iv_robustness_family(
         consumption_alternative_welfare_robustness,
-        consumption_alternative_welfare_support,
         "consumption_alternative_welfare_robustness"
       ),
       format = "file"
@@ -33,7 +30,6 @@ extended_iv_target_definitions <- function() {
       diag_ext_consumption_control_strategy_files,
       save_consumption_iv_robustness_family(
         consumption_control_strategy_robustness,
-        consumption_control_strategy_support,
         "consumption_control_strategy_robustness"
       ),
       format = "file"
@@ -42,7 +38,6 @@ extended_iv_target_definitions <- function() {
       diag_ext_consumption_control_parameterization_files,
       save_consumption_iv_robustness_family(
         consumption_control_parameterization_robustness,
-        consumption_control_parameterization_support,
         "consumption_control_parameterization_robustness"
       ),
       format = "file"
@@ -51,7 +46,6 @@ extended_iv_target_definitions <- function() {
       diag_ext_consumption_historical_adjustment_files,
       save_consumption_iv_robustness_family(
         consumption_historical_adjustment_robustness,
-        consumption_historical_adjustment_support,
         "consumption_historical_adjustment_robustness"
       ),
       format = "file"
@@ -60,9 +54,21 @@ extended_iv_target_definitions <- function() {
       diag_ext_consumption_historical_concept_matched_files,
       save_consumption_iv_robustness_family(
         consumption_historical_concept_matched_robustness,
-        consumption_historical_concept_matched_support,
         "consumption_historical_concept_matched_robustness"
       ),
+      format = "file"
+    ),
+    tar_target(
+      diag_ext_consumption_robustness_common_support_file,
+      save_consumption_robustness_common_support(list(
+        scalar_iv = consumption_scalar_iv_robustness_support,
+        treatment = consumption_treatment_robustness_support,
+        alternative_welfare = consumption_alternative_welfare_support,
+        control_strategy = consumption_control_strategy_support,
+        control_parameterization = consumption_control_parameterization_support,
+        historical_adjustment = consumption_historical_adjustment_support,
+        historical_concept_matched = consumption_historical_concept_matched_support
+      )),
       format = "file"
     ),
     tar_target(

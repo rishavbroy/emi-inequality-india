@@ -32,7 +32,9 @@ AR accepted sets are not assumed to have a fixed topology. Reporting code accept
 
 Raw pointwise AR grids are retained only for compact predeclared analyses where the acceptance path is useful for review. Broad alternative-design families persist compact summaries to avoid writing large redundant grids.
 
-Bounded exclusion-restriction sensitivity is a separate imperfect-IV analysis. Because that procedure contains custom econometric machinery, its derivation and finite-sample inference must remain explicit and tested; it should not be treated as interchangeable with ordinary AR inference.
+Bounded exclusion-restriction sensitivity is a separate imperfect-IV analysis. For one scalar excluded instrument, the project bounds the coefficient on a direct instrument-to-outcome path, `gamma`, while maintaining the registered controls, fixed effects, sample, and state-clustered CR2/HTZ reference distribution. At each candidate structural effect, the closest admissible `gamma` determines the union-AR test; widening the admissible interval can therefore only weakly enlarge the accepted set. Exact exclusion (`gamma = 0`) nests ordinary AR by construction. The beta grid is used only to discover accepted-set topology, and finite transition points are refined with the same `stats::uniroot()` boundary solver used for ordinary AR.
+
+This parameterization is not interchangeable with `ivmodel::ARsens.test()`. That package implements the Wang--Jiang--Zhang--Small sensitivity model through a noncentral-F allowance for instrument invalidity under its residualized classical linear-IV reference model; its sensitivity parameter can represent bounded invalidity from direct effects and instrument--unmeasured-confounder association. The present analysis instead isolates a bounded direct-effect coefficient and retains the project's clustered CR2/HTZ inference. `ivmodel::ARsens.test()` is therefore a methodological comparator, not a drop-in implementation for the registered estimand.
 
 ## Observed-balance and exclusion evidence
 

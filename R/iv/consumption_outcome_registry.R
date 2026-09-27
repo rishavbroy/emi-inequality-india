@@ -1164,12 +1164,28 @@ add_consumption_iv_family_multiplicity <- function(dynamics, multiplicity_family
 
 save_consumption_iv_robustness_family <- function(
     dynamics,
-    support,
     artifact_prefix,
     directory = "outputs/diagnostics/extended/consumption") {
-  objects <- list(safe_df(dynamics$summary), safe_df(support))
-  names(objects) <- c(artifact_prefix, paste0(artifact_prefix, "_common_support"))
-  write_diagnostic_bundle(objects, directory = directory)
+  write_diagnostic_csv(
+    safe_df(dynamics$summary),
+    file.path(directory, paste0(artifact_prefix, ".csv"))
+  )
+}
+
+save_consumption_robustness_common_support <- function(
+    supports,
+    directory = "outputs/diagnostics/extended/consumption") {
+  if (!is.list(supports) || is.null(names(supports)) || any(!nzchar(names(supports)))) {
+    stop("Consumption robustness supports require a named list of families.", call. = FALSE)
+  }
+  out <- safe_bind_rows(lapply(names(supports), function(family) {
+    x <- safe_df(supports[[family]])
+    x$robustness_family <- family
+    x
+  }))
+  write_diagnostic_csv(
+    out, file.path(directory, "consumption_robustness_common_support.csv")
+  )
 }
 
 consumption_exclusion_sensitivity_specifications <- function(specifications) {
@@ -1259,8 +1275,9 @@ estimate_consumption_exclusion_sensitivity <- function(
   estimated <- lapply(seq_len(nrow(specs)), function(i) {
     spec <- specs[i, , drop = FALSE]
     id <- plain_chr(spec$specification_id[[1L]])
-    profile <- estimate_bounded_exclusion_ar_profile_spec(
-      panel, spec, points = points
+    sensitivity_inputs <- bounded_exclusion_ar_specification_inputs(panel, spec)
+    profile <- bounded_exclusion_ar_profile_from_inputs(
+      sensitivity_inputs, points = points
     )
     zero <- profile[abs(num(profile$beta)) == min(abs(num(profile$beta))), , drop = FALSE]
     if (nrow(zero) != 1L) zero <- zero[1L, , drop = FALSE]
@@ -1293,6 +1310,11 @@ estimate_consumption_exclusion_sensitivity <- function(
       calibration <- calibrations[j, , drop = FALSE]
       grid <- bounded_exclusion_ar_grid(
         profile, calibration$gamma_lower[[1L]], calibration$gamma_upper[[1L]],
+        level = level
+      )
+      grid <- refine_bounded_exclusion_ar_grid(
+        grid, sensitivity_inputs,
+        calibration$gamma_lower[[1L]], calibration$gamma_upper[[1L]],
         level = level
       )
       summary <- bounded_exclusion_ar_summary(grid, level = level)
@@ -1386,10 +1408,9 @@ add_consumption_scalar_iv_multiplicity <- function(dynamics) {
 
 save_consumption_scalar_iv_robustness <- function(
     dynamics,
-    support,
     directory = "outputs/diagnostics/extended/consumption") {
   save_consumption_iv_robustness_family(
-    dynamics, support, "consumption_scalar_iv_robustness", directory
+    dynamics, "consumption_scalar_iv_robustness", directory
   )
 }
 

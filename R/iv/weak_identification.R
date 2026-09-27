@@ -126,6 +126,33 @@ anderson_rubin_test <- function(
 # so the clustered standard error is invariant to gamma. This makes the union of
 # Anderson--Rubin confidence sets over gamma in [lower, upper] available without
 # a numerical gamma grid.
+bounded_exclusion_ar_profile_point <- function(
+    data, outcome, treatment, instrument, included = character(),
+    controls = character(), fixed_effect = "none", cluster, beta0) {
+  transformed <- ".bounded_exclusion_ar_outcome"
+  x <- as.data.frame(data)
+  x[[transformed]] <- num(x[[outcome]]) - beta0 * num(x[[treatment]])
+  rhs <- unique(c(instrument, included, controls, iv_fixed_effect_terms(fixed_effect)))
+  fit <- stats::lm(stats::reformulate(rhs, response = transformed), data = x)
+  inference <- iv_clustered_inference(fit, cluster)
+  term <- model_term_inference(fit, instrument, inference$vcov)
+  joint <- clustered_joint_wald_test(fit, instrument, cluster, inference)
+  data.frame(
+    beta = beta0,
+    direct_effect_estimate = term[["estimate"]],
+    direct_effect_std.error = term[["std.error"]],
+    reference_df = joint[["df_denom"]],
+    status = if (
+      identical(inference$status, "estimated") &&
+        all(is.finite(term[c("estimate", "std.error")])) &&
+        is.finite(joint[["df_denom"]]) && joint[["df_denom"]] > 0 &&
+        term[["std.error"]] > 0
+    ) "estimated" else "inference_unavailable",
+    reason = if (identical(inference$status, "unavailable")) inference$reason else NA_character_,
+    stringsAsFactors = FALSE
+  )
+}
+
 bounded_exclusion_ar_profile <- function(
     data, outcome, treatment, excluded, included = character(),
     controls = character(), fixed_effect = "none", cluster, beta_values) {
@@ -138,32 +165,15 @@ bounded_exclusion_ar_profile <- function(
     stop("Bounded exclusion sensitivity requires finite beta values.", call. = FALSE)
   }
   instrument <- excluded[[1L]]
-  rhs <- unique(c(instrument, included, controls, iv_fixed_effect_terms(fixed_effect)))
 
   safe_bind_rows(lapply(beta_values, function(beta0) {
-    transformed <- ".bounded_exclusion_ar_outcome"
-    x <- as.data.frame(data)
-    x[[transformed]] <- num(x[[outcome]]) - beta0 * num(x[[treatment]])
-    fit <- stats::lm(stats::reformulate(rhs, response = transformed), data = x)
-    inference <- iv_clustered_inference(fit, cluster)
-    term <- model_term_inference(fit, instrument, inference$vcov)
-    joint <- clustered_joint_wald_test(fit, instrument, cluster, inference)
-    data.frame(
-      beta = beta0,
-      direct_effect_estimate = term[["estimate"]],
-      direct_effect_std.error = term[["std.error"]],
-      reference_df = joint[["df_denom"]],
-      status = if (
-        identical(inference$status, "estimated") &&
-          all(is.finite(term[c("estimate", "std.error")])) &&
-          is.finite(joint[["df_denom"]]) && joint[["df_denom"]] > 0 &&
-          term[["std.error"]] > 0
-      ) "estimated" else "inference_unavailable",
-      reason = if (identical(inference$status, "unavailable")) inference$reason else NA_character_,
-      stringsAsFactors = FALSE
+    bounded_exclusion_ar_profile_point(
+      data, outcome, treatment, instrument, included, controls, fixed_effect,
+      cluster = cluster, beta0 = beta0
     )
   }))
 }
+
 # sample-end: code-anderson-rubin
 
 bounded_exclusion_ar_grid <- function(
@@ -214,8 +224,24 @@ bounded_exclusion_ar_grid <- function(
     statistic = statistic,
     p.value = p_value,
     accepted = accepted,
+    boundary_refined = FALSE,
     stringsAsFactors = FALSE
   )
+}
+
+refine_bounded_exclusion_ar_grid <- function(
+    grid, inputs, gamma_lower, gamma_upper, level = 0.95) {
+  evaluate <- function(beta0) {
+    profile <- bounded_exclusion_ar_profile_point(
+      inputs$data, inputs$outcome, inputs$treatment, inputs$instrument,
+      inputs$included, inputs$controls, inputs$fixed_effect,
+      cluster = inputs$cluster, beta0 = beta0
+    )
+    bounded_exclusion_ar_grid(
+      profile, gamma_lower = gamma_lower, gamma_upper = gamma_upper, level = level
+    )
+  }
+  refine_acceptance_grid_boundaries(grid, evaluate, level = level)
 }
 
 bounded_exclusion_ar_summary <- function(grid, level = 0.95) {
@@ -379,6 +405,76 @@ anderson_rubin_beta_values <- function(data, outcome, treatment, points = 401L) 
   seq(-10 * scale, 10 * scale, length.out = points)
 }
 
+refine_acceptance_grid_boundaries <- function(grid, evaluate, level = 0.95) {
+  x <- safe_df(grid)
+  required <- c("beta", "p.value", "accepted")
+  missing <- setdiff(required, names(x))
+  if (length(missing)) {
+    stop(
+      "Acceptance grid is missing columns for boundary refinement: ",
+      paste(missing, collapse = ", "), call. = FALSE
+    )
+  }
+  if (!nrow(x)) return(x)
+  if (!is.function(evaluate)) {
+    stop("Acceptance boundary refinement requires an evaluator function.", call. = FALSE)
+  }
+  if (!is.finite(level) || level <= 0 || level >= 1) {
+    stop("Acceptance boundary refinement level must lie strictly between zero and one.", call. = FALSE)
+  }
+
+  if (!"boundary_refined" %in% names(x)) x$boundary_refined <- FALSE
+  x$boundary_refined <- as.logical(x$boundary_refined)
+  base <- x[!x$boundary_refined, , drop = FALSE]
+  if (nrow(base) < 2L) return(x)
+  base <- base[order(num(base$beta)), , drop = FALSE]
+  accepted <- as.logical(base$accepted)
+  transitions <- which(accepted[-nrow(base)] != accepted[-1L])
+  if (!length(transitions)) return(x)
+
+  alpha <- 1 - level
+  refined <- lapply(transitions, function(i) {
+    lower <- num(base$beta[[i]])
+    upper <- num(base$beta[[i + 1L]])
+    f_lower <- num(base$p.value[[i]]) - alpha
+    f_upper <- num(base$p.value[[i + 1L]]) - alpha
+    if (!all(is.finite(c(lower, upper, f_lower, f_upper))) || f_lower * f_upper > 0) {
+      return(NULL)
+    }
+
+    objective <- function(value) {
+      row <- safe_df(evaluate(value))
+      if (nrow(row) != 1L || !"p.value" %in% names(row)) return(NA_real_)
+      num(row$p.value[[1L]]) - alpha
+    }
+    root <- tryCatch(
+      stats::uniroot(
+        objective, interval = c(lower, upper),
+        f.lower = f_lower, f.upper = f_upper,
+        tol = 1e-8, check.conv = TRUE
+      )$root,
+      error = function(e) NA_real_
+    )
+    if (!is.finite(root)) return(NULL)
+
+    row <- safe_df(evaluate(root))
+    if (nrow(row) != 1L || !"p.value" %in% names(row) || !is.finite(num(row$p.value[[1L]]))) {
+      return(NULL)
+    }
+    row$beta <- root
+    row$accepted <- TRUE
+    row$boundary_refined <- TRUE
+    row
+  })
+  refined <- safe_bind_rows(refined)
+  if (!nrow(refined)) return(x)
+
+  out <- safe_bind_rows(list(x, refined))
+  out <- out[order(num(out$beta), !as.logical(out$boundary_refined)), , drop = FALSE]
+  rownames(out) <- NULL
+  out
+}
+
 anderson_rubin_grid <- function(
   data, outcome, treatment, excluded, included = character(),
   controls = character(), fixed_effect = "none", cluster,
@@ -390,68 +486,22 @@ anderson_rubin_grid <- function(
       data, outcome, treatment, excluded, included, controls, fixed_effect,
       cluster = cluster, beta0 = value
     )
-    c(statistic = test[["statistic"]], p.value = test[["p.value"]])
+    data.frame(
+      beta = value,
+      statistic = test[["statistic"]],
+      p.value = test[["p.value"]],
+      stringsAsFactors = FALSE
+    )
   }
 
   beta <- anderson_rubin_beta_values(data, outcome, treatment, points)
-  rows <- safe_bind_rows(lapply(beta, function(value) {
-    test <- evaluate(value)
-    data.frame(
-      beta = value, statistic = test[["statistic"]], p.value = test[["p.value"]],
-      boundary_refined = FALSE, stringsAsFactors = FALSE
-    )
-  }))
+  rows <- safe_bind_rows(lapply(beta, evaluate))
   rows$accepted <- is.finite(rows$p.value) & rows$p.value >= alpha
-
-  # The regular grid discovers confidence-set topology. Endpoints are then
-  # numerical roots of p(beta) - alpha, not whichever grid point happened to
-  # fall closest to the transition. stats::uniroot() is the standard base-R
-  # one-dimensional root finder and f.lower/f.upper avoid repeating the two
-  # expensive clustered tests that already bracket each transition.
-  transitions <- which(rows$accepted[-nrow(rows)] != rows$accepted[-1L])
-  if (length(transitions)) {
-    refined <- lapply(transitions, function(i) {
-      lower <- rows$beta[[i]]
-      upper <- rows$beta[[i + 1L]]
-      f_lower <- rows$p.value[[i]] - alpha
-      f_upper <- rows$p.value[[i + 1L]] - alpha
-      if (!all(is.finite(c(f_lower, f_upper))) || f_lower * f_upper > 0) return(NULL)
-
-      objective <- function(value) evaluate(value)[["p.value"]] - alpha
-      root <- tryCatch(
-        stats::uniroot(
-          objective, interval = c(lower, upper),
-          f.lower = f_lower, f.upper = f_upper, tol = 1e-8, check.conv = TRUE
-        )$root,
-        error = function(e) NA_real_
-      )
-      if (!is.finite(root)) return(NULL)
-      test <- evaluate(root)
-      data.frame(
-        beta = root, statistic = test[["statistic"]], p.value = test[["p.value"]],
-        boundary_refined = TRUE, accepted = TRUE, stringsAsFactors = FALSE
-      )
-    })
-    refined <- safe_bind_rows(refined)
-    if (nrow(refined)) {
-      rows <- safe_bind_rows(list(rows, refined))
-      rows <- rows[order(rows$beta, !rows$boundary_refined), , drop = FALSE]
-      rownames(rows) <- NULL
-    }
-  }
-
-  rows
+  rows$boundary_refined <- FALSE
+  refine_acceptance_grid_boundaries(rows, evaluate, level = level)
 }
 
-estimate_bounded_exclusion_ar_profile_spec <- function(
-    data, specification, points = 401L) {
-  points <- as.integer(points)
-  if (!is.finite(points) || points < 3L || points %% 2L != 1L) {
-    stop(
-      "Bounded exclusion sensitivity requires an odd beta grid with at least three points so beta = 0 is evaluated exactly.",
-      call. = FALSE
-    )
-  }
+bounded_exclusion_ar_specification_inputs <- function(data, specification) {
   specification <- as_single_iv_specification(specification)
   controls <- unlist(specification$controls[[1L]], use.names = FALSE)
   included <- unlist(specification$included_language_controls[[1L]], use.names = FALSE)
@@ -462,9 +512,6 @@ estimate_bounded_exclusion_ar_profile_spec <- function(
       call. = FALSE
     )
   }
-  outcome <- specification$outcome[[1L]]
-  treatment <- specification$treatment[[1L]]
-  fixed_effect <- specification$fixed_effect[[1L]]
   needed <- iv_specification_variables(specification)
   missing <- setdiff(needed, names(data))
   if (length(missing)) {
@@ -480,10 +527,36 @@ estimate_bounded_exclusion_ar_profile_spec <- function(
   if (is.null(cluster)) {
     stop("Bounded exclusion sensitivity requires an aligned state cluster.", call. = FALSE)
   }
-  beta <- anderson_rubin_beta_values(x, outcome, treatment, points)
+
+  list(
+    data = x,
+    outcome = specification$outcome[[1L]],
+    treatment = specification$treatment[[1L]],
+    instrument = plain_chr(excluded)[[1L]],
+    excluded = excluded,
+    included = included,
+    controls = controls,
+    fixed_effect = specification$fixed_effect[[1L]],
+    cluster = cluster,
+    specification_id = specification$specification_id[[1L]]
+  )
+}
+
+bounded_exclusion_ar_profile_from_inputs <- function(inputs, points = 401L) {
+  points <- as.integer(points)
+  if (!is.finite(points) || points < 3L || points %% 2L != 1L) {
+    stop(
+      "Bounded exclusion sensitivity requires an odd beta grid with at least three points so beta = 0 is evaluated exactly.",
+      call. = FALSE
+    )
+  }
+  beta <- anderson_rubin_beta_values(
+    inputs$data, inputs$outcome, inputs$treatment, points
+  )
   profile <- bounded_exclusion_ar_profile(
-    x, outcome, treatment, excluded, included, controls, fixed_effect,
-    cluster = cluster, beta_values = beta
+    inputs$data, inputs$outcome, inputs$treatment, inputs$excluded,
+    inputs$included, inputs$controls, inputs$fixed_effect,
+    cluster = inputs$cluster, beta_values = beta
   )
   if (any(profile$status != "estimated")) {
     stop(
@@ -491,8 +564,14 @@ estimate_bounded_exclusion_ar_profile_spec <- function(
       call. = FALSE
     )
   }
-  profile$specification_id <- specification$specification_id[[1L]]
+  profile$specification_id <- inputs$specification_id
   profile
+}
+
+estimate_bounded_exclusion_ar_profile_spec <- function(
+    data, specification, points = 401L) {
+  inputs <- bounded_exclusion_ar_specification_inputs(data, specification)
+  bounded_exclusion_ar_profile_from_inputs(inputs, points = points)
 }
 
 estimate_anderson_rubin_spec <- function(

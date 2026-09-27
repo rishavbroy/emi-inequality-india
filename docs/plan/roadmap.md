@@ -4,19 +4,16 @@ This file lists unfinished work only. Completed implementation history is retain
 
 ## Open methodological issues
 
-1. **Average marginal effects.** Replace the current broad-error fallback with one standard, verified AME implementation for the survey-weighted probit. The final build should not substitute a different uncertainty calculation when the preferred estimator fails. Document the derivative/inference rule and test it against a trusted implementation.
-2. **Survey-estimator failure policy.** Final-mode selection estimation should fail if the required survey design cannot be constructed or the required package is unavailable; it should not silently fall back to an ordinary unweighted probit.
-3. **First-stage formula fidelity.** First-stage and spatial first-stage diagnostics should preserve the transformations, factors, and interactions in the registered IV specification rather than reconstructing formulas from `all.vars()` names.
-4. **Clustered inference policy.** Revisit small-sample degrees of freedom and covariance corrections for state-clustered Wald/AR inference. Record the chosen finite-sample convention once and apply it consistently.
-5. **Bounded exclusion sensitivity.** Keep the custom procedure only if its derivation, clustered uncertainty calculation, and interpretation can be stated and tested directly. Prefer a standard implementation where an equivalent maintained method exists.
-6. **District fuzzy-candidate scoring.** Reassess hand-set similarity weights and thresholds against the reviewed adjudication set; final identities must continue to require deterministic/reviewed evidence rather than fuzzy scores alone.
-7. **Consumption support duplication.** Determine whether currently identical common-support files represent one shared support definition or intentionally separate families. Consolidate the computation if the estimand is truly shared; otherwise encode the intentional equality so hygiene checks remain informative.
+1. **Anderson--Rubin tail classification.** Interior confidence-set boundaries are root-refined, but accepted components that reach the finite topology-search range are still reported as search-truncated. Add adaptive range expansion or another defensible stopping rule before classifying a tail as genuinely unbounded, and benchmark the ordinary homoskedastic special case against an independent implementation.
+2. **Price-deflator sensitivity.** Revisit the documented overlap/linking choices, the 2011--12 spatial normalization, and the sensitivity of real-consumption results to defensible alternatives. Production temporal linking should also consume the shared `price_link_factor()` rule rather than maintain a second median-ratio implementation.
+3. **Moran inference convention.** Decide whether the public spatial residual check is intentionally the asymptotic `spdep::moran.test()` or whether a fixed-seed `spdep::moran.mc()` permutation result should be the reported robustness check. Remove the inactive 9,999-draw scaffold once that choice is documented.
+4. **District fuzzy-candidate scoring.** Reassess hand-set similarity weights and thresholds against the reviewed adjudication set; final identities must continue to require deterministic/reviewed evidence rather than fuzzy scores alone.
 
 ## Open engineering issues
 
-1. Compose the processed-data and full-build analytical target definitions from the same reusable target families so the two routes cannot drift.
+1. Replace regex discovery in the manual district-correction API with explicit correction fields/schemas so a correction cannot mutate an unrelated state/district-like column. Keep identity/name corrections distinct from lineage events such as splits, merges, carve-outs, and border shifts.
 2. Remove remaining compatibility aliases/wrappers that have no non-test consumers, including old NSS naming and period-deflator wrappers where backward compatibility is not an external requirement.
-3. Consolidate the repeated candidate-IV selection logic, DISE enrollment-ratio calculation, and survey-option context handling identified in the code review.
+3. Consolidate the repeated candidate-IV selection logic and DISE enrollment-ratio calculation identified in the code review.
 4. Replace remaining source-text tests with behavioral tests unless the literal text is itself an interface.
 5. Remove or archive genuinely dead branches and review-only files after verifying that no active paper, sample, or replication path consumes them.
 6. Reduce noisy successful-build logging from auxiliary XeLaTeX/reference passes while preserving complete logs on failure.

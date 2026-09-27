@@ -75,18 +75,25 @@ test_that("consumption scalar-IV saver persists summaries but not pointwise AR g
     summary = data.frame(specification_id = "s", estimate = 1),
     anderson_rubin_grid = data.frame(specification_id = "s", beta = 0, p.value = .5)
   )
-  support <- data.frame(group_id = "w", n_common = 10, status = "ready")
+  path <- save_consumption_scalar_iv_robustness(dynamics, root)
 
-  paths <- save_consumption_scalar_iv_robustness(dynamics, support, root)
-
-  expect_setequal(
-    basename(paths),
-    c(
-      "consumption_scalar_iv_robustness.csv",
-      "consumption_scalar_iv_robustness_common_support.csv"
-    )
-  )
+  expect_identical(basename(path), "consumption_scalar_iv_robustness.csv")
   expect_false(file.exists(file.path(root, "consumption_scalar_iv_robustness_anderson_rubin_grid.csv")))
+})
+
+test_that("consumption robustness support saver consolidates family-labelled supports", {
+  root <- tempfile("consumption-supports-")
+  supports <- list(
+    scalar_iv = data.frame(group_id = "a", n_common = 10L, status = "ready"),
+    treatment = data.frame(group_id = "a", n_common = 10L, status = "ready")
+  )
+
+  path <- save_consumption_robustness_common_support(supports, root)
+  out <- utils::read.csv(path, stringsAsFactors = FALSE)
+
+  expect_identical(basename(path), "consumption_robustness_common_support.csv")
+  expect_setequal(out$robustness_family, names(supports))
+  expect_equal(out$n_common, c(10L, 10L))
 })
 
 test_that("consumption scalar-IV validation enforces six-design realized common samples", {
@@ -189,18 +196,12 @@ test_that("alternative welfare saver persists only compact family artifacts", {
     summary = data.frame(specification_id = "s", estimate = 1),
     anderson_rubin_grid = data.frame(specification_id = "s", beta = 0, p.value = .5)
   )
-  support <- data.frame(group_id = "w", n_common = 10, status = "ready")
-
-  paths <- save_consumption_iv_robustness_family(
-    dynamics, support, "consumption_alternative_welfare_robustness", root
+  path <- save_consumption_iv_robustness_family(
+    dynamics, "consumption_alternative_welfare_robustness", root
   )
 
-  expect_setequal(
-    basename(paths),
-    c(
-      "consumption_alternative_welfare_robustness.csv",
-      "consumption_alternative_welfare_robustness_common_support.csv"
-    )
+  expect_identical(
+    basename(path), "consumption_alternative_welfare_robustness.csv"
   )
   expect_false(file.exists(file.path(
     root, "consumption_alternative_welfare_robustness_anderson_rubin_grid.csv"
