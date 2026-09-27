@@ -737,6 +737,7 @@ test_that("public table sources live in bottom notes rather than titles", {
   expect_match(note, "\\citeproc{ref-nationalsamplesurveyoffice2008}", fixed = TRUE)
   weak_note <- public_table_note("appendix_iv_weak_inference")
   expect_match(weak_note, "95\\%", fixed = TRUE)
+  expect_match(weak_note, "\\mathrm{grid}", fixed = TRUE)
   expect_false(grepl("95%", weak_note, fixed = TRUE))
 })
 
@@ -1155,16 +1156,23 @@ iv_weak_fixture <- function() {
     second_stage_std.error = c(.15, .23),
     second_stage_p.value = c(.44, .56),
     effective_f = c(.69, .41),
-    anderson_rubin_p_beta0 = c(.001, .014),
-    ar_95_components = c("[-.2,-.07] U [.03,.2]", "[-.19,-.05] U [.02,.19]"),
-    ar_95_disconnected = TRUE,
+    anderson_rubin_p_beta0 = c(.001, .08),
+    ar_95_components = c(
+      "[grid<= -.2, -.07] U [.03, .2 <=grid]",
+      "[grid<= -.19, .19 <=grid]"
+    ),
+    ar_95_n_components = c(2L, 1L),
+    ar_95_disconnected = c(TRUE, FALSE),
+    ar_95_contains_zero = c(FALSE, TRUE),
+    ar_95_left_truncated = TRUE,
+    ar_95_right_truncated = TRUE,
     ar_95_sign_identified = FALSE,
     n = c(524L, 522L),
     status = "estimated",
     stringsAsFactors = FALSE
   ), anderson_rubin_grid = data.frame(
     beta = rep(c(-.20, -.07, 0, .03, .20), 2L),
-    accepted = rep(c(TRUE, TRUE, FALSE, TRUE, TRUE), 2L),
+    accepted = c(TRUE, TRUE, FALSE, TRUE, TRUE, rep(TRUE, 5L)),
     specification_id = rep(
       c("consumption__long_2022__change", "consumption__long_2023__change"),
       each = 5L
@@ -1213,7 +1221,7 @@ iv_weak_fixture <- function() {
 }
 
 
-test_that("IV appendix weak-inference summary fails closed on identification claims", {
+test_that("IV appendix weak-inference summary preserves returned AR topology", {
   fixture <- iv_weak_fixture()
   out <- appendix_iv_weak_inference(
     fixture$dynamics, fixture$exclusion, fixture$robustness, fixture$alternative
@@ -1226,8 +1234,21 @@ test_that("IV appendix weak-inference summary fails closed on identification cla
     csv$minimum_gamma_share_of_reduced_form_for_zero_95,
     c(.417, .199)
   )
-  expect_true(all(csv$ar_disconnected))
-  expect_false(any(csv$ar_sign_identified))
+  expect_identical(csv$ar_n_components, c(2L, 1L))
+  expect_identical(csv$ar_disconnected, c(TRUE, FALSE))
+  expect_identical(csv$ar_contains_zero, c(FALSE, TRUE))
+  expect_true(all(csv$ar_left_truncated))
+  expect_true(all(csv$ar_right_truncated))
+
+  inconsistent <- fixture$dynamics
+  inconsistent$summary$ar_95_n_components[[2L]] <- 2L
+  expect_error(
+    appendix_iv_weak_inference(
+      inconsistent, fixture$exclusion, fixture$robustness, fixture$alternative
+    ),
+    "AR summary disagrees with its acceptance grid",
+    fixed = TRUE
+  )
 
   strong <- fixture$robustness
   strong$family_summary$n_strong_first_stage[[1L]] <- 1L
@@ -1270,7 +1291,7 @@ test_that("weak-IV appendix table renders through modelsummary", {
   expect_match(tex, "EMI exposure", fixed = TRUE)
   expect_match(tex, "MOP effective $F$", fixed = TRUE)
   expect_match(tex, "\\cup", fixed = TRUE)
-  expect_match(tex, "\\left[-0.200,\\,-0.070\\right]", fixed = TRUE)
+  expect_match(tex, "\\mathrm{grid}", fixed = TRUE)
   expect_match(tex, "41.7\\%", fixed = TRUE)
   expect_false(grepl("grid<=", tex, fixed = TRUE))
   expect_false(grepl("41.7%", tex, fixed = TRUE))

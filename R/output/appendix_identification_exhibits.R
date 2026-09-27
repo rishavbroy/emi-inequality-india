@@ -127,8 +127,9 @@ appendix_iv_weak_inference <- function(
   required <- c(
     "specification_id", "welfare_specification_id", "outcome_round", "second_stage_estimate",
     "second_stage_std.error", "second_stage_p.value", "effective_f",
-    "anderson_rubin_p_beta0", "ar_95_components", "ar_95_disconnected",
-    "ar_95_sign_identified", "n", "status"
+    "anderson_rubin_p_beta0", "ar_95_components", "ar_95_n_components",
+    "ar_95_disconnected", "ar_95_contains_zero", "ar_95_left_truncated",
+    "ar_95_right_truncated", "ar_95_sign_identified", "n", "status"
   )
   if (length(setdiff(required, names(x))) || nrow(x) != 2L ||
       any(is.na(x$welfare_specification_id)) || any(plain_chr(x$status) != "estimated") ||
@@ -178,17 +179,46 @@ appendix_iv_weak_inference <- function(
 
 
   ar_grid <- safe_df(dynamics$anderson_rubin_grid)
-  format_component <- function(specification_id) {
+  acceptance_components <- lapply(plain_chr(x$specification_id), function(specification_id) {
     grid <- ar_grid[plain_chr(ar_grid$specification_id) == specification_id, , drop = FALSE]
-    components <- anderson_rubin_acceptance_components(grid)
-    if (nrow(components) != 2L) {
-      stop("Weak-IV appendix expects two disconnected AR acceptance components.", call. = FALSE)
-    }
-    interval <- function(lower, upper) sprintf("\\left[%.3f,\\,%.3f\\right]", lower, upper)
-    paste0("$", interval(components$lower[[1L]], components$upper[[1L]]),
-           " \\cup ", interval(components$lower[[2L]], components$upper[[2L]]), "$")
+    anderson_rubin_acceptance_components(grid)
+  })
+  component_count <- vapply(acceptance_components, nrow, integer(1))
+  contains_zero <- vapply(acceptance_components, function(components) {
+    nrow(components) > 0L && any(components$contains_zero)
+  }, logical(1))
+  left_truncated <- vapply(acceptance_components, function(components) {
+    nrow(components) > 0L && any(components$touches_left_grid_edge)
+  }, logical(1))
+  right_truncated <- vapply(acceptance_components, function(components) {
+    nrow(components) > 0L && any(components$touches_right_grid_edge)
+  }, logical(1))
+  if (
+    any(component_count != as.integer(x$ar_95_n_components)) ||
+      any((component_count > 1L) != as.logical(x$ar_95_disconnected)) ||
+      any(contains_zero != as.logical(x$ar_95_contains_zero)) ||
+      any(left_truncated != as.logical(x$ar_95_left_truncated)) ||
+      any(right_truncated != as.logical(x$ar_95_right_truncated))
+  ) {
+    stop("Weak-IV AR summary disagrees with its acceptance grid.", call. = FALSE)
   }
-  ar_latex <- vapply(plain_chr(x$specification_id), format_component, character(1))
+
+  format_components <- function(components) {
+    if (!nrow(components)) return("$\\varnothing$")
+    intervals <- vapply(seq_len(nrow(components)), function(i) {
+      lower <- sprintf("%.3f", components$lower[[i]])
+      upper <- sprintf("%.3f", components$upper[[i]])
+      if (isTRUE(components$touches_left_grid_edge[[i]])) {
+        lower <- paste0("\\mathrm{grid}\\le ", lower)
+      }
+      if (isTRUE(components$touches_right_grid_edge[[i]])) {
+        upper <- paste0(upper, " \\le \\mathrm{grid}")
+      }
+      sprintf("\\left[%s,\\,%s\\right]", lower, upper)
+    }, character(1))
+    paste0("$", paste(intervals, collapse = " \\cup "), "$")
+  }
+  ar_latex <- vapply(acceptance_components, format_components, character(1))
   csv <- data.frame(
     row_id = wanted,
     outcome = c("2022-23 long change", "2023-24 long change"),
@@ -199,7 +229,11 @@ appendix_iv_weak_inference <- function(
     ar_p_beta0 = num(x$anderson_rubin_p_beta0),
     ar_95_components = plain_chr(x$ar_95_components),
     ar_95_latex = ar_latex,
+    ar_n_components = as.integer(x$ar_95_n_components),
     ar_disconnected = as.logical(x$ar_95_disconnected),
+    ar_contains_zero = as.logical(x$ar_95_contains_zero),
+    ar_left_truncated = as.logical(x$ar_95_left_truncated),
+    ar_right_truncated = as.logical(x$ar_95_right_truncated),
     ar_sign_identified = as.logical(x$ar_95_sign_identified),
     minimum_gamma_for_zero_95 = num(sensitivity$minimum_gamma_for_zero_95),
     minimum_gamma_share_of_reduced_form_for_zero_95 = num(
@@ -208,9 +242,6 @@ appendix_iv_weak_inference <- function(
     n = as.integer(x$n),
     stringsAsFactors = FALSE
   )
-  if (any(!csv$ar_disconnected) || any(csv$ar_sign_identified)) {
-    stop("Weak-IV inference summary expects disconnected AR sets that do not identify sign.", call. = FALSE)
-  }
   out <- data.frame(
     Outcome = csv$outcome,
     `2SLS estimate` = sprintf("%.3f", csv$estimate),

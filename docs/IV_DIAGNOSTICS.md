@@ -28,6 +28,8 @@ Anderson--Rubin inference is the principal weak-identification-robust safeguard 
 
 Confidence-set inversion is demand-driven because it repeats the clustered test over many candidate structural effects. Publication-facing analyses that report AR confidence sets request inversion. Broad registered sensitivity families that consume only the beta-zero test skip the unused grid while retaining the same CR2/HTZ point-null inference. This includes DISE construct permutations, alternative-distance comparisons, and consumption robustness families; the headline consumption specifications still invert the set because the appendix reports its components. Standard alternatives such as `ivmodel::AR.test()` and `ivDiag::AR_test()` use different variance/reference conventions, so substituting them only for speed would change the inferential procedure.
 
+AR accepted sets are not assumed to have a fixed topology. Reporting code accepts connected, disconnected, empty, and grid-truncated sets and checks that the stored summary agrees with the underlying acceptance grid. Acceptance at a grid edge is reported as numerical truncation rather than extrapolated to an infinite interval.
+
 Raw pointwise AR grids are retained only for compact predeclared analyses where the acceptance path is useful for review. Broad alternative-design families persist compact summaries to avoid writing large redundant grids.
 
 Bounded exclusion-restriction sensitivity is a separate imperfect-IV analysis. Because that procedure contains custom econometric machinery, its derivation and finite-sample inference must remain explicit and tested; it should not be treated as interchangeable with ordinary AR inference.

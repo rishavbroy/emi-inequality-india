@@ -187,7 +187,7 @@ public_table_note <- function(name) {
     ),
     appendix_iv_weak_inference = paste(
       "The table reports conventional 2SLS coefficients; standard errors are state-clustered. Weak-identification assessment uses the Montiel Olea--Pflueger effective $F$ statistic and Anderson--Rubin inference.",
-      "The 95\\% AR accepted sets are displayed as unions of intervals on the evaluated inversion grid, and both reported sets reach the grid boundaries.",
+      "The 95\\% AR accepted sets are displayed as the union of all accepted intervals on the evaluated inversion grid. An endpoint marked with \\mathrm{grid} means acceptance reaches that search boundary, so the set may extend beyond the evaluated range.",
       "The direct-effect row gives the smallest permitted direct effect, as a share of the absolute reduced form, for which the AR set includes $\\beta = 0$."
     ),
     appendix_migration_summary = paste(
