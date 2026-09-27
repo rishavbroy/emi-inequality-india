@@ -103,34 +103,20 @@ first_iv_model <- function(iv_models) {
   iv_models
 }
 
-first_stage_formula_from_iv_model <- function(model) {
-  f <- tryCatch(stats::formula(model), error = function(e) NULL)
-  if (is.null(f) || length(f) < 3L || !is.call(f[[3]]) || !identical(f[[3]][[1]], as.name("|"))) {
-    return(NULL)
-  }
-  regressors <- all.vars(f[[3]][[2]])
-  instruments <- all.vars(f[[3]][[3]])
-  endogenous <- setdiff(regressors, instruments)
-  if (!length(endogenous)) endogenous <- regressors[[1]]
-  if (!length(endogenous) || is.na(endogenous[[1]]) || !nzchar(endogenous[[1]]) || !length(instruments)) {
-    return(NULL)
-  }
-  stats::as.formula(paste(endogenous[[1]], "~", paste(instruments, collapse = " + ")))
-}
-
 first_stage_model_from_iv <- function(iv_models, district_panel = NULL) {
   model <- first_iv_model(iv_models)
   if (!inherits(model, "ivreg")) return(NULL)
-  fs_formula <- first_stage_formula_from_iv_model(model)
-  if (is.null(fs_formula)) return(NULL)
 
   data <- as_plain_data_frame(district_panel)
-  if (!nrow(data) || any(!all.vars(fs_formula) %in% names(data))) {
-    data <- tryCatch(as_plain_data_frame(stats::model.frame(model)), error = function(e) data.frame())
+  first_stage <- if (nrow(data)) iv_first_stage_fit(model, data) else NULL
+  if (is.null(first_stage)) {
+    fitted_data <- tryCatch(
+      as_plain_data_frame(stats::model.frame(model)),
+      error = function(e) data.frame()
+    )
+    if (nrow(fitted_data)) first_stage <- iv_first_stage_fit(model, fitted_data)
   }
-  if (!nrow(data) || any(!all.vars(fs_formula) %in% names(data))) return(NULL)
-
-  tryCatch(stats::lm(fs_formula, data = data), error = function(e) NULL)
+  if (is.null(first_stage)) NULL else first_stage$model
 }
 
 first_stage_model_value <- function(iv_models, district_panel, terms, column = "estimate", digits = NULL) {

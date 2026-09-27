@@ -712,6 +712,48 @@ test_that("clustered IV term inference selects the endogenous coefficient by fit
   expect_equal(observed[["p.value"]], direct$p_Satt[[1L]], tolerance = 1e-12)
 })
 
+test_that("first-stage refits preserve ivreg's instrument design and fitted sample", {
+  skip_if_not_installed("ivreg")
+  set.seed(8806)
+  n <- 96L
+  dat <- data.frame(
+    y = stats::rnorm(n),
+    x = stats::rnorm(n),
+    z = stats::rnorm(n),
+    w = stats::rnorm(n),
+    state = factor(rep(letters[1:8], each = 12)),
+    stringsAsFactors = FALSE
+  )
+  dat$x <- 0.7 * dat$z + 0.2 * dat$w + stats::rnorm(n)
+  dat$y <- 1.2 * dat$x + 0.4 * dat$w + stats::rnorm(n)
+  dat$y[c(5, 41)] <- NA_real_
+  rownames(dat) <- paste0("district_", seq_len(n))
+
+  fit <- ivreg::ivreg(
+    y ~ x + w + factor(state) | z * w + factor(state),
+    data = dat, model = TRUE, x = TRUE, y = TRUE
+  )
+  first_stage <- iv_first_stage_fit(fit, dat)
+
+  expect_false(is.null(first_stage))
+  expect_equal(stats::nobs(first_stage$model), stats::nobs(fit))
+  expect_identical(rownames(stats::model.frame(first_stage$model)), rownames(stats::model.frame(fit)))
+  expect_equal(
+    unname(stats::model.matrix(first_stage$model)),
+    unname(stats::model.matrix(fit, component = "instruments")),
+    tolerance = 1e-12
+  )
+  expect_identical(
+    colnames(stats::model.matrix(first_stage$model)),
+    colnames(stats::model.matrix(fit, component = "instruments"))
+  )
+  expect_equal(
+    unname(stats::residuals(first_stage$model)),
+    unname(as.matrix(stats::residuals(fit, type = "stage1"))[, 1L]),
+    tolerance = 1e-12
+  )
+})
+
 test_that("fitted IV term parsing preserves ivreg component terms", {
   skip_if_not_installed("ivreg")
   set.seed(8803)

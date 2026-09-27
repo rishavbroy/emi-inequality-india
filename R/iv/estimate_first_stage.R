@@ -32,42 +32,16 @@ estimate_first_stage <- function(iv_models, district_panel, cfg) {
       ))
     }
 
-    iv_terms <- parse_iv_formula_terms(model)
-    if (is.null(iv_terms) || !length(iv_terms$regressors) || !length(iv_terms$instruments)) {
-      return(first_stage_status_row(model_name, "Could not parse first-stage IV formula."))
-    }
-
-    endogenous <- setdiff(iv_terms$regressors, iv_terms$instruments)
-    if (!length(endogenous)) endogenous <- iv_terms$regressors[[1]]
-    if (!length(endogenous) || is.na(endogenous[[1]]) || !nzchar(endogenous[[1]])) {
-      return(first_stage_status_row(model_name, "No endogenous regressor could be identified for the first stage."))
-    }
-
-    first_stage_formula <- stats::as.formula(paste(
-      endogenous[[1]],
-      "~",
-      paste(iv_terms$instruments, collapse = " + ")
-    ))
-
-    panel <- as.data.frame(district_panel)
-    missing <- setdiff(all.vars(first_stage_formula), names(panel))
-    if (length(missing)) {
-      return(first_stage_status_row(model_name, paste("Missing first-stage variables:", paste(missing, collapse = ", "))))
-    }
-
-    fitted_rows <- iv_model_row_indices(model, panel)
-    if (!length(fitted_rows)) {
+    first_stage <- iv_first_stage_fit(model, district_panel)
+    if (is.null(first_stage)) {
       return(first_stage_status_row(
         model_name,
-        "Could not align the first stage to the fitted IV estimation sample."
+        "Could not recover the fitted IV first-stage specification and sample."
       ))
     }
-    analysis_data <- panel[fitted_rows, , drop = FALSE]
-    fit <- tryCatch(
-      stats::lm(first_stage_formula, data = analysis_data),
-      error = function(e) e
-    )
-    if (inherits(fit, "error")) return(first_stage_status_row(model_name, conditionMessage(fit)))
+    fit <- first_stage$model
+    analysis_data <- first_stage$data
+    iv_terms <- parse_iv_formula_terms(model)
 
     vc <- first_stage_vcov(fit, analysis_data)
     coef_mat <- tryCatch({
@@ -141,6 +115,47 @@ estimate_first_stage <- function(iv_models, district_panel, cfg) {
   })
 
   safe_bind_rows(rows)
+}
+
+# Build the inferential first-stage regression from ivreg's own fitted
+# instrument formula and estimation sample. This preserves factor expansion,
+# interactions, transformations, contrasts, and row selection defined by ivreg
+# instead of reconstructing the first stage from parsed term strings.
+iv_first_stage_fit <- function(model, data) {
+  if (!inherits(model, "ivreg")) return(NULL)
+
+  endogenous <- plain_chr(model$endogenous)
+  endogenous <- endogenous[!is.na(endogenous) & nzchar(endogenous)]
+  if (length(endogenous) != 1L) return(NULL)
+
+  panel <- as.data.frame(data)
+  rows <- iv_model_row_indices(model, panel)
+  if (!length(rows) || !endogenous[[1L]] %in% names(panel)) return(NULL)
+  analysis_data <- panel[rows, , drop = FALSE]
+
+  formula <- tryCatch(
+    stats::formula(model, component = "instruments"),
+    error = function(e) NULL
+  )
+  if (is.null(formula)) return(NULL)
+  if (length(formula) == 2L) {
+    formula <- stats::as.formula(
+      call("~", as.name(endogenous[[1L]]), formula[[2L]]),
+      env = environment(formula)
+    )
+  } else if (length(formula) >= 3L) {
+    formula[[2L]] <- as.name(endogenous[[1L]])
+  } else {
+    return(NULL)
+  }
+
+  fit <- tryCatch(
+    stats::lm(formula, data = analysis_data, na.action = stats::na.fail),
+    error = function(e) NULL
+  )
+  if (is.null(fit) || stats::nobs(fit) != stats::nobs(model)) return(NULL)
+
+  list(model = fit, data = analysis_data, endogenous = endogenous[[1L]])
 }
 
 first_stage_status_row <- function(model_name, reason) {

@@ -180,32 +180,38 @@ spatial_moran_test_from_model_residuals <- function(model, district_panel, weigh
 }
 
 spatial_moran_test_from_first_stage_residuals <- function(model, district_panel, weights, legacy_name, estimand, variable, source) {
-  fit <- spatial_first_stage_model(model, district_panel)
-  if (is.null(fit)) {
-    return(spatial_autocorrelation_status_row("out_of_active_pipeline", paste0("Could not estimate first-stage model for ", estimand, ".")))
+  if (!inherits(model, "ivreg")) {
+    return(spatial_autocorrelation_status_row(
+      "out_of_active_pipeline",
+      paste0("No fitted IV first stage is available for ", estimand, ".")
+    ))
   }
-  rows <- spatial_model_rows(fit, district_panel)
+  rows <- spatial_model_rows(model, district_panel)
+  residuals <- tryCatch(
+    stats::residuals(model, type = "stage1"),
+    error = function(e) NULL
+  )
+  if (is.null(residuals) || !length(rows)) {
+    return(spatial_autocorrelation_status_row(
+      "out_of_active_pipeline",
+      paste0("Could not recover fitted first-stage residuals for ", estimand, ".")
+    ))
+  }
+  residuals <- as.matrix(residuals)
+  if (ncol(residuals) != 1L || nrow(residuals) != length(rows)) {
+    return(spatial_autocorrelation_status_row(
+      "out_of_active_pipeline",
+      paste0("Spatial first-stage residual diagnostics require one endogenous regressor for ", estimand, ".")
+    ))
+  }
   if (!identical(as.integer(rows), as.integer(weights$row_index))) {
     weights <- build_spatial_weights_for_rows(
       district_panel, rows, queen = identical(weights$contiguity, "queen")
     )
   }
-  x <- tryCatch(stats::residuals(fit), error = function(e) NA_real_)
-  compute_moran_tests(x, weights, legacy_name, estimand, variable, source)
-}
-
-spatial_first_stage_model <- function(model, district_panel) {
-  if (!inherits(model, "ivreg")) return(NULL)
-  iv_terms <- parse_iv_formula_terms(model)
-  if (is.null(iv_terms) || !length(iv_terms$regressors) || !length(iv_terms$instruments)) return(NULL)
-  endogenous <- setdiff(iv_terms$regressors, iv_terms$instruments)
-  if (!length(endogenous)) endogenous <- iv_terms$regressors[[1]]
-  if (!length(endogenous) || is.na(endogenous[[1]]) || !nzchar(endogenous[[1]])) return(NULL)
-  first_stage_formula <- stats::as.formula(paste(endogenous[[1]], "~", paste(iv_terms$instruments, collapse = " + ")))
-  data <- as.data.frame(district_panel)
-  missing <- setdiff(all.vars(first_stage_formula), names(data))
-  if (length(missing)) return(NULL)
-  tryCatch(stats::lm(first_stage_formula, data = data), error = function(e) NULL)
+  compute_moran_tests(
+    residuals[, 1L], weights, legacy_name, estimand, variable, source
+  )
 }
 
 #' compute moran tests

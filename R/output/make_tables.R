@@ -873,26 +873,17 @@ first_finite_value <- function(df, cols) {
 
 first_stage_table_model <- function(iv_models, district_panel) {
   model <- second_stage_table_model(iv_models)$model
-  if (is.null(model) || !inherits(model, "ivreg")) return(list(model = NULL, vcov = NULL, add_rows = NULL))
+  if (is.null(model) || !inherits(model, "ivreg")) {
+    return(list(model = NULL, vcov = NULL, add_rows = NULL))
+  }
+  first_stage <- iv_first_stage_fit(model, district_panel)
+  if (is.null(first_stage)) {
+    return(list(model = NULL, vcov = NULL, add_rows = NULL))
+  }
+  fit <- first_stage$model
+  analysis_data <- first_stage$data
   terms <- parse_iv_formula_terms(model)
-  if (is.null(terms) || !length(terms$regressors) || !length(terms$instruments)) {
-    return(list(model = NULL, vcov = NULL, add_rows = NULL))
-  }
-  endogenous <- setdiff(terms$regressors, terms$instruments)
-  if (!length(endogenous)) endogenous <- terms$regressors[[1]]
-  if (!length(endogenous) || is.na(endogenous[[1]]) || !nzchar(endogenous[[1]])) {
-    return(list(model = NULL, vcov = NULL, add_rows = NULL))
-  }
-  formula <- stats::as.formula(paste(endogenous[[1]], "~", paste(terms$instruments, collapse = " + ")))
-  data <- as.data.frame(district_panel)
-  if (length(setdiff(all.vars(formula), names(as.data.frame(data))))) {
-    return(list(model = NULL, vcov = NULL, add_rows = NULL))
-  }
-  fitted_rows <- iv_model_row_indices(model, data)
-  if (!length(fitted_rows)) return(list(model = NULL, vcov = NULL, add_rows = NULL))
-  analysis_data <- data[fitted_rows, , drop = FALSE]
-  fit <- tryCatch(stats::lm(formula, data = analysis_data), error = function(e) NULL)
-  if (is.null(fit)) return(list(model = NULL, vcov = NULL, add_rows = NULL))
+  if (is.null(terms)) return(list(model = NULL, vcov = NULL, add_rows = NULL))
   vc <- first_stage_vcov(fit, analysis_data)
   excluded <- setdiff(terms$instruments, terms$regressors)
   excluded_term <- if (length(excluded)) excluded[[1]] else NA_character_

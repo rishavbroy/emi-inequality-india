@@ -46,3 +46,5 @@ Spatial-weight and residual checks are retained under the validation outputs. Te
 - [`DISTRICT_LINEAGE.md`](DISTRICT_LINEAGE.md)
 - [`GEOGRAPHY_HARMONIZATION.md`](GEOGRAPHY_HARMONIZATION.md)
 - [`IV_DIAGNOSTICS.md`](IV_DIAGNOSTICS.md)
+
+First-stage spatial residual diagnostics consume `ivreg::residuals(..., type = "stage1")` from the fitted structural model. They do not refit or reconstruct a parallel first-stage formula, so the spatial check uses the identical first-stage specification and estimation sample as the IV model.
