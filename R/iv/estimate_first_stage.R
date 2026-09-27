@@ -124,38 +124,56 @@ estimate_first_stage <- function(iv_models, district_panel, cfg) {
 iv_first_stage_fit <- function(model, data) {
   if (!inherits(model, "ivreg")) return(NULL)
 
-  endogenous <- plain_chr(model$endogenous)
-  endogenous <- endogenous[!is.na(endogenous) & nzchar(endogenous)]
-  if (length(endogenous) != 1L) return(NULL)
-
-  panel <- as.data.frame(data)
-  rows <- iv_model_row_indices(model, panel)
-  if (!length(rows) || !endogenous[[1L]] %in% names(panel)) return(NULL)
-  analysis_data <- panel[rows, , drop = FALSE]
-
-  formula <- tryCatch(
-    stats::formula(model, component = "instruments"),
+  regressors <- tryCatch(
+    stats::model.matrix(model, component = "regressors"),
     error = function(e) NULL
   )
-  if (is.null(formula)) return(NULL)
-  if (length(formula) == 2L) {
-    formula <- stats::as.formula(
-      call("~", as.name(endogenous[[1L]]), formula[[2L]]),
-      env = environment(formula)
-    )
-  } else if (length(formula) >= 3L) {
-    formula[[2L]] <- as.name(endogenous[[1L]])
-  } else {
+  endogenous_index <- suppressWarnings(as.integer(model$endogenous))
+  if (
+    is.null(regressors) || length(endogenous_index) != 1L ||
+      !is.finite(endogenous_index) || endogenous_index < 1L ||
+      endogenous_index > ncol(regressors)
+  ) {
     return(NULL)
   }
 
+  panel <- as.data.frame(data)
+  rows <- iv_model_row_indices(model, panel)
+  if (!length(rows)) return(NULL)
+  analysis_data <- panel[rows, , drop = FALSE]
+
+  # ivreg stores `endogenous` as column positions in its regressor matrix, not
+  # variable names. Use the fitted matrix itself as the stage-one response so
+  # transformed regressors and factor expansions stay exactly aligned with the
+  # fitted IV model.
+  model_frame <- tryCatch(as.data.frame(stats::model.frame(model)), error = function(e) NULL)
+  instrument_formula <- tryCatch(
+    stats::formula(model, component = "instruments"),
+    error = function(e) NULL
+  )
+  if (is.null(model_frame) || is.null(instrument_formula) || nrow(model_frame) != nrow(regressors)) {
+    return(NULL)
+  }
+  model_frame$.iv_first_stage_response <- regressors[, endogenous_index[[1L]]]
+  instrument_formula[[2L]] <- as.name(".iv_first_stage_response")
+
   fit <- tryCatch(
-    stats::lm(formula, data = analysis_data, na.action = stats::na.fail),
+    stats::lm(
+      instrument_formula,
+      data = model_frame,
+      weights = stats::weights(model, type = "working"),
+      na.action = stats::na.fail,
+      contrasts = model$contrasts$instruments %||% NULL
+    ),
     error = function(e) NULL
   )
   if (is.null(fit) || stats::nobs(fit) != stats::nobs(model)) return(NULL)
 
-  list(model = fit, data = analysis_data, endogenous = endogenous[[1L]])
+  list(
+    model = fit,
+    data = analysis_data,
+    endogenous = colnames(regressors)[endogenous_index[[1L]]]
+  )
 }
 
 first_stage_status_row <- function(model_name, reason) {
