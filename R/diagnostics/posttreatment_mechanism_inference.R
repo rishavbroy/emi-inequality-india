@@ -25,17 +25,7 @@ posttreatment_mechanism_specifications <- function(
     sample_rule = sample_rule,
     control_registry = control_registry
   )
-  construction_ids <- unname(iv_candidate_design_constructions())
-  keep <- registry$adjustment_id %in% iv_candidate_design_adjustments() &
-    registry$construction_id %in% construction_ids
-  out <- registry[keep, , drop = FALSE]
-  expected <- as.vector(outer(
-    iv_candidate_design_adjustments(), construction_ids, paste, sep = "__"
-  ))
-  if (!setequal(out$specification_id, expected) || anyDuplicated(out$specification_id)) {
-    stop("Could not recover the candidate scalar-IV post-treatment mechanism designs.", call. = FALSE)
-  }
-  out
+  iv_candidate_design_specifications(registry)
 }
 
 posttreatment_mechanism_design_variables <- function(specifications) {

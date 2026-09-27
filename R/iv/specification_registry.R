@@ -361,6 +361,23 @@ iv_candidate_design_constructions <- function() {
   )
 }
 
+iv_candidate_design_specifications <- function(registry) {
+  registry <- as_iv_specifications(registry)
+  adjustments <- iv_candidate_design_adjustments()
+  constructions <- unname(iv_candidate_design_constructions())
+  expected <- as.vector(outer(adjustments, constructions, paste, sep = "__"))
+
+  out <- registry[
+    registry$adjustment_id %in% adjustments &
+      registry$construction_id %in% constructions,
+    , drop = FALSE
+  ]
+  if (!setequal(plain_chr(out$specification_id), expected)) {
+    stop("Could not recover the registered candidate scalar-IV designs.", call. = FALSE)
+  }
+  out[match(expected, plain_chr(out$specification_id)), , drop = FALSE]
+}
+
 # Shastry (2012, p. 299 in the published article; p. 17 in the
 # circulated NBER draft) defines the Hindi belt for this robustness control as
 # Bihar, Uttar Pradesh/Uttaranchal, Madhya Pradesh/Chhattisgarh, Haryana,

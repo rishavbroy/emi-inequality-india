@@ -848,3 +848,27 @@ test_that("clustered coefficient names follow clubSandwich when nuisance terms a
     direct$SE[direct$Coef == "d"]
   )
 })
+
+
+test_that("candidate IV designs are selected once from any canonical registry", {
+  base <- iv_specification_registry()
+  diagnostic <- iv_diagnostic_specification_registry()
+  expected <- as.vector(outer(
+    iv_candidate_design_adjustments(),
+    unname(iv_candidate_design_constructions()),
+    paste, sep = "__"
+  ))
+
+  base_candidates <- iv_candidate_design_specifications(base)
+  diagnostic_candidates <- iv_candidate_design_specifications(diagnostic)
+
+  expect_identical(plain_chr(base_candidates$specification_id), expected)
+  expect_identical(plain_chr(diagnostic_candidates$specification_id), expected)
+
+  incomplete <- base[base$specification_id != expected[[1L]], , drop = FALSE]
+  expect_error(
+    iv_candidate_design_specifications(incomplete),
+    "registered candidate scalar-IV designs",
+    fixed = TRUE
+  )
+})
