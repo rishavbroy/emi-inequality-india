@@ -806,8 +806,22 @@ test_that("Anderson-Rubin inference accepts scalar and multi-instrument registry
 
   expect_equal(scalar_ar$summary$status, "estimated")
   expect_equal(multi_ar$summary$status, "estimated")
-  expect_equal(nrow(scalar_ar$grid), 21L)
-  expect_equal(nrow(multi_ar$grid), 21L)
+  expect_equal(sum(!scalar_ar$grid$boundary_refined), 21L)
+  expect_equal(sum(!multi_ar$grid$boundary_refined), 21L)
+  if (any(scalar_ar$grid$boundary_refined)) {
+    expect_equal(
+      scalar_ar$grid$p.value[scalar_ar$grid$boundary_refined],
+      rep(0.05, sum(scalar_ar$grid$boundary_refined)),
+      tolerance = 1e-5
+    )
+  }
+  if (any(multi_ar$grid$boundary_refined)) {
+    expect_equal(
+      multi_ar$grid$p.value[multi_ar$grid$boundary_refined],
+      rep(0.05, sum(multi_ar$grid$boundary_refined)),
+      tolerance = 1e-5
+    )
+  }
   expect_true(all(c("anderson_rubin_f_beta0", "anderson_rubin_p_beta0") %in% names(multi_ar$summary)))
 })
 
