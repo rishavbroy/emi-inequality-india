@@ -378,12 +378,8 @@ prepare_language_rows_for_decomposition <- function(
   rows[rows$district_panel_id %in% keep_ids, , drop = FALSE]
 }
 
-distance_four_language_decomposition <- function(
-  census_2001_languages, panel, glottolog = NULL, glottolog_crosswalk = NULL
-) {
-  rows <- prepare_language_rows_for_decomposition(
-    census_2001_languages, panel, glottolog, glottolog_crosswalk
-  )
+distance_four_language_decomposition <- function(rows) {
+  rows <- safe_df(rows)
   rows <- rows[num(rows$ling_degrees) == 4, , drop = FALSE]
   if (!nrow(rows)) return(data.frame())
   by_language_state <- aggregate(
@@ -408,12 +404,8 @@ distance_four_language_decomposition <- function(
   out[order(out$speakers, decreasing = TRUE), , drop = FALSE]
 }
 
-unmapped_language_decomposition <- function(
-  census_2001_languages, panel, glottolog = NULL, glottolog_crosswalk = NULL
-) {
-  rows <- prepare_language_rows_for_decomposition(
-    census_2001_languages, panel, glottolog, glottolog_crosswalk
-  )
+unmapped_language_decomposition <- function(rows) {
+  rows <- safe_df(rows)
   rows <- rows[
     !is.finite(num(rows$ling_degrees)) & rows$language_identity != "English",
     , drop = FALSE
@@ -474,15 +466,11 @@ estimate_weak_iv_outcomes <- function(
 }
 
 distance_four_leave_one_language_out <- function(
-  census_2001_languages,
+  prepared,
   panel,
-  treatment = "emi_exposure_all_children_0708",
-  glottolog = NULL,
-  glottolog_crosswalk = NULL
+  treatment = "emi_exposure_all_children_0708"
 ) {
-  prepared <- prepare_language_rows_for_decomposition(
-    census_2001_languages, panel, glottolog, glottolog_crosswalk
-  )
+  prepared <- safe_df(prepared)
   rows <- prepared[num(prepared$ling_degrees) == 4, , drop = FALSE]
   if (!nrow(rows)) return(data.frame())
   panel_data <- prepare_alternative_distance_panel(panel, treatment)
@@ -717,18 +705,15 @@ augment_alternative_distance_measurement_diagnostics <- function(
   if (!inherits(diagnostics, "emi_alternative_distance_first_stages")) {
     stop("Expected alternative-distance diagnostics.", call. = FALSE)
   }
-  diagnostics$distance4_languages <- distance_four_language_decomposition(
+  # Glottolog/Shastry reconciliation is the expensive step. Prepare once, then
+  # derive each diagnostic view from the same reviewed language rows.
+  language_rows <- prepare_language_rows_for_decomposition(
     census_2001_languages, panel, glottolog, glottolog_crosswalk
   )
-  diagnostics$unmapped_languages <- unmapped_language_decomposition(
-    census_2001_languages, panel, glottolog, glottolog_crosswalk
-  )
+  diagnostics$distance4_languages <- distance_four_language_decomposition(language_rows)
+  diagnostics$unmapped_languages <- unmapped_language_decomposition(language_rows)
   diagnostics$distance4_leave_one_out <- distance_four_leave_one_language_out(
-    census_2001_languages,
-    panel,
-    diagnostics$common_support$treatment[[1]],
-    glottolog,
-    glottolog_crosswalk
+    language_rows, panel, diagnostics$common_support$treatment[[1]]
   )
   diagnostics$basis_comparison <- compare_linguistic_distance_bases(panel)
   diagnostics

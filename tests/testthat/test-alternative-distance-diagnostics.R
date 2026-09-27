@@ -14,12 +14,12 @@ test_that("shared language preparation preserves mapped and unmapped rows for do
   expect_true(any(!is.finite(num(prepared$ling_degrees))))
   expect_true(any(is.finite(num(prepared$ling_degrees))))
 
-  unmapped <- unmapped_language_decomposition(census, panel)
+  unmapped <- unmapped_language_decomposition(prepared)
   expect_setequal(unmapped$mother_tongue, c("Dogri", "Bhojpuri"))
   expect_false(any(unmapped$mother_tongue == "English"))
   expect_equal(sum(unmapped$unmapped_speakers), 30)
 
-  distance4 <- distance_four_language_decomposition(census, panel)
+  distance4 <- distance_four_language_decomposition(prepared)
   expect_identical(distance4$mother_tongue, "Kashmiri")
   expect_equal(sum(distance4$speakers), 5)
 })
@@ -992,9 +992,7 @@ test_that("language decomposition can use the same non-Indo-European resolution 
   )
 
   expect_equal(prepared$ling_degrees, 5)
-  expect_equal(nrow(unmapped_language_decomposition(
-    census, panel, list(languoids = g), crosswalk
-  )), 0)
+  expect_equal(nrow(unmapped_language_decomposition(prepared)), 0)
 })
 
 
