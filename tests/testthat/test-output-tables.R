@@ -737,7 +737,8 @@ test_that("public table sources live in bottom notes rather than titles", {
   expect_match(note, "\\citeproc{ref-nationalsamplesurveyoffice2008}", fixed = TRUE)
   weak_note <- public_table_note("appendix_iv_weak_inference")
   expect_match(weak_note, "95\\%", fixed = TRUE)
-  expect_match(weak_note, "\\mathrm{grid}", fixed = TRUE)
+  expect_match(weak_note, "grid boundary", fixed = TRUE)
+  expect_false(grepl("\\\\mathrm", weak_note))
   expect_false(grepl("95%", weak_note, fixed = TRUE))
 })
 
@@ -1291,7 +1292,7 @@ test_that("weak-IV appendix table renders through modelsummary", {
   expect_match(tex, "EMI exposure", fixed = TRUE)
   expect_match(tex, "MOP effective $F$", fixed = TRUE)
   expect_match(tex, "\\cup", fixed = TRUE)
-  expect_match(tex, "\\mathrm{grid}", fixed = TRUE)
+  expect_match(tex, "grid boundary", fixed = TRUE)
   expect_match(tex, "41.7\\%", fixed = TRUE)
   expect_false(grepl("grid<=", tex, fixed = TRUE))
   expect_false(grepl("41.7%", tex, fixed = TRUE))
