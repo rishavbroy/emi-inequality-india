@@ -15,7 +15,7 @@ make restore
 make replicate-processed
 ```
 
-The processed replication is defined in [`_targets_processed.R`](_targets_processed.R) and uses its own `_targets_processed/` store. It reads:
+The processed replication is defined in [`_targets_processed.R`](_targets_processed.R) and uses its own `_targets_processed/` store. Its consumption-IV, schooling-consumption, alternative-distance, and first-stage-absorption analyses are composed from the same target-definition factories as the full build; only the upstream processed-data readers and output saver differ. It reads:
 
 - [`data/processed/district_panel_emi_consumption_2001_2007_2017_2020.csv`](data/processed/district_panel_emi_consumption_2001_2007_2017_2020.csv);
 - [`data/processed/consumption_district_welfare.csv`](data/processed/consumption_district_welfare.csv); and

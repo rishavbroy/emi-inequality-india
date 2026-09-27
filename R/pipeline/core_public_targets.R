@@ -59,12 +59,7 @@ core_public_target_definitions <- function() {
       format = "file"
     ),
     tar_target(diag_public_overidentification, diagnose_overidentification(revised_iv_models, public_iv_specifications, cfg)),
-    tar_target(
-      first_stage_absorption_diagnostics,
-      diagnose_first_stage_absorption(
-        district_panel, control_registry = census_2001_control_registry
-      )
-    ),
+    first_stage_absorption_target_definition(),
 
     tar_target(spatial_weights, build_spatial_weights(district_panel, cfg)),
     tar_target(diag_public_spatial_autocorrelation, diagnose_spatial_autocorrelation(district_panel, revised_iv_models, spatial_weights, cfg)),

@@ -43,7 +43,7 @@ Source directories are loaded with `{targets}`' native `tar_source()` support. T
 
 The environment switches `EMI_RUN_EXTENDED_DIAGNOSTICS`, `EMI_RUN_BENCHMARKS`, `EMI_RENDER_APPLICATION_SAMPLES`, and `EMI_RENDER_POSTER` control whether those optional families are included. Scientific configuration remains in `config/final.yml` or `config/fast.yml`.
 
-[`_targets_processed.R`](../_targets_processed.R) is a smaller entry point for district-level replication from tracked processed inputs. It uses its own `_targets_processed/` store and covers the analyses supported by those inputs.
+[`_targets_processed.R`](../_targets_processed.R) is a smaller entry point for district-level replication from tracked processed inputs. It uses its own `_targets_processed/` store and composes the same production target factories for the district-level analyses it can support, so the processed and full graphs share statistical definitions rather than parallel copies.
 
 Target definitions under `R/pipeline/` declare dependencies. Reusable domain computation belongs in independently testable `R/` functions. Moving declarations between files should preserve target names and commands unless the underlying scientific dependency changes.
 

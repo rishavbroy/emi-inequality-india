@@ -1,4 +1,4 @@
-core_consumption_iv_target_definitions <- function() {
+consumption_iv_analysis_target_definitions <- function() {
   list(
     tar_target(
       consumption_iv_panel,
@@ -18,11 +18,6 @@ core_consumption_iv_target_definitions <- function() {
       )
     ),
     tar_target(
-      consumption_iv_outcome_coverage_file,
-      save_consumption_iv_outcome_coverage(consumption_iv_outcome_coverage),
-      format = "file"
-    ),
-    tar_target(
       consumption_iv_dynamics,
       {
         consumption_iv_outcome_coverage
@@ -35,11 +30,6 @@ core_consumption_iv_target_definitions <- function() {
           consumption_iv_specifications
         )
       }
-    ),
-    tar_target(
-      consumption_iv_dynamics_files,
-      save_consumption_iv_dynamics(consumption_iv_dynamics),
-      format = "file"
     ),
     tar_target(
       schooling_consumption_bridge,
@@ -55,6 +45,24 @@ core_consumption_iv_target_definitions <- function() {
         consumption_iv_panel,
         consumption_iv_outcome_registry,
         census_2001_control_registry
+      )
+    )
+  )
+}
+
+core_consumption_iv_target_definitions <- function() {
+  c(
+    consumption_iv_analysis_target_definitions(),
+    list(
+      tar_target(
+        consumption_iv_outcome_coverage_file,
+        save_consumption_iv_outcome_coverage(consumption_iv_outcome_coverage),
+        format = "file"
+      ),
+      tar_target(
+        consumption_iv_dynamics_files,
+        save_consumption_iv_dynamics(consumption_iv_dynamics),
+        format = "file"
       )
     )
   )
