@@ -20,9 +20,12 @@ clustered_coefficient_frame <- function(fit, vcov) {
     check.names = FALSE,
     stringsAsFactors = FALSE
   )
-  coefficient_names <- names(stats::coef(fit))
-  coefficient_names <- coefficient_names[is.finite(stats::coef(fit))]
-  if (length(coefficient_names) != nrow(result)) return(data.frame())
+  coefficient_names <- plain_chr(out$Coef)
+  if (length(coefficient_names) != nrow(result) ||
+      anyNA(coefficient_names) || any(!nzchar(coefficient_names)) ||
+      anyDuplicated(coefficient_names)) {
+    return(data.frame())
+  }
   rownames(result) <- coefficient_names
   attr(result, "df") <- stats::setNames(
     suppressWarnings(as.numeric(out$df_Satt)),

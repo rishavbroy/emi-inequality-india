@@ -773,3 +773,31 @@ test_that("weak-IV unavailable results preserve diagnostic evidence", {
   expect_equal(nrow(out$grid), 0L)
   expect_equal(nrow(out$overidentification), 0L)
 })
+
+test_that("clustered coefficient names follow clubSandwich when nuisance terms are aliased", {
+  skip_if_not_installed("clubSandwich")
+  skip_if_not_installed("ivreg")
+
+  set.seed(211)
+  n <- 160L
+  state <- rep(seq_len(20L), each = n / 20L)
+  z <- rnorm(n)
+  x <- rnorm(n)
+  x_duplicate <- x
+  d <- 0.7 * z + 0.4 * x + rnorm(n)
+  y <- 0.5 * d + 0.3 * x + rnorm(n)
+  fit <- ivreg::ivreg(
+    y ~ d + x + x_duplicate | z + x + x_duplicate,
+    model = TRUE, x = TRUE, y = TRUE
+  )
+  vc <- clubSandwich::vcovCR(fit, cluster = state, type = "CR2")
+  direct <- clubSandwich::coef_test(fit, vcov = vc, test = "Satterthwaite")
+  observed <- clustered_coefficient_frame(fit, vc)
+
+  expect_identical(rownames(observed), plain_chr(direct$Coef))
+  expect_true("d" %in% rownames(observed))
+  expect_equal(
+    unname(model_term_inference(fit, "d", vc)[["std.error"]]),
+    direct$SE[direct$Coef == "d"]
+  )
+})
