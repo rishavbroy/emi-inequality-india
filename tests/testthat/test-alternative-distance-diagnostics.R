@@ -217,7 +217,6 @@ test_that("alternative linguistic-distance diagnostics save explicit outputs wit
       unmapped_languages = data.frame(status = "test"),
       distance4_leave_one_out = data.frame(status = "test"),
       weak_iv_outcomes = data.frame(status = "test"),
-      anderson_rubin_grid = data.frame(status = "test"),
       diagnostic_applicability = data.frame(status = "test"),
       diagnostic_registry = data.frame(status = "test"),
       overidentification = data.frame(status = "test"),
@@ -262,7 +261,6 @@ test_that("alternative linguistic-distance diagnostics save explicit outputs wit
   ))
   expect_true(all(file.exists(manifest$path)))
   expect_false(file.exists(file.path(dir, "alternative_distance_anderson_rubin_grid.csv")))
-  expect_true(nrow(diagnostics$anderson_rubin_grid) > 0L)
 })
 
 test_that("alternative-distance design comparison preserves both FE candidates", {
@@ -302,10 +300,6 @@ test_that("alternative-distance design comparison preserves both FE candidates",
         ),
         effective_f_critical_value = 23.1,
         anderson_rubin_p_beta0 = .25,
-        ar_95_contains_zero = TRUE,
-        ar_95_disconnected = FALSE,
-        ar_95_left_truncated = FALSE,
-        ar_95_right_truncated = FALSE,
         n = 573L,
         status = "estimated",
         stringsAsFactors = FALSE

@@ -525,10 +525,6 @@ test_that("consumption robustness evidence summarizes realized families without 
     effective_f_critical_value = c(23, 23),
     reduced_form_p_holm_family = c(.01, .6),
     anderson_rubin_p_beta0_holm_family = c(.02, .7),
-    ar_95_empty = FALSE,
-    ar_95_disconnected = c(FALSE, TRUE),
-    ar_95_left_truncated = c(FALSE, TRUE),
-    ar_95_right_truncated = FALSE,
     n = c(500, 500),
     multiplicity_family = "fixture_family",
     stringsAsFactors = FALSE
@@ -547,9 +543,7 @@ test_that("consumption robustness evidence summarizes realized families without 
   expect_identical(out$grid$first_stage_strong, c(TRUE, FALSE))
   expect_identical(out$grid$reduced_form_family_signal, c(TRUE, FALSE))
   expect_identical(out$grid$ar_family_signal, c(TRUE, FALSE))
-  expect_identical(out$grid$ar_95_bounded, c(TRUE, FALSE))
   expect_identical(out$family_summary$n_models, 2L)
   expect_identical(out$family_summary$n_strong_first_stage, 1L)
   expect_identical(out$family_summary$n_ar_family_signals, 1L)
-  expect_identical(out$family_summary$n_grid_truncated_ar_sets, 1L)
 })

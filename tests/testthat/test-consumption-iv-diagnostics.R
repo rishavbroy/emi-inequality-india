@@ -697,6 +697,14 @@ test_that("dynamic consumption IV validation rejects missing registered AR grids
     )
   )
 
+  point_only <- list(summary = summary, anderson_rubin_grid = data.frame())
+  expect_identical(
+    validate_consumption_iv_dynamics(
+      point_only, specs, require_ar_inversion = FALSE
+    ),
+    point_only
+  )
+
   expect_error(
     validate_consumption_iv_dynamics(dynamics, specs),
     "lack Anderson-Rubin grids"

@@ -20,8 +20,7 @@ summarize_consumption_robustness_family <- function(
     "analysis_id", "specification_id", "welfare_specification_id", "welfare_outcome_id",
     "outcome_round", "estimand", "effective_f", "effective_f_critical_value",
     "reduced_form_p_holm_family", "anderson_rubin_p_beta0_holm_family",
-    "ar_95_empty", "ar_95_disconnected", "ar_95_left_truncated",
-    "ar_95_right_truncated", "n", "multiplicity_family"
+    "n", "multiplicity_family"
   )
   missing_summary <- setdiff(required_summary, names(summary))
   if (length(missing_summary)) {
@@ -70,11 +69,6 @@ summarize_consumption_robustness_family <- function(
   out$first_stage_strong <- is.finite(effective_f) & is.finite(critical) & effective_f >= critical
   out$reduced_form_family_signal <- num(out$reduced_form_p_holm_family) < 0.05
   out$ar_family_signal <- num(out$anderson_rubin_p_beta0_holm_family) < 0.05
-  out$ar_95_bounded <-
-    !(out$ar_95_empty %in% TRUE) &
-    !(out$ar_95_left_truncated %in% TRUE) &
-    !(out$ar_95_right_truncated %in% TRUE)
-
   keep <- c(
     "analysis_id", "family", "analysis_role", "multiplicity_family", "specification_id",
     "welfare_specification_id", "welfare_outcome_id", "outcome_round", "estimand",
@@ -82,8 +76,7 @@ summarize_consumption_robustness_family <- function(
     "effective_f", "effective_f_critical_value", "first_stage_strong",
     "reduced_form_p_holm_family", "reduced_form_family_signal",
     "anderson_rubin_p_beta0_holm_family", "ar_family_signal",
-    "ar_95_bounded", "ar_95_disconnected", "ar_95_left_truncated",
-    "ar_95_right_truncated", "n"
+    "n"
   )
   out[keep]
 }
@@ -120,11 +113,6 @@ build_consumption_robustness_evidence <- function(families) {
       max_effective_f = max(num(x$effective_f), na.rm = TRUE),
       n_reduced_form_family_signals = sum(x$reduced_form_family_signal %in% TRUE),
       n_ar_family_signals = sum(x$ar_family_signal %in% TRUE),
-      n_bounded_ar_sets = sum(x$ar_95_bounded %in% TRUE),
-      n_disconnected_ar_sets = sum(x$ar_95_disconnected %in% TRUE),
-      n_grid_truncated_ar_sets = sum(
-        x$ar_95_left_truncated %in% TRUE | x$ar_95_right_truncated %in% TRUE
-      ),
       min_n = min(num(x$n), na.rm = TRUE),
       max_n = max(num(x$n), na.rm = TRUE),
       stringsAsFactors = FALSE

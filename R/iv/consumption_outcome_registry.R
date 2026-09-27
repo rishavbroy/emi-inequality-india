@@ -863,7 +863,8 @@ consumption_iv_first_stage_rows <- function(first_stage, specifications) {
 }
 
 estimate_consumption_iv_dynamic_spec <- function(
-    panel, specification, cfg = list(), ar_level = 0.95, ar_points = 401L) {
+    panel, specification, cfg = list(), ar_level = 0.95, ar_points = 401L,
+    invert_ar = TRUE) {
   spec <- as_single_iv_specification(specification)
   id <- plain_chr(spec$specification_id[[1L]])
   needed <- iv_specification_variables(spec, include_outcome = TRUE)
@@ -879,9 +880,10 @@ estimate_consumption_iv_dynamic_spec <- function(
     reduced_form <- estimate_iv_reduced_form_spec(analysis_panel, spec, cfg)
     second_stage <- consumption_iv_second_stage_rows(models, spec, analysis_panel)
     ar <- estimate_anderson_rubin_spec(
-      analysis_panel, spec, level = ar_level, points = ar_points
+      analysis_panel, spec, level = ar_level, points = ar_points,
+      invert = invert_ar
     )
-    if ("analysis_id" %in% names(spec)) {
+    if (nrow(ar$grid) && "analysis_id" %in% names(spec)) {
       ar$grid$analysis_id <- spec$analysis_id[[1L]]
     }
 
@@ -929,7 +931,8 @@ estimate_consumption_iv_dynamic_spec <- function(
 }
 
 estimate_consumption_iv_dynamics <- function(
-    panel, specifications, cfg = list(), ar_level = 0.95, ar_points = 401L) {
+    panel, specifications, cfg = list(), ar_level = 0.95, ar_points = 401L,
+    invert_ar = TRUE) {
   specs <- as_iv_specifications(specifications)
   estimated <- lapply(seq_len(nrow(specs)), function(i) {
     estimate_consumption_iv_dynamic_spec(
@@ -937,7 +940,8 @@ estimate_consumption_iv_dynamics <- function(
       specs[i, , drop = FALSE],
       cfg = cfg,
       ar_level = ar_level,
-      ar_points = ar_points
+      ar_points = ar_points,
+      invert_ar = invert_ar
     )
   })
 
@@ -955,7 +959,8 @@ estimate_consumption_iv_dynamics <- function(
 }
 
 
-validate_consumption_iv_dynamics <- function(dynamics, specifications) {
+validate_consumption_iv_dynamics <- function(
+    dynamics, specifications, require_ar_inversion = TRUE) {
   specs <- as_iv_specifications(specifications)
   if (!is.list(dynamics) ||
       !all(c("summary", "anderson_rubin_grid") %in% names(dynamics))) {
@@ -1046,17 +1051,30 @@ validate_consumption_iv_dynamics <- function(dynamics, specifications) {
     )
   }
 
-  grid <- safe_df(dynamics$anderson_rubin_grid)
-  if (!nrow(grid) || !"specification_id" %in% names(grid) ||
-      !all(expected %in% plain_chr(grid$specification_id))) {
-    stop(
-      "Consumption IV dynamics lack Anderson-Rubin grids for registered specifications.",
-      call. = FALSE
-    )
+  if (isTRUE(require_ar_inversion)) {
+    grid <- safe_df(dynamics$anderson_rubin_grid)
+    if (!nrow(grid) || !"specification_id" %in% names(grid) ||
+        !all(expected %in% plain_chr(grid$specification_id))) {
+      stop(
+        "Consumption IV dynamics lack Anderson-Rubin grids for registered specifications.",
+        call. = FALSE
+      )
+    }
   }
 
   dynamics$summary <- summary
   dynamics
+}
+
+estimate_consumption_iv_robustness_dynamics <- function(
+    panel, specifications, cfg = list()) {
+  validate_consumption_iv_dynamics(
+    estimate_consumption_iv_dynamics(
+      panel, specifications, cfg, invert_ar = FALSE
+    ),
+    specifications,
+    require_ar_inversion = FALSE
+  )
 }
 
 validate_consumption_iv_robustness_family <- function(

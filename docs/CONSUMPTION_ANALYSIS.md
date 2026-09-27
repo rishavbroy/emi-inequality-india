@@ -28,6 +28,8 @@ Robustness analyses are limited to predeclared families: alternative welfare out
 
 Comparisons within a robustness family use an explicit common support rule so coefficient differences are not mechanically driven by changing samples. If multiple families intentionally share the identical support definition, that support should be computed once or the equivalence should be declared so output checks remain meaningful.
 
+The broad robustness families report the exact CR2/HTZ Anderson--Rubin test of beta = 0 but do not invert a confidence set for every registered sensitivity model. Those inversions are not consumed by the robustness tables or multiplicity summaries and would repeat hundreds of clustered fits per specification. The headline consumption IV specifications retain full Anderson--Rubin inversion because the appendix reports those confidence-set components.
+
 ## Validation
 
 The analysis checks estimation-sample identity, instrument/treatment availability, cluster support, weak-instrument statistics, and registered output completeness. Processed-data replication reruns the shared district-level consumption/IV results through a separate target store and compares them to the full-route outputs.

@@ -230,7 +230,6 @@ assemble_alternative_distance_first_stages <- function(
       unmapped_languages = data.frame(status = character()),
       distance4_leave_one_out = data.frame(status = character()),
       weak_iv_outcomes = data.frame(status = character()),
-      anderson_rubin_grid = data.frame(status = character()),
       overidentification = data.frame(status = character()),
       falsification_adaptive_summary = data.frame(status = character()),
       falsification_adaptive_components = data.frame(status = character()),
@@ -567,9 +566,7 @@ summarize_alternative_distance_design_evidence <- function(
   )
   required_weak_iv <- c(
     "specification_id", "effective_f", "effective_f_critical_value",
-    "anderson_rubin_p_beta0", "ar_95_contains_zero",
-    "ar_95_disconnected", "ar_95_left_truncated",
-    "ar_95_right_truncated", "n", "status"
+    "anderson_rubin_p_beta0", "n", "status"
   )
   missing <- setdiff(required_first_stage, names(first_stage))
   if (length(missing)) {
@@ -645,14 +642,6 @@ summarize_alternative_distance_design_evidence <- function(
       is.finite(effective_f_critical_value) &
       effective_f >= effective_f_critical_value
   )
-  evidence$ar_95_bounded_single_interval <- with(
-    evidence,
-    status == "estimated" &
-      !(ar_95_disconnected %in% TRUE) &
-      !(ar_95_left_truncated %in% TRUE) &
-      !(ar_95_right_truncated %in% TRUE)
-  )
-
   evidence$effective_f_relative_to_primary <- NA_real_
   evidence$partial_r_squared_relative_to_primary <- NA_real_
   comparisons <- vector("list", length(adjustment_ids))
@@ -754,10 +743,10 @@ augment_alternative_distance_inference_diagnostics <- function(
     stop("Expected alternative-distance diagnostics.", call. = FALSE)
   }
   weak_iv <- estimate_weak_iv_outcomes(
-    panel, outcome = outcome, treatment = diagnostics$common_support$treatment[[1]]
+    panel, outcome = outcome, treatment = diagnostics$common_support$treatment[[1]],
+    invert_ar = FALSE
   )
   diagnostics$weak_iv_outcomes <- weak_iv$summary
-  diagnostics$anderson_rubin_grid <- weak_iv$ar_grid
   diagnostics$overidentification <- weak_iv$overidentification
   fas <- validate_iv_falsification_adaptive_sets(
     estimate_iv_falsification_adaptive_sets(panel, weak_iv$registry),

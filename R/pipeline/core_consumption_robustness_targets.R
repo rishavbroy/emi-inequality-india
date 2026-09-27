@@ -33,13 +33,10 @@ core_consumption_robustness_target_definitions <- function() {
       consumption_scalar_iv_robustness,
       add_consumption_scalar_iv_multiplicity(
         validate_consumption_scalar_iv_robustness(
-          validate_consumption_iv_dynamics(
-            estimate_consumption_iv_dynamics(
-              consumption_scalar_iv_robustness_panel,
-              consumption_scalar_iv_robustness_specifications,
-              cfg
-            ),
-            consumption_scalar_iv_robustness_specifications
+          estimate_consumption_iv_robustness_dynamics(
+            consumption_scalar_iv_robustness_panel,
+            consumption_scalar_iv_robustness_specifications,
+            cfg
           ),
           consumption_scalar_iv_robustness_support
         )
@@ -71,13 +68,10 @@ core_consumption_robustness_target_definitions <- function() {
       consumption_treatment_robustness,
       add_consumption_iv_family_multiplicity(
         validate_consumption_iv_robustness_family(
-          validate_consumption_iv_dynamics(
-            estimate_consumption_iv_dynamics(
-              consumption_treatment_robustness_panel,
-              consumption_treatment_robustness_specifications,
-              cfg
-            ),
-            consumption_treatment_robustness_specifications
+          estimate_consumption_iv_robustness_dynamics(
+            consumption_treatment_robustness_panel,
+            consumption_treatment_robustness_specifications,
+            cfg
           ),
           consumption_treatment_robustness_support,
           group_size = 6L,
@@ -128,13 +122,10 @@ core_consumption_robustness_target_definitions <- function() {
       consumption_alternative_welfare_robustness,
       add_consumption_iv_family_multiplicity(
         validate_consumption_iv_robustness_family(
-          validate_consumption_iv_dynamics(
-            estimate_consumption_iv_dynamics(
-              consumption_alternative_welfare_common_panel,
-              consumption_alternative_welfare_specifications,
-              cfg
-            ),
-            consumption_alternative_welfare_specifications
+          estimate_consumption_iv_robustness_dynamics(
+            consumption_alternative_welfare_common_panel,
+            consumption_alternative_welfare_specifications,
+            cfg
           ),
           consumption_alternative_welfare_support,
           group_size = 6L,
@@ -170,13 +161,10 @@ core_consumption_robustness_target_definitions <- function() {
       consumption_control_strategy_robustness,
       add_consumption_iv_family_multiplicity(
         validate_consumption_iv_robustness_family(
-          validate_consumption_iv_dynamics(
-            estimate_consumption_iv_dynamics(
-              consumption_control_strategy_panel,
-              consumption_control_strategy_specifications,
-              cfg
-            ),
-            consumption_control_strategy_specifications
+          estimate_consumption_iv_robustness_dynamics(
+            consumption_control_strategy_panel,
+            consumption_control_strategy_specifications,
+            cfg
           ),
           consumption_control_strategy_support,
           group_size = 6L,
@@ -212,13 +200,10 @@ core_consumption_robustness_target_definitions <- function() {
       consumption_control_parameterization_robustness,
       add_consumption_iv_family_multiplicity(
         validate_consumption_iv_robustness_family(
-          validate_consumption_iv_dynamics(
-            estimate_consumption_iv_dynamics(
-              consumption_control_parameterization_panel,
-              consumption_control_parameterization_specifications,
-              cfg
-            ),
-            consumption_control_parameterization_specifications
+          estimate_consumption_iv_robustness_dynamics(
+            consumption_control_parameterization_panel,
+            consumption_control_parameterization_specifications,
+            cfg
           ),
           consumption_control_parameterization_support,
           group_size = 8L,
@@ -259,13 +244,10 @@ core_consumption_robustness_target_definitions <- function() {
       consumption_historical_adjustment_robustness,
       add_consumption_iv_family_multiplicity(
         validate_consumption_iv_robustness_family(
-          validate_consumption_iv_dynamics(
-            estimate_consumption_iv_dynamics(
-              consumption_historical_adjustment_common_panel,
-              consumption_historical_adjustment_specifications,
-              cfg
-            ),
-            consumption_historical_adjustment_specifications
+          estimate_consumption_iv_robustness_dynamics(
+            consumption_historical_adjustment_common_panel,
+            consumption_historical_adjustment_specifications,
+            cfg
           ),
           consumption_historical_adjustment_support,
           group_size = 4L,
@@ -320,13 +302,10 @@ core_consumption_robustness_target_definitions <- function() {
       consumption_historical_concept_matched_robustness,
       add_consumption_iv_family_multiplicity(
         validate_consumption_iv_robustness_family(
-          validate_consumption_iv_dynamics(
-            estimate_consumption_iv_dynamics(
-              consumption_historical_concept_matched_common_panel,
-              consumption_historical_concept_matched_specifications,
-              cfg
-            ),
-            consumption_historical_concept_matched_specifications
+          estimate_consumption_iv_robustness_dynamics(
+            consumption_historical_concept_matched_common_panel,
+            consumption_historical_concept_matched_specifications,
+            cfg
           ),
           consumption_historical_concept_matched_support,
           group_size = 6L,
