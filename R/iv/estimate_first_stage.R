@@ -155,11 +155,24 @@ iv_first_stage_fit <- function(model, data) {
     return(NULL)
   }
   model_frame$.iv_first_stage_response <- regressors[, endogenous_index[[1L]]]
-  instrument_formula[[2L]] <- as.name(".iv_first_stage_response")
+
+  # formula.ivreg(component = "instruments") returns the one-sided instrument
+  # formula. Preserve its RHS expression verbatim and add only the fitted
+  # endogenous regressor as the response. Replacing [[2L]] directly would
+  # overwrite the RHS and silently discard every instrument.
+  instrument_rhs <- if (length(instrument_formula) == 2L) {
+    instrument_formula[[2L]]
+  } else {
+    instrument_formula[[3L]]
+  }
+  first_stage_formula <- stats::as.formula(
+    call("~", as.name(".iv_first_stage_response"), instrument_rhs),
+    env = environment(instrument_formula)
+  )
 
   fit <- tryCatch(
     stats::lm(
-      instrument_formula,
+      first_stage_formula,
       data = model_frame,
       weights = stats::weights(model, type = "working"),
       na.action = stats::na.fail,
