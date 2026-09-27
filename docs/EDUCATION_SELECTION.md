@@ -10,7 +10,7 @@ The selection sample is constructed from the registered education microdata with
 
 ## Model
 
-The preferred model is a survey-weighted probit for enrollment. Model covariates, factor handling, weights, strata, PSUs, and the lonely-PSU convention are methodological inputs and should be declared centrally rather than inferred from whichever columns happen to be present.
+The preferred model is a survey-weighted probit for enrollment. Model covariates, factor handling, weights, strata, PSUs, and the lonely-PSU convention are methodological inputs and should be declared centrally rather than inferred from whichever columns happen to be present. NSS 64 forms rural and urban strata separately and selects four FSUs from each sub-stratum, so the analysis stratum key includes state, sector, stratum, and sub-stratum. Single-PSU analytic strata are therefore not treated as certainty strata. The shared survey context uses `survey.lonely.psu = "adjust"` with domain adjustment, the conservative grand-mean centering rule documented by the `survey` package.
 
 Final mode should fail when the required survey design cannot be constructed; it should not change the estimator to an ordinary unweighted probit as a convenience fallback.
 

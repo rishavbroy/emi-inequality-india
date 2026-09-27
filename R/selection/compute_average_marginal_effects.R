@@ -22,8 +22,7 @@ compute_average_marginal_effects <- function(selection_model, cfg = list()) {
   }
 
   out <- with_survey_lonely_psu(
-    compute_ames_marginaleffects(selection_model),
-    lonely_psu = "average"
+    compute_ames_marginaleffects(selection_model)
   )
   format_ame_results(out)
 }

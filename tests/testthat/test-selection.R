@@ -296,16 +296,15 @@ test_that("final selection estimation rejects an incomplete scientific specifica
   )
 })
 
-test_that("survey option context restores caller settings", {
+test_that("shared survey context applies and restores the conservative lonely-PSU policy", {
   old <- options(survey.lonely.psu = "fail", survey.adjust.domain.lonely = FALSE)
   on.exit(options(old), add = TRUE)
 
   observed <- with_survey_lonely_psu(
-    c(getOption("survey.lonely.psu"), as.character(getOption("survey.adjust.domain.lonely"))),
-    lonely_psu = "average"
+    c(getOption("survey.lonely.psu"), as.character(getOption("survey.adjust.domain.lonely")))
   )
 
-  expect_identical(observed, c("average", "TRUE"))
+  expect_identical(observed, c("adjust", "TRUE"))
   expect_identical(getOption("survey.lonely.psu"), "fail")
   expect_identical(getOption("survey.adjust.domain.lonely"), FALSE)
 })
@@ -347,6 +346,7 @@ test_that("selection model input excludes unrelated schooling attributes", {
     weight = c(1, 2),
     FSU_SL_NO = c("1", "2"),
     STATE = c("09", "09"),
+    SECTOR = c("1", "2"),
     STRATUM = c("1", "1"),
     SUB_STRATUM_NO = c("1", "1"),
     TYPE_OF_INSTT = c(1, 4),
@@ -359,7 +359,7 @@ test_that("selection model input excludes unrelated schooling attributes", {
 
   expect_setequal(
     names(out),
-    c("enrolled", "AGE", "weight", "FSU_SL_NO", "STATE", "STRATUM", "SUB_STRATUM_NO")
+    c("enrolled", "AGE", "weight", "FSU_SL_NO", "STATE", "SECTOR", "STRATUM", "SUB_STRATUM_NO")
   )
   expect_false(any(c("TYPE_OF_INSTT", "NATURE_OF_INSTT", "MEDIUM_INSTRUCTION") %in% names(out)))
   expect_identical(out$enrolled, selection_data$enrolled)

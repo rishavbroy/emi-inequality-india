@@ -20,7 +20,7 @@ PLFS 2017-18 provides the later usual-status labor outcomes. The adapter uses th
 
 ## Survey design
 
-All three surveys use their registered weights, strata, PSUs, and domain support rules. District estimates are design based. The lonely-PSU convention is defined once in the shared survey layer and applied consistently across estimators.
+All three surveys use their registered weights, strata, PSUs, and domain support rules. District estimates are design based. The shared survey layer uses the conservative `survey.lonely.psu = "adjust"` convention with domain adjustment and applies it consistently across estimators.
 
 ## Geography
 

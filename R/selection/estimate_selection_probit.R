@@ -29,7 +29,7 @@ selection_probit_variables <- function(selection_data, require_all = FALSE) {
 }
 
 selection_survey_design_variables <- function() {
-  c("FSU_SL_NO", "weight", "STATE", "STRATUM", "SUB_STRATUM_NO")
+  c("FSU_SL_NO", "weight", "STATE", "SECTOR", "STRATUM", "SUB_STRATUM_NO")
 }
 
 #' project the selection sample to the model's actual dependency surface
@@ -65,8 +65,7 @@ estimate_selection_probit <- function(selection_data, cfg) {
     }
     design <- build_survey_design_selection(selection_data, require_all = TRUE)
     out <- with_survey_lonely_psu(
-      fit_selection_probit(design, f_probit),
-      lonely_psu = "average"
+      fit_selection_probit(design, f_probit)
     )
     return(stabilize_selection_model_formula(out, f_probit))
   }
@@ -109,7 +108,7 @@ build_survey_design_selection <- function(selection_df, require_all = FALSE) {
 
   psu <- first_col(selection_df, c("FSU_SL_NO", "fsu", "PSU", "psu"))
   weight <- first_col(selection_df, c("weight", "WEIGHT", "Multiplier", "multiplier"))
-  strata_cols <- intersect(c("STATE", "STRATUM", "SUB_STRATUM_NO"), names(selection_df))
+  strata_cols <- intersect(c("STATE", "SECTOR", "STRATUM", "SUB_STRATUM_NO"), names(selection_df))
   if (is.null(psu) || is.null(weight) || !length(strata_cols)) {
     if (isTRUE(require_all)) {
       stop("Final selection survey design could not be constructed.", call. = FALSE)

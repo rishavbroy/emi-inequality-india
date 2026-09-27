@@ -24,9 +24,10 @@ test_that("selection survey design preserves documented stratification without g
     AGE = c(8, 9, 10, 11),
     FSU_SL_NO = c(101, 102, 201, 202),
     weight = c(1.5, 2, 1.25, 1.75),
-    STATE = c("10", "10", "11", "11"),
-    STRATUM = c("01", "01", "02", "02"),
-    SUB_STRATUM_NO = c("1", "1", "2", "2"),
+    STATE = c("10", "10", "10", "10"),
+    SECTOR = factor(c("Rural", "Rural", "Urban", "Urban")),
+    STRATUM = c("01", "01", "01", "01"),
+    SUB_STRATUM_NO = c("1", "1", "1", "1"),
     stringsAsFactors = FALSE
   )
 
@@ -36,6 +37,7 @@ test_that("selection survey design preserves documented stratification without g
   expect_identical(getOption("survey.lonely.psu"), "fail")
   expect_true(".survey_strata" %in% names(design$variables))
   expect_equal(length(unique(design$variables$.survey_strata)), 2L)
+  expect_equal(length(unique(design$variables$SECTOR)), 2L)
 })
 
 test_that("EMIE uses Block 5 English-medium code 02 among children at most 19", {

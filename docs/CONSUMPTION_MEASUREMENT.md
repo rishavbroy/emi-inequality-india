@@ -30,7 +30,7 @@ For lineage-dependent historical rounds, household records are assigned only thr
 
 District welfare estimates use the registered survey weights, strata, and PSU identifiers for each round. Domain support is checked before estimating means or quantiles. Where a variance estimate is not defensible because support is too thin, the output records that limitation instead of fabricating precision.
 
-The statistical treatment of lonely PSUs is a methodological choice and should be defined once in the shared survey-design layer. Any future change must update the relevant tests and this documentation together.
+The shared survey-design layer uses `survey.lonely.psu = "adjust"` with domain adjustment. This conservative grand-mean centering rule is used consistently across survey estimators; any future change must update the relevant tests and methodology documentation together.
 
 ## Modern HCES validation
 
