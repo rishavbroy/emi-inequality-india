@@ -515,6 +515,8 @@ test_that("temporal price links use state-sector overlap medians", {
   )
   links <- summarise_price_links(old, new, months[1], months[3])
   expect_equal(links$link_factor, c(2, 0.5))
+  expect_equal(links$link_factor_first, c(2, 0.5))
+  expect_equal(links$link_factor_last, c(3, 0.5))
   expect_equal(links$link_months, c(3L, 3L))
 })
 
@@ -555,6 +557,19 @@ test_that("base-2010 and base-2012 CPI-R/U overlap remains a validation result",
   out <- summarise_ruc_base_overlap(sources)
   expect_equal(out$link_factor, 2)
   expect_equal(out$link_months, 2L)
+})
+
+test_that("price-link sensitivity maps overlap choices to exact real-consumption scaling", {
+  links <- data.frame(
+    state_code = c("A", "B"), sector = c("rural", "urban"),
+    link_factor = c(2, 4), link_factor_first = c(1, 5),
+    link_factor_last = c(4, 2), link_months = c(3L, 3L),
+    link_ratio_mad = c(0.2, 0.3), link_ratio_min = c(1, 2),
+    link_ratio_max = c(4, 5)
+  )
+  out <- summarise_price_link_sensitivity(links)
+  expect_equal(out$real_consumption_factor_first_vs_registered, c(2, 0.8))
+  expect_equal(out$real_consumption_factor_last_vs_registered, c(0.5, 2))
 })
 
 test_that("official price metadata covers every current state and sector", {
@@ -703,9 +718,9 @@ test_that("NSS sub-rounds map to consecutive survey-quarter price months", {
   periods <- as.Date(c("2007-07-01", "2007-09-01", "2007-10-01", "2008-06-01"))
 
   expect_equal(survey_subround_for_month(periods, spec), c(1L, 1L, 2L, 4L))
-  expect_equal(nss_subround_for_month(periods, 2007, registry), survey_subround_for_month(periods, spec))
+  spec17 <- consumption_survey_spec_for_wave(registry, 2017)
   expect_equal(
-    nss_subround_for_month(as.Date(c("2017-07-01", "2018-01-01", "2018-06-01")), 2017, registry),
+    survey_subround_for_month(as.Date(c("2017-07-01", "2018-01-01", "2018-06-01")), spec17),
     c(1L, 3L, 4L)
   )
   modern <- consumption_survey_spec(registry, "hces_2022_23")
@@ -802,7 +817,9 @@ test_that("NSS sub-round deflators average exactly three monthly indices", {
     price_source = "cpi_rl_state", temporal_state_source = "BIH",
     state_rule = "direct", fallback_reason = NA_character_
   )
-  out <- build_nss_subround_deflators(d, 2007)
+  registry <- read_consumption_survey_registry()
+  spec <- consumption_survey_spec_for_wave(registry, 2007)
+  out <- build_survey_subround_deflators(d, spec)
   expect_equal(out$price_deflator, 2)
   expect_equal(out$period_start, as.Date("2007-07-01"))
   expect_equal(out$period_end, as.Date("2007-09-01"))

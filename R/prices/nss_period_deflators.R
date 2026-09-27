@@ -1,9 +1,4 @@
 # Convert registered consumption-survey timing fields to the monthly price system.
-# Legacy nss_* entry points remain thin compatibility wrappers.
-
-nss_wave_months <- function(wave, registry = read_consumption_survey_registry()) {
-  survey_period_months(consumption_survey_spec_for_wave(registry, wave))
-}
 
 normalise_nss_subround <- function(x) {
   value <- suppressWarnings(as.integer(gsub("[^0-9]", "", plain_chr(x))))
@@ -28,10 +23,6 @@ survey_subround_for_month <- function(period, specification) {
   ok <- !is.na(position)
   out[ok] <- ((position[ok] - 1L) %/% group_months) + 1L
   out
-}
-
-nss_subround_for_month <- function(period, wave, registry = read_consumption_survey_registry()) {
-  survey_subround_for_month(period, consumption_survey_spec_for_wave(registry, wave))
 }
 
 build_survey_subround_deflators <- function(deflators, specification) {
@@ -70,10 +61,6 @@ build_survey_subround_deflators <- function(deflators, specification) {
   if (any(!positive_finite(out$price_deflator))) stop("Survey sub-round deflators contain invalid values.", call. = FALSE)
   if (anyDuplicated(out[c("state_code", "sector", "subround")])) stop("Duplicate survey sub-round deflators.", call. = FALSE)
   out[order(out$state_code, out$sector, out$subround), , drop = FALSE]
-}
-
-build_nss_subround_deflators <- function(deflators, wave, registry = read_consumption_survey_registry()) {
-  build_survey_subround_deflators(deflators, consumption_survey_spec_for_wave(registry, wave))
 }
 
 normalise_survey_panel <- function(x, specification) {

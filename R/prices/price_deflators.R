@@ -363,7 +363,7 @@ build_state_sector_price_deflators <- function(
     reference_index = NULL,
     start_period = NULL,
     end_period = NULL,
-    reference_rupees = 816,
+    reference_rupees = tendulkar_real_poverty_line(),
     require_complete_grid = TRUE) {
   temporal_index <- if (inherits(temporal_series, "emi_temporal_price_series")) {
     temporal_series$index

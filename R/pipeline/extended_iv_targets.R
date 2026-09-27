@@ -207,7 +207,8 @@ extended_iv_target_definitions <- function() {
           hces_2022_23 = consumption_households_real_hces_2022_23,
           hces_2023_24 = consumption_households_real_hces_2023_24
         ),
-        district_panel
+        district_panel,
+        temporal_price_series
       ),
       format = "file"
     )

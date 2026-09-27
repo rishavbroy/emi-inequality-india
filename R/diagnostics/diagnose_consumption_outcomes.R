@@ -265,7 +265,7 @@ compare_district_consumption_constructions <- function(panel) {
   }))
 }
 
-save_consumption_price_diagnostics <- function(comparison, price_households, panel) {
+save_consumption_price_diagnostics <- function(comparison, price_households, panel, temporal_price_series) {
   if (!is.list(price_households) || !length(price_households) ||
       is.null(names(price_households)) || any(!nzchar(names(price_households)))) {
     stop("Consumption price diagnostics require a named list of survey household objects.", call. = FALSE)
@@ -293,6 +293,10 @@ save_consumption_price_diagnostics <- function(comparison, price_households, pan
     district_constructions = write_diagnostic_csv(
       compare_district_consumption_constructions(panel),
       file.path(dir, "district_consumption_constructions.csv")
+    ),
+    temporal_price_links = write_diagnostic_csv(
+      summarise_price_link_sensitivity(temporal_price_series),
+      file.path(dir, "temporal_price_link_sensitivity.csv")
     )
   ), use.names = FALSE))
 }

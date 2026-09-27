@@ -88,13 +88,17 @@ summarise_price_links <- function(old_index, new_index, overlap_start, overlap_e
 
   split_i <- split(seq_len(nrow(paired)), interaction(paired$state_code, paired$sector, drop = TRUE))
   out <- do.call(rbind, lapply(split_i, function(i) {
+    i <- i[order(paired$period[i])]
     ratio <- num(paired$index_new[i]) / num(paired$index_old[i])
+    link_factor <- price_link_factor(paired$index_old[i], paired$index_new[i])
     data.frame(
       state_code = paired$state_code[i[1]],
       sector = paired$sector[i[1]],
-      link_factor = stats::median(ratio),
+      link_factor = link_factor,
+      link_factor_first = ratio[[1L]],
+      link_factor_last = ratio[[length(ratio)]],
       link_months = length(ratio),
-      link_ratio_mad = stats::mad(ratio, center = stats::median(ratio), constant = 1),
+      link_ratio_mad = stats::mad(ratio, center = link_factor, constant = 1),
       link_ratio_min = min(ratio),
       link_ratio_max = max(ratio),
       stringsAsFactors = FALSE
@@ -103,6 +107,44 @@ summarise_price_links <- function(old_index, new_index, overlap_start, overlap_e
   rownames(out) <- NULL
   if (any(!positive_finite(out$link_factor))) stop("Price linking produced an invalid factor.", call. = FALSE)
   out[order(out$state_code, out$sector), , drop = FALSE]
+}
+
+summarise_price_link_sensitivity <- function(temporal_series) {
+  links <- if (inherits(temporal_series, "emi_temporal_price_series")) {
+    safe_df(temporal_series$links)
+  } else {
+    safe_df(temporal_series)
+  }
+  required <- c(
+    "state_code", "sector", "link_factor", "link_factor_first",
+    "link_factor_last", "link_months", "link_ratio_mad",
+    "link_ratio_min", "link_ratio_max"
+  )
+  missing <- setdiff(required, names(links))
+  if (length(missing)) {
+    stop("Price-link sensitivity input is missing columns: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+  registered <- num(links$link_factor)
+  first <- num(links$link_factor_first)
+  last <- num(links$link_factor_last)
+  if (any(!positive_finite(registered)) || any(!positive_finite(first)) || any(!positive_finite(last))) {
+    stop("Price-link sensitivity requires positive finite link factors.", call. = FALSE)
+  }
+
+  # Pre-switch temporal price indices scale in direct proportion to the link
+  # factor. Holding the spatial anchor fixed, real consumption therefore scales
+  # inversely. These ratios are exact construction sensitivities, not model
+  # re-estimates.
+  links$real_consumption_factor_first_vs_registered <- registered / first
+  links$real_consumption_factor_last_vs_registered <- registered / last
+  keep <- c(
+    "state_code", "sector", "link_factor", "link_factor_first",
+    "link_factor_last", "link_months", "link_ratio_mad",
+    "link_ratio_min", "link_ratio_max",
+    "real_consumption_factor_first_vs_registered",
+    "real_consumption_factor_last_vs_registered"
+  )
+  links[order(links$state_code, links$sector), keep, drop = FALSE]
 }
 
 validate_temporal_price_chain <- function(index, switch_date) {

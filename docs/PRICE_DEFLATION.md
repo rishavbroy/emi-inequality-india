@@ -10,7 +10,7 @@ The analysis selects one registered real-price reference and expresses historica
 
 ## Spatial price relatives
 
-State-sector spatial relatives anchor rural/urban purchasing-power differences. Historical spatial adjustment uses the registered Tendulkar poverty-line relationship where that is the declared basis. State/sector values are normalized to the selected reference before they are combined with temporal series.
+State-sector spatial relatives anchor rural/urban purchasing-power differences. Historical spatial adjustment uses the registered Tendulkar poverty-line relationship where that is the declared basis. State/sector values are normalized to the selected reference before they are combined with temporal series. The selected reference is defined centrally by `tendulkar_real_poverty_line()`; production constructors do not repeat the numerical anchor.
 
 Spatial relatives are inputs to the real-consumption construction.
 
@@ -20,7 +20,7 @@ Temporal adjustment is assembled from registered official series, principally CP
 
 ## CPI-RL and CPI-IW
 
-CPI-RL supplies rural temporal variation where its coverage and period match the target survey. CPI-IW supplies the historical urban/worker link used by the registered historical consumption construction. Base changes are handled through the declared linking procedure.
+CPI-RL supplies rural temporal variation where its coverage and period match the target survey. CPI-IW supplies the historical urban/worker link used by the registered historical consumption construction. Base changes are handled through the declared linking procedure. The production pre/post-2013 bridge uses the median of valid state-sector monthly overlap ratios, implemented once in `price_link_factor()`. This is a registered robust aggregation choice rather than a claim that multi-month median linking is the unique CPI standard: international CPI guidance requires an overlap period and commonly illustrates linking at a designated common period. The extended diagnostics therefore retain the first and last valid overlap-month factors alongside the production median and report their exact implied multiplicative effect on pre-switch real consumption.
 
 ## State CPI rural/urban transition
 

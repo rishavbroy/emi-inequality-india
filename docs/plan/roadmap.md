@@ -5,13 +5,13 @@ This file lists unfinished work only. Completed implementation history is retain
 ## Open methodological issues
 
 1. **Anderson--Rubin tail classification.** Interior confidence-set boundaries are root-refined, but accepted components that reach the finite topology-search range are still reported as search-truncated. Add adaptive range expansion or another defensible stopping rule before classifying a tail as genuinely unbounded, and benchmark the ordinary homoskedastic special case against an independent implementation.
-2. **Price-deflator sensitivity.** Revisit the documented overlap/linking choices, the 2011--12 spatial normalization, and the sensitivity of real-consumption results to defensible alternatives. Production temporal linking should also consume the shared `price_link_factor()` rule rather than maintain a second median-ratio implementation.
+2. **Price-deflator sensitivity.** The production link now consumes the shared `price_link_factor()` rule and diagnostics report first/last-overlap alternatives with their exact pre-switch real-consumption scaling. Remaining work is to decide, from those diagnostics and the 2011--12 spatial-normalization evidence, whether a materially different registered price construction warrants full outcome re-estimation.
 3. **Moran inference convention.** Decide whether the public spatial residual check is intentionally the asymptotic `spdep::moran.test()` or whether a fixed-seed `spdep::moran.mc()` permutation result should be the reported robustness check. Remove the inactive 9,999-draw scaffold once that choice is documented.
 4. **District fuzzy-candidate scoring.** Reassess hand-set similarity weights and thresholds against the reviewed adjudication set; final identities must continue to require deterministic/reviewed evidence rather than fuzzy scores alone.
 
 ## Open engineering issues
 
-1. Remove remaining compatibility aliases/wrappers that have no non-test consumers, including old NSS naming and period-deflator wrappers where backward compatibility is not an external requirement.
+1. Remove remaining compatibility aliases/wrappers that have no non-test consumers where backward compatibility is not an external requirement.
 2. Replace remaining source-text tests with behavioral tests unless the literal text is itself an interface.
 3. Remove or archive genuinely dead branches and review-only files after verifying that no active paper, sample, or replication path consumes them.
 4. Reduce noisy successful-build logging from auxiliary XeLaTeX/reference passes while preserving complete logs on failure.
