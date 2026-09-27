@@ -786,10 +786,11 @@ test_that("clustered coefficient names follow clubSandwich when nuisance terms a
   x_duplicate <- x
   d <- 0.7 * z + 0.4 * x + rnorm(n)
   y <- 0.5 * d + 0.3 * x + rnorm(n)
-  fit <- ivreg::ivreg(
+  fit <- suppressWarnings(ivreg::ivreg(
     y ~ d + x + x_duplicate | z + x + x_duplicate,
     model = TRUE, x = TRUE, y = TRUE
-  )
+  ))
+  expect_true(anyNA(stats::coef(fit)))
   vc <- clubSandwich::vcovCR(fit, cluster = state, type = "CR2")
   direct <- clubSandwich::coef_test(fit, vcov = vc, test = "Satterthwaite")
   observed <- clustered_coefficient_frame(fit, vc)
