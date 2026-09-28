@@ -2,7 +2,7 @@
 # Functions are intentionally small enough to be tested and called by _targets.R.
 
 
-#' validate district panel
+#' Validate district panel
 #'
 validate_district_panel <- function(panel, join_map = NULL, strict = FALSE) {
   issues <- safe_bind_rows(list(
@@ -30,7 +30,7 @@ validation_issue <- function(check, severity, message, n = NA_integer_) {
   data.frame(check = check, severity = severity, message = message, n = n, stringsAsFactors = FALSE)
 }
 
-#' check unique district units
+#' Check unique district units
 #'
 check_unique_district_units <- function(panel) {
   panel <- as.data.frame(if (inherits(panel, "sf")) sf::st_drop_geometry(panel) else panel, stringsAsFactors = FALSE)
@@ -42,7 +42,7 @@ check_unique_district_units <- function(panel) {
   data.frame()
 }
 
-#' check no unintended many to many
+#' Check for unintended many-to-many joins
 #'
 check_no_unintended_many_to_many <- function(panel, join_map = NULL) {
   panel <- as.data.frame(if (inherits(panel, "sf")) sf::st_drop_geometry(panel) else panel, stringsAsFactors = FALSE)
@@ -77,7 +77,7 @@ check_no_unintended_many_to_many <- function(panel, join_map = NULL) {
   safe_bind_rows(issues)
 }
 
-#' check core variables present
+#' Check core variables present
 #'
 check_core_variables_present <- function(panel) {
   spec <- preferred_iv_variables()
@@ -89,7 +89,7 @@ check_core_variables_present <- function(panel) {
   data.frame()
 }
 
-#' check panel variable ranges
+#' Check panel variable ranges
 #'
 check_panel_variable_ranges <- function(panel) {
   panel <- as.data.frame(if (inherits(panel, "sf")) sf::st_drop_geometry(panel) else panel, stringsAsFactors = FALSE)

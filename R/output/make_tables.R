@@ -372,7 +372,7 @@ clustered_model_vcov <- function(model, data = NULL) {
   function(x) vc
 }
 
-#' make tables
+#' Make tables
 #'
 #' @return A named list of data frames consumed by save_tables().
 make_tables <- function(

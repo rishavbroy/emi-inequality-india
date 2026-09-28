@@ -96,7 +96,7 @@ while IFS= read -r -d '' file; do
   if [[ -f "$file" ]]; then cp -p "$file" "$tmpdir/$file"; fi
 done < <(git ls-files -z)
 
-# `analysis/` is intentionally ignored by Git while notebooks are still being
+# The `analysis/` directory is intentionally ignored by Git while notebooks are still being
 # developed, but it is valuable review context. Include the current working-tree
 # notebooks even when they are absent from `git ls-files`. Generic cache cleanup
 # below still removes Quarto/Python intermediates from this copy.

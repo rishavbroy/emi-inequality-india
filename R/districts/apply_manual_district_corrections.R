@@ -22,7 +22,7 @@ manual_name_correction_types <- function() {
   c("typo", "spelling", "standardization", "rename", "name_change")
 }
 
-#' apply manual district corrections
+#' Apply manual district corrections
 #'
 apply_manual_district_corrections <- function(
     tracker,
@@ -46,7 +46,7 @@ apply_manual_district_corrections <- function(
   tracker
 }
 
-#' validate manual corrections
+#' Validate manual corrections
 #'
 validate_manual_corrections <- function(corrections, tracker) {
   corrections <- safe_df(corrections)

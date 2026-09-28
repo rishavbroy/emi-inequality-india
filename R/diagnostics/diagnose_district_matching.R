@@ -1,7 +1,7 @@
 # This file is part of the EMI inequality research pipeline.
 # Functions are intentionally small enough to be tested and called by _targets.R.
 
-#' diagnose district matching
+#' Diagnose district matching
 #'
 #' Port the legacy Chunk 20 district-matching diagnostics: unmatched rows,
 #' many-to-many / flagged cases, panel-vs-join row counts, and a searchable table

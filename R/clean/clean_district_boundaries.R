@@ -2,7 +2,7 @@
 # Functions are intentionally small enough to be tested and called by _targets.R.
 
 
-#' clean district boundaries
+#' Clean district boundaries
 #'
 #' @return An sf/data frame with canonical state and district join keys.
 clean_district_boundaries <- function(raw_sf) {
@@ -40,7 +40,7 @@ normalize_numeric_join_code <- function(x) {
   x
 }
 
-#' repair invalid geometries
+#' Repair invalid geometries
 #'
 repair_invalid_geometries <- function(sf_df) {
   if (!inherits(sf_df, "sf")) return(sf_df)

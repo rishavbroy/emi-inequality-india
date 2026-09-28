@@ -54,7 +54,7 @@ estimate_iv_fas_component <- function(data, specification, instrument) {
   excluded <- plain_chr(unlist(spec$excluded_instruments[[1L]], use.names = FALSE))
   instrument <- plain_chr(instrument)[[1L]]
   other_instruments <- setdiff(excluded, instrument)
-  # iv_specification_variables() resolves transformed formula terms such as
+  # The iv_specification_variables() function resolves transformed formula terms such as
   # factor(region) to their underlying data columns. Keep sample construction on
   # that canonical contract instead of treating formula expressions as columns.
   needed <- iv_specification_variables(spec)

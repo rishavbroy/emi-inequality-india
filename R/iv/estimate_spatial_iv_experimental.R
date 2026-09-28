@@ -1,7 +1,7 @@
 # This file is part of the EMI inequality research pipeline.
 # Functions are intentionally small enough to be tested and called by _targets.R.
 
-#' estimate spatial iv experimental
+#' Estimate experimental spatial IV model
 #'
 #' Port the legacy eval=FALSE Chunk 30 spatial-2SLS attempts as an opt-in
 #' benchmark/diagnostic artifact.  The attempts are documented and, when all

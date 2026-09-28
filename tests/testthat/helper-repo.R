@@ -27,7 +27,7 @@ repo_target_manifest <- function() {
     old_wd <- setwd(root)
     on.exit(setwd(old_wd), add = TRUE)
 
-    # tar_manifest() normally evaluates the target script in a clean callr
+    # The tar_manifest() function normally evaluates the target script in a clean callr
     # process. For tests, its documented callr_function = NULL mode lets us
     # control the working directory explicitly while keeping evaluation in an
     # isolated environment. This matters because the target script deliberately

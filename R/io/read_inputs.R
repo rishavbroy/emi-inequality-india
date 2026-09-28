@@ -2,31 +2,31 @@
 # Functions are intentionally small enough to be tested and called by _targets.R.
 
 
-#' read nss 2007 education
+#' Read NSS 2007 education
 #'
 read_nss_2007_education <- function(paths) {
   read_manifest_group(paths, "nss_2007_education")
 }
 
-#' read nss 2007 consumption
+#' Read NSS 2007 consumption
 #'
 read_nss_2007_consumption <- function(paths) {
   read_manifest_group(paths, "nss_2007_consumption")
 }
 
-#' read nss 2017 education
+#' Read NSS 2017 education
 #'
 read_nss_2017_education <- function(paths) {
   read_manifest_group(paths, "nss_2017_education")
 }
 
-#' read census 2001 mother tongue
+#' Read 2001 Census mother tongue
 #'
 read_census_2001_mother_tongue <- function(paths) {
   read_manifest_group(paths, "census_2001_mother_tongue")
 }
 
-#' read district boundaries 2020
+#' Read district boundaries 2020
 #'
 read_district_boundaries_2020 <- function(paths) {
   rows <- require_manifest_files(paths, "district_boundaries_2020")
@@ -36,13 +36,13 @@ read_district_boundaries_2020 <- function(paths) {
   sf::st_read(shp$absolute_path[[1]], quiet = TRUE)
 }
 
-#' read district change sources
+#' Read district change sources
 #'
 read_district_change_sources <- function(paths) {
   read_manifest_group(paths, "district_changes")
 }
 
-#' list ilo figure paths
+#' List ILO figure paths
 #'
 list_ilo_figure_paths <- function(paths) {
   rows <- require_manifest_files(paths, "ilo_figures")
@@ -159,7 +159,7 @@ read_district_carveouts <- function(path) {
 
 # sample-end: code-district-carveout-repair
 
-#' read one manifest row
+#' Read one manifest row
 #'
 #' @return Reader output for raw data files, or a validated path for sidecars/assets.
 read_by_manifest_row <- function(row) {
@@ -188,7 +188,7 @@ read_by_manifest_row <- function(row) {
   )
 }
 
-#' read all manifest rows for a source
+#' Read all manifest rows for a source
 #'
 #' @return Named list of reader outputs keyed by manifest file_id.
 read_manifest_group <- function(paths, source_id) {

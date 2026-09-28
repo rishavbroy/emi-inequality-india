@@ -28,7 +28,7 @@ build_paths <- function(root = ".") {
 
 
 
-#' path from project root
+#' Path from project root
 #'
 #' @return Path under the project root.
 path_project <- function(paths, ...) {
@@ -36,7 +36,7 @@ path_project <- function(paths, ...) {
 }
 
 
-#' path metadata
+#' Path metadata
 #'
 path_metadata <- function(paths, ...) {
   file.path(paths$metadata, ...)

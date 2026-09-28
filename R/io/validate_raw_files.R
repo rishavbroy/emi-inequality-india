@@ -2,7 +2,7 @@
 # Functions are intentionally small enough to be tested and called by _targets.R.
 
 
-#' read raw file manifest
+#' Read raw file manifest
 #'
 #' @return Data frame with one row per manifest entry.
 read_manifest <- function(paths = build_paths()) {
@@ -22,7 +22,7 @@ read_manifest <- function(paths = build_paths()) {
   )
 }
 
-#' filter manifest rows for source or target
+#' Filter manifest rows for source or target
 #'
 #' @return Data frame of required manifest rows with absolute paths and existence status.
 manifest_rows <- function(paths, source_id = NULL, target_name = NULL, required_only = TRUE) {
@@ -37,7 +37,7 @@ manifest_rows <- function(paths, source_id = NULL, target_name = NULL, required_
   manifest
 }
 
-#' format missing raw-data message
+#' Format missing raw-data message
 #'
 #' @return Character scalar suitable for an error message.
 missing_data_message <- function(rows, label = NULL) {
@@ -109,14 +109,14 @@ validate_manifest_rows <- function(rows) {
   rows
 }
 
-#' validate raw files
+#' Validate raw files
 #'
 #' @return Data frame with manifest metadata, absolute paths, existence, size, and SHA-256 checks.
 validate_raw_files <- function(paths = build_paths()) {
   validate_manifest_rows(manifest_rows(paths))
 }
 
-#' require manifest files before reading raw data
+#' Require manifest files before reading raw data
 #'
 #' @return Data frame of matching manifest rows, invisibly if all required files are valid.
 require_manifest_files <- function(
@@ -134,7 +134,7 @@ require_manifest_files <- function(
   rows
 }
 
-#' stop if required files are missing or differ from pinned source identity
+#' Stop if required files are missing or differ from pinned source identity
 #'
 #' @return Invisible TRUE when all active required files exist and pass registered checks.
 stop_if_required_files_invalid <- function(manifest_status) {

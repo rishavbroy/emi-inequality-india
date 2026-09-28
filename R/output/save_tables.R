@@ -7,7 +7,7 @@ table_output_dir <- function(cfg) {
 
 table_formats <- function(cfg) {
   out <- cfg$output_formats$tables %||% "csv"
-  # yaml::read_yaml() represents sequence values as lists, not necessarily as
+  # The yaml::read_yaml() function represents sequence values as lists, not necessarily as
   # atomic character vectors.  Calling as.character() directly on that list
   # emits "argument is not an atomic vector; coercing", which targets records as
   # a warning on the file target even when all table files are written correctly.
@@ -30,7 +30,7 @@ nice_column_name <- function(x) {
   x <- gsub("p value", "p-value", x, ignore.case = TRUE)
   x <- gsub("std error", "Std. Error", x, ignore.case = TRUE)
 
-  # tools::toTitleCase() lowercases letters inside inline LaTeX math, turning
+  # The tools::toTitleCase() function lowercases letters inside inline LaTeX math, turning
   # $F$, $R^2$, and $N$ into different symbols. Protect math spans while
   # polishing the surrounding prose header.
   vapply(x, function(label) {
@@ -1330,7 +1330,7 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   landscape_longtable <- name %in% c(
     "paper_core_summary", "sum_tbl_iv", "sum_tbl_probit_quant", "sum_tbl_probit_cat"
   )
-  # paper.qmd owns the landscape environment for its core summary. Keep the
+  # The paper.qmd file owns the landscape environment for its core summary. Keep the
   # generated file as a longtable so it can paginate, but do not nest a second
   # pdflscape environment around it. The legacy summary tables are included
   # without a document-level landscape wrapper and therefore retain it here.
@@ -1353,7 +1353,7 @@ save_table_tex <- function(table, path, name, public = TRUE) {
     return(write_table_tex(tex, path, name))
   }
 
-  # kableExtra requires escape = FALSE below because header/group styling emits
+  # The kableExtra package requires escape = FALSE below because header/group styling emits
   # LaTeX. Escape ordinary cell text first so `%`, `&`, `_`, and other LaTeX
   # metacharacters cannot corrupt the alignment. kableExtra's own documentation
   # explicitly requires manual escaping when raw LaTeX output is enabled.
@@ -1448,7 +1448,7 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   write_table_tex(tex, path, name)
 }
 
-#' save tables
+#' Save tables
 #'
 #' @return A character vector of generated table paths.
 save_tables <- function(tables, cfg) {

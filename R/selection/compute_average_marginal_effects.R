@@ -1,6 +1,6 @@
 # Use marginaleffects for response-scale AMEs and delta-method uncertainty.
 
-#' compute average marginal effects
+#' Compute average marginal effects
 #'
 compute_average_marginal_effects <- function(selection_model, cfg = list()) {
   if (!inherits(selection_model, "glm")) {
@@ -67,7 +67,7 @@ ame_model_data_and_weights <- function(model) {
   list(data = model_data, wts = model_weights)
 }
 
-#' run the standard marginaleffects implementation
+#' Run the standard marginaleffects implementation
 #'
 run_avg_slopes <- function(model, newdata = NULL, wts = TRUE, numderiv = NULL) {
   args <- list(
@@ -81,7 +81,7 @@ run_avg_slopes <- function(model, newdata = NULL, wts = TRUE, numderiv = NULL) {
   do.call(marginaleffects::avg_slopes, args)
 }
 
-#' compute AMEs with marginaleffects
+#' Compute AMEs with marginaleffects
 #'
 compute_ames_marginaleffects <- function(model) {
   # Earlier calls relied on marginaleffects to recover weights from serialized
@@ -109,7 +109,7 @@ copy_first_ame_column <- function(out, target, candidates) {
 }
 
 normalize_ame_columns <- function(out) {
-  # marginaleffects has used both dotted and snake_case names across versions
+  # The marginaleffects package has used both dotted and snake_case names across versions
   # and model classes. Normalize here before selecting the public/audit schema
   # so uncertainty columns are not silently dropped downstream.
   aliases <- list(
@@ -255,7 +255,7 @@ modelsummary_marginaleffects_object <- function(out, native_ame) {
   ms
 }
 
-#' format ame results
+#' Format AME results
 #'
 format_ame_results <- function(ame_results) {
   native_ame <- ame_results

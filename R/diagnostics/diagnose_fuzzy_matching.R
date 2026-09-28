@@ -3,7 +3,7 @@
 # Fuzzy-matching threshold and string-distance tuning helpers live in
 # R/benchmarking/benchmark_fuzzy_matching.R.
 
-#' diagnose fuzzy matching
+#' Diagnose fuzzy matching
 #'
 #' Port the legacy Chunk 16 fuzzy-matching tuning diagnostics: method/threshold
 #' choices, string-distance examples, and current join status counts.  The

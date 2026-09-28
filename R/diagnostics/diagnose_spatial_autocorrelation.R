@@ -3,7 +3,7 @@
 
 # sample-start: code-spatial-autocorrelation
 
-#' diagnose spatial autocorrelation
+#' Diagnose spatial autocorrelation
 #'
 #' Reproduce the Moran's I diagnostics on the harmonized Census-2001 district
 #' geometry. Rook contiguity remains the primary definition used by the paper;
@@ -221,7 +221,7 @@ spatial_moran_test_from_first_stage_residuals <- function(model, district_panel,
   )
 }
 
-#' compute Moran's I tests
+#' Compute Moran's I tests
 #'
 #' @return A one-row data frame containing Moran's I and the analytical
 #' randomisation test result from `spdep::moran.test()`. For regression
@@ -326,7 +326,7 @@ spatial_legacy_note <- function(legacy_name) {
   unname(notes[legacy_name]) %||% NA_character_
 }
 
-#' save spatial autocorrelation diagnostics
+#' Save spatial autocorrelation diagnostics
 #'
 #' @return Character vector of diagnostic CSV paths written for public review.
 save_spatial_autocorrelation_diagnostics <- function(diagnostics, dir = "outputs/diagnostics/public") {

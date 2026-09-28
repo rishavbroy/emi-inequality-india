@@ -25,7 +25,7 @@ selection_survey_design_variables <- function() {
   c("FSU_SL_NO", "weight", "STATE", "SECTOR", "STRATUM", "SUB_STRATUM_NO")
 }
 
-#' retain the variables used by the selection model and survey design
+#' Retain the variables used by the selection model and survey design
 #'
 #' Earlier builds stored unrelated Block 5 schooling fields with the survey
 #' design. Editing one of those fields therefore recomputed the marginal effects
@@ -38,7 +38,7 @@ project_selection_model_data <- function(selection_data) {
   selection_data[intersect(keep, names(selection_data))]
 }
 
-#' estimate selection probit
+#' Estimate selection probit
 #'
 estimate_selection_probit <- function(selection_data, cfg) {
   if (!"enrolled" %in% names(selection_data) || all(is.na(selection_data$enrolled))) {
@@ -71,7 +71,7 @@ estimate_selection_probit <- function(selection_data, cfg) {
   stabilize_selection_model_formula(out, f_probit)
 }
 
-#' store the fitted selection formula inside the saved model call
+#' Store the fitted selection formula inside the saved model call
 #'
 #' Programmatic fitting originally left the local symbol `f_probit` in the saved
 #' call. After {targets} serialized the model, packages reconstructing model data
@@ -86,7 +86,7 @@ stabilize_selection_model_formula <- function(model, formula) {
   model
 }
 
-#' build survey design selection
+#' Build survey design selection
 #'
 build_survey_design_selection <- function(selection_df, require_all = FALSE) {
   required <- selection_survey_design_variables()
@@ -118,7 +118,7 @@ build_survey_design_selection <- function(selection_df, require_all = FALSE) {
   )
 }
 
-#' fit selection probit
+#' Fit selection probit
 #'
 fit_selection_probit <- function(selection_design, f_probit) {
   survey::svyglm(

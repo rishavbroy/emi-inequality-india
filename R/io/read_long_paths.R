@@ -9,7 +9,7 @@
 # This project found me making frequent use of file paths over 260 characters in length.
 # Out of my naivete, I didn't realize Windows File Explorer automatically shortens such file paths by rewriting them in the 8.3 filename convention---meaning R can no longer access their standard "long name."
 
-#' read with short path
+#' Read with short path
 #'
 #' @return Reader output from the supplied path.
 read_with_short_path <- function(path, reader, ..., binary_connection = TRUE) {
@@ -23,7 +23,7 @@ read_with_short_path <- function(path, reader, ..., binary_connection = TRUE) {
   reader(con, ...)
 }
 
-#' read sav short
+#' Read SAV with a short path
 #'
 #' @return Data frame read from an SPSS file.
 read_sav_short <- function(long_path, ...) {
@@ -31,7 +31,7 @@ read_sav_short <- function(long_path, ...) {
   read_with_short_path(long_path, haven::read_sav, ...)
 }
 
-#' read csv short
+#' Read CSV with a short path
 #'
 #' @return Data frame read from a CSV file.
 read_csv_short <- function(long_path, ...) {
@@ -49,7 +49,7 @@ read_csv_short <- function(long_path, ...) {
   }
 }
 
-#' read excel short
+#' Read Excel with a short path
 #'
 #' @return Data frame read from an Excel file.
 read_excel_short <- function(long_path, sheet = 1, col_types = "text", .name_repair = "minimal", ...) {
@@ -63,7 +63,7 @@ read_excel_short <- function(long_path, sheet = 1, col_types = "text", .name_rep
   )
 }
 
-#' read ODS using a path normalized for this OS
+#' Read ODS using a path normalized for this OS
 #'
 #' @return Data frame read from an ODS file.
 read_ods_short <- function(long_path, ...) {
@@ -71,14 +71,14 @@ read_ods_short <- function(long_path, ...) {
   readODS::read_ods(long_path, ...)
 }
 
-#' normalize path for os
+#' Normalize path for OS
 #'
 #' @return Normalized path string.
 normalize_path_for_os <- function(path) {
   normalizePath(path, mustWork = FALSE)
 }
 
-#' get windows short path
+#' Get Windows short path
 #'
 #' @return Windows 8.3 short path on Windows, otherwise the original path.
 get_windows_short_path <- function(long_path) {

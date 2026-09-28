@@ -2,7 +2,7 @@
 # Functions are intentionally small enough to be tested and called by _targets.R.
 
 
-#' build spatial weights
+#' Build spatial weights
 #'
 #' Build the rook-contiguity spatial weights used by the legacy Rmd.
 #'
@@ -37,7 +37,7 @@ build_spatial_weights <- function(district_panel, cfg) {
   weights
 }
 
-#' rows used by final-panel spatial diagnostics
+#' Rows used by final-panel spatial diagnostics
 #'
 #' Spatial diagnostics operate on the active `district_panel` target, not on the
 #' legacy exploratory geometry object.  The final-panel scope is therefore all
@@ -80,7 +80,7 @@ spatial_expected_offshore_islands <- function(neighbor_ledger, n_subgraphs) {
     is.finite(n_subgraphs) && n_subgraphs == length(ids) + 1L
 }
 
-#' build spatial weights for selected district-panel rows
+#' Build spatial weights for selected district-panel rows
 #'
 #' @return A list with nb, binary matrix, and row-standardized listw objects.
 # sample-start: code-spatial-weights-construction
@@ -174,7 +174,7 @@ build_spatial_weights_for_rows <- function(district_panel, rows, queen = FALSE, 
 
 # sample-end: code-spatial-weights-construction
 
-#' diagnose spatial weights
+#' Diagnose spatial weights
 #'
 diagnose_spatial_weights <- function(district_panel, spatial_weights, cfg) {
   if (!inherits(district_panel, "sf")) {
@@ -212,7 +212,7 @@ diagnose_spatial_weights <- function(district_panel, spatial_weights, cfg) {
   base
 }
 
-#' compare rook and queen contiguity
+#' Compare rook and queen contiguity
 #'
 #' The legacy Rmd commented out an sfExtras rook-vs-queen check and recorded
 #' nearly identical mean neighbor counts (rook 4.780165, queen 4.783471) plus
@@ -290,7 +290,7 @@ add_spatial_weight_reference <- function(comparison) {
   out
 }
 
-#' summarize islands
+#' Summarize islands
 #'
 summarize_islands <- function(spatial_weights) {
   ledger <- summarize_neighbor_counts(spatial_weights)
@@ -298,7 +298,7 @@ summarize_islands <- function(spatial_weights) {
   ledger[ledger$n_neighbors == 0L, , drop = FALSE]
 }
 
-#' summarize neighbor counts
+#' Summarize neighbor counts
 #'
 summarize_neighbor_counts <- function(spatial_weights) {
   if (!inherits(spatial_weights, "emi_spatial_weights")) return(tibble::tibble())
@@ -330,7 +330,7 @@ summarize_spatial_connectivity <- function(spatial_weights) {
   )
 }
 
-#' save spatial weight diagnostics
+#' Save spatial weight diagnostics
 #'
 save_spatial_weight_diagnostics <- function(diagnostics, dir = "outputs/diagnostics/extended/spatial") {
   dir.create(dir, recursive = TRUE, showWarnings = FALSE)

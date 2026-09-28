@@ -89,7 +89,7 @@ with_consumption_quantile_adjustment <- function(expr) {
     withCallingHandlers(
       expr,
       warning = function(w) {
-        # survey::svyquantile documents NaN confidence limits when the
+        # The survey::svyquantile() documentation notes NaN confidence limits when the
         # probability-scale interval cannot be inverted inside [0, 1].
         # The returned point estimate remains usable; downstream code converts
         # the non-finite SE into an explicit point-estimate-only status.

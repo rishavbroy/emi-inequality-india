@@ -2,13 +2,13 @@
 # Functions are intentionally small enough to be tested and called by _targets.R.
 
 
-#' canonicalize district name
+#' Canonicalize district name
 #'
 canonicalize_district_name <- function(x) {
   canon(x)
 }
 
-#' canonicalize state name
+#' Canonicalize state name
 #'
 canonicalize_state_name <- function(x) {
   out <- canonicalize_district_name(x)
@@ -79,31 +79,31 @@ census_2001_state_name <- function(code) {
   unname(lookup[key])
 }
 
-#' make district key
+#' Make district key
 #'
 make_district_key <- function(state, district, year) {
   paste(year, canonicalize_state_name(state), canonicalize_district_name(district), sep = "__")
 }
 
-#' build district keys 2001
+#' Build district keys 2001
 #'
 build_district_keys_2001 <- function(census_2001_languages) {
   key_df(census_2001_languages, 2001L)
 }
 
-#' build district keys 2007
+#' Build district keys 2007
 #'
 build_district_keys_2007 <- function(nss_2007_education, nss_2007_consumption = NULL) {
   unique(safe_bind_rows(lapply(c(as_input_list(nss_2007_education), as_input_list(nss_2007_consumption)), key_df, year = 2007L)))
 }
 
-#' build district keys 2017
+#' Build district keys 2017
 #'
 build_district_keys_2017 <- function(nss_2017_education) {
   unique(safe_bind_rows(lapply(as_input_list(nss_2017_education), key_df, year = 2017L)))
 }
 
-#' build district keys 2020
+#' Build district keys 2020
 #'
 build_district_keys_2020 <- function(boundaries_2020) {
   key_df(boundaries_2020, 2020L)

@@ -3,7 +3,7 @@
 
 # sample-start: code-district-crosswalk-qa
 
-#' build district tracker
+#' Build district tracker
 #'
 build_district_tracker <- function(raw_district_changes) {
   source_aliases <- list(
@@ -32,7 +32,7 @@ build_district_tracker <- function(raw_district_changes) {
   standardize_tracker_names(standardize_tracker_years(combine_district_tracker_sources(parsed)))
 }
 
-#' parse alluvial district changes
+#' Parse alluvial district changes
 #'
 parse_alluvial_district_changes <- function(x) {
   x <- safe_df(x)
@@ -43,7 +43,7 @@ parse_alluvial_district_changes <- function(x) {
   parse_wide_year_lineages(x, years, source_type = "alluvial")
 }
 
-#' parse india district tracker
+#' Parse India district tracker
 #'
 parse_india_district_tracker <- function(x) {
   x <- safe_df(x)
@@ -53,7 +53,7 @@ parse_india_district_tracker <- function(x) {
   parse_tracker_year_triplets(x, years)
 }
 
-#' parse carveouts renamings
+#' Parse carveouts renamings
 #'
 parse_carveouts_renamings <- function(x) {
   x <- safe_df(x)
@@ -78,7 +78,7 @@ parse_carveouts_renamings <- function(x) {
   )
 }
 
-#' parse new districts created
+#' Parse new districts created
 #'
 parse_new_districts_created <- function(x) {
   x <- safe_df(x)
@@ -100,7 +100,7 @@ parse_new_districts_created <- function(x) {
   )
 }
 
-#' parse name changes
+#' Parse name changes
 #'
 parse_name_changes <- function(x) {
   x <- safe_df(x)
@@ -123,7 +123,7 @@ parse_name_changes <- function(x) {
   )
 }
 
-#' parse district splits
+#' Parse district splits
 #'
 parse_district_splits <- function(x) {
   x <- safe_df(x)
@@ -237,7 +237,7 @@ first_present_value <- function(df, candidates) {
   as.character(df[[hit]])
 }
 
-#' combine district tracker sources
+#' Combine district tracker sources
 #'
 combine_district_tracker_sources <- function(raw_district_changes) {
   out <- safe_bind_rows(lapply(names(raw_district_changes), function(name) {
@@ -251,7 +251,7 @@ combine_district_tracker_sources <- function(raw_district_changes) {
   out
 }
 
-#' standardize tracker years
+#' Standardize tracker years
 #'
 standardize_tracker_years <- function(tracker) {
   tracker <- safe_df(tracker)
@@ -261,7 +261,7 @@ standardize_tracker_years <- function(tracker) {
   tracker
 }
 
-#' standardize tracker names
+#' Standardize tracker names
 #'
 standardize_tracker_names <- function(tracker) {
   tracker <- safe_df(tracker)

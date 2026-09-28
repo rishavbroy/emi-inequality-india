@@ -2,7 +2,7 @@
 # Functions are intentionally small enough to be tested and called by _targets.R.
 
 
-#' diagnose weak instruments
+#' Diagnose weak instruments
 #'
 diagnose_weak_instruments <- function(iv_models, district_panel, cfg) {
   estimate_first_stage(iv_models, district_panel, cfg)
@@ -60,7 +60,7 @@ save_candidate_anderson_rubin <- function(
 }
 
 
-#' diagnose instrument exploration
+#' Diagnose instrument exploration
 #'
 #' Build a district-level view of the preferred public treatment and instrument,
 #' while retaining the archived prose notes that motivated the original check.

@@ -10,7 +10,7 @@ with_survey_lonely_psu <- function(expr) {
   withCallingHandlers(
     expr,
     warning = function(w) {
-      # survey can warn for domain-level lonely PSUs even when the requested
+      # The survey package can warn for domain-level lonely PSUs even when the requested
       # adjustment is applied. Muffle only that handled condition so strict
       # builds remain warning-clean; all other warnings still propagate.
       if (grepl("has only one PSU at stage", conditionMessage(w), fixed = TRUE)) {

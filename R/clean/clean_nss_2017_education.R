@@ -2,7 +2,7 @@
 # Functions are intentionally small enough to be tested and called by _targets.R.
 
 
-#' clean nss 2017 education
+#' Clean NSS 2017 education
 #'
 clean_nss_2017_education <- function(raw) {
   out <- lapply(raw, std, year = 2017L)

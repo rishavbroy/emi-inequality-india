@@ -226,7 +226,7 @@ public_table_note <- function(name) {
   paste(parts, collapse = " ")
 }
 
-# kableExtra inserts LaTeX footnotes through regex replacement.  With
+  # The kableExtra package inserts LaTeX footnotes through regex replacement.  With
 # `escape = FALSE`, a single backslash in the replacement text is consumed by
 # R's replacement-string semantics before the TeX file is written.  Double raw
 # LaTeX backslashes at this boundary so math escapes and citeproc links survive

@@ -107,7 +107,7 @@ iv_clustered_inference <- function(model, cluster) {
   list(vcov = out, status = "estimated", reason = NA_character_)
 }
 
-#' estimate 2sls
+#' Estimate 2SLS
 #'
 estimate_2sls <- function(district_panel, formulas, cfg) {
   lapply(formulas, function(formula) {

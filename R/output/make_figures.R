@@ -137,7 +137,7 @@ add_paper_welfare_map_variables <- function(district_panel, consumption_district
 }
 
 
-#' make figures
+#' Make figures
 #'
 #' @return A named list of figure specifications consumed by save_figures().
 make_figures <- function(

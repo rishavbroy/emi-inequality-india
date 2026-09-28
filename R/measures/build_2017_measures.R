@@ -1,7 +1,7 @@
 # This file is part of the EMI inequality research pipeline.
 # Functions are intentionally small enough to be tested and called by _targets.R.
 
-#' build 2017 measures
+#' Build 2017 measures
 #'
 build_2017_measures <- function(nss_2017_education, cfg, consumption_households = NULL) {
   inputs <- as_input_list(nss_2017_education)

@@ -7,7 +7,7 @@
 # 3, demographic controls from education Block 4, and pucca housing from the
 # consumption household-characteristics file.
 
-#' build 2007 measures
+#' Build 2007 measures
 #'
 build_2007_measures <- function(nss_2007_education, nss_2007_consumption, cfg, consumption_households = NULL, selection_data = NULL) {
   edu <- as_input_list(nss_2007_education)
@@ -149,7 +149,7 @@ prepare_2007_consumption_households <- function(nss_2007_education, deflators = 
   )
 }
 
-#' compute education household measures 2007
+#' Compute education household measures 2007
 #'
 compute_education_household_measures_2007 <- function(df) {
   households <- prepare_2007_consumption_households(df)
@@ -221,7 +221,7 @@ weighted_code_share_2007 <- function(value, codes, weight) {
   weighted_share_2007(condition, weight)
 }
 
-#' compute baseline controls 2007
+#' Compute baseline controls 2007
 #'
 #' Household attributes are aggregated from the household-level Block 3 using
 #' household survey weights. Head characteristics come from one Block 4 head
@@ -298,7 +298,7 @@ compute_baseline_controls_2007 <- function(person_df, household_df = data.frame(
 }
 
 
-#' compute housing controls 2007
+#' Compute housing controls 2007
 #'
 #' @return District-level housing controls from the 2007 consumption household file.
 compute_housing_controls_2007 <- function(df) {

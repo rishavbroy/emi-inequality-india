@@ -1,7 +1,7 @@
 # This file is part of the EMI inequality research pipeline.
 # Functions are intentionally small enough to be tested and called by _targets.R.
 
-#' diagnose district tracker sources
+#' Diagnose district tracker sources
 #'
 #' Preserve the legacy tracker-source QA from Chunk 6: source row coverage,
 #' state/UT changes recorded in the tracker, unrecorded historical state-name

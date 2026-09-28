@@ -34,7 +34,7 @@ missingness_variables <- function(selection_data) {
   )
 }
 
-#' diagnose missingness
+#' Diagnose missingness
 #'
 #' Construct the canonical missingness diagnostic object used by final-paper
 #' Appendix E and by the extended forensic outputs. The returned list preserves
@@ -300,7 +300,7 @@ binomial_fit_issues <- function(fit, warnings = character(), tolerance = sqrt(.M
   unique(issues)
 }
 
-#' check missing logit parallel
+#' Check missing logit parallel
 #'
 #' Legacy Chunk 8 used mclapply/parLapply after defining the same one-logit-per-
 #' missing-variable problem.  Targets already parallelizes at the target level,

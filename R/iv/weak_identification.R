@@ -64,7 +64,7 @@ mop_effective_f <- function(
   covariance_options <- if (is.null(cluster)) {
     list(type = "HC0")
   } else {
-    # momentfit::MOPtest() uses an HC0 clustered moment covariance with its own
+    # The momentfit::MOPtest() function uses an HC0 clustered moment covariance with its own
     # finite-cluster adjustment. The conventional first-stage Wald F is computed
     # separately with the HC1 covariance used for the first-stage regression.
     list(

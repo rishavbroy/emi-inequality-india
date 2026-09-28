@@ -1,7 +1,7 @@
 # This file is part of the EMI inequality research pipeline.
 # Functions are intentionally small enough to be tested and called by _targets.R.
 
-#' build district panel
+#' Build district panel
 #'
 #' @return A district panel; an sf object when validated boundary geometry joins.
 build_district_panel <- function(district_join_map, measures_2007, measures_2017, linguistic_distance_iv, boundaries_2020, cfg) {

@@ -8,7 +8,7 @@
 # PID is not globally unique, and the legacy Rmd joined by household, FSU,
 # district, state, stratum, substratum, and weight as well.
 
-#' build selection data
+#' Build selection data
 #'
 build_selection_data <- function(nss_2007_education, district_keys_2007, cfg) {
   blocks <- as_input_list(nss_2007_education)
@@ -36,7 +36,7 @@ build_selection_data <- function(nss_2007_education, district_keys_2007, cfg) {
   selection_df
 }
 
-#' construct child level selection sample
+#' Construct child level selection sample
 #'
 #' Recreate the legacy child-level sample construction from NSS 2007 education
 #' Blocks 4, 5, and 6.  Block 5/6 records identify enrolled children and their
@@ -135,7 +135,7 @@ select_primary_education_course <- function(df) {
   df[primary, , drop = FALSE]
 }
 
-#' construct household covariates
+#' Construct household covariates
 construct_household_covariates <- function(df) {
   build_father_education_proxy(df)
 }
@@ -150,13 +150,13 @@ attach_household_covariates <- function(selection_df, household_covariates) {
   selection_df
 }
 
-#' construct district level context
+#' Construct district level context
 construct_district_level_context <- function(df, metadata = data.frame()) {
   df <- attach_district_schooling_context(df)
   attach_nss_2007_district_names(df, metadata)
 }
 
-#' define probit variables
+#' Define probit variables
 define_probit_variables <- function(df) {
   if (!"enrolled" %in% names(df)) df$enrolled <- NA_real_
   if ("RELIGION" %in% names(df) && is.factor(df$RELIGION) && "Hindu" %in% levels(df$RELIGION)) {
@@ -174,7 +174,7 @@ define_probit_variables <- function(df) {
   df
 }
 
-#' apply selection sample restrictions
+#' Apply selection sample restrictions
 apply_selection_sample_restrictions <- function(df) {
   df <- safe_df(df)
   if (!nrow(df)) return(df)
