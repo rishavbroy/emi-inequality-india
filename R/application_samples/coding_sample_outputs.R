@@ -65,10 +65,8 @@ coding_sample_output_lines <- function(output_ids, manifest, reference_labels) {
     )
     title <- trimws(item$title %||% "")
     description <- trimws(item$description %||% "")
-    page_break <- if (identical(type, "figure")) c("```{=latex}", "\\clearpage", "```", "") else character()
     c(
       "",
-      page_break,
       paste0("### Result", if (nzchar(title)) paste0(": ", title) else ""),
       if (nzchar(description)) c("", description) else character(),
       "",

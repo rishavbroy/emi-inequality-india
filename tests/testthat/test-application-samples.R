@@ -355,6 +355,7 @@ test_that("coding samples reuse paper-formatted output files", {
   expect_match(text, paste0("![](../../", figure_file, "){width=95%}"), fixed = TRUE)
   expect_match(text, "### Result: Paper figure", fixed = TRUE)
   expect_match(text, "Fixture figure description.", fixed = TRUE)
+  expect_false(grepl("\\clearpage", text, fixed = TRUE))
 })
 
 
