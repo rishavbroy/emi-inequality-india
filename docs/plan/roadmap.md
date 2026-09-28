@@ -21,11 +21,9 @@ The documentation restructure is complete when the active files describe current
 
 ## Open presentation and release work
 
-1. Render and visually inspect the expanded coding samples after the geospatial, Python, historical-data, and reproducibility selections are in place; trim only excerpts that remain needlessly long in the finished PDFs.
-2. Finish the typography pass for the paper and application samples, including remaining overfull boxes and float/page balance.
-3. Resolve the nominal five-page writing sample, which currently remains an advisory page-count issue until presentation is final.
-4. Remove machine-local Zotero `file = {...}` fields from `paper/references.bib` before final release.
-5. Review tracked paper/sample PDFs after the final methodological and typography changes and refresh them once, rather than repeatedly committing intermediate renders.
+1. Finish the typography pass for the paper and writing samples, including remaining overfull boxes and float/page balance.
+2. Resolve the nominal five-page writing sample, which currently remains an advisory page-count issue until presentation is final.
+3. Review tracked paper/sample PDFs after the final methodological and typography changes and refresh them once, rather than repeatedly committing intermediate renders.
 
 ## Deferred work
 

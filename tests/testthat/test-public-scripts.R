@@ -491,6 +491,13 @@ test_that("target issue printer selects columns without data-frame drop warnings
   expect_false(grepl("ignored", paste(output, collapse = "\n"), fixed = TRUE))
 })
 
+test_that("release bibliography contains no machine-local attachment metadata", {
+  bibliography <- readLines(repo_file("paper", "references.bib"), warn = FALSE)
+  attachment_fields <- grep("^\\s*file\\s*=", bibliography, perl = TRUE, value = TRUE)
+
+  expect_length(attachment_fields, 0L)
+})
+
 test_that("active QMD citations resolve through the project bibliography", {
   source(repo_file("scripts", "public_output_contract.R"), local = TRUE)
   qmd_sources <- public_qmd_sources()
