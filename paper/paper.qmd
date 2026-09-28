@@ -2,7 +2,7 @@
 title: "Inequality in a Potential Equalizer of Opportunity"
 subtitle: "Variation in the Accessibility and Net Benefits of English-Medium Instruction in India"
 author: "Rishav Roy"
-thanks: "Acknowledgments: I would like to thank Laura Schechter, Corina Mommaerts, and Agustín Gutiérrez for their feedback on earlier stages of this project. I would also like to thank the Internet Archive, which proved indispensable for me; a plurality of the data sources I use were only accessible thanks to their preservation work. GPT models 5.5 and 5.6 were used for troubleshooting, proofreading, and generating certain portions of this paper and its code from my detailed outlines and pseudocode. All ideas, analytical work, and errors are my own."
+thanks: "Acknowledgments: I would like to thank Laura Schechter, Corina Mommaerts, and Agustín Gutiérrez for their feedback on earlier stages of this project. I would also like to thank the Internet Archive, which proved indispensable for me; a plurality of the data sources I use were only accessible thanks to their preservation work. GPT models 5.5 and 5.6 were used for troubleshooting, proofreading, and generating certain portions of this paper and its code from my detailed outlines and pseudocode; their outputs were reviewed extensively. All ideas, analytical work, and errors are my own. The replication package can be found [here](https://github.com/rishavbroy/emi-inequality-india)."
 format:
   pdf:
     pdf-engine: xelatex

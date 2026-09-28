@@ -29,13 +29,13 @@ The standard complete build also renders samples unless sample rendering is expl
 
 ## Named and anonymous variants
 
-Both variants are generated from the same selected content. Named samples may link to the hosted paper, repository, Makefile, and build script. Anonymous samples omit identifying names and repository URLs and are checked against the forbidden strings declared in `samples.yml`.
+Both variants are generated from the same selected content. Named samples may link to the current hosted sample, paper, repository, Makefile, and build script. Anonymous samples omit identifying names and repository URLs and are checked against the forbidden strings declared in `samples.yml`.
 
 Define identity changes once in the manifest or rendering helpers.
 
 ## Writing-sample numbering and references
 
-Writing excerpts preserve the current full paper's section, table, figure, and equation numbering. References to omitted material use the current full-paper labels. This keeps excerpts synchronized when the paper structure changes.
+Writing excerpts preserve the current full paper's section, table, figure, and equation numbering. References to omitted material use the current full-paper labels. The writing samples also retain the paper's acknowledgments; the replication-package link in the paper title footnote remains exclusive to the full paper. This keeps excerpts synchronized when the paper structure changes.
 
 The low-level LaTeX/reference extraction is an implementation detail of the renderer; maintainers normally change section selections only in `samples.yml`.
 

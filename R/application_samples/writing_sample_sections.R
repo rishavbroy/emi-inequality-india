@@ -253,13 +253,9 @@ writing_sample_notice <- function(spec, variant, manifest, source_lines, referen
       " of the titular paper."
     )
   }
-  availability <- if (identical(variant, "named")) {
-    application_sample_availability_sentence(variant, manifest, also = is_full)
-  } else if (is_full) {
-    "The full paper and repository are also available online, and I would be happy to provide links for them if desired."
-  } else {
-    "The full paper and repository are available online, and I would be happy to provide links for them if desired."
-  }
+  availability <- application_sample_availability_sentence(
+    "writing", spec$id, variant, manifest, full_paper = !is_full
+  )
   text <- paste(
     c(description, availability, application_sample_build_sentence(variant, manifest)),
     collapse = " "
@@ -281,8 +277,19 @@ writing_sample_notice <- function(spec, variant, manifest, source_lines, referen
 }
 
 
+writing_sample_acknowledgments <- function(thanks) {
+  if (is.null(thanks) || !nzchar(thanks)) return(NULL)
+  trimws(sub(
+    "\\s*The replication package can be found \\[here\\]\\([^)]*\\)\\.?(\\s*)$",
+    "",
+    thanks,
+    perl = TRUE
+  ))
+}
+
 sample_metadata <- function(source_metadata, spec, variant, manifest) {
   meta <- paper_sample_metadata(source_metadata, variant, manifest)
+  meta$thanks <- writing_sample_acknowledgments(source_metadata$thanks %||% NULL)
   abstract <- meta$abstract %||% ""
   meta$abstract <- NULL
   meta$bibliography <- "../../paper/references.bib"

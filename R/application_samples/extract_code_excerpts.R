@@ -48,19 +48,19 @@ extract_between_sample_markers <- function(file, id) {
 }
 
 coding_sample_notice <- function(spec, variant, manifest, source_metadata) {
-  paper_title <- quoted_paper_title(source_metadata)
+  paper_title <- quoted_paper_title(source_metadata, terminal_period = TRUE)
   description <- paste0(
     "This document contains excerpts from the replication code of ",
-    if (identical(variant, "anonymous")) "a paper titled " else "the paper ",
+    if (identical(variant, "anonymous")) "a paper titled " else "my paper ",
     paper_title,
-    ". Results shown after an excerpt are the same generated files used by the paper."
+    " Results shown after an excerpt are the same generated files used by the paper."
   )
 
   c(
     paste(
       c(
         description,
-        application_sample_availability_sentence(variant, manifest),
+        application_sample_availability_sentence("coding", spec$id, variant, manifest),
         application_sample_build_sentence(variant, manifest)
       ),
       collapse = " "
