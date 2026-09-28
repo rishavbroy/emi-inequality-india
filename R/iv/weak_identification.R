@@ -64,9 +64,9 @@ mop_effective_f <- function(
   covariance_options <- if (is.null(cluster)) {
     list(type = "HC0")
   } else {
-    # momentfit's clustered moment covariance is based on sandwich::meatCL()
-    # and supports HC0. Keep its package-native finite-cluster correction
-    # rather than altering the existing HC1 Wald-F diagnostic to force equality.
+    # momentfit::MOPtest() uses an HC0 clustered moment covariance with its own
+    # finite-cluster adjustment. The conventional first-stage Wald F uses the
+    # project's HC1 convention and is reported as a separate statistic.
     list(
       cluster = data.frame(cluster = cluster),
       type = "HC0", cadjust = TRUE, multi0 = FALSE
@@ -95,7 +95,7 @@ mop_effective_f <- function(
   values <- suppressWarnings(as.numeric(result[c("Feff", "critValue", "pvalue", "Keff")]))
   names(values) <- c("statistic", "critical_value", "p.value", "effective_df")
   if (length(values) != 4L || any(!is.finite(values))) {
-    return(unavailable("momentfit::MOPtest() did not return finite effective-F diagnostics."))
+    return(unavailable("momentfit::MOPtest() did not return finite effective-F statistics."))
   }
 
   c(

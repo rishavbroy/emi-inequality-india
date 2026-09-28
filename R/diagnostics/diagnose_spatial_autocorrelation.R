@@ -207,7 +207,7 @@ spatial_moran_test_from_first_stage_residuals <- function(model, district_panel,
   if (ncol(residuals) != 1L || nrow(residuals) != length(rows)) {
     return(spatial_autocorrelation_status_row(
       "out_of_active_pipeline",
-      paste0("Spatial first-stage residual diagnostics require one endogenous regressor for ", estimand, ".")
+      paste0("The spatial first-stage residual test requires one endogenous regressor for ", estimand, ".")
     ))
   }
   if (!identical(as.integer(rows), as.integer(weights$row_index))) {
@@ -221,12 +221,12 @@ spatial_moran_test_from_first_stage_residuals <- function(model, district_panel,
   )
 }
 
-#' compute Moran tests
+#' compute Moran's I tests
 #'
 #' @return A one-row data frame containing Moran's I and the analytical
-#' randomisation-test result from `spdep::moran.test()`. Residual checks also
-#' report the fixed-seed permutation p-value from `spdep::moran.mc()`; raw
-#' variable checks retain the analytical test only.
+#' randomisation test result from `spdep::moran.test()`. For regression
+#' residuals, the returned row also contains the permutation p-value computed with a fixed random seed
+#' from `spdep::moran.mc()`. Descriptive variable tests use the analytical test.
 compute_moran_tests <- function(
     x, spatial_weights, legacy_name = NA_character_, estimand = NA_character_,
     variable = NA_character_, source = NA_character_, run_permutation = FALSE,

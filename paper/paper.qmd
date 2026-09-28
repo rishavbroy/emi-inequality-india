@@ -416,7 +416,7 @@ The preferred district estimates must also satisfy predeclared sample-support ru
 
 **Cross-round validation.** The adjacent modern HCES rounds provide a direct validation under a nearly unchanged three-visit survey design. On preferred common support, the 2022--23 and 2023--24 district estimates have Pearson correlations of 0.859 for real mean MPCE, 0.854 for mean log real MPCE, and 0.860 for weighted median real MPCE. These correlations show consistent district variation across adjacent rounds. The older NSS rounds require the survey-definition and price adjustments described above, while the national benchmark checks verify each reconstructed nominal MPCE series before those adjustments are applied.
 
-![District-level consistency of reconstructed consumption across the 2022--23 and 2023--24 HCES rounds. Each panel uses districts retained in both rounds under the consumption sample criteria; the dashed line is the 45-degree line. Sources: National Sample Survey Office, HCES 2022--23 and HCES 2023--24 [@nsoHCES2022; @nsoHCES2023].](../outputs/figures/appendix/appendix_consumption_hces_consistency.pdf){#fig-app-consumption-hces fig-pos="htbp" width="90%"}
+![Agreement between district real-consumption estimates in the 2022--23 and 2023--24 HCES rounds. Each panel uses districts retained in both rounds under the consumption sample criteria; the dashed line is the 45-degree line. Sources: National Sample Survey Office, HCES 2022--23 and HCES 2023--24 [@nsoHCES2022; @nsoHCES2023].](../outputs/figures/appendix/appendix_consumption_hces_consistency.pdf){#fig-app-consumption-hces fig-pos="htbp" width="90%"}
 
 ## Additional Harmonized Outcome Panels {#sec-app-additional-data}
 

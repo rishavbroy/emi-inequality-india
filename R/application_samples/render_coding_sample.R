@@ -19,7 +19,7 @@ coding_sample_body <- function(spec, variant, manifest, reference_labels) {
   unlist(lapply(spec$excerpts, function(excerpt) {
     c(
       extract_code_excerpt(excerpt, variant, manifest),
-      coding_sample_output_lines(excerpt$outputs %||% character(), manifest, reference_labels)
+      coding_sample_output_lines(excerpt$outputs %||% character(), variant, manifest, reference_labels)
     )
   }), use.names = FALSE)
 }

@@ -41,7 +41,7 @@ The low-level LaTeX/reference extraction is an implementation detail of the rend
 
 ## Coding-sample outputs
 
-Selected code excerpts may attach tables or figures from the paper listed under `coding_outputs`. Results appear immediately after the excerpt they illustrate. Selected tables and figures declare their paper cross-reference labels and retain the full paper's numbering and captions; figures are copied from the corresponding `paper.qmd` figure blocks rather than described again in the sample manifest. Citations in named coding samples link to the full paper, while anonymous samples retain the citation text without the identifying URL. Output composition does not re-estimate results independently of the main analysis.
+Selected code excerpts may attach tables or figures from the paper listed under `coding_outputs`. Results appear immediately after the excerpt they illustrate. Selected tables and figures declare their paper cross-reference labels and retain the full paper's numbering and captions; figures are copied from the corresponding `paper.qmd` figure blocks rather than described again in the sample manifest. If an output combines results from code outside the displayed excerpt, `code_files` lists those files and the named sample links to them in the repository. Citations in named coding samples link to the full paper, while anonymous samples retain the citation text without the identifying URL. Output composition does not re-estimate results independently of the main analysis.
 
 ## Page-count policy
 

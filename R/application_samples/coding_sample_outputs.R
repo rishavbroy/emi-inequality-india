@@ -109,7 +109,20 @@ selected_figure_lines <- function(item, manifest, reference_labels) {
   )
 }
 
-coding_sample_output_lines <- function(output_ids, manifest, reference_labels) {
+coding_output_code_file_lines <- function(item, variant, manifest) {
+  files <- unlist(item$code_files %||% character(), use.names = FALSE)
+  if (!length(files)) return(character())
+  refs <- vapply(
+    files,
+    application_sample_file_reference,
+    character(1),
+    variant = variant,
+    manifest = manifest
+  )
+  c("", paste0("Additional implementation files for this output: ", paste(refs, collapse = ", "), "."), "")
+}
+
+coding_sample_output_lines <- function(output_ids, variant, manifest, reference_labels) {
   items <- resolve_coding_outputs(output_ids, manifest)
   if (!length(items)) return(character())
   unlist(lapply(items, function(item) {
@@ -120,13 +133,8 @@ coding_sample_output_lines <- function(output_ids, manifest, reference_labels) {
       figure = selected_figure_lines(item, manifest, reference_labels),
       stop("Unsupported coding-sample output type: ", type, call. = FALSE)
     )
-    title <- trimws(item$title %||% "")
-    description <- trimws(item$description %||% "")
-    paper_figure <- identical(type, "figure")
     c(
-      "",
-      paste0("### Result", if (!paper_figure && nzchar(title)) paste0(": ", title) else ""),
-      if (!paper_figure && nzchar(description)) c("", description) else character(),
+      coding_output_code_file_lines(item, variant, manifest),
       "",
       content,
       ""

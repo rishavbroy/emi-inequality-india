@@ -65,10 +65,10 @@ join_district_carveout_wrapped_label <- function(previous, continuation) {
 
 # sample-start: code-district-carveout-repair
 
-#' Read the headerless 1961-2001 district carve-out source
+#' Read the headerless table of district boundary changes from 1961 to 2001
 #'
-#' The source has five data columns and no header row. Reading it with the
-#' ordinary CSV default would consume the first Anantapur observation as names.
+#' The historical table has five data columns and no header row. Reading it with
+#' the ordinary CSV default would consume the first Anantapur observation as names.
 repair_district_carveout_wrapped_rows <- function(x) {
   out <- safe_df(x)
   if (!nrow(out)) return(out)
@@ -84,7 +84,7 @@ repair_district_carveout_wrapped_rows <- function(x) {
     if (source_continuation) {
       previous_name <- plain_chr(out$district_1991[[previous]])
       if (!length(previous_name) || !grepl("-$", trimws(previous_name[[1L]]))) {
-        stop("Unexpected wrapped row in the district carve-out source.", call. = FALSE)
+        stop("Unexpected wrapped row in the district boundary table.", call. = FALSE)
       }
       continuation <- plain_chr(out$district_1991[[i]])[[1L]]
       combined <- join_district_carveout_wrapped_label(previous_name[[1L]], continuation)
@@ -98,7 +98,7 @@ repair_district_carveout_wrapped_rows <- function(x) {
     if (!has_transfer && (source_continuation || target_continuation)) {
       if (target_continuation) {
         if (blank(out$district_2001[[previous]])) {
-          stop("Unexpected target-only continuation in the district carve-out source.", call. = FALSE)
+          stop("Unexpected continuation of a 2001 district name in the district boundary table.", call. = FALSE)
         }
         previous_target <- trimws(as.character(out$district_2001[[previous]]))
         continuation <- trimws(as.character(out$district_2001[[i]]))
@@ -124,17 +124,17 @@ validate_district_carveout_shares <- function(
     values <- num(out[[field]])
     bad <- is.finite(values) & (values < 0 | values > 100)
     if (any(bad)) {
-      stop("District carve-out transfer shares must lie in [0, 100].", call. = FALSE)
+      stop("District transfer shares must lie in [0, 100].", call. = FALSE)
     }
   }
   source_share <- num(out$pct_01in91)
   if (any(!is.finite(source_share))) {
-    stop("District carve-out source shares must be complete.", call. = FALSE)
+    stop("Shares of each 1991 district assigned to 2001 districts must be complete.", call. = FALSE)
   }
   source_key <- paste(out$district_1991, out$pop_1991, sep = "__")
   source_sum <- vapply(split(source_share, source_key), sum, numeric(1))
   if (any(abs(source_sum - 100) > rounding_tolerance_pp)) {
-    stop("District carve-out source shares must sum to 100 within rounding tolerance.", call. = FALSE)
+    stop("Shares of each 1991 district assigned to 2001 districts must sum to 100 within rounding tolerance.", call. = FALSE)
   }
   invisible(TRUE)
 }

@@ -44,7 +44,7 @@ ame_out_of_pipeline <- function(status, reason) {
 }
 
 # sample-start: code-ame-estimation
-#' extract the estimation rows and fitted-model weights for AME benchmarks
+#' extract the fitted sample and survey weights used to average marginal effects
 #'
 ame_model_data_and_weights <- function(model) {
   model_data <- as.data.frame(stats::model.frame(model))
@@ -84,10 +84,11 @@ run_avg_slopes <- function(model, newdata = NULL, wts = TRUE, numderiv = NULL) {
 #' compute AMEs with marginaleffects
 #'
 compute_ames_marginaleffects <- function(model) {
-  # marginaleffects supports svyglm directly, but automatic weight discovery is
-  # not reliable for all fitted survey objects. Supply the observed model frame
-  # and its sampling weights explicitly; vcov(model) still supplies the
-  # design-based covariance used by marginaleffects' delta method.
+  # Earlier calls relied on marginaleffects to recover weights from serialized
+  # svyglm objects. Some saved models no longer exposed those weights reliably,
+  # so pass the fitted model frame and sampling weights explicitly. The averaging
+  # population then matches the survey sample, while marginaleffects uses the
+  # model's design-based covariance matrix for uncertainty.
   amed <- ame_model_data_and_weights(model)
   run_avg_slopes(model, newdata = amed$data, wts = amed$wts)
 }
@@ -152,7 +153,7 @@ ame_label_lookup <- function() {
       "Social group: Scheduled Tribe (ref: Other)", "Social group: Scheduled Caste", "Social group: Other Backward Class",
       "Urban (ref: Rural)",
       "Distance 1–2km (ref: <1km)", "Distance 2–3km", "Distance 3–5km", "Distance > 5km",
-      "Male household educ.: Literate, no school (ref: Illiterate)", "Male household educ.: Literate, school < primary", "Male household educ.: Primary", "Male household educ.: Upper primary", "Male household educ.: Secondary", "Male household educ.: Higher secondary", "Male household educ.: Postsecondary+",
+      "Male household education: Literate, no school (ref: Illiterate)", "Male household education: Literate, school < primary", "Male household education: Primary", "Male household education: Upper primary", "Male household education: Secondary", "Male household education: Higher secondary", "Male household education: Postsecondary+",
       "Educ. free available (ref: No)", "Tuition waiver received", "Scholarship/Stipend received", "Textbook(s) received", "Stationery received", "Mid-day meal, etc. received", "Enrollment cost (Rs.)"
     ),
     stringsAsFactors = FALSE

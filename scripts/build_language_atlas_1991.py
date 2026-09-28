@@ -534,11 +534,11 @@ def merge_population_continuations(
 # sample-start: code-language-atlas-validation
 
 def cross_page_serial_evidence(cells: list[dict[str, object]]) -> dict[tuple[int, str], tuple[int, ...]]:
-    """Collect repeated printed district-serial evidence for exact Atlas row labels.
+    """Collect district serials printed beside the same Atlas row label.
 
-    Annexure IV repeats the district rows on each of its eight language pages.
-    Exact label repetition can therefore recover a dropped serial without fuzzy
-    district matching. Conflicting repeated serials remain conflicts.
+    Annexure IV repeats each district row on eight language pages. An exact label
+    repeated with one serial can therefore supply a serial omitted on another page.
+    Conflicting printed serials remain unresolved.
     """
     observed: dict[tuple[int, str], set[int]] = {}
     unique_rows = {
@@ -572,9 +572,9 @@ def reconcile_district_serial(
     direct_source = "serial_column" if serial_column is not None else "label_prefix"
 
     if direct is not None:
-        # Direct page-1 serial evidence remains primary. Repeated pages are used
-        # to recover a missing serial, not to overturn a directly printed code
-        # because isolated OCR serial errors occur on continuation pages.
+        # Use a serial printed on this row when it is available. Exact labels on
+        # repeated language pages supply a serial only when this field is missing;
+        # continuation pages occasionally contain isolated OCR errors.
         return direct, direct_source, repeated_text
     if len(repeated) == 1:
         return repeated[0], "cross_page_exact_label", repeated_text

@@ -553,34 +553,34 @@ build_public_ggplot_map <- function(plot_data, spec, boundary_reference = NULL) 
 
 complete_public_map_geometry <- function(district_panel, map_geometry) {
   if (!has_sf_geometry(map_geometry)) {
-    stop("Public maps require the complete Census-2001 district geometry.", call. = FALSE)
+    stop("District maps require the complete 2001 Census district geometry.", call. = FALSE)
   }
   key <- "target_unit_2001"
   if (!key %in% names(map_geometry) && "unit_id" %in% names(map_geometry)) {
     map_geometry[[key]] <- map_geometry$unit_id
   }
   if (!key %in% names(map_geometry) || !key %in% names(district_panel)) {
-    stop("Public map geometry and panel must contain a Census-2001 unit key.", call. = FALSE)
+    stop("Map geometry and analysis data must contain a 2001 Census district key.", call. = FALSE)
   }
   if (anyDuplicated(map_geometry[[key]])) {
-    stop("Complete Census-2001 map geometry must contain one row per district.", call. = FALSE)
+    stop("Complete 2001 Census map geometry must contain one row per district.", call. = FALSE)
   }
   attributes <- if (inherits(district_panel, "sf")) sf::st_drop_geometry(district_panel) else safe_df(district_panel)
   attributes <- attributes[!duplicated(attributes[[key]]), , drop = FALSE]
   out <- merge(map_geometry, attributes, by = key, all.x = TRUE, sort = FALSE)
 
-  # State identity belongs to the complete Census geometry, not to the analysis
-  # panel: districts absent from a particular estimand must still participate in
-  # state/exterior linework. Canonical IDs encode the 2001 state code directly.
-  canonical_state <- public_map_state_code_2001(out[[key]])
+  # Derive state identity from the complete 2001 Census boundary identifier so
+  # state and national outlines include districts with missing analysis values.
+  # The district identifier stores the 2001 state code directly.
+  boundary_state <- public_map_state_code_2001(out[[key]])
   if ("state_code_2001" %in% names(out)) {
     panel_state <- plain_chr(out$state_code_2001)
-    mismatch <- !is.na(panel_state) & nzchar(panel_state) & panel_state != canonical_state
+    mismatch <- !is.na(panel_state) & nzchar(panel_state) & panel_state != boundary_state
     if (any(mismatch)) {
-      stop("Public map panel state codes disagree with canonical district IDs.", call. = FALSE)
+      stop("Analysis state codes disagree with the state codes in the 2001 Census district identifiers.", call. = FALSE)
     }
   }
-  out$state_code_2001 <- canonical_state
+  out$state_code_2001 <- boundary_state
   out
 }
 

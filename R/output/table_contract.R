@@ -122,9 +122,9 @@ public_table_caption_text <- function(name) {
     paper_economic_conversion = "English-Medium Schooling, Later Consumption, and Predetermined Complements",
     paper_local_development = "Linguistic Conditions and Local Development Outcomes",
     appendix_iv_relevance_summary = "First-Stage Relevance Across Linguistic Measures",
-    appendix_iv_weak_inference = "Weak-IV-Robust Long-Run Inference",
+    appendix_iv_weak_inference = "Inference with Weak Instruments for Long-Run Consumption Change",
     appendix_migration_summary = "Linguistic Distance and Migration Composition",
-    appendix_selection_ame = "Correlates of School Enrollment",
+    appendix_selection_ame = "Average Marginal Effects for School Enrollment",
     appendix_selection_missingness = "Missingness in Child-Enrollment Model Covariates",
     fs_cons = "First-Stage Regression: EMI Exposure on Linguistic Distance",
     cons_iv = "Second-Stage Regression: Real Log Consumption Growth on EMI Exposure (Fitted)",
@@ -186,9 +186,9 @@ public_table_note <- function(name) {
       "These conventional first-stage statistics describe relevance across geographic adjustments. The consumption IV specifications use the Montiel Olea--Pflueger effective $F$ statistic for weak-identification assessment."
     ),
     appendix_iv_weak_inference = paste(
-      "The table reports conventional 2SLS coefficients; standard errors are state-clustered. Weak-identification assessment uses the Montiel Olea--Pflueger effective $F$ statistic and Anderson--Rubin inference.",
-      "The 95\\% AR accepted sets are displayed as unions of closed intervals. A dagger marks a component that reaches an evaluated search boundary; its outer endpoint is therefore a numerical search limit, not an identified finite confidence bound.",
-      "The direct-effect row gives the smallest permitted direct effect, as a share of the absolute reduced form, for which the AR set includes $\\beta = 0$."
+      "The table reports conventional 2SLS coefficients with state-clustered standard errors. Instrument strength is summarized by the Montiel Olea--Pflueger effective $F$ statistic, and Anderson--Rubin tests provide inference robust to weak instruments.",
+      "The 95\\% AR accepted sets are displayed as unions of closed intervals. A dagger marks a component that reaches an evaluated search boundary. Its outer endpoint is the numerical search limit and should not be interpreted as a finite confidence bound.",
+      "The direct effect threshold is the smallest permitted direct effect, expressed as a share of the absolute reduced form, for which the AR set includes $\\beta = 0$."
     ),
     appendix_migration_summary = paste(
       "Each column is a separate district regression using speaker-weighted linguistic distance from Hindi, baseline 2001 Census covariates, state fixed effects, and state-clustered standard errors.",
@@ -199,8 +199,8 @@ public_table_note <- function(name) {
     appendix_selection_ame = paste(
       "Entries are average changes in predicted enrollment probability.",
       "Continuous covariates are average slopes; categorical covariates are average discrete comparisons against the stated reference category, evaluated over the observed covariate distribution.",
-      "Standard errors use the declared NSS survey design, including household weights, primary sampling units, and strata formed from state, stratum, and substratum identifiers.",
-      "The fitted model includes district averages of schooling costs and benefits among enrolled children. Their coefficients are omitted because those variables combine local provision with the composition of enrolled children."
+      "Standard errors use the NSS sampling design, including household weights, primary sampling units, and strata formed from state, stratum, and substratum identifiers.",
+      "The model also controls for district averages of schooling costs and benefits among enrolled children; the table displays marginal effects for child and household covariates."
     ),
     appendix_selection_missingness = paste(
       "The final row reports children missing at least one covariate required by the probit.",

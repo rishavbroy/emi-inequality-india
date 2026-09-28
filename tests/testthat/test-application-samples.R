@@ -84,6 +84,19 @@ test_that("coding-output references are validated at the excerpt that displays t
 })
 
 
+test_that("coding-output implementation files must exist", {
+  env <- sample_test_env()
+  manifest <- yaml::read_yaml(repo_file("application-samples", "samples.yml"))
+  broken <- manifest
+  broken$coding_outputs[[1L]]$code_files <- "R/does-not-exist.R"
+
+  expect_error(
+    env$validate_application_sample_manifest(broken),
+    "Coding-sample output code files do not exist"
+  )
+})
+
+
 test_that("long coding sample contains every short-sample excerpt plus additional material", {
   env <- sample_test_env()
   manifest <- env$read_application_sample_manifest(repo_file("application-samples", "samples.yml"))
@@ -385,27 +398,41 @@ test_that("coding samples reuse paper-formatted tables and exact paper figures",
   manifest <- list(
     paper = list(source = paper_file),
     coding_outputs = list(
-      table = list(type = "latex", file = table_file, paper_label = "tbl-paper-fixture", title = "Fixture table"),
+      table = list(type = "latex", file = table_file, paper_label = "tbl-paper-fixture"),
       figure = list(type = "figure", paper_label = "fig-paper-fixture")
     )
   )
   text <- paste(
     env$coding_sample_output_lines(
-      c("table", "figure"), manifest,
+      c("table", "figure"), "named", manifest,
       c(`tbl-paper-fixture` = "7", `tbl-file-fixture` = "7a", `fig-paper-fixture` = "4")
     ),
     collapse = "\n"
   )
 
-  expect_match(text, "### Result: Fixture table", fixed = TRUE)
   expect_match(text, "\\setcounter{table}{6}", fixed = TRUE)
   expect_match(text, paste0("\\input{../../", table_file, "}"), fixed = TRUE)
-  expect_match(text, "### Result\n", fixed = TRUE)
   expect_match(text, "\\setcounter{figure}{3}", fixed = TRUE)
   expect_match(text, "Paper figure caption with source [@shastry2012a].", fixed = TRUE)
   expect_match(text, "{#fig-paper-fixture width=90%}", fixed = TRUE)
   expect_match(text, "../../outputs/figures/fixture.pdf", fixed = TRUE)
   expect_false(grepl("\\clearpage", text, fixed = TRUE))
+})
+
+
+test_that("coding-sample outputs link additional implementation files when requested", {
+  env <- sample_test_env()
+  sys.source(repo_file("R", "application_samples", "coding_sample_outputs.R"), envir = env)
+  code_file <- file.path("R", "iv", "weak_identification.R")
+  manifest <- list(paper = list(repository_url = "https://example.com/repository"))
+  item <- list(code_files = code_file)
+
+  named <- paste(env$coding_output_code_file_lines(item, "named", manifest), collapse = "\n")
+  anonymous <- paste(env$coding_output_code_file_lines(item, "anonymous", manifest), collapse = "\n")
+
+  expect_match(named, env$application_sample_file_url(code_file, manifest), fixed = TRUE)
+  expect_match(anonymous, paste0("`", code_file, "`"), fixed = TRUE)
+  expect_false(grepl("https://", anonymous, fixed = TRUE))
 })
 
 
@@ -426,7 +453,7 @@ test_that("coding-sample results follow the excerpt that produces them", {
   manifest <- list(
     paper = list(source = paper_file, repository_url = "https://example.com/repository"),
     coding_outputs = list(
-      table = list(type = "latex", file = table_file, paper_label = "tbl-fixture", title = "Fixture result")
+      table = list(type = "latex", file = table_file, paper_label = "tbl-fixture")
     )
   )
   spec <- list(excerpts = list(list(
@@ -435,13 +462,12 @@ test_that("coding-sample results follow the excerpt that produces them", {
 
   body <- env$coding_sample_body(spec, "named", manifest, c(`tbl-fixture` = "3"))
   code_heading <- match("## Fixture code", body)
-  result_heading <- match("### Result: Fixture result", body)
+  output_line <- which(grepl("\\input{../../", body, fixed = TRUE))[[1L]]
 
   expect_true(is.finite(code_heading))
-  expect_true(is.finite(result_heading))
-  expect_lt(code_heading, result_heading)
+  expect_true(is.finite(output_line))
+  expect_lt(code_heading, output_line)
   expect_true(any(grepl("answer <- 42", body, fixed = TRUE)))
-  expect_true(any(grepl("\\input{../../", body, fixed = TRUE)))
 })
 
 

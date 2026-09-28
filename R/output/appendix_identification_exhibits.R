@@ -221,7 +221,7 @@ appendix_iv_weak_inference <- function(
   ar_latex <- vapply(acceptance_components, format_components, character(1))
   csv <- data.frame(
     row_id = wanted,
-    outcome = c("2022-23 long change", "2023-24 long change"),
+    outcome = c("Real log consumption change, 2004-05 to 2022-23", "Real log consumption change, 2004-05 to 2023-24"),
     estimate = num(x$second_stage_estimate),
     std.error = num(x$second_stage_std.error),
     p.value = num(x$second_stage_p.value),

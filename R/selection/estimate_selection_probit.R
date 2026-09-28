@@ -10,9 +10,9 @@ selection_probit_variables <- function(selection_data, require_all = FALSE) {
     "dmean_num_ENROLLMENT_COST"
   )
 
-  # Tiny development fixtures historically use `age`; production data use the
-  # registered `AGE` field. Keep that convenience outside final mode without
-  # allowing the scientific specification to change silently.
+  # Early test fixtures used `age`; the NSS extracts use `AGE`. Retain
+  # the fixture spelling for lightweight tests, while the final analysis requires
+  # the NSS field and the fixed covariate list.
   if (!isTRUE(require_all) && !"AGE" %in% names(selection_data) && "age" %in% names(selection_data)) {
     variables[[1L]] <- "age"
   }
@@ -20,7 +20,7 @@ selection_probit_variables <- function(selection_data, require_all = FALSE) {
   missing <- setdiff(variables, names(selection_data))
   if (isTRUE(require_all) && length(missing)) {
     stop(
-      "Final selection probit is missing required covariates: ",
+      "Selection probit is missing required final analysis covariates: ",
       paste(missing, collapse = ", "),
       call. = FALSE
     )
@@ -32,12 +32,12 @@ selection_survey_design_variables <- function() {
   c("FSU_SL_NO", "weight", "STATE", "SECTOR", "STRATUM", "SUB_STRATUM_NO")
 }
 
-#' project the selection sample to the model's actual dependency surface
+#' retain the variables used by the selection model and survey design
 #'
-#' Keeping unrelated Block-5 schooling attributes in the fitted survey design makes
-#' the serialized model change whenever those attributes change, even though they
-#' are absent from the probit formula. A narrow model frame lets {targets} skip the
-#' expensive AME branch when upstream changes do not affect estimation.
+#' Earlier builds stored unrelated Block 5 schooling fields with the survey
+#' design. Editing one of those fields therefore recomputed the marginal effects
+#' even when the probit inputs were unchanged. Retain only variables used by the
+#' model and survey design.
 project_selection_model_data <- function(selection_data) {
   selection_data <- safe_df(selection_data)
   design <- c("enrolled", selection_survey_design_variables())
@@ -61,7 +61,7 @@ estimate_selection_probit <- function(selection_data, cfg) {
 
   if (final_mode) {
     if (!requireNamespace("survey", quietly = TRUE)) {
-      stop("Final selection probit requires the survey package.", call. = FALSE)
+      stop("The final selection probit requires the survey package.", call. = FALSE)
     }
     design <- build_survey_design_selection(selection_data, require_all = TRUE)
     out <- with_survey_lonely_psu(
@@ -78,12 +78,12 @@ estimate_selection_probit <- function(selection_data, cfg) {
   stabilize_selection_model_formula(out, f_probit)
 }
 
-#' store a durable selection-model formula
+#' store the fitted selection formula inside the saved model call
 #'
-#' Programmatically fitted models otherwise retain a call to the local symbol
-#' `f_probit`. Packages which reconstruct model data from the saved call cannot
-#' resolve that symbol after the model is serialized by targets. Embed the
-#' formula object in the call and retain the existing audit attribute.
+#' Programmatic fitting originally left the local symbol `f_probit` in the saved
+#' call. After {targets} serialized the model, packages reconstructing model data
+#' could no longer resolve that local name. Store the formula itself in the call
+#' and keep the formula attribute used by downstream validation.
 stabilize_selection_model_formula <- function(model, formula) {
   if (!inherits(formula, "formula")) {
     stop("Selection model formula must inherit from formula.", call. = FALSE)
@@ -100,7 +100,7 @@ build_survey_design_selection <- function(selection_df, require_all = FALSE) {
   missing <- setdiff(required, names(selection_df))
   if (isTRUE(require_all) && length(missing)) {
     stop(
-      "Final selection survey design is missing required fields: ",
+      "Selection survey design is missing required final analysis fields: ",
       paste(missing, collapse = ", "),
       call. = FALSE
     )
@@ -111,7 +111,7 @@ build_survey_design_selection <- function(selection_df, require_all = FALSE) {
   strata_cols <- intersect(c("STATE", "SECTOR", "STRATUM", "SUB_STRATUM_NO"), names(selection_df))
   if (is.null(psu) || is.null(weight) || !length(strata_cols)) {
     if (isTRUE(require_all)) {
-      stop("Final selection survey design could not be constructed.", call. = FALSE)
+      stop("The final selection survey design could not be constructed.", call. = FALSE)
     }
     return(NULL)
   }

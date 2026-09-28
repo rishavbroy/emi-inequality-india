@@ -979,7 +979,7 @@ appendix_iv_weak_inference_modelsummary_table <- function(table, name) {
     list(raw = "effective_f", clean = "MOP effective $F$", fmt = 2),
     list(raw = "ar_p_beta0", clean = "AR $p$-value at zero", fmt = 3),
     list(raw = "ar_set", clean = "AR 95\\% accepted set", fmt = as_text),
-    list(raw = "direct_effect_share", clean = "Direct effect needed to admit zero", fmt = as_text),
+    list(raw = "direct_effect_share", clean = "Direct effect threshold for $\\beta=0$ (share of |reduced form|)", fmt = as_text),
     list(raw = "nobs", clean = "Observations", fmt = 0)
   )
 

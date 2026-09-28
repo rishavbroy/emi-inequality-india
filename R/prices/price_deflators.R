@@ -326,7 +326,7 @@ build_state_sector_deflator <- function(
       stop("Reference-price table is missing columns: ", paste(missing_reference, collapse = ", "), call. = FALSE)
     }
     if (anyDuplicated(ref_mean[c("state_code", "sector")]) || any(!positive_finite(ref_mean$reference_index))) {
-      stop("Reference-price table must have one positive row per state-sector.", call. = FALSE)
+      stop("Reference-price table must have one positive row per state and rural/urban sector.", call. = FALSE)
     }
     ref_mean <- ref_mean[required_reference]
   }
@@ -383,7 +383,7 @@ build_state_sector_price_deflators <- function(
     unique(paste(spatial$state_code, spatial$sector, sep = "\r"))
   )
   if (length(missing_spatial)) {
-    stop("Tendulkar metadata does not cover every temporal state-sector series.", call. = FALSE)
+    stop("Tendulkar poverty-line data do not cover every state and rural/urban CPI series.", call. = FALSE)
   }
   build_state_sector_deflator(
     expanded,

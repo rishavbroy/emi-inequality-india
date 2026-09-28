@@ -48,6 +48,17 @@ validate_application_sample_manifest <- function(manifest) {
   if (length(missing_outputs)) {
     stop("Coding samples reference unknown selected outputs: ", paste(missing_outputs, collapse = ", "), call. = FALSE)
   }
+  output_code_files <- unique(unlist(lapply(manifest$coding_outputs, function(x) {
+    unlist(x$code_files %||% character(), use.names = FALSE)
+  }), use.names = FALSE))
+  missing_code_files <- output_code_files[!file.exists(output_code_files)]
+  if (length(missing_code_files)) {
+    stop(
+      "Coding-sample output code files do not exist: ",
+      paste(missing_code_files, collapse = ", "),
+      call. = FALSE
+    )
+  }
   latex_outputs <- manifest$coding_outputs[vapply(
     manifest$coding_outputs, function(x) identical(x$type %||% "", "latex"), logical(1)
   )]
