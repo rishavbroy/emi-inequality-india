@@ -24,6 +24,16 @@ test_that("application-sample manifest references current paper sections and cod
       expect_true(sum(nzchar(trimws(lines))) > 1L, info = excerpt$id)
     }
   }
+
+  paper_labels <- env$qmd_label_ids(readLines(paper, warn = FALSE))
+  figure_labels <- vapply(
+    manifest$coding_outputs[vapply(
+      manifest$coding_outputs, function(x) identical(x$type %||% "", "figure"), logical(1)
+    )],
+    function(x) x$paper_label %||% "",
+    character(1)
+  )
+  expect_true(all(figure_labels %in% paper_labels))
 })
 
 
@@ -43,6 +53,23 @@ test_that("LaTeX coding outputs declare the paper cross-reference they preserve"
     "LaTeX coding outputs must declare a tbl- paper_label"
   )
 })
+
+test_that("figure coding outputs declare the paper cross-reference they preserve", {
+  env <- sample_test_env()
+  manifest <- yaml::read_yaml(repo_file("application-samples", "samples.yml"))
+  figure_ids <- names(manifest$coding_outputs)[vapply(
+    manifest$coding_outputs, function(x) identical(x$type %||% "", "figure"), logical(1)
+  )]
+  expect_true(length(figure_ids) > 0L)
+
+  broken <- manifest
+  broken$coding_outputs[[figure_ids[[1L]]]]$paper_label <- NULL
+  expect_error(
+    env$validate_application_sample_manifest(broken),
+    "Figure coding outputs must declare a fig- paper_label"
+  )
+})
+
 
 test_that("coding-output references are validated at the excerpt that displays them", {
   env <- sample_test_env()
@@ -313,9 +340,17 @@ test_that("coding sample assembly uses paper typography and wrapped highlighted 
   expect_identical(meta$format$pdf$documentclass, "article")
   expect_identical(meta$format$pdf$`syntax-highlighting`, "tango")
   expect_identical(meta$format$pdf$`code-block-bg`, "#f7f7f7")
+  expect_identical(meta$bibliography, "../../paper/references.bib")
+  expect_true(isTRUE(meta$`suppress-bibliography`))
+  expect_false(isTRUE(meta$`link-citations`))
+  expect_identical(meta$`sample-full-paper-url`, manifest$paper$full_paper_url)
+  citation_filter <- meta$filters[[length(meta$filters)]]
+  expect_identical(citation_filter$at, "post-quarto")
+  expect_identical(citation_filter$path, "../filters/link-citations-to-paper.lua")
   headers <- unlist(meta$`header-includes`, use.names = FALSE)
   expect_true(any(grepl("usepackage{fvextra}", headers, fixed = TRUE)))
   expect_true(any(grepl("RecustomVerbatimEnvironment{Highlighting}", headers, fixed = TRUE)))
+  expect_true(any(grepl("\\href{https://example.com/paper.pdf}{#2}", headers, fixed = TRUE)))
 
   anon_out <- tempfile(fileext = ".qmd")
   manifest$identity$anonymous <- list(author = "Anonymous")
@@ -325,36 +360,51 @@ test_that("coding sample assembly uses paper typography and wrapped highlighted 
   expect_match(anonymous, "a paper titled “Fixture Paper: Fixture Subtitle”", fixed = TRUE)
   expect_false(grepl("https://", anonymous, fixed = TRUE))
   expect_match(anonymous, "`scripts/run_full_build.sh`", fixed = TRUE)
+  anonymous_meta <- env$read_qmd_metadata(readLines(anon_out, warn = FALSE))
+  expect_null(anonymous_meta$`sample-full-paper-url`)
+  anonymous_headers <- unlist(anonymous_meta$`header-includes`, use.names = FALSE)
+  expect_true(any(grepl("\\providecommand{\\citeproc}[2]{#2}", anonymous_headers, fixed = TRUE)))
+  expect_true(is.null(anonymous_meta$filters) || !any(vapply(
+    anonymous_meta$filters,
+    function(x) identical(x$path %||% "", "../filters/link-citations-to-paper.lua"),
+    logical(1)
+  )))
 })
 
 
-test_that("coding samples reuse paper-formatted output files", {
+test_that("coding samples reuse paper-formatted tables and exact paper figures", {
   env <- sample_test_env()
   sys.source(repo_file("R", "application_samples", "coding_sample_outputs.R"), envir = env)
   table_file <- tempfile(fileext = ".tex")
-  figure_file <- tempfile(fileext = ".pdf")
+  paper_file <- tempfile(fileext = ".qmd")
   writeLines("\\begin{table}\\caption{Fixture}\\label{tbl-file-fixture}paper table\\end{table}", table_file)
-  writeBin(charToRaw("pdf fixture"), figure_file)
-  manifest <- list(coding_outputs = list(
-    table = list(type = "latex", file = table_file, paper_label = "tbl-paper-fixture"),
-    figure = list(type = "figure", file = figure_file, title = "Paper figure")
-  ))
-  manifest$coding_outputs$table$title <- "Fixture table"
-  manifest$coding_outputs$figure$description <- "Fixture figure description."
+  writeLines(c(
+    "---", "title: Fixture", "---", "",
+    "![Paper figure caption with source [@shastry2012a].](../outputs/figures/fixture.pdf){#fig-paper-fixture width=90%}"
+  ), paper_file)
+  manifest <- list(
+    paper = list(source = paper_file),
+    coding_outputs = list(
+      table = list(type = "latex", file = table_file, paper_label = "tbl-paper-fixture", title = "Fixture table"),
+      figure = list(type = "figure", paper_label = "fig-paper-fixture")
+    )
+  )
   text <- paste(
     env$coding_sample_output_lines(
-      c("table", "figure"), manifest, c(`tbl-paper-fixture` = "7", `tbl-file-fixture` = "7a")
+      c("table", "figure"), manifest,
+      c(`tbl-paper-fixture` = "7", `tbl-file-fixture` = "7a", `fig-paper-fixture` = "4")
     ),
     collapse = "\n"
   )
 
   expect_match(text, "### Result: Fixture table", fixed = TRUE)
   expect_match(text, "\\setcounter{table}{6}", fixed = TRUE)
-  expect_equal(length(gregexpr("\\\\FloatBarrier", text, perl = TRUE)[[1L]]), 2L)
   expect_match(text, paste0("\\input{../../", table_file, "}"), fixed = TRUE)
-  expect_match(text, paste0("![](../../", figure_file, "){width=95%}"), fixed = TRUE)
-  expect_match(text, "### Result: Paper figure", fixed = TRUE)
-  expect_match(text, "Fixture figure description.", fixed = TRUE)
+  expect_match(text, "### Result\n", fixed = TRUE)
+  expect_match(text, "\\setcounter{figure}{3}", fixed = TRUE)
+  expect_match(text, "Paper figure caption with source [@shastry2012a].", fixed = TRUE)
+  expect_match(text, "{#fig-paper-fixture width=90%}", fixed = TRUE)
+  expect_match(text, "../../outputs/figures/fixture.pdf", fixed = TRUE)
   expect_false(grepl("\\clearpage", text, fixed = TRUE))
 })
 
@@ -411,6 +461,62 @@ test_that("coding-sample tables require an unambiguous full-paper number", {
     env$selected_latex_lines(list(type = "latex", file = table_file), c(`tbl-paper-fixture` = "7")),
     "must name its paper_label"
   )
+})
+
+
+test_that("coding-sample figures require an unambiguous full-paper number", {
+  env <- sample_test_env()
+  sys.source(repo_file("R", "application_samples", "coding_sample_outputs.R"), envir = env)
+  paper_file <- tempfile(fileext = ".qmd")
+  writeLines(c(
+    "---", "title: Fixture", "---", "",
+    "![Fixture](figure.pdf){#fig-fixture}"
+  ), paper_file)
+  manifest <- list(paper = list(source = paper_file))
+  item <- list(type = "figure", paper_label = "fig-fixture")
+
+  expect_error(
+    env$selected_figure_lines(item, manifest, character()),
+    "no integer figure number for fig-fixture"
+  )
+  expect_error(
+    env$selected_figure_lines(item, manifest, c(`fig-fixture` = "4a")),
+    "no integer figure number for fig-fixture"
+  )
+  expect_error(
+    env$selected_figure_lines(list(type = "figure"), manifest, c(`fig-fixture` = "4")),
+    "must name its fig- paper_label"
+  )
+})
+
+
+test_that("citation-link filter sends named-sample citations to the full paper", {
+  skip_if(!nzchar(Sys.which("pandoc")), "pandoc is unavailable")
+  input <- tempfile(fileext = ".md")
+  output <- tempfile(fileext = ".tex")
+  filter <- repo_file("application-samples", "filters", "link-citations-to-paper.lua")
+  bibliography <- repo_file("paper", "references.bib")
+  writeLines(c(
+    "---",
+    paste0("bibliography: ", bibliography),
+    "suppress-bibliography: true",
+    "sample-full-paper-url: https://example.com/paper.pdf",
+    "---",
+    "Source [@shastry2012a]."
+  ), input)
+
+  status <- system2(
+    Sys.which("pandoc"),
+    c(
+      shQuote(input),
+      paste0("--lua-filter=", shQuote(filter)),
+      "--citeproc", "-t", "latex", "-o", shQuote(output)
+    )
+  )
+  expect_identical(status, 0L)
+  rendered <- paste(readLines(output, warn = FALSE), collapse = "\n")
+  expect_match(rendered, "\\href{https://example.com/paper.pdf}", fixed = TRUE)
+  expect_match(rendered, "Shastry", fixed = TRUE)
 })
 
 

@@ -50,29 +50,16 @@ coding_outputs:
     title: Weak-identification evidence
   consumption_validation:
     type: figure
-    file: outputs/figures/appendix/appendix_consumption_hces_consistency.pdf
-    title: Consumption-series consistency
-    description: Validation of the harmonized consumption series used in the later-outcome analysis.
+    paper_label: fig-app-consumption-hces
   main_maps:
     type: figure
-    file: outputs/figures/main/collage_main_maps.pdf
-    title: District geography of schooling and later outcomes
-    description: District maps of EMI exposure, real consumption change, housing quality, and household-head education.
+    paper_label: fig-schooling-geography
   iv_maps:
     type: figure
-    file: outputs/figures/main/collage_iv_region_maps.pdf
-    title: Linguistic-distance and residualized district geography
-    description: Region, linguistic distance, residualized linguistic distance, and residualized EMI exposure under the paper's geographic adjustments.
-  district_carveouts:
-    type: figure
-    file: outputs/figures/main/district_carveouts_shifts.pdf
-    title: Population shares in historical district carve-outs
-    description: The distribution of 1991 district populations assigned to successor districts in the historical geography evidence.
+    paper_label: fig-linguistic-geography
   historical_language_persistence:
     type: figure
-    file: outputs/figures/appendix/appendix_historical_language_persistence.pdf
-    title: Persistence of the reconstructed historical language measure
-    description: Comparison of the reconstructed 1991 linguistic measure with the later district measure used in the analysis.
+    paper_label: fig-linguistic-persistence
 coding:
   - id: short
     excerpts:
@@ -133,8 +120,6 @@ coding:
         title: Repairing and validating a historical district carve-out table
         description: >-
           A headerless historical crosswalk contains wrapped district labels and population-transfer shares. The reader repairs only structurally identifiable continuations, validates every percentage, and requires each 1991 source district's outgoing shares to sum to 100 within rounding tolerance.
-        outputs:
-          - district_carveouts
       - id: code-language-atlas-validation
         file: scripts/build_language_atlas_1991.py
         title: Validating district rows extracted from the 1991 Language Atlas

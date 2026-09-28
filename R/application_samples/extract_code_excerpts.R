@@ -69,15 +69,25 @@ coding_sample_notice <- function(spec, variant, manifest, source_metadata) {
   )
 }
 
+
+coding_sample_citeproc_fallback <- function(variant, manifest) {
+  url <- manifest$paper$full_paper_url %||% ""
+  if (identical(variant, "named") && nzchar(url)) {
+    return(paste0("\\providecommand{\\citeproc}[2]{\\href{", url, "}{#2}}"))
+  }
+  "\\providecommand{\\citeproc}[2]{#2}"
+}
+
 coding_sample_metadata <- function(spec, variant, manifest, source_metadata) {
   meta <- paper_sample_metadata(source_metadata, variant, manifest)
   meta$title <- "Code Sample"
   meta$subtitle <- if (identical(spec$id, "short")) "Short Version" else "Long Version"
   meta$abstract <- NULL
-  meta$bibliography <- NULL
+  meta$bibliography <- "../../paper/references.bib"
+  meta$`suppress-bibliography` <- TRUE
   meta$execute <- NULL
-  meta$`link-citations` <- NULL
-  meta$`cite-method` <- NULL
+  meta$`link-citations` <- FALSE
+  meta$`cite-method` <- "citeproc"
   meta$`number-sections` <- FALSE
   meta$format$pdf <- utils::modifyList(
     meta$format$pdf %||% list(),
@@ -87,6 +97,13 @@ coding_sample_metadata <- function(spec, variant, manifest, source_metadata) {
       `keep-tex` = TRUE
     )
   )
+  if (identical(variant, "named") && nzchar(manifest$paper$full_paper_url %||% "")) {
+    meta$`sample-full-paper-url` <- manifest$paper$full_paper_url
+    meta$filters <- c(
+      meta$filters %||% list(),
+      list(list(at = "post-quarto", path = "../filters/link-citations-to-paper.lua"))
+    )
+  }
   meta$`header-includes` <- c(
     meta$`header-includes` %||% list(),
     list(
@@ -97,7 +114,7 @@ coding_sample_metadata <- function(spec, variant, manifest, source_metadata) {
         "{commandchars=\\\\\\{\\},breaklines=true,breaknonspaceingroup,",
         "breakanywhere=true,fontsize=\\footnotesize}"
       ),
-      "\\providecommand{\\citeproc}[2]{#2}"
+      coding_sample_citeproc_fallback(variant, manifest)
     )
   )
   meta
@@ -107,7 +124,19 @@ assemble_coding_sample_qmd <- function(spec, variant, manifest, body, output_qmd
   source_metadata <- read_qmd_metadata(readLines(manifest$paper$source, warn = FALSE))
   meta <- coding_sample_metadata(spec, variant, manifest, source_metadata)
   yaml_lines <- quarto_yaml_lines(meta, indent.mapping.sequence = TRUE)
-  lines <- c("---", yaml_lines, "---", "", coding_sample_notice(spec, variant, manifest, source_metadata), body)
+  paper_helpers <- c(
+    "```{r coding-sample-paper-helpers}",
+    "#| include: false",
+    "source(\"../../R/output/public_qmd_helpers.R\", local = knitr::knit_global())",
+    "```",
+    ""
+  )
+  lines <- c(
+    "---", yaml_lines, "---", "",
+    paper_helpers,
+    coding_sample_notice(spec, variant, manifest, source_metadata),
+    body
+  )
   dir.create(dirname(output_qmd), recursive = TRUE, showWarnings = FALSE)
   writeLines(lines, output_qmd)
   invisible(output_qmd)

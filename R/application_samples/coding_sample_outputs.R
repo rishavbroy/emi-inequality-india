@@ -46,10 +46,67 @@ selected_latex_lines <- function(item, reference_labels) {
   )
 }
 
-selected_figure_lines <- function(item) {
-  path <- item$file %||% ""
-  if (!file.exists(path)) stop("Selected coding-sample figure does not exist: ", path, call. = FALSE)
-  paste0("![](", sample_output_path(path), "){width=95%}")
+paper_figure_block <- function(source, paper_label) {
+  if (!file.exists(source)) stop("Current paper source does not exist: ", source, call. = FALSE)
+  if (!grepl("^fig-[A-Za-z0-9_-]+$", paper_label)) {
+    stop("Selected coding-sample figure must name its fig- paper_label.", call. = FALSE)
+  }
+
+  lines <- readLines(source, warn = FALSE)
+  label_pattern <- paste0("\\{#", paper_label, "(?:\\s+[^}]*)?\\}")
+  hits <- grep(label_pattern, lines, perl = TRUE)
+  if (length(hits) != 1L) {
+    stop("Expected exactly one paper figure block for ", paper_label, call. = FALSE)
+  }
+
+  start <- hits[[1L]]
+  if (!grepl("^\\s*:{3,}\\s*\\{#", lines[[start]], perl = TRUE)) {
+    return(lines[[start]])
+  }
+
+  depth <- 0L
+  end <- NA_integer_
+  for (i in seq.int(start, length(lines))) {
+    line <- lines[[i]]
+    if (grepl("^\\s*:{3,}\\s*\\{", line, perl = TRUE)) depth <- depth + 1L
+    if (grepl("^\\s*:{3,}\\s*$", line, perl = TRUE)) {
+      depth <- depth - 1L
+      if (depth == 0L) {
+        end <- i
+        break
+      }
+    }
+  }
+  if (is.na(end)) stop("Unclosed paper figure block for ", paper_label, call. = FALSE)
+  lines[start:end]
+}
+
+normalize_coding_sample_figure_paths <- function(lines) {
+  gsub("../outputs/", "../../outputs/", lines, fixed = TRUE)
+}
+
+selected_figure_lines <- function(item, manifest, reference_labels) {
+  paper_label <- item$paper_label %||% ""
+  if (!grepl("^fig-[A-Za-z0-9_-]+$", paper_label)) {
+    stop("Selected coding-sample figure must name its fig- paper_label.", call. = FALSE)
+  }
+  number <- unname(reference_labels[paper_label])
+  if (length(number) != 1L || is.na(number) || !grepl("^[0-9]+$", number)) {
+    stop("Full-paper reference index has no integer figure number for ", paper_label, call. = FALSE)
+  }
+
+  figure <- paper_figure_block(manifest$paper$source, paper_label)
+  figure <- normalize_coding_sample_figure_paths(figure)
+  c(
+    "```{=latex}",
+    "\\FloatBarrier",
+    sprintf("\\setcounter{figure}{%d}", as.integer(number) - 1L),
+    "```",
+    figure,
+    "```{=latex}",
+    "\\FloatBarrier",
+    "```"
+  )
 }
 
 coding_sample_output_lines <- function(output_ids, manifest, reference_labels) {
@@ -60,15 +117,16 @@ coding_sample_output_lines <- function(output_ids, manifest, reference_labels) {
     content <- switch(
       type,
       latex = selected_latex_lines(item, reference_labels),
-      figure = selected_figure_lines(item),
+      figure = selected_figure_lines(item, manifest, reference_labels),
       stop("Unsupported coding-sample output type: ", type, call. = FALSE)
     )
     title <- trimws(item$title %||% "")
     description <- trimws(item$description %||% "")
+    paper_figure <- identical(type, "figure")
     c(
       "",
-      paste0("### Result", if (nzchar(title)) paste0(": ", title) else ""),
-      if (nzchar(description)) c("", description) else character(),
+      paste0("### Result", if (!paper_figure && nzchar(title)) paste0(": ", title) else ""),
+      if (!paper_figure && nzchar(description)) c("", description) else character(),
       "",
       content,
       ""

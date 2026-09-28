@@ -63,6 +63,21 @@ validate_application_sample_manifest <- function(manifest) {
       call. = FALSE
     )
   }
+  figure_outputs <- manifest$coding_outputs[vapply(
+    manifest$coding_outputs, function(x) identical(x$type %||% "", "figure"), logical(1)
+  )]
+  bad_figure_labels <- names(figure_outputs)[!vapply(
+    figure_outputs,
+    function(x) grepl("^fig-[A-Za-z0-9_-]+$", x$paper_label %||% ""),
+    logical(1)
+  )]
+  if (length(bad_figure_labels)) {
+    stop(
+      "Figure coding outputs must declare a fig- paper_label: ",
+      paste(bad_figure_labels, collapse = ", "),
+      call. = FALSE
+    )
+  }
   invisible(TRUE)
 }
 
@@ -107,6 +122,7 @@ application_sample_input_files <- function(manifest_path = application_sample_ma
     manifest_path,
     manifest$paper$source,
     "application-samples/filters/select-sections.lua",
+    "application-samples/filters/link-citations-to-paper.lua",
     coding_files[!is.na(coding_files)]
   ))
   missing <- files[!file.exists(files)]
