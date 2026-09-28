@@ -119,7 +119,8 @@ coding_output_code_file_lines <- function(item, variant, manifest) {
     variant = variant,
     manifest = manifest
   )
-  c("", paste0("Additional implementation files for this output: ", paste(refs, collapse = ", "), "."), "")
+  output_name <- if (identical(item$type %||% "", "latex")) "table" else "figure"
+  c("", paste0("Additional code used for this ", output_name, ": ", paste(refs, collapse = ", "), "."), "")
 }
 
 coding_sample_output_lines <- function(output_ids, variant, manifest, reference_labels) {

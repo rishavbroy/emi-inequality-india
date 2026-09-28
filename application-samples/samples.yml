@@ -47,7 +47,7 @@ coding_outputs:
     file: outputs/tables/appendix/appendix_iv_weak_inference.tex
     paper_label: tbl-app-iv-weak
     code_files:
-      - R/iv/specification_estimation.R
+      - R/iv/estimate_2sls.R
       - R/iv/consumption_outcome_registry.R
       - R/output/appendix_identification_exhibits.R
       - R/output/save_tables.R
@@ -82,7 +82,7 @@ coding:
         file: R/iv/weak_identification.R
         title: Assessing weak-instrument strength with the Montiel Olea--Pflueger effective F
         description: >-
-          The fitted instrumental-variable model is passed to `momentfit::MOPtest()`, using state clusters when they are available, to obtain the Montiel Olea--Pflueger effective F, critical value, p-value, and effective degrees of freedom. The table below also contains two-stage least squares (2SLS) and Anderson--Rubin results produced by the additional implementation files linked above the table.
+          The fitted instrumental-variable model is passed to `momentfit::MOPtest()`, using state clusters when they are available, to obtain the Montiel Olea--Pflueger effective F, critical value, p-value, and effective degrees of freedom. The table below also contains two-stage least squares (2SLS) and Anderson--Rubin results produced by the additional implementation files linked immediately before the table.
         outputs:
           - weak_iv
       - id: code-public-map-rendering
@@ -152,7 +152,7 @@ coding:
         file: R/iv/weak_identification.R
         title: Assessing weak-instrument strength with the Montiel Olea--Pflueger effective F
         description: >-
-          The fitted instrumental-variable model is passed to `momentfit::MOPtest()`, using state clusters when they are available, to obtain the Montiel Olea--Pflueger effective F, critical value, p-value, and effective degrees of freedom. The table below also contains two-stage least squares (2SLS) and Anderson--Rubin results produced by the additional implementation files linked above the table.
+          The fitted instrumental-variable model is passed to `momentfit::MOPtest()`, using state clusters when they are available, to obtain the Montiel Olea--Pflueger effective F, critical value, p-value, and effective degrees of freedom. The table below also contains two-stage least squares (2SLS) and Anderson--Rubin results produced by the additional implementation files linked immediately before the table.
         outputs:
           - weak_iv
       - id: code-temporal-price-series

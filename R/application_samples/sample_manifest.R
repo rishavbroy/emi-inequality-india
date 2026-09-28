@@ -51,7 +51,9 @@ validate_application_sample_manifest <- function(manifest) {
   output_code_files <- unique(unlist(lapply(manifest$coding_outputs, function(x) {
     unlist(x$code_files %||% character(), use.names = FALSE)
   }), use.names = FALSE))
-  missing_code_files <- output_code_files[!file.exists(output_code_files)]
+  project_root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
+  code_file_paths <- file.path(project_root, output_code_files)
+  missing_code_files <- output_code_files[!file.exists(code_file_paths)]
   if (length(missing_code_files)) {
     stop(
       "Coding-sample output code files do not exist: ",

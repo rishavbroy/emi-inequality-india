@@ -17,7 +17,7 @@ missingness_variables <- function(selection_data) {
   # row labelled "probit-model" is not inflated by fee variables that are
   # undefined for non-enrolled children.
   probit_vars <- c(
-    "enrolled", "ENROLLED", "AGE", "age", "SEX", "HH_SIZE", "RELIGION", "SOCIAL_GROUP",
+    "enrolled", "ENROLLED", "AGE", "SEX", "HH_SIZE", "RELIGION", "SOCIAL_GROUP",
     "SECTOR", "state_0708", "region_0708", all_child_missing_vars
   )
   probit_vars <- intersect(probit_vars, names(df))

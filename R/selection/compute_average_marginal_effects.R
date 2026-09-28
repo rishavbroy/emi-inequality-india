@@ -86,9 +86,9 @@ run_avg_slopes <- function(model, newdata = NULL, wts = TRUE, numderiv = NULL) {
 compute_ames_marginaleffects <- function(model) {
   # Earlier calls relied on marginaleffects to recover weights from serialized
   # svyglm objects. Some saved models no longer exposed those weights reliably,
-  # so pass the fitted model frame and sampling weights explicitly. The averaging
-  # population then matches the survey sample, while marginaleffects uses the
-  # model's design-based covariance matrix for uncertainty.
+  # so pass the fitted model frame and sampling weights explicitly. This keeps the
+  # averaging population equal to the survey estimation sample. `marginaleffects`
+  # uses the model's design-based covariance matrix for uncertainty.
   amed <- ame_model_data_and_weights(model)
   run_avg_slopes(model, newdata = amed$data, wts = amed$wts)
 }

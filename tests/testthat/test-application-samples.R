@@ -71,6 +71,23 @@ test_that("figure coding outputs declare the paper cross-reference they preserve
 })
 
 
+
+
+test_that("coding-output file validation uses the repository root", {
+  env <- sample_test_env()
+  manifest <- yaml::read_yaml(repo_file("application-samples", "samples.yml"))
+  root <- normalizePath(file.path(dirname(repo_file("application-samples", "samples.yml")), ".."), mustWork = TRUE)
+  old_root <- Sys.getenv("EMI_PROJECT_ROOT", unset = NA_character_)
+  old_wd <- setwd(tempdir())
+  on.exit({
+    setwd(old_wd)
+    if (is.na(old_root)) Sys.unsetenv("EMI_PROJECT_ROOT") else Sys.setenv(EMI_PROJECT_ROOT = old_root)
+  }, add = TRUE)
+  Sys.setenv(EMI_PROJECT_ROOT = root)
+
+  expect_silent(env$validate_application_sample_manifest(manifest))
+})
+
 test_that("coding-output references are validated at the excerpt that displays them", {
   env <- sample_test_env()
   manifest <- yaml::read_yaml(repo_file("application-samples", "samples.yml"))

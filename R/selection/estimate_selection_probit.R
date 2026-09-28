@@ -10,13 +10,6 @@ selection_probit_variables <- function(selection_data, require_all = FALSE) {
     "dmean_num_ENROLLMENT_COST"
   )
 
-  # Early test fixtures used `age`; the NSS extracts use `AGE`. Retain
-  # the fixture spelling for lightweight tests, while the final analysis requires
-  # the NSS field and the fixed covariate list.
-  if (!isTRUE(require_all) && !"AGE" %in% names(selection_data) && "age" %in% names(selection_data)) {
-    variables[[1L]] <- "age"
-  }
-
   missing <- setdiff(variables, names(selection_data))
   if (isTRUE(require_all) && length(missing)) {
     stop(
