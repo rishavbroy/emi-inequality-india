@@ -531,6 +531,8 @@ def merge_population_continuations(
     return out
 
 
+# sample-start: code-language-atlas-validation
+
 def cross_page_serial_evidence(cells: list[dict[str, object]]) -> dict[tuple[int, str], tuple[int, ...]]:
     """Collect repeated printed district-serial evidence for exact Atlas row labels.
 
@@ -686,6 +688,9 @@ def build_district_population_validation(
         if identity_status == "candidate_official_code" and population_status == "within_1pct":
             row["promotion_status"] = "population_validated_candidate"
     return candidates
+
+
+# sample-end: code-language-atlas-validation
 
 
 def read_language_registry(path: Path) -> dict[int, dict[str, str]]:

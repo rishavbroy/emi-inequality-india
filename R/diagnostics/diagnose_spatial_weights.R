@@ -1,7 +1,6 @@
 # This file is part of the EMI inequality research pipeline.
 # Functions are intentionally small enough to be tested and called by _targets.R.
 
-# sample-start: code-spatial-weights
 
 #' build spatial weights
 #'
@@ -84,6 +83,8 @@ spatial_expected_offshore_islands <- function(neighbor_ledger, n_subgraphs) {
 #' build spatial weights for selected district-panel rows
 #'
 #' @return A list with nb, binary matrix, and row-standardized listw objects.
+# sample-start: code-spatial-weights-construction
+
 build_spatial_weights_for_rows <- function(district_panel, rows, queen = FALSE, snap = NULL) {
   if (!inherits(district_panel, "sf")) {
     return(list(status = "out_of_active_pipeline", reason = "Requires sf geometry."))
@@ -170,6 +171,8 @@ build_spatial_weights_for_rows <- function(district_panel, rows, queen = FALSE, 
   class(out) <- c("emi_spatial_weights", class(out))
   out
 }
+
+# sample-end: code-spatial-weights-construction
 
 #' diagnose spatial weights
 #'
@@ -341,5 +344,3 @@ save_spatial_weight_diagnostics <- function(diagnostics, dir = "outputs/diagnost
   )
   output_manifest(paths)
 }
-
-# sample-end: code-spatial-weights

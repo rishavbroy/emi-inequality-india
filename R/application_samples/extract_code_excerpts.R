@@ -1,24 +1,38 @@
-# Utilities for marker-delimited coding-sample excerpts from R files.
+# Utilities for marker-delimited coding-sample excerpts from research code.
+
+code_excerpt_language <- function(file, language = NULL) {
+  if (!is.null(language) && nzchar(language)) return(language)
+  switch(
+    tolower(tools::file_ext(file)),
+    r = "r",
+    py = "python",
+    sh = "bash",
+    "text"
+  )
+}
+
+extract_code_excerpt <- function(excerpt, variant, manifest) {
+  file <- excerpt$file
+  id <- excerpt$id
+  title <- excerpt$title %||% id
+  description <- trimws(excerpt$description %||% "")
+  code <- extract_between_sample_markers(file, id)
+  c(
+    "",
+    paste0("## ", title),
+    if (nzchar(description)) c("", description) else character(),
+    "",
+    paste0("File: ", application_sample_file_reference(file, variant, manifest)),
+    "",
+    paste0("```", code_excerpt_language(file, excerpt$language %||% NULL)),
+    code,
+    "```",
+    ""
+  )
+}
 
 extract_code_excerpts <- function(spec, variant, manifest) {
-  pieces <- lapply(spec$excerpts, function(x) {
-    file <- x$file
-    id <- x$id
-    title <- x$title %||% id
-    code <- extract_between_sample_markers(file, id)
-    c(
-      "",
-      paste0("## ", title),
-      "",
-      paste0("File: ", application_sample_file_reference(file, variant, manifest)),
-      "",
-      "```r",
-      code,
-      "```",
-      ""
-    )
-  })
-  unlist(pieces, use.names = FALSE)
+  unlist(lapply(spec$excerpts, extract_code_excerpt, variant = variant, manifest = manifest), use.names = FALSE)
 }
 
 extract_between_sample_markers <- function(file, id) {
@@ -39,7 +53,7 @@ coding_sample_notice <- function(spec, variant, manifest, source_metadata) {
     "This document contains excerpts from the replication code of ",
     if (identical(variant, "anonymous")) "a paper titled " else "the paper ",
     paper_title,
-    ". Selected outputs are rendered at the end."
+    ". Results shown after an excerpt are the same generated files used by the paper."
   )
 
   c(
@@ -98,7 +112,6 @@ assemble_coding_sample_qmd <- function(spec, variant, manifest, body, output_qmd
   writeLines(lines, output_qmd)
   invisible(output_qmd)
 }
-
 
 validate_code_excerpt_markers <- function(spec) {
   invisible(lapply(spec$excerpts, function(x) extract_between_sample_markers(x$file, x$id)))

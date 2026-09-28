@@ -479,6 +479,8 @@ public_map_state_outlines <- function(plot_data) {
   outlines
 }
 
+# sample-start: code-public-map-rendering
+
 build_public_ggplot_map <- function(plot_data, spec, boundary_reference = NULL) {
   need_pkg("ggplot2", "classified choropleth maps")
   style <- public_map_style(spec$variable)
@@ -599,6 +601,8 @@ save_map_figure <- function(spec, path_base, district_panel, map_geometry, bound
   p <- build_public_ggplot_map(plot_data, spec, boundary_reference = boundary_reference)
   save_map_plot_formats(p, path_base, formats, width = 7.2, height = 5.2, dpi = 300)
 }
+
+# sample-end: code-public-map-rendering
 
 read_carveout_shift_data <- function(path = "data/raw/district_changes/District Carve-Outs and Renamings 1961-2001.csv") {
   if (!file.exists(path) && nzchar(Sys.getenv("EMI_PROJECT_ROOT"))) {

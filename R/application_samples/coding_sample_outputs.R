@@ -1,4 +1,4 @@
-# Append selected paper-formatted empirical outputs to coding samples.
+# Render paper-formatted empirical outputs next to the code that produces them.
 
 coding_output_registry <- function(manifest) {
   entries <- manifest$coding_outputs %||% list()
@@ -9,8 +9,8 @@ coding_output_registry <- function(manifest) {
   entries
 }
 
-resolve_coding_outputs <- function(spec, manifest) {
-  ids <- unlist(spec$outputs %||% character(), use.names = FALSE)
+resolve_coding_outputs <- function(ids, manifest) {
+  ids <- unlist(ids %||% character(), use.names = FALSE)
   registry <- coding_output_registry(manifest)
   missing <- setdiff(ids, names(registry))
   if (length(missing)) {
@@ -49,39 +49,31 @@ selected_latex_lines <- function(item, reference_labels) {
 selected_figure_lines <- function(item) {
   path <- item$file %||% ""
   if (!file.exists(path)) stop("Selected coding-sample figure does not exist: ", path, call. = FALSE)
-  c(
-    "```{=latex}",
-    "\\clearpage",
-    "```",
-    "",
-    paste0("## ", item$title %||% basename(path)),
-    "",
-    item$description %||% "",
-    "",
-    paste0("![](", sample_output_path(path), "){width=95%}")
-  )
+  paste0("![](", sample_output_path(path), "){width=95%}")
 }
 
-coding_sample_output_lines <- function(spec, manifest, variant, reference_labels) {
-  items <- resolve_coding_outputs(spec, manifest)
+coding_sample_output_lines <- function(output_ids, manifest, reference_labels) {
+  items <- resolve_coding_outputs(output_ids, manifest)
   if (!length(items)) return(character())
-  pieces <- lapply(items, function(item) {
+  unlist(lapply(items, function(item) {
+    type <- item$type %||% ""
     content <- switch(
-      item$type %||% "",
+      type,
       latex = selected_latex_lines(item, reference_labels),
       figure = selected_figure_lines(item),
-      stop("Unsupported coding-sample output type: ", item$type %||% "", call. = FALSE)
+      stop("Unsupported coding-sample output type: ", type, call. = FALSE)
     )
-    c("", content, "")
-  })
-  table_code <- application_sample_file_reference("R/output/make_tables.R", variant, manifest)
-  figure_code <- application_sample_file_reference("R/output/make_figures.R", variant, manifest)
-  c(
-    "", "# Selected Paper Outputs", "",
-    paste0(
-      "These outputs are the same formatted table and figure files used by the paper; their presentation is assembled in ",
-      table_code, " and ", figure_code, "."
-    ),
-    unlist(pieces, use.names = FALSE)
-  )
+    title <- trimws(item$title %||% "")
+    description <- trimws(item$description %||% "")
+    page_break <- if (identical(type, "figure")) c("```{=latex}", "\\clearpage", "```", "") else character()
+    c(
+      "",
+      page_break,
+      paste0("### Result", if (nzchar(title)) paste0(": ", title) else ""),
+      if (nzchar(description)) c("", description) else character(),
+      "",
+      content,
+      ""
+    )
+  }), use.names = FALSE)
 }

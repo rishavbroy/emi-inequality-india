@@ -42,67 +42,145 @@ coding_outputs:
     type: latex
     file: outputs/tables/appendix/appendix_selection_ame.tex
     paper_label: tbl-appendix-selection-ame
+    title: Average marginal effects
   weak_iv:
     type: latex
     file: outputs/tables/appendix/appendix_iv_weak_inference.tex
     paper_label: tbl-app-iv-weak
+    title: Weak-identification evidence
   consumption_validation:
     type: figure
     file: outputs/figures/appendix/appendix_consumption_hces_consistency.pdf
     title: Consumption-series consistency
     description: Validation of the harmonized consumption series used in the later-outcome analysis.
+  main_maps:
+    type: figure
+    file: outputs/figures/main/collage_main_maps.pdf
+    title: District geography of schooling and later outcomes
+    description: District maps of EMI exposure, real consumption change, housing quality, and household-head education.
+  iv_maps:
+    type: figure
+    file: outputs/figures/main/collage_iv_region_maps.pdf
+    title: Linguistic-distance and residualized district geography
+    description: Region, linguistic distance, residualized linguistic distance, and residualized EMI exposure under the paper's geographic adjustments.
+  district_carveouts:
+    type: figure
+    file: outputs/figures/main/district_carveouts_shifts.pdf
+    title: Population shares in historical district carve-outs
+    description: The distribution of 1991 district populations assigned to successor districts in the historical geography evidence.
+  historical_language_persistence:
+    type: figure
+    file: outputs/figures/appendix/appendix_historical_language_persistence.pdf
+    title: Persistence of the reconstructed historical language measure
+    description: Comparison of the reconstructed 1991 linguistic measure with the later district measure used in the analysis.
 coding:
   - id: short
-    outputs:
-      - selection_ame
-      - weak_iv
-      - consumption_validation
     excerpts:
       - id: code-survey-probit
         file: R/selection/estimate_selection_probit.R
         title: Survey-weighted enrollment model
+        description: >-
+          The enrollment model uses the registered NSS survey design and an explicit required specification. Final mode stops when the intended design cannot be constructed, so missing inputs cannot silently change the estimator.
       - id: code-ame-estimation
         file: R/selection/compute_average_marginal_effects.R
-        title: Average marginal effects on the model estimation sample
+        title: Average marginal effects on the estimation sample
+        description: >-
+          Average marginal effects are computed on the fitted model's estimation sample with marginaleffects::avg_slopes(), carrying the survey weights from the fitted design. The same implementation produces the reported selection table below.
+        outputs:
+          - selection_ame
       - id: code-mop-effective-f
         file: R/iv/weak_identification.R
         title: Montiel Olea--Pflueger effective-F calculation
-      - id: code-anderson-rubin
-        file: R/iv/weak_identification.R
-        title: Anderson--Rubin inference and bounded exclusion sensitivity
+        description: >-
+          The weak-instrument check reports the Montiel Olea--Pflueger effective F using the fitted first stage and the registered cluster structure. The excerpt returns the components used in the paper's weak-identification summary.
+        outputs:
+          - weak_iv
+      - id: code-public-map-rendering
+        file: R/output/save_figures.R
+        title: District choropleths from complete Census geometry
+        description: >-
+          District estimates are joined to complete 2001 Census geometry so observations outside a particular estimation sample remain visible as missing data. The plotting path masks disputed polygons consistently, reconstructs state outlines, and supports categorical, continuous, and diverging measures.
+        outputs:
+          - main_maps
       - id: code-temporal-price-series
         file: R/prices/build_temporal_price_series.R
         title: Linked state-sector price series
+        description: >-
+          Adjacent CPI bases are placed on a common scale over their overlap period with one registered link rule. The construction also retains overlap information used by the price-sensitivity checks.
       - id: code-state-sector-deflator
         file: R/prices/price_deflators.R
         title: State-sector real-consumption deflator construction
+        description: >-
+          Temporal and spatial price adjustments are combined into state-sector deflators used to express consumption in comparable 2011-12 rupees. The validation figure below compares the harmonized series with HCES.
+        outputs:
+          - consumption_validation
   - id: long
-    outputs:
-      - selection_ame
-      - weak_iv
-      - consumption_validation
     excerpts:
       - id: code-survey-probit
         file: R/selection/estimate_selection_probit.R
         title: Survey-weighted enrollment model
+        description: >-
+          The enrollment model uses the registered NSS survey design and an explicit required specification. Final mode stops when the intended design cannot be constructed, so missing inputs cannot silently change the estimator.
       - id: code-ame-estimation
         file: R/selection/compute_average_marginal_effects.R
-        title: Average marginal effects on the model estimation sample
-      - id: code-mop-effective-f
-        file: R/iv/weak_identification.R
-        title: Montiel Olea--Pflueger effective-F calculation
-      - id: code-anderson-rubin
-        file: R/iv/weak_identification.R
-        title: Anderson--Rubin inference and bounded exclusion sensitivity
-      - id: code-temporal-price-series
-        file: R/prices/build_temporal_price_series.R
-        title: Linked state-sector price series
-      - id: code-state-sector-deflator
-        file: R/prices/price_deflators.R
-        title: State-sector real-consumption deflator construction
-      - id: code-lineage-candidate-scoring
-        file: R/districts/lineage_matching.R
-        title: Cross-vintage district candidate scoring
+        title: Average marginal effects on the estimation sample
+        description: >-
+          Average marginal effects are computed on the fitted model's estimation sample with marginaleffects::avg_slopes(), carrying the survey weights from the fitted design. The same implementation produces the reported selection table below.
+        outputs:
+          - selection_ame
+      - id: code-district-carveout-repair
+        file: R/io/read_inputs.R
+        title: Repairing and validating a historical district carve-out table
+        description: >-
+          A headerless historical crosswalk contains wrapped district labels and population-transfer shares. The reader repairs only structurally identifiable continuations, validates every percentage, and requires each 1991 source district's outgoing shares to sum to 100 within rounding tolerance.
+        outputs:
+          - district_carveouts
+      - id: code-language-atlas-validation
+        file: scripts/build_language_atlas_1991.py
+        title: Validating district rows extracted from the 1991 Language Atlas
+        description: >-
+          The 1991 Language Atlas is recovered from positioned PDF text and checked against official district populations before any row is eligible for analysis. Repeated serial evidence can recover a missing printed code, while conflicts and population disagreements remain review cases rather than guessed matches.
+        outputs:
+          - historical_language_persistence
+      - id: code-spatial-weights-construction
+        file: R/diagnostics/diagnose_spatial_weights.R
+        title: Rook and queen contiguity from district polygons
+        description: >-
+          Spatial weights are built directly from sf district polygons while preserving the estimation-row index. The routine records islands and disconnected components and distinguishes the expected offshore districts from geometry problems that need investigation.
       - id: code-spatial-residual-moran
         file: R/diagnostics/diagnose_spatial_autocorrelation.R
-        title: Residual spatial-autocorrelation diagnostics
+        title: Permutation inference for residual spatial dependence
+        description: >-
+          Residual spatial dependence is evaluated on the exact model rows with spdep::moran.mc() and a fixed seed. The analytical Moran result is retained as a comparison while the permutation p-value is the reported inference.
+      - id: code-public-map-rendering
+        file: R/output/save_figures.R
+        title: District choropleths from complete Census geometry
+        description: >-
+          District estimates are joined to complete 2001 Census geometry so observations outside a particular estimation sample remain visible as missing data. The plotting path masks disputed polygons consistently, reconstructs state outlines, and supports categorical, continuous, and diverging measures.
+        outputs:
+          - main_maps
+          - iv_maps
+      - id: code-mop-effective-f
+        file: R/iv/weak_identification.R
+        title: Montiel Olea--Pflueger effective-F calculation
+        description: >-
+          The weak-instrument check reports the Montiel Olea--Pflueger effective F using the fitted first stage and the registered cluster structure. The excerpt returns the components used in the paper's weak-identification summary.
+        outputs:
+          - weak_iv
+      - id: code-temporal-price-series
+        file: R/prices/build_temporal_price_series.R
+        title: Linked state-sector price series
+        description: >-
+          Adjacent CPI bases are placed on a common scale over their overlap period with one registered link rule. The construction also retains overlap information used by the price-sensitivity checks.
+      - id: code-state-sector-deflator
+        file: R/prices/price_deflators.R
+        title: State-sector real-consumption deflator construction
+        description: >-
+          Temporal and spatial price adjustments are combined into state-sector deflators used to express consumption in comparable 2011-12 rupees. The validation figure below compares the harmonized series with HCES.
+        outputs:
+          - consumption_validation
+      - id: code-reproducible-targets
+        file: R/pipeline/core_consumption_iv_targets.R
+        title: One analysis definition for full and processed-data replication
+        description: >-
+          The full build and the processed-data replication compose the same analysis-target factory, so replication changes inputs without redeclaring the statistical analysis. This shared branch constructs the consumption-IV panel, validates outcome support, estimates the registered specifications, and builds the schooling-consumption checks.

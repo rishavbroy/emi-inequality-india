@@ -1,3 +1,5 @@
+# sample-start: code-reproducible-targets
+
 consumption_iv_analysis_target_definitions <- function() {
   list(
     tar_target(
@@ -49,6 +51,8 @@ consumption_iv_analysis_target_definitions <- function() {
     )
   )
 }
+
+# sample-end: code-reproducible-targets
 
 core_consumption_iv_target_definitions <- function() {
   c(

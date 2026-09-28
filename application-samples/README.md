@@ -1,6 +1,6 @@
 # Application samples
 
-Application samples are generated from the current paper and R code. [`samples.yml`](samples.yml) is the single configuration file for sample content, identity variants, paper/repository links, and selected code outputs.
+Application samples are generated from the current paper and research code. [`samples.yml`](samples.yml) is the single configuration file for sample content, identity variants, paper/repository links, and selected code outputs.
 
 ## Outputs
 
@@ -15,7 +15,7 @@ Generated PDFs are the maintained application files. Intermediate Markdown and L
 
 Writing samples select ordinary Quarto section IDs from `paper/paper.qmd`, so the excerpts are generated directly from the paper.
 
-Coding samples use paired `sample-start:` / `sample-end:` comments in active R files because R has no document-section analogue. Marker IDs are declared in `samples.yml`, and validation requires each selected marker pair to be unique and well formed.
+Coding samples use paired `sample-start:` / `sample-end:` comments in active R and Python files. Marker IDs are declared in `samples.yml`, and validation requires each selected marker pair to be unique and well formed.
 
 ## Build
 
@@ -41,7 +41,7 @@ The low-level LaTeX/reference extraction is an implementation detail of the rend
 
 ## Coding-sample outputs
 
-Selected code excerpts may include tables or figures from the paper listed under `coding_outputs`. A selected LaTeX table declares the paper cross-reference whose displayed number it should retain. Output composition does not re-estimate results independently of the main analysis.
+Selected code excerpts may attach tables or figures from the paper listed under `coding_outputs`. Results appear immediately after the excerpt they illustrate. A selected LaTeX table declares the paper cross-reference whose displayed number it should retain. Output composition does not re-estimate results independently of the main analysis.
 
 ## Page-count policy
 

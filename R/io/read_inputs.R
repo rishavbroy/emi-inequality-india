@@ -1,7 +1,6 @@
 # This file is part of the EMI inequality research pipeline.
 # Functions are intentionally small enough to be tested and called by _targets.R.
 
-# sample-start: code-census-geospatial-import
 
 #' read nss 2007 education
 #'
@@ -63,6 +62,8 @@ join_district_carveout_wrapped_label <- function(previous, continuation) {
   }
   paste0(previous, continuation)
 }
+
+# sample-start: code-district-carveout-repair
 
 #' Read the headerless 1961-2001 district carve-out source
 #'
@@ -156,6 +157,8 @@ read_district_carveouts <- function(path) {
   out
 }
 
+# sample-end: code-district-carveout-repair
+
 #' read one manifest row
 #'
 #' @return Reader output for raw data files, or a validated path for sidecars/assets.
@@ -192,5 +195,3 @@ read_manifest_group <- function(paths, source_id) {
   rows <- require_manifest_files(paths, source_id)
   stats::setNames(lapply(seq_len(nrow(rows)), function(i) read_by_manifest_row(rows[i, ])), rows$file_id)
 }
-
-# sample-end: code-census-geospatial-import

@@ -44,6 +44,19 @@ test_that("LaTeX coding outputs declare the paper cross-reference they preserve"
   )
 })
 
+test_that("coding-output references are validated at the excerpt that displays them", {
+  env <- sample_test_env()
+  manifest <- yaml::read_yaml(repo_file("application-samples", "samples.yml"))
+  broken <- manifest
+  broken$coding[[1L]]$excerpts[[1L]]$outputs <- "missing-output"
+
+  expect_error(
+    env$validate_application_sample_manifest(broken),
+    "unknown selected outputs"
+  )
+})
+
+
 test_that("long coding sample contains every short-sample excerpt plus additional material", {
   env <- sample_test_env()
   manifest <- env$read_application_sample_manifest(repo_file("application-samples", "samples.yml"))
@@ -256,9 +269,18 @@ test_that("coding sample assembly uses paper typography and wrapped highlighted 
     "answer <- 42",
     "# sample-end: fixture"
   ), code_file)
+  python_file <- tempfile(fileext = ".py")
+  writeLines(c(
+    "# sample-start: python-fixture",
+    "answer = 43",
+    "# sample-end: python-fixture"
+  ), python_file)
   spec <- list(
     id = "short",
-    excerpts = list(list(file = code_file, id = "fixture", title = "Fixture"))
+    excerpts = list(
+      list(file = code_file, id = "fixture", title = "Fixture", description = "Fixture context."),
+      list(file = python_file, id = "python-fixture", title = "Python fixture")
+    )
   )
   manifest <- list(
     identity = list(named = list(author = "Example Author")),
@@ -275,7 +297,10 @@ test_that("coding sample assembly uses paper typography and wrapped highlighted 
   rendered <- paste(readLines(out, warn = FALSE), collapse = "\n")
 
   expect_match(rendered, "```r", fixed = TRUE)
+  expect_match(rendered, "Fixture context.", fixed = TRUE)
   expect_match(rendered, "answer <- 42", fixed = TRUE)
+  expect_match(rendered, "```python", fixed = TRUE)
+  expect_match(rendered, "answer = 43", fixed = TRUE)
   expect_match(rendered, env$application_sample_file_url(code_file, manifest), fixed = TRUE)
   expect_false(grepl("```{r}", rendered, fixed = TRUE))
   expect_false(grepl("CODING SAMPLE:", rendered, fixed = TRUE))
@@ -314,24 +339,58 @@ test_that("coding samples reuse paper-formatted output files", {
     table = list(type = "latex", file = table_file, paper_label = "tbl-paper-fixture"),
     figure = list(type = "figure", file = figure_file, title = "Paper figure")
   ))
-  spec <- list(outputs = c("table", "figure"))
-
-  manifest$paper <- list(repository_url = "https://github.com/example/repository")
+  manifest$coding_outputs$table$title <- "Fixture table"
+  manifest$coding_outputs$figure$description <- "Fixture figure description."
   text <- paste(
     env$coding_sample_output_lines(
-      spec, manifest, "named", c(`tbl-paper-fixture` = "7", `tbl-file-fixture` = "7a")
+      c("table", "figure"), manifest, c(`tbl-paper-fixture` = "7", `tbl-file-fixture` = "7a")
     ),
     collapse = "\n"
   )
 
-  expect_match(text, "# Selected Paper Outputs", fixed = TRUE)
+  expect_match(text, "### Result: Fixture table", fixed = TRUE)
   expect_match(text, "\\setcounter{table}{6}", fixed = TRUE)
   expect_equal(length(gregexpr("\\\\FloatBarrier", text, perl = TRUE)[[1L]]), 2L)
   expect_match(text, paste0("\\input{../../", table_file, "}"), fixed = TRUE)
   expect_match(text, paste0("![](../../", figure_file, "){width=95%}"), fixed = TRUE)
-  expect_match(text, "## Paper figure", fixed = TRUE)
-  expect_match(text, "https://github.com/example/repository/blob/main/R/output/make_tables.R", fixed = TRUE)
-  expect_match(text, "https://github.com/example/repository/blob/main/R/output/make_figures.R", fixed = TRUE)
+  expect_match(text, "### Result: Paper figure", fixed = TRUE)
+  expect_match(text, "Fixture figure description.", fixed = TRUE)
+})
+
+
+test_that("coding-sample results follow the excerpt that produces them", {
+  env <- sample_test_env()
+  sys.source(repo_file("R", "application_samples", "coding_sample_outputs.R"), envir = env)
+  sys.source(repo_file("R", "application_samples", "render_coding_sample.R"), envir = env)
+  code_file <- tempfile(fileext = ".R")
+  table_file <- tempfile(fileext = ".tex")
+  paper_file <- tempfile(fileext = ".qmd")
+  writeLines(c(
+    "# sample-start: fixture",
+    "answer <- 42",
+    "# sample-end: fixture"
+  ), code_file)
+  writeLines("\\begin{table}fixture\\end{table}", table_file)
+  writeLines(c("---", "title: Fixture", "---", "# Intro"), paper_file)
+  manifest <- list(
+    paper = list(source = paper_file, repository_url = "https://example.com/repository"),
+    coding_outputs = list(
+      table = list(type = "latex", file = table_file, paper_label = "tbl-fixture", title = "Fixture result")
+    )
+  )
+  spec <- list(excerpts = list(list(
+    id = "fixture", file = code_file, title = "Fixture code", outputs = "table"
+  )))
+
+  body <- env$coding_sample_body(spec, "named", manifest, c(`tbl-fixture` = "3"))
+  code_heading <- match("## Fixture code", body)
+  result_heading <- match("### Result: Fixture result", body)
+
+  expect_true(is.finite(code_heading))
+  expect_true(is.finite(result_heading))
+  expect_lt(code_heading, result_heading)
+  expect_true(any(grepl("answer <- 42", body, fixed = TRUE)))
+  expect_true(any(grepl("\\input{../../", body, fixed = TRUE)))
 })
 
 

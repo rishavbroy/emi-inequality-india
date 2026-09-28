@@ -1,4 +1,4 @@
-# Render coding samples from marker-delimited R excerpts in the shared manifest.
+# Render coding samples from marker-delimited research-code excerpts in the shared manifest.
 
 render_coding_samples <- function(manifest_path = application_sample_manifest_path()) {
   manifest <- read_application_sample_manifest(manifest_path)
@@ -14,15 +14,22 @@ render_coding_samples <- function(manifest_path = application_sample_manifest_pa
   unname(outputs)
 }
 
+
+coding_sample_body <- function(spec, variant, manifest, reference_labels) {
+  unlist(lapply(spec$excerpts, function(excerpt) {
+    c(
+      extract_code_excerpt(excerpt, variant, manifest),
+      coding_sample_output_lines(excerpt$outputs %||% character(), manifest, reference_labels)
+    )
+  }), use.names = FALSE)
+}
+
 render_one_coding_sample <- function(spec, variant, manifest, reference_labels) {
   output <- application_sample_output_path("coding", spec$id, variant, manifest)
   work_dir <- file.path("application-samples", ".work")
   dir.create(work_dir, recursive = TRUE, showWarnings = FALSE)
   output_qmd <- file.path(work_dir, paste0(tools::file_path_sans_ext(basename(output)), ".qmd"))
-  body <- c(
-    extract_code_excerpts(spec, variant, manifest),
-    coding_sample_output_lines(spec, manifest, variant, reference_labels)
-  )
+  body <- coding_sample_body(spec, variant, manifest, reference_labels)
   assemble_coding_sample_qmd(spec, variant, manifest, body, output_qmd)
   render_qmd_to_pdf(output_qmd, output)
   if (identical(variant, "anonymous")) {

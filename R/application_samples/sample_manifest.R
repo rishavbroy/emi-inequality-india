@@ -38,7 +38,12 @@ validate_application_sample_manifest <- function(manifest) {
   if (is.null(output_ids) || any(!nzchar(output_ids)) || anyDuplicated(output_ids)) {
     stop("coding_outputs must be a named mapping with unique IDs.", call. = FALSE)
   }
-  referenced_outputs <- unique(unlist(lapply(manifest$coding, function(x) x$outputs %||% character()), use.names = FALSE))
+  referenced_outputs <- unique(unlist(lapply(manifest$coding, function(spec) {
+    c(
+      spec$outputs %||% character(),
+      unlist(lapply(spec$excerpts, function(x) x$outputs %||% character()), use.names = FALSE)
+    )
+  }), use.names = FALSE))
   missing_outputs <- setdiff(referenced_outputs, output_ids)
   if (length(missing_outputs)) {
     stop("Coding samples reference unknown selected outputs: ", paste(missing_outputs, collapse = ", "), call. = FALSE)
