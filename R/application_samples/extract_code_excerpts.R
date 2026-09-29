@@ -53,7 +53,7 @@ coding_sample_notice <- function(spec, variant, manifest, source_metadata) {
     "This document contains excerpts from the replication code of ",
     if (identical(variant, "anonymous")) "a paper titled " else "my paper ",
     paper_title,
-    " Results shown after an excerpt are the same generated files used by the paper."
+    " Excerpts are followed by their corresponding outputs when appropriate."
   )
 
   c(
