@@ -713,9 +713,11 @@ test_that("section-selection filter can retain a numbered figure outside selecte
     "",
     "# Omit {#sec-omit}",
     "",
+    "::: {.section-wrapper}",
     "Omitted text.",
     "",
-    "![Selected figure](figure.pdf){#fig-extra}"
+    "![Selected figure](figure.pdf){#fig-extra}",
+    ":::"
   ), input)
   status <- system2(
     Sys.which("pandoc"),
