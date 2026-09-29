@@ -204,6 +204,8 @@ test_that("writing sample assembly derives identity and section selection from o
   expect_identical(anonymous_meta$author, manifest$identity$anonymous$author)
   expect_identical(named_meta$`sample-sections`, unname(unlist(spec$sections, use.names = FALSE)))
   expect_identical(anonymous_meta$`sample-sections`, unname(unlist(spec$sections, use.names = FALSE)))
+  expect_identical(named_meta$`sample-figures`, unname(unlist(spec$figures, use.names = FALSE)))
+  expect_identical(anonymous_meta$`sample-figures`, unname(unlist(spec$figures, use.names = FALSE)))
   expect_true(isTRUE(named_meta$`suppress-bibliography`))
   expect_true(isTRUE(anonymous_meta$`suppress-bibliography`))
   expect_true(nzchar(named_meta$thanks %||% ""))
@@ -691,6 +693,69 @@ test_that("writing numbering preflight requires labels for retained cross-refere
   ))
 })
 
+test_that("section-selection filter can retain a numbered figure outside selected sections", {
+  skip_if(!nzchar(Sys.which("pandoc")), "pandoc is unavailable")
+  input <- tempfile(fileext = ".md")
+  output <- tempfile(fileext = ".tex")
+  writeLines(c(
+    "---",
+    "sample-sections:",
+    "  - sec-keep",
+    "sample-figures:",
+    "  - fig-extra",
+    "sample-reference-labels:",
+    "  sec-keep: '1'",
+    "  fig-extra: '7'",
+    "---",
+    "# Keep {#sec-keep}",
+    "",
+    "Kept text.",
+    "",
+    "# Omit {#sec-omit}",
+    "",
+    "Omitted text.",
+    "",
+    "![Selected figure](figure.pdf){#fig-extra}"
+  ), input)
+  status <- system2(
+    Sys.which("pandoc"),
+    c(
+      shQuote(input),
+      "--lua-filter", shQuote(repo_file("application-samples", "filters", "select-sections.lua")),
+      "-t", "latex",
+      "-o", shQuote(output)
+    )
+  )
+  expect_identical(status, 0L)
+  rendered <- paste(readLines(output, warn = FALSE), collapse = "\n")
+  expect_match(rendered, "Kept text.", fixed = TRUE)
+  expect_match(rendered, "Selected figure", fixed = TRUE)
+  expect_match(rendered, "\\setcounter{figure}{6}", fixed = TRUE)
+  expect_false(grepl("Omitted text.", rendered, fixed = TRUE))
+})
+
+
+test_that("writing figure selection validates paper membership and reference numbering", {
+  env <- sample_test_env()
+  source <- tempfile(fileext = ".qmd")
+  writeLines(c(
+    "---", "title: Fixture", "---",
+    "# Keep {#sec-keep}", "",
+    "![Figure](figure.pdf){#fig-extra}"
+  ), source)
+
+  expect_no_error(env$validate_writing_figure_ids(source, "fig-extra"))
+  expect_error(env$validate_writing_figure_ids(source, "fig-missing"))
+  expect_error(env$validate_writing_figure_ids(source, "table-extra"))
+  expect_no_error(env$validate_writing_reference_labels(
+    source, "sec-keep", c(`sec-keep` = "1", `fig-extra` = "7"), "fig-extra"
+  ))
+  expect_error(env$validate_writing_reference_labels(
+    source, "sec-keep", c(`sec-keep` = "1"), "fig-extra"
+  ))
+})
+
+
 test_that("section-selection filter preserves full-paper numbering for retained content", {
   skip_if(!nzchar(Sys.which("pandoc")), "pandoc is unavailable")
   input <- tempfile(fileext = ".md")
@@ -751,32 +816,34 @@ test_that("omitted writing-sample cross-references use the full-paper label inde
     "",
     "# Keep {#sec-keep}",
     "",
-    "See @sec-drop and @fig-keep.",
-    "",
-    "![Kept figure](figure.pdf){#fig-keep}",
+    "See @sec-drop and @fig-extra.",
     "",
     "# Drop {#sec-drop}",
     "",
-    "Omitted."
+    "Omitted.",
+    "",
+    "![Selected figure](figure.pdf){#fig-extra}"
   )
   body <- env$split_qmd_front_matter(source)$body
-  labels <- c(`sec-drop` = "2", `fig-keep` = "1")
+  labels <- c(`sec-drop` = "2", `fig-extra` = "7")
 
   named <- env$externalize_omitted_writing_crossrefs(
-    body, source, "sec-keep", labels, "named", "https://example.com/paper.pdf"
+    body, source, "sec-keep", labels, "named", "https://example.com/paper.pdf",
+    figure_ids = "fig-extra"
   )
   anonymous <- env$externalize_omitted_writing_crossrefs(
-    body, source, "sec-keep", labels, "anonymous", "https://example.com/paper.pdf"
+    body, source, "sec-keep", labels, "anonymous", "https://example.com/paper.pdf",
+    figure_ids = "fig-extra"
   )
 
   named_text <- paste(named, collapse = "\n")
   anonymous_text <- paste(anonymous, collapse = "\n")
   expect_match(named_text, "[Section 2](https://example.com/paper.pdf)", fixed = TRUE)
-  expect_match(named_text, "@fig-keep", fixed = TRUE)
+  expect_match(named_text, "@fig-extra", fixed = TRUE)
   expect_false(grepl("@sec-drop", named_text, fixed = TRUE))
   expect_match(anonymous_text, "Section 2", fixed = TRUE)
   expect_false(grepl("example.com", anonymous_text, fixed = TRUE))
-  expect_match(anonymous_text, "@fig-keep", fixed = TRUE)
+  expect_match(anonymous_text, "@fig-extra", fixed = TRUE)
   expect_error(env$externalize_omitted_writing_crossrefs(
     body, source, "sec-keep", c(`fig-keep` = "1"), "named", "https://example.com/paper.pdf"
   ))

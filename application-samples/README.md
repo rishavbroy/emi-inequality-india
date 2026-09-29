@@ -35,7 +35,7 @@ Define identity changes once in the manifest or rendering helpers.
 
 ## Writing-sample numbering and references
 
-Writing excerpts preserve the current full paper's section, table, figure, and equation numbering. References to omitted material use the current full-paper labels. The writing samples also retain the paper's acknowledgments; the replication-package link in the paper title footnote remains exclusive to the full paper. This keeps excerpts synchronized when the paper structure changes.
+Writing excerpts preserve the current full paper's section, table, figure, and equation numbering. A writing-sample specification may also retain selected paper figures outside the included sections; those figures keep the paper's caption and number. References to omitted material use the current full-paper labels. The writing samples also retain the paper's acknowledgments; the replication-package link in the paper title footnote remains exclusive to the full paper. This keeps excerpts synchronized when the paper structure changes.
 
 The low-level LaTeX/reference extraction is an implementation detail of the renderer; maintainers normally change section selections only in `samples.yml`.
 

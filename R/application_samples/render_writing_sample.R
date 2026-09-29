@@ -6,13 +6,15 @@ render_writing_samples <- function(manifest_path = application_sample_manifest_p
   if (any(excerpt_specs)) {
     for (spec in manifest$writing[excerpt_specs]) {
       validate_writing_section_ids(manifest$paper$source, unlist(spec$sections, use.names = FALSE))
+      validate_writing_figure_ids(manifest$paper$source, spec$figures %||% character())
     }
     reference_labels <- read_latex_reference_labels(paper_reference_aux_path(manifest$paper$source))
     for (spec in manifest$writing[excerpt_specs]) {
       validate_writing_reference_labels(
         manifest$paper$source,
         unlist(spec$sections, use.names = FALSE),
-        reference_labels
+        reference_labels,
+        unlist(spec$figures %||% character(), use.names = FALSE)
       )
     }
   } else {

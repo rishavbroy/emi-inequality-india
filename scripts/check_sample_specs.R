@@ -22,6 +22,12 @@ for (spec in manifest$writing) {
   if (length(missing)) {
     failures <- c(failures, paste0("writing sample ", spec$id, " missing section IDs: ", paste(missing, collapse = ", ")))
   }
+  tryCatch(
+    validate_writing_figure_ids(source_path, spec$figures %||% character()),
+    error = function(e) {
+      failures <<- c(failures, paste0("writing sample ", spec$id, ": ", conditionMessage(e)))
+    }
+  )
   if (is.null(spec$target_pages) || !is.finite(as.numeric(spec$target_pages)) || as.integer(spec$target_pages) < 1L) {
     failures <- c(failures, paste0("writing sample ", spec$id, " needs a positive target_pages value"))
   }

@@ -24,6 +24,8 @@ writing:
     target_pages: 5
     sections:
       - sec-intro
+    figures:
+      - fig-schooling-geography
   - id: 10pg
     target_pages: 10
     sections:
@@ -37,6 +39,7 @@ writing:
       - sec-intro
       - sec-language-persistence
       - sec-language-behavior
+      - sec-language-context
       - sec-schooling-menu
       - sec-schooling-market
       - sec-social-access

@@ -2,6 +2,7 @@
 -- retained sections, figures, tables, and equations from the full paper.
 
 local selected = nil
+local selected_figures = nil
 local reference_labels = nil
 
 local function meta_strings(value)
@@ -124,6 +125,7 @@ end
 
 function Meta(meta)
   selected = meta_strings(meta["sample-sections"])
+  selected_figures = meta_strings(meta["sample-figures"])
   reference_labels = reference_label_map(meta["sample-reference-labels"])
   return meta
 end
@@ -165,7 +167,10 @@ function Pandoc(doc)
       end
     end
 
-    local retain = (not seen_top_level) or active or (block.t == "Header" and context[block.identifier])
+    local crossref_id = block_crossref_id(block)
+    local selected_figure = crossref_id ~= nil and selected_figures[crossref_id]
+    local retain = (not seen_top_level) or active or selected_figure or
+      (block.t == "Header" and context[block.identifier])
     if retain then
       if block.t == "Header" then
         local reset = counter_reset(block.identifier)

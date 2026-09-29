@@ -119,16 +119,26 @@ qmd_rendered_tex_ids <- function(lines, source_dir) {
   ), use.names = FALSE))
 }
 
-writing_sample_retained_label_ids <- function(source_lines, section_ids, source_dir = ".") {
+writing_sample_retained_label_ids <- function(
+    source_lines, section_ids, source_dir = ".", figure_ids = character()
+) {
   body <- split_qmd_front_matter(source_lines)$body
   keep <- writing_sample_retained_body_lines(source_lines, section_ids)
   kept <- body[keep]
-  unique(c(qmd_label_ids(kept), qmd_rendered_tex_ids(kept, source_dir)))
+  unique(c(
+    qmd_label_ids(kept),
+    qmd_rendered_tex_ids(kept, source_dir),
+    unname(figure_ids)
+  ))
 }
 
-validate_writing_reference_labels <- function(source, section_ids, reference_labels) {
+validate_writing_reference_labels <- function(
+    source, section_ids, reference_labels, figure_ids = character()
+) {
   source_lines <- readLines(source, warn = FALSE)
-  retained <- writing_sample_retained_label_ids(source_lines, section_ids, dirname(source))
+  retained <- writing_sample_retained_label_ids(
+    source_lines, section_ids, dirname(source), figure_ids
+  )
   retained <- retained[grepl("^(?:sec|tbl|fig|eq)-", retained, perl = TRUE)]
   missing <- setdiff(retained, names(reference_labels %||% character()))
   if (length(missing)) {
@@ -174,10 +184,13 @@ externalize_crossrefs_in_line <- function(line, retained_ids, reference_labels, 
 # references to content that the excerpt will omit before Quarto processes the
 # excerpt; references to retained targets stay in Quarto's ordinary @id form.
 externalize_omitted_writing_crossrefs <- function(
-    body, source_lines, section_ids, reference_labels, variant, full_paper_url = "", source_dir = "."
+    body, source_lines, section_ids, reference_labels, variant, full_paper_url = "",
+    source_dir = ".", figure_ids = character()
 ) {
   keep <- writing_sample_retained_body_lines(source_lines, section_ids)
-  retained_ids <- writing_sample_retained_label_ids(source_lines, section_ids, source_dir)
+  retained_ids <- writing_sample_retained_label_ids(
+    source_lines, section_ids, source_dir, figure_ids
+  )
   body[keep] <- vapply(
     body[keep],
     externalize_crossrefs_in_line,
@@ -197,6 +210,24 @@ validate_writing_section_ids <- function(source, section_ids) {
   missing <- setdiff(section_ids, index$id)
   if (length(missing)) {
     stop("Writing-sample section IDs are missing from the current paper: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+  invisible(TRUE)
+}
+
+validate_writing_figure_ids <- function(source, figure_ids) {
+  figure_ids <- unname(unlist(figure_ids %||% character(), use.names = FALSE))
+  if (!length(figure_ids)) return(invisible(TRUE))
+  if (any(!grepl("^fig-[A-Za-z0-9_-]+$", figure_ids))) {
+    stop("Writing-sample figure IDs must use fig- labels.", call. = FALSE)
+  }
+  paper_ids <- qmd_label_ids(readLines(source, warn = FALSE))
+  missing <- setdiff(figure_ids, paper_ids)
+  if (length(missing)) {
+    stop(
+      "Writing-sample figure IDs are missing from the current paper: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
   }
   invisible(TRUE)
 }
@@ -240,7 +271,23 @@ writing_sample_contents <- function(spec, source_lines, reference_labels) {
     numbered <- paste0(prefix, format_english_list(numbers))
   }
 
-  format_english_list(c(named_sections, numbered))
+  figure_ids <- unname(unlist(spec$figures %||% character(), use.names = FALSE))
+  figures <- character()
+  if (length(figure_ids)) {
+    missing <- setdiff(figure_ids, names(reference_labels %||% character()))
+    if (length(missing)) {
+      stop(
+        "Full-paper reference index has no figure number for writing-sample figure(s): ",
+        paste(missing, collapse = ", "),
+        call. = FALSE
+      )
+    }
+    numbers <- unname(reference_labels[figure_ids])
+    prefix <- if (length(numbers) == 1L) "Figure " else "Figures "
+    figures <- paste0(prefix, format_english_list(numbers))
+  }
+
+  format_english_list(c(named_sections, numbered, figures))
 }
 
 writing_sample_notice <- function(spec, variant, manifest, source_lines, reference_labels = NULL) {
@@ -344,6 +391,8 @@ sample_metadata <- function(source_metadata, spec, variant, manifest) {
       list(list(at = "post-quarto", path = "../filters/select-sections.lua"))
     )
     meta$`sample-sections` <- unname(unlist(spec$sections, use.names = FALSE))
+    figure_ids <- unname(unlist(spec$figures %||% character(), use.names = FALSE))
+    if (length(figure_ids)) meta$`sample-figures` <- figure_ids
   }
   list(metadata = meta, abstract = abstract)
 }
@@ -369,7 +418,8 @@ assemble_writing_sample_qmd <- function(source, spec, variant, manifest, output_
     }
     body <- externalize_omitted_writing_crossrefs(
       body, source_lines, unlist(spec$sections, use.names = FALSE), reference_labels,
-      variant, manifest$paper$full_paper_url %||% "", dirname(source)
+      variant, manifest$paper$full_paper_url %||% "", dirname(source),
+      unlist(spec$figures %||% character(), use.names = FALSE)
     )
   }
 
