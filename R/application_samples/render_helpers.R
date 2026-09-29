@@ -79,8 +79,8 @@ application_sample_availability_sentence <- function(kind, sample_id, variant, m
   paper_phrase <- if (isTRUE(full_paper)) "the full paper" else "the paper"
   if (!identical(variant, "named")) {
     return(paste0(
-      "This project may have updated since this file was submitted; the most up-to-date versions of this document, ",
-      paper_phrase, ", and the repository are available online."
+      "This project may have been updated since this file was generated; the most up-to-date versions of this document, ",
+      paper_phrase, ", and the repository are available online for those interested."
     ))
   }
 
@@ -89,8 +89,8 @@ application_sample_availability_sentence <- function(kind, sample_id, variant, m
   repository <- paste0("[repository](", manifest$paper$repository_url, ")")
   paper_phrase <- if (isTRUE(full_paper)) paste0("the full ", paper) else paste0("the ", paper)
   paste0(
-    "This project may have updated since this file was submitted; the most up-to-date versions of this ",
-    document, ", ", paper_phrase, ", and the ", repository, " are available online."
+    "This project may have been updated since this file was generated; the most up-to-date versions of this ",
+    document, ", ", paper_phrase, ", and the ", repository, " are available online for those interested."
   )
 }
 
