@@ -46,7 +46,7 @@ render_one_writing_sample <- function(spec, variant, manifest, reference_labels 
   assemble_writing_sample_qmd(source, spec, variant, manifest, output_qmd, reference_labels)
   render_qmd_to_pdf(output_qmd, output)
   if (identical(variant, "anonymous")) {
-    validate_anonymous_sample(output, manifest$identity$anonymous$forbidden_strings %||% character())
+    validate_anonymous_sample(output, anonymous_sample_forbidden_strings(manifest))
   }
   output
 }

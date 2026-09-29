@@ -26,6 +26,14 @@ validate_application_sample_manifest <- function(manifest) {
   if (!all(c("named", "anonymous") %in% names(manifest$identity))) {
     stop("Application-sample manifest must define named and anonymous identities.", call. = FALSE)
   }
+  anonymous_identity <- manifest$identity$anonymous %||% list()
+  acknowledgment_names <- as.character(unlist(
+    anonymous_identity$acknowledgment_names %||% character(), use.names = FALSE
+  ))
+  acknowledgment_replacement <- as.character(anonymous_identity$acknowledgment_replacement %||% "")
+  if (length(acknowledgment_names) && !nzchar(acknowledgment_replacement)) {
+    stop("Anonymous acknowledgment names require a replacement label.", call. = FALSE)
+  }
   writing_ids <- vapply(manifest$writing, function(x) x$id %||% "", character(1))
   coding_ids <- vapply(manifest$coding, function(x) x$id %||% "", character(1))
   if (any(!nzchar(writing_ids)) || anyDuplicated(writing_ids)) {
@@ -96,6 +104,14 @@ validate_application_sample_manifest <- function(manifest) {
 
 application_sample_variants <- function(manifest = read_application_sample_manifest()) {
   names(manifest$identity)
+}
+
+anonymous_sample_forbidden_strings <- function(manifest) {
+  identity <- manifest$identity$anonymous %||% list()
+  unique(c(
+    as.character(unlist(identity$forbidden_strings %||% character(), use.names = FALSE)),
+    as.character(unlist(identity$acknowledgment_names %||% character(), use.names = FALSE))
+  ))
 }
 
 application_sample_output_path <- function(kind, sample_id, variant, manifest = read_application_sample_manifest()) {

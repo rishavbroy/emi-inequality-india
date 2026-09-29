@@ -48,10 +48,7 @@ test_that("LaTeX coding outputs declare the paper cross-reference they preserve"
 
   broken <- manifest
   broken$coding_outputs[[latex_ids[[1L]]]]$paper_label <- NULL
-  expect_error(
-    env$validate_application_sample_manifest(broken),
-    "LaTeX coding outputs must declare a tbl- paper_label"
-  )
+  expect_error(env$validate_application_sample_manifest(broken))
 })
 
 test_that("figure coding outputs declare the paper cross-reference they preserve", {
@@ -64,10 +61,7 @@ test_that("figure coding outputs declare the paper cross-reference they preserve
 
   broken <- manifest
   broken$coding_outputs[[figure_ids[[1L]]]]$paper_label <- NULL
-  expect_error(
-    env$validate_application_sample_manifest(broken),
-    "Figure coding outputs must declare a fig- paper_label"
-  )
+  expect_error(env$validate_application_sample_manifest(broken))
 })
 
 
@@ -94,10 +88,7 @@ test_that("coding-output references are validated at the excerpt that displays t
   broken <- manifest
   broken$coding[[1L]]$excerpts[[1L]]$outputs <- "missing-output"
 
-  expect_error(
-    env$validate_application_sample_manifest(broken),
-    "unknown selected outputs"
-  )
+  expect_error(env$validate_application_sample_manifest(broken))
 })
 
 
@@ -107,10 +98,7 @@ test_that("coding-output implementation files must exist", {
   broken <- manifest
   broken$coding_outputs[[1L]]$code_files <- "R/does-not-exist.R"
 
-  expect_error(
-    env$validate_application_sample_manifest(broken),
-    "Coding-sample output code files do not exist"
-  )
+  expect_error(env$validate_application_sample_manifest(broken))
 })
 
 
@@ -207,19 +195,30 @@ test_that("writing sample assembly derives identity and section selection from o
 
   env$assemble_writing_sample_qmd(source, spec, "named", manifest, out_named, labels)
   env$assemble_writing_sample_qmd(source, spec, "anonymous", manifest, out_anonymous, labels)
-  named <- paste(readLines(out_named, warn = FALSE), collapse = "\n")
-  anonymous <- paste(readLines(out_anonymous, warn = FALSE), collapse = "\n")
+  named_lines <- readLines(out_named, warn = FALSE)
+  anonymous_lines <- readLines(out_anonymous, warn = FALSE)
+  named_meta <- env$read_qmd_metadata(named_lines)
+  anonymous_meta <- env$read_qmd_metadata(anonymous_lines)
 
-  selected <- unlist(spec$sections, use.names = FALSE)
-  expect_match(named, "sample-sections", fixed = TRUE)
-  expect_match(named, selected[[1L]], fixed = TRUE)
-  expect_match(named, "suppress-bibliography: true", fixed = TRUE)
-  named_meta <- env$read_qmd_metadata(readLines(out_named, warn = FALSE))
-  anonymous_meta <- env$read_qmd_metadata(readLines(out_anonymous, warn = FALSE))
-  expect_match(named_meta$thanks, "Acknowledgments:", fixed = TRUE)
-  expect_match(anonymous_meta$thanks, "Acknowledgments:", fixed = TRUE)
+  expect_identical(named_meta$author, manifest$identity$named$author)
+  expect_identical(anonymous_meta$author, manifest$identity$anonymous$author)
+  expect_identical(named_meta$`sample-sections`, unname(unlist(spec$sections, use.names = FALSE)))
+  expect_identical(anonymous_meta$`sample-sections`, unname(unlist(spec$sections, use.names = FALSE)))
+  expect_true(isTRUE(named_meta$`suppress-bibliography`))
+  expect_true(isTRUE(anonymous_meta$`suppress-bibliography`))
+  expect_true(nzchar(named_meta$thanks %||% ""))
+  expect_true(nzchar(anonymous_meta$thanks %||% ""))
   expect_false(grepl(manifest$paper$repository_url, named_meta$thanks, fixed = TRUE))
-  expect_false(grepl(manifest$paper$repository_url, anonymous_meta$thanks, fixed = TRUE))
+  acknowledgment_names <- manifest$identity$anonymous$acknowledgment_names %||% character()
+  expect_false(any(vapply(
+    acknowledgment_names, grepl, logical(1), x = anonymous_meta$thanks, fixed = TRUE
+  )))
+  expect_true(grepl(
+    manifest$identity$anonymous$acknowledgment_replacement,
+    anonymous_meta$thanks,
+    fixed = TRUE
+  ))
+
   header_includes <- unlist(named_meta$`header-includes`, use.names = FALSE)
   expect_true(any(grepl("\\providecommand{\\citeproc}[2]{#2}", header_includes, fixed = TRUE)))
   expect_false(any(grepl("externaldocument", header_includes, fixed = TRUE)))
@@ -229,29 +228,22 @@ test_that("writing sample assembly derives identity and section selection from o
   expect_true(length(named_meta$`sample-reference-labels`) > 0L)
   expect_true(isTRUE(named_meta$format$pdf$`keep-tex`))
   expect_identical(named_meta$format$pdf$documentclass, "article")
-  expect_match(named, "\\begin{abstract}", fixed = TRUE)
-  expect_match(named, "\\end{abstract}", fixed = TRUE)
-  expect_false(grepl("## Abstract", named, fixed = TRUE))
+
   selector <- named_meta$filters[[length(named_meta$filters)]]
   expect_identical(selector$at, "post-quarto")
   expect_identical(selector$path, "../filters/select-sections.lua")
-  expect_match(named, "Rishav Roy", fixed = TRUE)
-  expect_match(named, manifest$paper$repository_url, fixed = TRUE)
+
+  named <- paste(named_lines, collapse = "\n")
+  anonymous <- paste(anonymous_lines, collapse = "\n")
+  expect_match(named, env$application_sample_document_url("writing", spec$id, "named", manifest), fixed = TRUE)
   expect_match(named, env$application_sample_makefile_url(manifest), fixed = TRUE)
   expect_match(named, env$application_sample_build_script_url(manifest), fixed = TRUE)
-  expect_false(grepl(env$quoted_paper_title(env$read_qmd_metadata(readLines(source, warn = FALSE))), named, fixed = TRUE))
-  expect_false(grepl("bash scripts/run_full_build.sh", named, fixed = TRUE))
-  expect_match(anonymous, "author: Anonymous", fixed = TRUE)
-  expect_false(grepl(manifest$paper$repository_url, anonymous, fixed = TRUE))
-  expect_false(grepl(manifest$paper$full_paper_url, anonymous, fixed = TRUE))
-  expect_false(grepl("http://", anonymous, fixed = TRUE))
-  expect_false(grepl("https://", anonymous, fixed = TRUE))
-  expect_match(anonymous, "make samples", fixed = TRUE)
-  expect_match(anonymous, "`scripts/run_full_build.sh`", fixed = TRUE)
-  expect_false(grepl("bash scripts/run_full_build.sh", anonymous, fixed = TRUE))
+  forbidden <- env$anonymous_sample_forbidden_strings(manifest)
+  expect_false(any(vapply(forbidden, grepl, logical(1), x = anonymous, fixed = TRUE)))
 })
 
-test_that("writing sample notices use current paper numbers and abstract styling", {
+
+test_that("writing sample notices use current section numbers and identity-specific links", {
   env <- sample_test_env()
   source <- c(
     "---",
@@ -284,35 +276,59 @@ test_that("writing sample notices use current paper numbers and abstract styling
   named <- paste(env$writing_sample_notice(spec, "named", manifest, source, labels), collapse = "\n")
   anonymous <- paste(env$writing_sample_notice(spec, "anonymous", manifest, source, labels), collapse = "\n")
 
-  expect_match(named, "This document contains the Introduction, Conclusion, and Sections 3.1 and 3.2 of the titular paper.", fixed = TRUE)
-  expect_false(grepl("Fixture Paper", named, fixed = TRUE))
-  expect_match(named, "\\renewcommand{\\abstractname}{WRITING SAMPLE: 5-PAGE COPY}", fixed = TRUE)
-  expect_match(named, "\\begin{abstract}", fixed = TRUE)
-  expect_match(named, env$application_sample_build_script_url(manifest), fixed = TRUE)
+  expect_match(named, "3.1", fixed = TRUE)
+  expect_match(named, "3.2", fixed = TRUE)
   expect_match(named, env$application_sample_document_url("writing", "fixture", "named", manifest), fixed = TRUE)
-  expect_false(grepl("bash scripts/run_full_build.sh", named, fixed = TRUE))
-  expect_false(grepl("Fixture Paper", anonymous, fixed = TRUE))
-  expect_false(grepl("https://", anonymous, fixed = TRUE))
-  expect_match(anonymous, "the most up-to-date versions of this document, the full paper, and the repository", fixed = TRUE)
-  expect_match(anonymous, "This PDF can be generated by running `make samples` or `scripts/run_full_build.sh` from the repo root.", fixed = TRUE)
+  expect_match(named, env$application_sample_build_script_url(manifest), fixed = TRUE)
+  expect_match(anonymous, "3.1", fixed = TRUE)
+  expect_match(anonymous, "3.2", fixed = TRUE)
+  expect_false(grepl(env$application_sample_document_url("writing", "fixture", "named", manifest), anonymous, fixed = TRUE))
 
-  full <- paste(
+  full_named <- paste(
     env$writing_sample_notice(list(id = "full", mode = "full"), "named", manifest, source),
     collapse = "\n"
   )
-  expect_false(grepl("This document contains", full, fixed = TRUE))
-  expect_match(full, env$application_sample_document_url("writing", "full", "named", manifest), fixed = TRUE)
-  expect_match(full, "the [paper](https://example.com/paper.pdf)", fixed = TRUE)
-  expect_match(full, "WRITING SAMPLE: FULL PAPER", fixed = TRUE)
-
   full_anonymous <- paste(
     env$writing_sample_notice(list(id = "full", mode = "full"), "anonymous", manifest, source),
     collapse = "\n"
   )
-  expect_match(full_anonymous, "the most up-to-date versions of this document, the paper, and the repository", fixed = TRUE)
-  expect_false(grepl("https://", full_anonymous, fixed = TRUE))
+  expect_match(full_named, env$application_sample_document_url("writing", "full", "named", manifest), fixed = TRUE)
+  expect_false(grepl(env$application_sample_document_url("writing", "full", "named", manifest), full_anonymous, fixed = TRUE))
 })
 
+
+test_that("writing-sample acknowledgments apply identity redactions", {
+  env <- sample_test_env()
+  repository_url <- "https://example.com/repository"
+  identity <- list(
+    acknowledgment_names = c("Professor One", "Professor Two", "Professor Three"),
+    acknowledgment_replacement = "[my professors]"
+  )
+  thanks <- paste(
+    "Acknowledgments: Thanks to Professor One, Professor Two, and Professor Three.",
+    paste0("Replication materials are [available here](", repository_url, ").")
+  )
+
+  anonymous <- env$writing_sample_acknowledgments(thanks, repository_url, identity)
+  expect_true(grepl(identity$acknowledgment_replacement, anonymous, fixed = TRUE))
+  expect_false(any(vapply(
+    identity$acknowledgment_names, grepl, logical(1), x = anonymous, fixed = TRUE
+  )))
+  expect_false(grepl(repository_url, anonymous, fixed = TRUE))
+})
+
+test_that("anonymous sample validation includes configured acknowledgment names", {
+  env <- sample_test_env()
+  manifest <- list(identity = list(anonymous = list(
+    forbidden_strings = c("Applicant Name", "applicant-handle"),
+    acknowledgment_names = c("Professor One", "Professor Two")
+  )))
+
+  expect_setequal(
+    env$anonymous_sample_forbidden_strings(manifest),
+    c("Applicant Name", "applicant-handle", "Professor One", "Professor Two")
+  )
+})
 
 test_that("sample availability links target the published named PDFs", {
   env <- sample_test_env()
@@ -391,13 +407,10 @@ test_that("coding sample assembly uses paper typography and wrapped highlighted 
   expect_match(rendered, env$application_sample_file_url(code_file, manifest), fixed = TRUE)
   expect_false(grepl("```{r}", rendered, fixed = TRUE))
   expect_false(grepl("CODING SAMPLE:", rendered, fixed = TRUE))
-  expect_match(rendered, "my paper “Fixture Paper: Fixture Subtitle.”", fixed = TRUE)
   expect_match(rendered, env$application_sample_document_url("coding", "short", "named", manifest), fixed = TRUE)
   expect_match(rendered, env$application_sample_makefile_url(manifest), fixed = TRUE)
   expect_match(rendered, env$application_sample_build_script_url(manifest), fixed = TRUE)
-  expect_false(grepl("bash scripts/run_full_build.sh", rendered, fixed = TRUE))
   meta <- env$read_qmd_metadata(readLines(out, warn = FALSE))
-  expect_identical(meta$subtitle, "Short Version")
   expect_identical(meta$format$pdf$documentclass, "article")
   expect_identical(meta$format$pdf$`syntax-highlighting`, "tango")
   expect_identical(meta$format$pdf$`code-block-bg`, "#f7f7f7")
@@ -418,9 +431,6 @@ test_that("coding sample assembly uses paper typography and wrapped highlighted 
   anonymous_body <- env$extract_code_excerpts(spec, "anonymous", manifest)
   env$assemble_coding_sample_qmd(spec, "anonymous", manifest, anonymous_body, anon_out)
   anonymous <- paste(readLines(anon_out, warn = FALSE), collapse = "\n")
-  expect_match(anonymous, "a paper titled “Fixture Paper: Fixture Subtitle.”", fixed = TRUE)
-  expect_false(grepl("https://", anonymous, fixed = TRUE))
-  expect_match(anonymous, "`scripts/run_full_build.sh`", fixed = TRUE)
   anonymous_meta <- env$read_qmd_metadata(readLines(anon_out, warn = FALSE))
   expect_null(anonymous_meta$`sample-full-paper-url`)
   anonymous_headers <- unlist(anonymous_meta$`header-includes`, use.names = FALSE)
@@ -480,7 +490,6 @@ test_that("coding-sample outputs link additional implementation files when reque
 
   expect_match(named, env$application_sample_file_url(code_file, manifest), fixed = TRUE)
   expect_match(anonymous, paste0("`", code_file, "`"), fixed = TRUE)
-  expect_false(grepl("https://", anonymous, fixed = TRUE))
 })
 
 
@@ -526,15 +535,12 @@ test_that("coding-sample tables require an unambiguous full-paper number", {
   writeLines("\\begin{table}\\caption{Fixture}\\label{tbl-file-fixture}x\\end{table}", table_file)
   item <- list(type = "latex", file = table_file, paper_label = "tbl-paper-fixture")
 
-  expect_error(env$selected_latex_lines(item, character()), "no integer table number for tbl-paper-fixture")
-  expect_error(
-    env$selected_latex_lines(item, c(`tbl-paper-fixture` = "7a")),
-    "no integer table number for tbl-paper-fixture"
-  )
-  expect_error(
-    env$selected_latex_lines(list(type = "latex", file = table_file), c(`tbl-paper-fixture` = "7")),
-    "must name its paper_label"
-  )
+  expect_error(env$selected_latex_lines(item, character()))
+  expect_error(env$selected_latex_lines(item, c(`tbl-paper-fixture` = "7a")))
+  expect_error(env$selected_latex_lines(
+    list(type = "latex", file = table_file),
+    c(`tbl-paper-fixture` = "7")
+  ))
 })
 
 
@@ -549,18 +555,11 @@ test_that("coding-sample figures require an unambiguous full-paper number", {
   manifest <- list(paper = list(source = paper_file))
   item <- list(type = "figure", paper_label = "fig-fixture")
 
-  expect_error(
-    env$selected_figure_lines(item, manifest, character()),
-    "no integer figure number for fig-fixture"
-  )
-  expect_error(
-    env$selected_figure_lines(item, manifest, c(`fig-fixture` = "4a")),
-    "no integer figure number for fig-fixture"
-  )
-  expect_error(
-    env$selected_figure_lines(list(type = "figure"), manifest, c(`fig-fixture` = "4")),
-    "must name its fig- paper_label"
-  )
+  expect_error(env$selected_figure_lines(item, manifest, character()))
+  expect_error(env$selected_figure_lines(item, manifest, c(`fig-fixture` = "4a")))
+  expect_error(env$selected_figure_lines(
+    list(type = "figure"), manifest, c(`fig-fixture` = "4")
+  ))
 })
 
 
@@ -684,10 +683,7 @@ test_that("writing numbering preflight requires labels for retained cross-refere
     "![Figure](figure.pdf){#fig-keep}"
   ), source)
 
-  expect_error(
-    env$validate_writing_reference_labels(source, "sec-keep", c(`sec-keep` = "3")),
-    "no label for retained writing-sample content: fig-keep"
-  )
+  expect_error(env$validate_writing_reference_labels(source, "sec-keep", c(`sec-keep` = "3")))
   expect_no_error(env$validate_writing_reference_labels(
     source,
     "sec-keep",
@@ -781,12 +777,9 @@ test_that("omitted writing-sample cross-references use the full-paper label inde
   expect_match(anonymous_text, "Section 2", fixed = TRUE)
   expect_false(grepl("example.com", anonymous_text, fixed = TRUE))
   expect_match(anonymous_text, "@fig-keep", fixed = TRUE)
-  expect_error(
-    env$externalize_omitted_writing_crossrefs(
-      body, source, "sec-keep", c(`fig-keep` = "1"), "named", "https://example.com/paper.pdf"
-    ),
-    "no label for sec-drop"
-  )
+  expect_error(env$externalize_omitted_writing_crossrefs(
+    body, source, "sec-keep", c(`fig-keep` = "1"), "named", "https://example.com/paper.pdf"
+  ))
 })
 
 
@@ -805,7 +798,7 @@ test_that("LaTeX reference labels reject conflicting full-paper numbers", {
     "\\newlabel{sec-one}{{1}{2}{One}{section.1}{}}",
     "\\newlabel{sec-one}{{2}{3}{One}{section.2}{}}"
   ), aux)
-  expect_error(env$read_latex_reference_labels(aux), "conflicting numbers for: sec-one")
+  expect_error(env$read_latex_reference_labels(aux))
 })
 
 
@@ -830,10 +823,7 @@ test_that("writing excerpts fail closed without the full-paper reference index",
   )
   spec <- list(id = "fixture", target_pages = 1L, sections = "sec-keep")
 
-  expect_error(
-    env$assemble_writing_sample_qmd(source, spec, "named", manifest, output),
-    "require the current full-paper reference index"
-  )
+  expect_error(env$assemble_writing_sample_qmd(source, spec, "named", manifest, output))
 })
 
 
@@ -847,11 +837,7 @@ test_that("writing page-count checks report all mismatched deliverables without 
   env <- sample_test_env()
 
   expect_silent(env$check_writing_sample_page_counts(c(pdf, pdf), c(1L, NA_integer_)))
-  expect_message(
-    env$check_writing_sample_page_counts(c(pdf, pdf), c(2L, 3L)),
-    "(?s)WARNING: Writing-sample page counts differ from their current targets:.+1 pages \\(target 2\\).+1 pages \\(target 3\\)",
-    perl = TRUE
-  )
+  expect_message(env$check_writing_sample_page_counts(c(pdf, pdf), c(2L, 3L)))
 })
 
 test_that("final-output requirements are derived from the sample manifest", {

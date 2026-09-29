@@ -10,6 +10,11 @@ identity:
   anonymous:
     author: Anonymous
     prefix: Anon
+    acknowledgment_names:
+      - Laura Schechter
+      - Corina Mommaerts
+      - Agustín Gutiérrez
+    acknowledgment_replacement: "[my professors]"
     forbidden_strings:
       - Rishav Roy
       - rishavbroy

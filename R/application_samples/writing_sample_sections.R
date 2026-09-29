@@ -277,19 +277,48 @@ writing_sample_notice <- function(spec, variant, manifest, source_lines, referen
 }
 
 
-writing_sample_acknowledgments <- function(thanks) {
+writing_sample_acknowledgments <- function(thanks, repository_url = "", identity = list()) {
   if (is.null(thanks) || !nzchar(thanks)) return(NULL)
-  trimws(sub(
-    "\\s*The replication package can be found \\[here\\]\\([^)]*\\)\\.?(\\s*)$",
-    "",
-    thanks,
-    perl = TRUE
+  thanks <- trimws(as.character(thanks))
+  repository_url <- trimws(as.character(repository_url %||% ""))
+
+  if (nzchar(repository_url)) {
+    sentences <- strsplit(thanks, "(?<=[.!?])\\s+", perl = TRUE)[[1L]]
+    if (length(sentences) && grepl(repository_url, tail(sentences, 1L), fixed = TRUE)) {
+      sentences <- head(sentences, -1L)
+    }
+    thanks <- trimws(paste(sentences, collapse = " "))
+  }
+
+  acknowledgment_names <- as.character(unlist(
+    identity$acknowledgment_names %||% character(), use.names = FALSE
   ))
+  replacement <- as.character(identity$acknowledgment_replacement %||% "")
+  if (length(acknowledgment_names) && nzchar(replacement)) {
+    thanks <- sub(
+      format_english_list(acknowledgment_names),
+      replacement,
+      thanks,
+      fixed = TRUE
+    )
+    remaining_names <- acknowledgment_names[vapply(
+      acknowledgment_names, grepl, logical(1), x = thanks, fixed = TRUE
+    )]
+    if (length(remaining_names)) {
+      stop("Anonymous writing-sample acknowledgments still contain configured personal names.", call. = FALSE)
+    }
+  }
+
+  if (nzchar(thanks)) thanks else NULL
 }
 
 sample_metadata <- function(source_metadata, spec, variant, manifest) {
   meta <- paper_sample_metadata(source_metadata, variant, manifest)
-  meta$thanks <- writing_sample_acknowledgments(source_metadata$thanks %||% NULL)
+  meta$thanks <- writing_sample_acknowledgments(
+    source_metadata$thanks %||% NULL,
+    manifest$paper$repository_url %||% "",
+    manifest$identity[[variant]] %||% list()
+  )
   abstract <- meta$abstract %||% ""
   meta$abstract <- NULL
   meta$bibliography <- "../../paper/references.bib"

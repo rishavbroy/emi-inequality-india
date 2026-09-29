@@ -33,7 +33,7 @@ render_one_coding_sample <- function(spec, variant, manifest, reference_labels) 
   assemble_coding_sample_qmd(spec, variant, manifest, body, output_qmd)
   render_qmd_to_pdf(output_qmd, output)
   if (identical(variant, "anonymous")) {
-    validate_anonymous_sample(output, manifest$identity$anonymous$forbidden_strings %||% character())
+    validate_anonymous_sample(output, anonymous_sample_forbidden_strings(manifest))
   }
   output
 }
