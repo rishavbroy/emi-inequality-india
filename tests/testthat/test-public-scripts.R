@@ -28,7 +28,7 @@ test_that("rendered and archived artifacts are treated as binary by Git", {
   artifacts <- c(
     "posters/2026_predoc_conference/poster.pdf",
     "outputs/figures/main/map_emi_exposure.png",
-    "docs/plan/TO-DO Research Paper ECON 623.docx"
+    "docs/notes/example.docx"
   )
 
   expect_identical(

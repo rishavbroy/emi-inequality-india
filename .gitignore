@@ -34,6 +34,12 @@ data/interim/
 # locally stored literature PDFs
 relevant-literature/
 
+# local research notes, feedback, and one-off source inventories
+/docs/notes/
+/docs/feedback/
+/codebase_source_census_addendum.csv
+/exhaustive_markdown_source_map.csv
+
 # locally reproducible processed geography
 data/processed/geography/*.gpkg
 

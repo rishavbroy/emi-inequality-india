@@ -196,8 +196,14 @@ find "$tmpdir" -type f \( -name '*.aux' -o -name '*.log' -o -name '*.fls' -o -na
 # Raw data and literature are intentionally omitted from the review archive.
 rm -rf "$tmpdir/data/raw" "$tmpdir/data/raw_future" "$tmpdir/relevant-literature"
 rm -rf "$tmpdir/archive/implementation-bundles"
-rm -f "$tmpdir/docs/plan/THOROUGH NOTES Research Paper ECON 623.docx" \
-      "$tmpdir/docs/plan/COMPACTED NOTES Research Paper ECON 623.docx"
+# Local notes and feedback are deliberately absent from the review archive,
+# even if an older checkout still has them tracked.
+rm -rf "$tmpdir/docs/notes" "$tmpdir/docs/feedback"
+if [[ -d "$tmpdir/docs/plan" ]]; then
+  find "$tmpdir/docs/plan" -maxdepth 1 -type f -name '*.docx' -delete
+fi
+rm -f "$tmpdir/codebase_source_census_addendum.csv" \
+      "$tmpdir/exhaustive_markdown_source_map.csv"
 
 required_public=(
   "paper/paper.pdf"
