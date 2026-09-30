@@ -232,7 +232,7 @@ test_that("writing sample assembly derives identity and section selection from o
   expect_identical(named_meta$format$pdf$documentclass, "article")
 
   selector <- named_meta$filters[[length(named_meta$filters)]]
-  expect_identical(selector$at, "post-quarto")
+  expect_identical(selector$at, "pre-ast")
   expect_identical(selector$path, "../filters/select-sections.lua")
 
   named <- paste(named_lines, collapse = "\n")
@@ -713,10 +713,14 @@ test_that("section-selection filter can retain a numbered figure outside selecte
     "",
     "# Omit {#sec-omit}",
     "",
-    "::: {.section-wrapper}",
     "Omitted text.",
     "",
-    "![Selected figure](figure.pdf){#fig-extra}",
+    "::: {#fig-extra layout-ncol=2}",
+    "![Panel A](figure-a.pdf)",
+    "",
+    "![Panel B](figure-b.pdf)",
+    "",
+    "Selected figure",
     ":::"
   ), input)
   status <- system2(

@@ -388,7 +388,10 @@ sample_metadata <- function(source_metadata, spec, variant, manifest) {
     )
     meta$filters <- c(
       meta$filters %||% list(),
-      list(list(at = "post-quarto", path = "../filters/select-sections.lua"))
+      # Select raw paper blocks before Quarto converts cross-referenceable figures
+      # into FloatRefTarget nodes. Keeping selection on the ordinary Pandoc AST
+      # lets one filter handle sections, paper-owned figure divs, and raw LaTeX.
+      list(list(at = "pre-ast", path = "../filters/select-sections.lua"))
     )
     meta$`sample-sections` <- unname(unlist(spec$sections, use.names = FALSE))
     figure_ids <- unname(unlist(spec$figures %||% character(), use.names = FALSE))

@@ -130,57 +130,16 @@ function Meta(meta)
   return meta
 end
 
-local function selected_figures_in(block)
-  local ids = {}
-  local function record(el)
-    local id = block_crossref_id(el)
-    if id ~= nil and selected_figures[id] then
-      ids[id] = true
-    end
-  end
-
-  record(block)
-  pandoc.walk_block(block, {
-    Div = record,
-    Figure = record,
-    Table = record,
-    RawBlock = record
-  })
-  return ids
-end
-
-local function collect_selected_figure_blocks(doc)
-  local blocks = pandoc.List()
-  local seen = {}
-  local function record(el)
-    local id = block_crossref_id(el)
-    if id ~= nil and selected_figures[id] and not seen[id] then
-      blocks:insert(el)
-      seen[id] = true
-    end
-  end
-
-  doc:walk({
-    Div = record,
-    Figure = record,
-    Table = record,
-    RawBlock = record
-  })
-  return blocks
-end
-
 function Pandoc(doc)
   if selected == nil or next(selected) == nil then
     return doc
   end
 
-  local standalone_figures = collect_selected_figure_blocks(doc)
   local context = ancestor_ids(doc.blocks, selected)
   local out = pandoc.List()
   local seen_top_level = false
   local active = false
   local active_level = nil
-  local retained_selected_figures = {}
 
   local function insert_numbered(block)
     local id = block_crossref_id(block)
@@ -213,9 +172,6 @@ function Pandoc(doc)
     local retain = (not seen_top_level) or active or selected_figure or
       (block.t == "Header" and context[block.identifier])
     if retain then
-      for id, _ in pairs(selected_figures_in(block)) do
-        retained_selected_figures[id] = true
-      end
       if block.t == "Header" then
         local reset = counter_reset(block.identifier)
         if reset ~= nil then
@@ -228,17 +184,6 @@ function Pandoc(doc)
     end
   end
 
-  -- Quarto may nest a fenced figure div inside a section-level container before
-  -- post-Quarto filters run. Append explicitly selected figures that were not
-  -- already retained with a selected section. This keeps the paper-owned figure
-  -- block intact while allowing a short excerpt to add one numbered figure.
-  for _, block in ipairs(standalone_figures) do
-    local id = block_crossref_id(block)
-    if id ~= nil and not retained_selected_figures[id] then
-      insert_numbered(block)
-      retained_selected_figures[id] = true
-    end
-  end
 
   doc.blocks = out
   return doc
