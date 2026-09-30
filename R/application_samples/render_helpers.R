@@ -80,17 +80,17 @@ application_sample_availability_sentence <- function(kind, sample_id, variant, m
   if (!identical(variant, "named")) {
     return(paste0(
       "This project may have been updated since this file was generated; the most up-to-date versions of this document, ",
-      paper_phrase, ", and the repository are available online for those interested."
+      paper_phrase, ", and the replication package are available online for those interested."
     ))
   }
 
   document <- paste0("[document](", application_sample_document_url(kind, sample_id, variant, manifest), ")")
   paper <- paste0("[paper](", manifest$paper$full_paper_url, ")")
-  repository <- paste0("[repository](", manifest$paper$repository_url, ")")
+  replication_package <- paste0("[replication package](", manifest$paper$repository_url, ")")
   paper_phrase <- if (isTRUE(full_paper)) paste0("the full ", paper) else paste0("the ", paper)
   paste0(
     "This project may have been updated since this file was generated; the most up-to-date versions of this ",
-    document, ", ", paper_phrase, ", and the ", repository, " are available online for those interested."
+    document, ", ", paper_phrase, ", and the ", replication_package, " are available online for those interested."
   )
 }
 

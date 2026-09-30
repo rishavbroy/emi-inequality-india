@@ -1,6 +1,6 @@
 # Application samples
 
-Application samples are generated from the current paper and research code. [`samples.yml`](samples.yml) is the single configuration file for sample content, identity variants, paper/repository links, and selected code outputs.
+Application samples are generated from the current paper and research code. [`samples.yml`](samples.yml) is the single configuration file for sample content, identity variants, paper/replication-package links, and selected code outputs.
 
 ## Outputs
 
@@ -29,7 +29,7 @@ The standard complete build also renders samples unless sample rendering is expl
 
 ## Named and anonymous variants
 
-Both variants are generated from the same selected content. Named samples may link to the current hosted sample, paper, repository, Makefile, and build script. Anonymous samples omit identifying names and repository URLs. Writing-sample acknowledgments replace the configured personal names with the configured anonymous label, and all anonymous PDFs are checked against the identifying strings declared in `samples.yml`.
+Both variants are generated from the same selected content. Named samples may link to the current hosted sample, paper, replication package, Makefile, and build script. Anonymous samples omit identifying names and repository URLs. Writing-sample acknowledgments replace the configured personal names with the configured anonymous label, and all anonymous PDFs are checked against the identifying strings declared in `samples.yml`.
 
 Define identity changes once in the manifest or rendering helpers.
 
