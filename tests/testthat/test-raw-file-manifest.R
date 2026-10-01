@@ -300,6 +300,12 @@ test_that("data source catalogs are documented and uniquely identified", {
 
   expect_equal(anyDuplicated(sources$source_id), 0L)
   expect_equal(anyDuplicated(lineage$source_id), 0L)
+
+  manifest <- readr::read_csv(
+    file.path(root, "data", "metadata", "file_manifest.csv"),
+    show_col_types = FALSE
+  )
+  expect_setequal(setdiff(unique(manifest$source_id), sources$source_id), character())
   expect_true(all(c(
     "source_url", "access_date", "license_or_terms_notes", "citation_key", "notes"
   ) %in% names(sources)))
@@ -323,6 +329,23 @@ test_that("required manifest sources are marked current in the source catalog", 
   expect_false(anyNA(source_rows$source_id))
   expect_true(all(as.logical(source_rows$used_in_current_pipeline)))
   expect_true(all(source_rows$current_or_future %in% c("current", "both")))
+})
+
+test_that("implemented consumption survey sources are covered by raw-data preflight", {
+  paths <- build_paths(Sys.getenv("EMI_PROJECT_ROOT", "."))
+  registry <- read_consumption_survey_registry(paths)
+  manifest <- read_manifest(paths)
+
+  implemented <- registry$household_adapter != "legacy_schedule_pending"
+  required <- tolower(plain_chr(manifest$required_for_current_pipeline)) == "true"
+  required_source_ids <- unique(plain_chr(manifest$source_id[required]))
+  missing <- setdiff(unique(registry$source_id[implemented]), required_source_ids)
+
+  expect_identical(
+    missing,
+    character(),
+    info = paste("Consumption sources bypassing raw-data preflight:", paste(missing, collapse = ", "))
+  )
 })
 
 test_that("post-period LGD history is inventory-only lineage evidence", {

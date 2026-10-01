@@ -21,13 +21,16 @@ read_consumption_survey_registry_file <- function(path) {
 }
 
 read_consumption_survey_registry <- function(paths = build_paths(Sys.getenv("EMI_PROJECT_ROOT", unset = "."))) {
-  read_consumption_survey_registry_file(consumption_survey_registry_path(paths))
+  validate_consumption_survey_sources(
+    read_consumption_survey_registry_file(consumption_survey_registry_path(paths)),
+    read_data_source_catalog(paths)
+  )
 }
 
 validate_consumption_survey_registry <- function(registry) {
   x <- safe_df(registry)
   required <- c(
-    "survey_id", "survey_family", "survey_label", "survey_start", "survey_end",
+    "survey_id", "source_id", "survey_family", "survey_label", "survey_start", "survey_end",
     "schedule_variant", "analysis_role", "raw_path", "price_timing",
     "price_group_months", "district_identity_source", "mpce_contract", "legacy_wave",
     "household_adapter", "household_id_field", "mpce_field", "mpce_scale",
@@ -50,7 +53,7 @@ validate_consumption_survey_registry <- function(registry) {
   }
 
   required_text <- c(
-    "survey_id", "survey_family", "survey_label", "schedule_variant", "analysis_role",
+    "survey_id", "source_id", "survey_family", "survey_label", "schedule_variant", "analysis_role",
     "raw_path", "price_timing", "district_identity_source", "mpce_contract", "household_adapter"
   )
   adapter_fields <- c(
@@ -112,6 +115,42 @@ validate_consumption_survey_registry <- function(registry) {
   legacy <- !is.na(x$legacy_wave)
   if (anyDuplicated(x$legacy_wave[legacy])) stop("legacy_wave values must be unique when supplied.", call. = FALSE)
   rownames(x) <- NULL
+  x
+}
+
+validate_consumption_survey_sources <- function(registry, source_catalog) {
+  x <- validate_consumption_survey_registry(registry)
+  sources <- validate_data_source_catalog(source_catalog)
+
+  matched <- match(x$source_id, sources$source_id)
+  if (anyNA(matched)) {
+    missing <- unique(x$source_id[is.na(matched)])
+    stop(
+      "Consumption survey registry references unknown data source_id value(s): ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  linked <- sources[matched, , drop = FALSE]
+  inactive <- !linked$used_in_current_pipeline | linked$current_or_future == "future"
+  if (any(inactive)) {
+    stop(
+      "Consumption survey registry references inactive data source(s): ",
+      paste(unique(x$source_id[inactive]), collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  source_path <- sub("/+$", "", linked$local_raw_path)
+  registry_path <- sub("/+$", "", x$raw_path)
+  mismatch <- !nzchar(source_path) | source_path != registry_path
+  if (any(mismatch)) {
+    stop(
+      "Consumption survey raw_path disagrees with data_sources.csv for: ",
+      paste(unique(x$survey_id[mismatch]), collapse = ", "),
+      call. = FALSE
+    )
+  }
   x
 }
 

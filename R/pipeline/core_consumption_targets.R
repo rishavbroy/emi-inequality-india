@@ -6,8 +6,16 @@ core_consumption_target_definitions <- function() {
     format = "file"
   ),
   tar_target(
+    data_source_catalog_file,
+    data_source_catalog_path(paths),
+    format = "file"
+  ),
+  tar_target(
     consumption_survey_registry,
-    read_consumption_survey_registry_file(consumption_survey_registry_file)
+    validate_consumption_survey_sources(
+      read_consumption_survey_registry_file(consumption_survey_registry_file),
+      read_data_source_catalog_file(data_source_catalog_file)
+    )
   ),
   tar_target(
     raw_nss_2007_consumption,

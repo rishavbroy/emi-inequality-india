@@ -114,7 +114,8 @@ test_that("Census-2001 codebooks keep unmatched legacy district codes unresolved
     stringsAsFactors = FALSE
   )
   spec <- data.frame(
-    survey_id = "nss_2000_01", survey_family = "nss", survey_label = "Wave",
+    survey_id = "nss_2000_01", source_id = "nss_2000_01_consumption",
+    survey_family = "nss", survey_label = "Wave",
     survey_start = as.Date("2000-07-01"), survey_end = as.Date("2001-06-30"),
     schedule_variant = "schedule_1_0", analysis_role = "optional_pretrend",
     raw_path = "unused", price_timing = "quarterly_subround", price_group_months = 3,

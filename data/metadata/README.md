@@ -43,7 +43,7 @@ See [`../../docs/DISTRICT_LINEAGE.md`](../../docs/DISTRICT_LINEAGE.md) and [`../
 
 Consumption metadata separate source identity, welfare concepts, registered analysis endpoints, comparison checks, and price construction:
 
-- `consumption_survey_registry.csv`
+- `consumption_survey_registry.csv` — survey semantics and a `source_id` foreign key to `data_sources.csv`
 - `consumption_welfare_outcomes.csv`
 - `consumption_iv_outcomes.csv`
 - `consumption_welfare_comparisons.csv`
@@ -102,7 +102,7 @@ When changing metadata:
 
 1. **Preserve stable IDs.** IDs referenced by code, outputs, or review histories should not be renamed merely for presentation.
 2. **Keep paths repository-relative.** Local-machine absolute paths do not belong in tracked metadata.
-3. **Define each shared fact once.** Reuse the same path, construct definition, or finite design declaration downstream.
+3. **Define each shared fact once.** Reuse the same path, construct definition, or finite design declaration downstream. Reference-only catalog rows may leave `local_raw_path` blank when no local source artifact participates in the build; do not invent a repository path for a citation.
 4. **Separate scientific declarations from run results.** Metadata may declare admissibility, source meaning, or expected identities. Realized estimates/counts that depend on execution belong in generated outputs unless they are reviewed external facts.
 5. **Record scientific meaning explicitly.** Add a stable ID, label, or role field when downstream code needs it.
 6. **Update dependent hashes deliberately.** After intentional tracked-metadata edits, refresh the digest registry with `Rscript scripts/update_checksums.R` when required by the checks.

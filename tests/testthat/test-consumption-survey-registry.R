@@ -37,6 +37,39 @@ test_that("consumption survey registry is self-describing and distinguishes lega
   expect_equal(range(survey_period_months(modern)), as.Date(c("2022-08-01", "2023-07-01")))
 })
 
+
+test_that("consumption survey provenance resolves through the source catalog", {
+  paths <- build_paths(Sys.getenv("EMI_PROJECT_ROOT", "."))
+  registry <- read_consumption_survey_registry_file(consumption_survey_registry_path(paths))
+  sources <- read_data_source_catalog(paths)
+
+  linked <- validate_consumption_survey_sources(registry, sources)
+  expect_identical(linked$survey_id, registry$survey_id)
+  expect_true(all(nzchar(linked$source_id)))
+
+  unknown <- registry
+  unknown$source_id[[1L]] <- "missing_source"
+  expect_error(
+    validate_consumption_survey_sources(unknown, sources),
+    "unknown data source_id"
+  )
+
+  moved <- sources
+  row <- match(registry$source_id[[1L]], moved$source_id)
+  moved$local_raw_path[[row]] <- "data/raw/wrong-location"
+  expect_error(
+    validate_consumption_survey_sources(registry, moved),
+    "raw_path disagrees"
+  )
+
+  inactive <- sources
+  inactive$used_in_current_pipeline[[row]] <- FALSE
+  expect_error(
+    validate_consumption_survey_sources(registry, inactive),
+    "inactive data source"
+  )
+})
+
 test_that("registry validation rejects ambiguous or malformed survey contracts", {
   registry <- read_consumption_survey_registry(build_paths(Sys.getenv("EMI_PROJECT_ROOT", ".")))
 
@@ -149,7 +182,7 @@ test_that("household ID suffix metadata is optional for ordinary survey specific
 
 test_that("registered detailed consumption frames reuse the declarative adapter", {
   spec <- data.frame(
-    survey_id = "wave", survey_family = "nss", survey_label = "Wave",
+    survey_id = "wave", source_id = "test_source", survey_family = "nss", survey_label = "Wave",
     survey_start = "2007-07-01", survey_end = "2008-06-30",
     schedule_variant = "schedule_1_0", analysis_role = "test",
     raw_path = "unused", price_timing = "quarterly_subround",
