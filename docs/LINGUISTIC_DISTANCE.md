@@ -14,11 +14,11 @@ District language composition comes from the registered Census language sources 
 
 ## Preferred distance
 
-The preferred 0--5 mapping is frozen in reviewed metadata. District distance aggregates language composition against that mapping using the declared weighting rule. The mapping is treated as a substantive measurement decision and changes only with documented evidence.
+The preferred 0--5 mapping is frozen in reviewed metadata. Its published authority is Shastry (2012), Table 1; Figure 5 of the 2008 working-paper version provides the same distance ordering and attributes the linguistic classification to Jay Jasanoff. District distance aggregates language composition against that mapping using the declared weighting rule. The mapping is treated as a substantive measurement decision and changes only with documented evidence.
 
 ## Glottolog layer
 
-Glottolog supplies reviewed genealogical identities/relationships used both to validate language mappings and to construct an alternative distance basis. The code consumes the reviewed crosswalk rather than querying a mutable external taxonomy during estimation.
+Glottolog supplies reviewed genealogical identities/relationships used both to validate language mappings and to construct an alternative distance basis. The code consumes the reviewed crosswalk rather than querying a mutable external taxonomy during estimation. Shastry's 2008 working-paper Figure 6 is retained as an external published genealogy check; it validates interpretation but does not replace the independently versioned Glottolog construction.
 
 ## Dyen/Shastry and cognate-distance robustness
 

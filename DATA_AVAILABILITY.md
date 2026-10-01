@@ -26,9 +26,10 @@ The table below summarizes active source families. Exact filenames, checksums, a
 | NSS consumer-expenditure rounds | Historical district consumption and welfare | Local required for full reconstruction | registered NSS paths | [`docs/CONSUMPTION_MEASUREMENT.md`](docs/CONSUMPTION_MEASUREMENT.md) |
 | HCES 2022-23 and 2023-24 | Modern consumption outcomes and validation | Local required for full reconstruction | registered HCES paths | [`docs/CONSUMPTION_MEASUREMENT.md`](docs/CONSUMPTION_MEASUREMENT.md) |
 | RBI CPI-RL / Labour Bureau CPI-IW / state CPI series | Temporal price adjustment | External/local according to manifest | registered price paths | [`docs/PRICE_DEFLATION.md`](docs/PRICE_DEFLATION.md) |
+| Planning Commission 2011--12 Tendulkar poverty lines | Spatial state-sector price adjustment | Local optional source with tracked derived metadata | registered poverty-line path | [`docs/PRICE_DEFLATION.md`](docs/PRICE_DEFLATION.md) |
 | DISE/UDISE report cards and workbooks | Administrative EMI provision, enrollment, and school-quality measures | Local required where declared strict | `data/raw/dise_internet_archive/` | [`docs/DISE_TREATMENTS.md`](docs/DISE_TREATMENTS.md) |
 | Census Language Atlas 1991 and historical language references | Historical linguistic-distance validation | Local required for historical validation where declared strict | registered language-source paths | [`docs/HISTORICAL_LANGUAGE_DATA.md`](docs/HISTORICAL_LANGUAGE_DATA.md) |
-| Glottolog / Dyen / reviewed language crosswalks | Preferred and alternative linguistic-distance measures | Mixed tracked/local | registered metadata/source paths | [`docs/LINGUISTIC_DISTANCE.md`](docs/LINGUISTIC_DISTANCE.md) |
+| Shastry / Glottolog / Dyen / reviewed language crosswalks | Preferred and alternative linguistic-distance measures | Mixed tracked/local/reference | registered metadata/source paths where materialized | [`docs/LINGUISTIC_DISTANCE.md`](docs/LINGUISTIC_DISTANCE.md) |
 | SHRUG Economic Census 2005/2013 and official EC05 material | Local-development measures and predetermined IT opportunity baseline | Local required where declared strict | `data/raw/shrug/` and registered EC paths | [`docs/ECONOMIC_CENSUS.md`](docs/ECONOMIC_CENSUS.md) |
 | NSS 64 / NSS 66 / PLFS 2017-18 labor files | Labor outcomes in 2007-08, 2009-10, and 2017-18 | Local required where declared strict | `data/raw/nss/`, `data/raw/plfs/` | [`docs/LABOR_MARKET.md`](docs/LABOR_MARKET.md) |
 | District-lineage evidence and boundary files | Reviewed geographic harmonization | Mixed tracked/local | `data/metadata/district_lineage/`, registered boundary paths | [`docs/DISTRICT_LINEAGE.md`](docs/DISTRICT_LINEAGE.md), [`docs/GEOGRAPHY_HARMONIZATION.md`](docs/GEOGRAPHY_HARMONIZATION.md) |
@@ -61,7 +62,7 @@ Final district identities follow the reviewed lineage system and its documented 
 
 - Do not commit raw microdata or archival files unless redistribution is explicitly permitted.
 - Preserve original provider filenames and formats where practical; normalized derivatives belong in generated/interim locations.
-- Record acquisition URL or archival route, access date where applicable, expected path, and methodological role in `data_sources.csv`.
+- Record acquisition URL or archival route, access date where applicable, expected path when a local source artifact exists, and methodological role in `data_sources.csv`.
 - Record exact required/optional status and checksums in `file_manifest.csv` when the file participates in automated preflight.
 - Keep local-only exploratory material outside the active manifest unless it becomes an analysis dependency.
 - Never infer methodological authority from a filename or directory alone; domain documentation and registries define analytical use.
