@@ -37,16 +37,16 @@ writing:
     target_pages: 15
     sections:
       - sec-intro
-      - sec-language-persistence
-      - sec-language-behavior
-      - sec-language-context
       - sec-schooling-menu
       - sec-schooling-market
       - sec-social-access
+      - sec-consumption-emi
+      - sec-consumption-complements
+      - sec-discussion
   - id: Under5MB
     label: UNDER-5MB COPY
     max_bytes: 5000000
-    raster_figures: true
+    selective_rasterization: true
     sections:
       - sec-intro
       - sec-schooling-menu
@@ -55,6 +55,11 @@ writing:
       - sec-consumption-emi
       - sec-consumption-complements
       - sec-discussion
+  - id: Under10MB
+    label: UNDER-10MB COPY
+    mode: full
+    max_bytes: 10000000
+    selective_rasterization: true
   - id: full
     mode: full
 coding_outputs:

@@ -6,7 +6,7 @@ Application samples are generated from the current paper and research code. [`sa
 
 The build writes named and anonymous variants under [`output/`](output/):
 
-- writing samples targeting 5, 10, and 15 pages, a file-size-limited copy, and the full paper;
+- writing samples targeting 5, 10, and 15 pages, file-size-limited copies, and the full paper;
 - short and long coding samples.
 
 Generated PDFs are the maintained application files. Intermediate Markdown and LaTeX files are temporary build products.
@@ -35,7 +35,7 @@ Define identity changes once in the manifest or rendering helpers.
 
 ## Writing-sample numbering and references
 
-Writing excerpts preserve the current full paper's section, table, figure, and equation numbering. A file-size-limited variant may use the tracked PNG counterparts of paper figures while retaining the same captions, numbering, and text; its declared byte limit is enforced after rendering. A writing-sample specification may also retain selected paper figures outside the included sections; those figures keep the paper's caption and number. References to omitted material use the current full-paper labels. The writing samples also retain the paper's acknowledgments; the replication-package link in the paper title footnote remains exclusive to the full paper. This keeps excerpts synchronized when the paper structure changes.
+Writing excerpts preserve the current full paper's section, table, figure, and equation numbering. File-size-limited variants selectively use a tracked PNG counterpart only when it is smaller than the paper's PDF figure; captions, numbering, and text are unchanged, and each declared byte limit is enforced after rendering. The ordinary page-constrained and full writing samples retain the paper's publication-quality PDF figures. A writing-sample specification may also retain selected paper figures outside the included sections; those figures keep the paper's caption and number. References to omitted material use the current full-paper labels. The writing samples also retain the paper's acknowledgments; the replication-package link in the paper title footnote remains exclusive to the full paper. This keeps excerpts synchronized when the paper structure changes.
 
 The low-level LaTeX/reference extraction is an implementation detail of the renderer; maintainers normally change section selections only in `samples.yml`.
 

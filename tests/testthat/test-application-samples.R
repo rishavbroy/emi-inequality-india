@@ -75,11 +75,21 @@ test_that("writing manifest supports file-size-limited excerpts", {
     id = "size-limit",
     label = "SIZE-LIMIT COPY",
     max_bytes = 1000,
-    raster_figures = TRUE,
+    selective_rasterization = TRUE,
     sections = "sec-intro"
   ))
 
   expect_no_error(env$validate_application_sample_manifest(fixture))
+
+  full_fixture <- manifest
+  full_fixture$writing <- list(list(
+    id = "full-size-limit",
+    mode = "full",
+    label = "SIZE-LIMIT COPY",
+    max_bytes = 1000,
+    selective_rasterization = TRUE
+  ))
+  expect_no_error(env$validate_application_sample_manifest(full_fixture))
 
   broken <- fixture
   broken$writing[[1L]]$label <- NULL
@@ -210,25 +220,34 @@ test_that("writing sample labels may be configured independently of page targets
   expect_identical(env$writing_sample_label(list(label = "SIZE-LIMIT COPY")), "SIZE-LIMIT COPY")
   expect_identical(env$writing_sample_label(list(target_pages = 7L)), "7-PAGE COPY")
   expect_identical(env$writing_sample_label(list(id = "full", mode = "full")), "FULL PAPER")
+  expect_identical(
+    env$writing_sample_label(list(id = "limited", mode = "full", label = "LIMITED COPY")),
+    "LIMITED COPY"
+  )
 })
 
-test_that("size-limited writing samples use available raster figure assets", {
+test_that("size-limited writing samples use smaller raster figure assets", {
   env <- sample_test_env()
   root <- tempfile("writing-raster-")
   paper_dir <- file.path(root, "paper")
   figure_dir <- file.path(root, "outputs", "figures", "main")
   dir.create(paper_dir, recursive = TRUE)
   dir.create(figure_dir, recursive = TRUE)
-  file.create(file.path(figure_dir, "map.png"))
+  writeBin(as.raw(rep(1L, 20L)), file.path(figure_dir, "map.pdf"))
+  writeBin(as.raw(rep(1L, 5L)), file.path(figure_dir, "map.png"))
+  writeBin(as.raw(rep(1L, 5L)), file.path(figure_dir, "chart.pdf"))
+  writeBin(as.raw(rep(1L, 20L)), file.path(figure_dir, "chart.png"))
 
-  line <- "![Map](../outputs/figures/main/map.pdf)"
+  map <- "![Map](../outputs/figures/main/map.pdf)"
+  chart <- "![Chart](../outputs/figures/main/chart.pdf)"
   expect_identical(
-    env$use_raster_writing_figure_assets(line, paper_dir, TRUE),
+    env$use_compact_writing_figure_assets(map, paper_dir, TRUE),
     "![Map](../outputs/figures/main/map.png)"
   )
-  expect_identical(env$use_raster_writing_figure_assets(line, paper_dir, FALSE), line)
+  expect_identical(env$use_compact_writing_figure_assets(map, paper_dir, FALSE), map)
+  expect_identical(env$use_compact_writing_figure_assets(chart, paper_dir, TRUE), chart)
   expect_identical(
-    env$use_raster_writing_figure_assets(
+    env$use_compact_writing_figure_assets(
       "![Other](../outputs/figures/main/other.pdf)", paper_dir, TRUE
     ),
     "![Other](../outputs/figures/main/other.pdf)"
@@ -293,6 +312,9 @@ test_that("writing sample assembly derives identity and section selection from o
   expect_null(named_meta$`sample-full-paper-url`)
   expect_null(anonymous_meta$`sample-full-paper-url`)
   expect_true(length(named_meta$`sample-reference-labels`) > 0L)
+  expect_true(any(grepl(
+    "emi.application_sample_reference_labels", named_lines, fixed = TRUE
+  )))
   expect_true(isTRUE(named_meta$format$pdf$`keep-tex`))
   expect_identical(named_meta$format$pdf$documentclass, "article")
 
@@ -662,6 +684,29 @@ test_that("citation-link filter sends named-sample citations to the full paper",
   expect_match(rendered, "Shastry", fixed = TRUE)
 })
 
+
+
+test_that("public TeX tables honor application-sample reference numbers", {
+  env <- new.env(parent = globalenv())
+  sys.source(repo_file("R", "output", "public_qmd_helpers.R"), envir = env)
+  tex <- tempfile(fileext = ".tex")
+  writeLines(c(
+    "\\begin{longtable}{l}",
+    "\\caption{\\label{tbl-fixture}Fixture}\\\\",
+    "x\\\\",
+    "\\end{longtable}"
+  ), tex)
+  old <- getOption("emi.application_sample_reference_labels")
+  on.exit(options(emi.application_sample_reference_labels = old), add = TRUE)
+  options(emi.application_sample_reference_labels = c(`tbl-fixture` = "7"))
+
+  rendered <- as.character(env$render_public_tex(tex))
+  expect_match(rendered, "\\setcounter{table}{6}", fixed = TRUE)
+  expect_lt(
+    regexpr("\\setcounter{table}{6}", rendered, fixed = TRUE),
+    regexpr("\\caption", rendered, fixed = TRUE)
+  )
+})
 
 test_that("section-selection Lua filter retains selected subsections and ancestor headings", {
   skip_if(!nzchar(Sys.which("pandoc")), "pandoc is unavailable")

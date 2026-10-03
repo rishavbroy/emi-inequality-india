@@ -77,7 +77,26 @@ read_public_table <- function(path) {
 
 render_public_tex <- function(path) {
   tex <- paste(readLines(resolve_public_output_path(path), warn = FALSE), collapse = "\n")
+  labels <- getOption("emi.application_sample_reference_labels", character())
+  table_id <- tex_crossref_ids_from_text(tex, "tbl")
+  if (length(table_id) == 1L && table_id %in% names(labels)) {
+    number <- suppressWarnings(as.integer(labels[[table_id]]))
+    if (is.finite(number) && number >= 1L) {
+      tex <- paste0("\\setcounter{table}{", number - 1L, "}\n", tex)
+    }
+  }
   knitr::asis_output(paste0("\n\n", tex, "\n\n"))
+}
+
+tex_crossref_ids_from_text <- function(text, prefix = NULL) {
+  pattern <- if (is.null(prefix)) {
+    "\\\\label\\{(?:tbl|fig|eq)-[A-Za-z0-9_-]+\\}"
+  } else {
+    paste0("\\\\label\\{", prefix, "-[A-Za-z0-9_-]+\\}")
+  }
+  hits <- regmatches(text, gregexpr(pattern, text, perl = TRUE))[[1L]]
+  if (!length(hits) || identical(hits, "")) return(character())
+  unique(sub("\\}$", "", sub("^\\\\label\\{", "", hits, perl = TRUE), perl = TRUE))
 }
 
 wrap_table_text <- function(df) as.data.frame(df, check.names = FALSE, stringsAsFactors = FALSE)

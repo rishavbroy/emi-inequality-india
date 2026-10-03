@@ -40,10 +40,10 @@ validate_application_sample_manifest <- function(manifest) {
     stop("Writing-sample IDs must be nonempty and unique.", call. = FALSE)
   }
   for (spec in manifest$writing) {
-    if (identical(spec$mode %||% "excerpt", "full")) next
+    is_full <- identical(spec$mode %||% "excerpt", "full")
     target_pages <- spec$target_pages %||% NULL
     label <- as.character(spec$label %||% "")
-    if (is.null(target_pages) && !nzchar(label)) {
+    if (!is_full && is.null(target_pages) && !nzchar(label)) {
       stop("Writing excerpts require either target_pages or a label.", call. = FALSE)
     }
     if (!is.null(target_pages) &&
@@ -55,10 +55,10 @@ validate_application_sample_manifest <- function(manifest) {
         (length(max_bytes) != 1L || !is.finite(as.numeric(max_bytes)) || as.numeric(max_bytes) < 1)) {
       stop("Writing-sample max_bytes must be a positive number when supplied.", call. = FALSE)
     }
-    raster_figures <- spec$raster_figures %||% NULL
-    if (!is.null(raster_figures) &&
-        (length(raster_figures) != 1L || !is.logical(raster_figures) || is.na(raster_figures))) {
-      stop("Writing-sample raster_figures must be true or false when supplied.", call. = FALSE)
+    selective_rasterization <- spec$selective_rasterization %||% NULL
+    if (!is.null(selective_rasterization) &&
+        (length(selective_rasterization) != 1L || !is.logical(selective_rasterization) || is.na(selective_rasterization))) {
+      stop("Writing-sample selective_rasterization must be true or false when supplied.", call. = FALSE)
     }
   }
   if (any(!nzchar(coding_ids)) || anyDuplicated(coding_ids)) {
@@ -174,6 +174,7 @@ application_sample_input_files <- function(manifest_path = application_sample_ma
     manifest$paper$source,
     "application-samples/filters/select-sections.lua",
     "application-samples/filters/link-citations-to-paper.lua",
+    "R/output/public_qmd_helpers.R",
     coding_files[!is.na(coding_files)]
   ))
   missing <- files[!file.exists(files)]

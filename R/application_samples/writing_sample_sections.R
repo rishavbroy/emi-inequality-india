@@ -304,20 +304,29 @@ writing_sample_contents <- function(spec, source_lines, reference_labels) {
 
 
 writing_sample_label <- function(spec) {
-  if (identical(spec$mode %||% "excerpt", "full")) return("FULL PAPER")
   configured <- as.character(spec$label %||% "")
   if (nzchar(configured)) return(configured)
+  if (identical(spec$mode %||% "excerpt", "full")) return("FULL PAPER")
   paste0(as.integer(spec$target_pages), "-PAGE COPY")
 }
 
 writing_sample_notice <- function(spec, variant, manifest, source_lines, reference_labels = NULL) {
   is_full <- identical(spec$mode %||% "excerpt", "full")
   label <- writing_sample_label(spec)
-  description <- if (is_full) character() else {
+  description <- if (is_full) {
+    "This document contains the entirety of the titular paper."
+  } else {
     paste0(
       "This document contains ",
       writing_sample_contents(spec, source_lines, reference_labels),
       " of the titular paper."
+    )
+  }
+  if (!is.null(spec$max_bytes)) {
+    description <- sub(
+      "[.]$",
+      ", with figures selectively rasterized to reduce file size.",
+      description
     )
   }
   availability <- application_sample_availability_sentence(
@@ -424,7 +433,7 @@ normalize_sample_resource_paths <- function(lines) {
   gsub("../outputs/", "../../outputs/", lines, fixed = TRUE)
 }
 
-use_raster_writing_figure_assets <- function(lines, source_dir, enabled = FALSE) {
+use_compact_writing_figure_assets <- function(lines, source_dir, enabled = FALSE) {
   if (!isTRUE(enabled)) return(lines)
 
   pattern <- "\\.\\./outputs/figures/[A-Za-z0-9_./-]+[.]pdf"
@@ -434,12 +443,32 @@ use_raster_writing_figure_assets <- function(lines, source_dir, enabled = FALSE)
 
     paths <- regmatches(line, list(matches))[[1L]]
     replacements <- vapply(paths, function(path) {
+      pdf_file <- file.path(source_dir, path)
       png <- sub("[.]pdf$", ".png", path)
-      if (file.exists(file.path(source_dir, png))) png else path
+      png_file <- file.path(source_dir, png)
+      if (!file.exists(png_file) || !file.exists(pdf_file)) return(path)
+      if (file.info(png_file)$size < file.info(pdf_file)$size) png else path
     }, character(1))
     regmatches(line, list(matches)) <- list(replacements)
     line
   }, character(1), USE.NAMES = FALSE)
+}
+
+writing_sample_reference_setup <- function(reference_labels) {
+  table_labels <- reference_labels[grepl("^tbl-", names(reference_labels %||% character()))]
+  if (!length(table_labels)) return(character())
+  assignments <- paste0(
+    '  "', names(table_labels), '" = "', unname(table_labels), '"'
+  )
+  c(
+    "```{r writing-sample-reference-labels}",
+    "#| include: false",
+    "options(emi.application_sample_reference_labels = c(",
+    paste0(assignments, collapse = ",\n"),
+    "))",
+    "```",
+    ""
+  )
 }
 
 
@@ -452,8 +481,8 @@ assemble_writing_sample_qmd <- function(source, spec, variant, manifest, output_
     prepared$metadata$`sample-reference-labels` <- as.list(reference_labels)
   }
   yaml_lines <- quarto_yaml_lines(prepared$metadata, indent.mapping.sequence = TRUE)
-  body <- use_raster_writing_figure_assets(
-    parts$body, dirname(source), spec$raster_figures %||% FALSE
+  body <- use_compact_writing_figure_assets(
+    parts$body, dirname(source), spec$selective_rasterization %||% FALSE
   )
   body <- normalize_sample_resource_paths(body)
   if (!identical(spec$mode %||% "excerpt", "full")) {
@@ -469,6 +498,11 @@ assemble_writing_sample_qmd <- function(source, spec, variant, manifest, output_
 
   preamble <- c(
     writing_sample_notice(spec, variant, manifest, source_lines, reference_labels),
+    if (!identical(spec$mode %||% "excerpt", "full")) {
+      writing_sample_reference_setup(reference_labels)
+    } else {
+      character()
+    },
     "```{=latex}",
     "\\begin{abstract}",
     "```",
