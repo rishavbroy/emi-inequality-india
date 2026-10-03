@@ -216,6 +216,22 @@ render_qmd_to_pdf <- function(input_qmd, output_file) {
   invisible(output_file)
 }
 
+
+validate_application_sample_max_bytes <- function(path, max_bytes = NULL) {
+  if (is.null(max_bytes)) return(invisible(TRUE))
+  max_bytes <- as.numeric(max_bytes)
+  size <- file.info(path)$size
+  if (!is.finite(size)) stop("Could not read application-sample file size: ", path, call. = FALSE)
+  if (size > max_bytes) {
+    stop(
+      basename(path), " is ", format(size, scientific = FALSE),
+      " bytes, exceeding its ", format(max_bytes, scientific = FALSE), "-byte limit.",
+      call. = FALSE
+    )
+  }
+  invisible(TRUE)
+}
+
 pdf_page_count <- function(path) {
   pdfinfo <- Sys.which("pdfinfo")
   if (!nzchar(pdfinfo)) stop("pdfinfo is required to validate application-sample page counts.", call. = FALSE)

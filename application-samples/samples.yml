@@ -43,6 +43,18 @@ writing:
       - sec-schooling-menu
       - sec-schooling-market
       - sec-social-access
+  - id: Under5MB
+    label: UNDER-5MB COPY
+    max_bytes: 5000000
+    raster_figures: true
+    sections:
+      - sec-intro
+      - sec-schooling-menu
+      - sec-schooling-market
+      - sec-social-access
+      - sec-consumption-emi
+      - sec-consumption-complements
+      - sec-discussion
   - id: full
     mode: full
 coding_outputs:

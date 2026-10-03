@@ -252,11 +252,7 @@ writing_sample_contents <- function(spec, source_lines, reference_labels) {
   titles <- unname(writing_section_titles(source_lines, section_ids))
   special <- titles %in% c("Introduction", "Conclusion")
 
-  named_sections <- titles[special]
-  named_sections[named_sections == "Introduction"] <- "the Introduction"
-
   numbered_ids <- section_ids[!special]
-  numbered <- character()
   if (length(numbered_ids)) {
     missing <- setdiff(numbered_ids, names(reference_labels %||% character()))
     if (length(missing)) {
@@ -266,13 +262,29 @@ writing_sample_contents <- function(spec, source_lines, reference_labels) {
         call. = FALSE
       )
     }
-    numbers <- unname(reference_labels[numbered_ids])
-    prefix <- if (length(numbers) == 1L) "Section " else "Sections "
-    numbered <- paste0(prefix, format_english_list(numbers))
   }
 
+  parts <- character()
+  pending_numbers <- character()
+  flush_numbers <- function() {
+    if (!length(pending_numbers)) return(character())
+    prefix <- if (length(pending_numbers) == 1L) "Section " else "Sections "
+    paste0(prefix, format_english_list(pending_numbers))
+  }
+  for (i in seq_along(section_ids)) {
+    if (special[[i]]) {
+      numbered <- flush_numbers()
+      if (length(numbered)) parts <- c(parts, numbered)
+      pending_numbers <- character()
+      parts <- c(parts, paste0("the ", titles[[i]]))
+    } else {
+      pending_numbers <- c(pending_numbers, unname(reference_labels[section_ids[[i]]]))
+    }
+  }
+  numbered <- flush_numbers()
+  if (length(numbered)) parts <- c(parts, numbered)
+
   figure_ids <- unname(unlist(spec$figures %||% character(), use.names = FALSE))
-  figures <- character()
   if (length(figure_ids)) {
     missing <- setdiff(figure_ids, names(reference_labels %||% character()))
     if (length(missing)) {
@@ -284,15 +296,23 @@ writing_sample_contents <- function(spec, source_lines, reference_labels) {
     }
     numbers <- unname(reference_labels[figure_ids])
     prefix <- if (length(numbers) == 1L) "Figure " else "Figures "
-    figures <- paste0(prefix, format_english_list(numbers))
+    parts <- c(parts, paste0(prefix, format_english_list(numbers)))
   }
 
-  format_english_list(c(named_sections, numbered, figures))
+  format_english_list(parts)
+}
+
+
+writing_sample_label <- function(spec) {
+  if (identical(spec$mode %||% "excerpt", "full")) return("FULL PAPER")
+  configured <- as.character(spec$label %||% "")
+  if (nzchar(configured)) return(configured)
+  paste0(as.integer(spec$target_pages), "-PAGE COPY")
 }
 
 writing_sample_notice <- function(spec, variant, manifest, source_lines, reference_labels = NULL) {
   is_full <- identical(spec$mode %||% "excerpt", "full")
-  label <- if (is_full) "FULL PAPER" else paste0(spec$target_pages, "-PAGE COPY")
+  label <- writing_sample_label(spec)
   description <- if (is_full) character() else {
     paste0(
       "This document contains ",
@@ -404,6 +424,24 @@ normalize_sample_resource_paths <- function(lines) {
   gsub("../outputs/", "../../outputs/", lines, fixed = TRUE)
 }
 
+use_raster_writing_figure_assets <- function(lines, source_dir, enabled = FALSE) {
+  if (!isTRUE(enabled)) return(lines)
+
+  pattern <- "\\.\\./outputs/figures/[A-Za-z0-9_./-]+[.]pdf"
+  vapply(lines, function(line) {
+    matches <- gregexpr(pattern, line, perl = TRUE)[[1L]]
+    if (length(matches) == 1L && identical(matches[[1L]], -1L)) return(line)
+
+    paths <- regmatches(line, list(matches))[[1L]]
+    replacements <- vapply(paths, function(path) {
+      png <- sub("[.]pdf$", ".png", path)
+      if (file.exists(file.path(source_dir, png))) png else path
+    }, character(1))
+    regmatches(line, list(matches)) <- list(replacements)
+    line
+  }, character(1), USE.NAMES = FALSE)
+}
+
 
 assemble_writing_sample_qmd <- function(source, spec, variant, manifest, output_qmd, reference_labels = NULL) {
   source_lines <- readLines(source, warn = FALSE)
@@ -414,7 +452,10 @@ assemble_writing_sample_qmd <- function(source, spec, variant, manifest, output_
     prepared$metadata$`sample-reference-labels` <- as.list(reference_labels)
   }
   yaml_lines <- quarto_yaml_lines(prepared$metadata, indent.mapping.sequence = TRUE)
-  body <- normalize_sample_resource_paths(parts$body)
+  body <- use_raster_writing_figure_assets(
+    parts$body, dirname(source), spec$raster_figures %||% FALSE
+  )
+  body <- normalize_sample_resource_paths(body)
   if (!identical(spec$mode %||% "excerpt", "full")) {
     if (is.null(reference_labels)) {
       stop("Writing excerpts require the current full-paper reference index.", call. = FALSE)

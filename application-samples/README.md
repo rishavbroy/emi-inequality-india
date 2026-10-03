@@ -6,7 +6,7 @@ Application samples are generated from the current paper and research code. [`sa
 
 The build writes named and anonymous variants under [`output/`](output/):
 
-- writing samples targeting 5, 10, and 15 pages plus the full paper;
+- writing samples targeting 5, 10, and 15 pages, a file-size-limited copy, and the full paper;
 - short and long coding samples.
 
 Generated PDFs are the maintained application files. Intermediate Markdown and LaTeX files are temporary build products.
@@ -35,7 +35,7 @@ Define identity changes once in the manifest or rendering helpers.
 
 ## Writing-sample numbering and references
 
-Writing excerpts preserve the current full paper's section, table, figure, and equation numbering. A writing-sample specification may also retain selected paper figures outside the included sections; those figures keep the paper's caption and number. References to omitted material use the current full-paper labels. The writing samples also retain the paper's acknowledgments; the replication-package link in the paper title footnote remains exclusive to the full paper. This keeps excerpts synchronized when the paper structure changes.
+Writing excerpts preserve the current full paper's section, table, figure, and equation numbering. A file-size-limited variant may use the tracked PNG counterparts of paper figures while retaining the same captions, numbering, and text; its declared byte limit is enforced after rendering. A writing-sample specification may also retain selected paper figures outside the included sections; those figures keep the paper's caption and number. References to omitted material use the current full-paper labels. The writing samples also retain the paper's acknowledgments; the replication-package link in the paper title footnote remains exclusive to the full paper. This keeps excerpts synchronized when the paper structure changes.
 
 The low-level LaTeX/reference extraction is an implementation detail of the renderer; maintainers normally change section selections only in `samples.yml`.
 
@@ -45,7 +45,7 @@ Selected code excerpts may attach tables or figures from the paper listed under 
 
 ## Page-count policy
 
-Writing-sample target lengths are checked after rendering. During the typography pass, a mismatch produces a visible warning. Strict enforcement should be enabled after the paper/sample layout is final.
+Writing-sample target lengths are checked after rendering. During the typography pass, a mismatch produces a visible warning. File-size limits declared in the manifest are hard requirements and stop the build when exceeded.
 
 ## Publication
 

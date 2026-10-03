@@ -67,6 +67,29 @@ test_that("figure coding outputs declare the paper cross-reference they preserve
 
 
 
+test_that("writing manifest supports file-size-limited excerpts", {
+  env <- sample_test_env()
+  manifest <- yaml::read_yaml(repo_file("application-samples", "samples.yml"))
+  fixture <- manifest
+  fixture$writing <- list(list(
+    id = "size-limit",
+    label = "SIZE-LIMIT COPY",
+    max_bytes = 1000,
+    raster_figures = TRUE,
+    sections = "sec-intro"
+  ))
+
+  expect_no_error(env$validate_application_sample_manifest(fixture))
+
+  broken <- fixture
+  broken$writing[[1L]]$label <- NULL
+  expect_error(env$validate_application_sample_manifest(broken))
+
+  broken <- fixture
+  broken$writing[[1L]]$max_bytes <- 0
+  expect_error(env$validate_application_sample_manifest(broken))
+})
+
 test_that("coding-output file validation uses the repository root", {
   env <- sample_test_env()
   manifest <- yaml::read_yaml(repo_file("application-samples", "samples.yml"))
@@ -180,6 +203,48 @@ test_that("Quarto metadata serialization uses YAML 1.2 booleans", {
   expect_false(grepl("\\b(?:yes|no)\\b", text, perl = TRUE))
 })
 
+
+test_that("writing sample labels may be configured independently of page targets", {
+  env <- sample_test_env()
+
+  expect_identical(env$writing_sample_label(list(label = "SIZE-LIMIT COPY")), "SIZE-LIMIT COPY")
+  expect_identical(env$writing_sample_label(list(target_pages = 7L)), "7-PAGE COPY")
+  expect_identical(env$writing_sample_label(list(id = "full", mode = "full")), "FULL PAPER")
+})
+
+test_that("size-limited writing samples use available raster figure assets", {
+  env <- sample_test_env()
+  root <- tempfile("writing-raster-")
+  paper_dir <- file.path(root, "paper")
+  figure_dir <- file.path(root, "outputs", "figures", "main")
+  dir.create(paper_dir, recursive = TRUE)
+  dir.create(figure_dir, recursive = TRUE)
+  file.create(file.path(figure_dir, "map.png"))
+
+  line <- "![Map](../outputs/figures/main/map.pdf)"
+  expect_identical(
+    env$use_raster_writing_figure_assets(line, paper_dir, TRUE),
+    "![Map](../outputs/figures/main/map.png)"
+  )
+  expect_identical(env$use_raster_writing_figure_assets(line, paper_dir, FALSE), line)
+  expect_identical(
+    env$use_raster_writing_figure_assets(
+      "![Other](../outputs/figures/main/other.pdf)", paper_dir, TRUE
+    ),
+    "![Other](../outputs/figures/main/other.pdf)"
+  )
+})
+
+test_that("application-sample byte limits are enforced after rendering", {
+  env <- sample_test_env()
+  path <- tempfile(fileext = ".pdf")
+  writeBin(as.raw(1:4), path)
+
+  expect_no_error(env$validate_application_sample_max_bytes(path, 4L))
+  expect_error(env$validate_application_sample_max_bytes(path, 3L))
+  expect_no_error(env$validate_application_sample_max_bytes(path, NULL))
+})
+
 test_that("writing sample assembly derives identity and section selection from one manifest", {
   env <- sample_test_env()
   manifest <- env$read_application_sample_manifest(repo_file("application-samples", "samples.yml"))
@@ -274,6 +339,9 @@ test_that("writing sample notices use current section numbers and identity-speci
     )
   )
   labels <- c(`sec-first` = "3.1", `sec-second` = "3.2")
+  contents <- env$writing_sample_contents(spec, source, labels)
+  expect_lt(regexpr("Introduction", contents, fixed = TRUE), regexpr("3.1", contents, fixed = TRUE))
+  expect_lt(regexpr("3.2", contents, fixed = TRUE), regexpr("Conclusion", contents, fixed = TRUE))
 
   named <- paste(env$writing_sample_notice(spec, "named", manifest, source, labels), collapse = "\n")
   anonymous <- paste(env$writing_sample_notice(spec, "anonymous", manifest, source, labels), collapse = "\n")

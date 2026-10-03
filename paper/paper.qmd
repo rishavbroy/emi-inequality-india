@@ -248,7 +248,7 @@ English-medium and private schools can be present in a district while remaining 
 
 # Local Economic Outcomes Associated with English-Medium Instruction {#sec-conversion}
 
-## Later Consumption and English-Medium Instruction
+## Later Consumption and English-Medium Instruction {#sec-consumption-emi}
 
 English-language skills are a form of human capital [@chiswick1995a; @azam2013a], and evidence from India gives households an economic reason to value them. Using nationally representative 2005 household data, @azam2013a find English fluency associated with a 34% hourly wage premium for men and a 22% premium for women; workers with a little English receive smaller positive premia, and the returns are greater for more educated workers. @refeque2022a later documents substantial English-skill earnings associations through 2011--12. The strongest evidence for a causal wage effect comes from @chakraborty2016a, who exploit West Bengal's withdrawal of English from primary schools and estimate substantially lower later wages for cohorts more exposed to the policy.
 
@@ -276,7 +276,7 @@ render_public_table("../outputs/tables/main/paper_economic_conversion.tex", "pap
 
 These are conditional district associations, while individual wage studies estimate returns to English skills for workers. The strong social selection into English-medium and private schooling makes that distinction important. EMI exposure is much more strongly associated with later consumption than enrollment alone, consistent with @azam2013a's evidence that English skills and education are complementary in the labor market.
 
-## Predetermined Complements to English-Medium Instruction
+## Predetermined Complements to English-Medium Instruction {#sec-consumption-complements}
 
 The same @tbl-paper-economic-conversion asks whether the 2004--05 to 2022--23 association varies with three characteristics measured before the schooling round: baseline human capital, urbanization, and ST concentration. The interaction rows standardize each characteristic so that they report how much the schooling association differs with a one-standard-deviation increase. For EMI exposure among all children, the schooling--consumption association is about 1.5 percentage points larger for a one-standard-deviation increase in baseline human capital and about 1.8 points larger for the same increase in urbanization. Both interactions survive the predeclared family correction. The ST-concentration interaction is near zero. The private EMI interaction estimates are also positive: 1.47 points for baseline human capital and 2.00 for urbanization.
 
