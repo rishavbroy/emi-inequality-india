@@ -29,12 +29,7 @@ jobs:
           mkdir -p _site/application-samples
           cp pages/index.html _site/index.html
           cp paper/paper.pdf _site/paper.pdf
-          cp application-samples/output/RishavRoy_WritingSample_5pg.pdf _site/application-samples/
-          cp application-samples/output/RishavRoy_WritingSample_10pg.pdf _site/application-samples/
-          cp application-samples/output/RishavRoy_WritingSample_15pg.pdf _site/application-samples/
-          cp application-samples/output/RishavRoy_WritingSample_Full.pdf _site/application-samples/
-          cp application-samples/output/RishavRoy_CodeSample_Short.pdf _site/application-samples/
-          cp application-samples/output/RishavRoy_CodeSample_Long.pdf _site/application-samples/
+          cp application-samples/output/RishavRoy_*.pdf _site/application-samples/
       - name: Upload Pages files
         uses: actions/upload-pages-artifact@v5
         with:
