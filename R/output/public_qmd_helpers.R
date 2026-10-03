@@ -63,7 +63,20 @@ report_value <- function(key) {
 }
 
 resolve_public_output_path <- function(path) {
-  candidates <- unique(c(path, file.path(getwd(), path), file.path("paper", path), file.path(dirname(knitr::current_input()), path), sub("^\\.\\/", "", path)))
+  if (file.exists(path) && file.info(path)$size > 0) return(path)
+
+  current_input <- knitr::current_input()
+  input_relative <- if (length(current_input) == 1L && !is.na(current_input) && nzchar(current_input)) {
+    file.path(dirname(current_input), path)
+  } else {
+    character()
+  }
+  candidates <- unique(c(
+    file.path(getwd(), path),
+    file.path("paper", path),
+    input_relative,
+    sub("^\\.\\/", "", path)
+  ))
   hit <- candidates[file.exists(candidates) & file.info(candidates)$size > 0]
   if (length(hit)) return(hit[[1]])
   stop("Missing table output: ", path, call. = FALSE)
