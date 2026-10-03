@@ -741,6 +741,18 @@ test_that("section-selection filter can retain a numbered figure outside selecte
 })
 
 
+test_that("schooling geography figure is anchored before the following subsection", {
+  source <- readLines(repo_file("paper", "paper.qmd"), warn = FALSE)
+  figure <- grep("::: {#fig-schooling-geography", source, fixed = TRUE)
+  next_section <- grep("{#sec-schooling-market}", source, fixed = TRUE)
+
+  expect_length(figure, 1L)
+  expect_length(next_section, 1L)
+  expect_lt(figure, next_section)
+  expect_match(source[[figure]], 'fig-pos="H"', fixed = TRUE)
+})
+
+
 test_that("writing figure selection validates paper membership and reference numbering", {
   env <- sample_test_env()
   source <- tempfile(fileext = ".qmd")

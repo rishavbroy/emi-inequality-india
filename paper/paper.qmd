@@ -202,7 +202,7 @@ DISE reports district enrollment by medium and management from schools. These en
 
 @fig-schooling-geography compares the four EMI measures directly. EMI among enrolled children isolates the medium-of-instruction margin among children already in school, while EMI exposure among all children also incorporates enrollment. Splitting exposure among all children by school management shows that public-school EMI is concentrated especially in northern and northeastern districts, whereas private-school EMI is more geographically dispersed. The four panels use the same percentage bins so that differences in both levels and geography can be compared directly.
 
-::: {#fig-schooling-geography layout-ncol=2}
+::: {#fig-schooling-geography layout-ncol=2 fig-pos="H"}
 ![EMI share among enrolled children.](../outputs/figures/main/map_emi_share_enrolled.pdf)
 
 ![EMI exposure among all children.](../outputs/figures/main/map_emi_exposure.pdf)
