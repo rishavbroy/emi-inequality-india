@@ -4,7 +4,7 @@ This repository contains the code, outputs, and replication materials for *Inequ
 
 [Paper](paper/paper.pdf) · [Replication guide](REPLICATION.md) · [Data availability](DATA_AVAILABILITY.md) · [Application samples](application-samples/README.md)
 
-The current paper is available at <https://rishavbroy.github.io/emi-inequality-india/paper.pdf>.
+The paper and application samples are also hosted at <https://rishavbroy.github.io/emi-inequality-india/>.
 
 ## Research overview
 
@@ -14,13 +14,13 @@ The empirical work studies inherited linguistic conditions, access to EMI, and l
 
 ## Start here
 
-**To read the research:** open [`paper/paper.pdf`](paper/paper.pdf) or the [browser-hosted paper](https://rishavbroy.github.io/emi-inequality-india/paper.pdf).
+**To read the research:** Open [`paper/paper.pdf`](paper/paper.pdf) or the [browser-hosted paper](https://rishavbroy.github.io/emi-inequality-india/paper.pdf).
 
-**To reproduce the analysis:** start with [`REPLICATION.md`](REPLICATION.md) and [`DATA_AVAILABILITY.md`](DATA_AVAILABILITY.md). The former gives the supported replication paths and system requirements; the latter records access and redistribution information for each data source.
+**To reproduce the analysis:** Start with [`REPLICATION.md`](REPLICATION.md) and [`DATA_AVAILABILITY.md`](DATA_AVAILABILITY.md). The former gives the supported replication paths and system requirements; the latter records access and redistribution information for each data source.
 
-**To inspect the code:** start with [`_targets.R`](_targets.R), [`R/`](R/), and [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). The target script defines the main research computation, while the architecture guide explains the module boundaries and shared analysis registries.
+**To inspect the code:** Start with [`_targets.R`](_targets.R), [`R/`](R/), and [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). The target script defines the main research computation, while the architecture guide explains the module boundaries and shared analysis registries.
 
-**To review application materials:** see [`application-samples/output/`](application-samples/output/) for the generated PDFs and [`application-samples/README.md`](application-samples/README.md) for how they are selected and rendered.
+**To review application materials:** See [my website](https://rishavbroy.github.io/emi-inequality-india/) for the browser-hosted samples, [`application-samples/output/`](application-samples/output/) for the generated PDFs, and [`application-samples/README.md`](application-samples/README.md) for how they are selected and rendered.
 
 ## Reproducing the project
 
