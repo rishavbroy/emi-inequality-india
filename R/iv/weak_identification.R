@@ -48,7 +48,7 @@ mop_effective_f <- function(
   }
   moment_data <- data[needed]
   if (any(!stats::complete.cases(moment_data))) {
-    return(unavailable("Montiel Olea-Pflueger analysis data contain incomplete model rows."))
+    return(unavailable("Regressors or instruments used by the fitted IV model contain missing values."))
   }
 
   stored_cluster <- attr(model, "cluster_state", exact = TRUE)
@@ -64,9 +64,9 @@ mop_effective_f <- function(
   covariance_options <- if (is.null(cluster)) {
     list(type = "HC0")
   } else {
-    # The momentfit::MOPtest() function uses an HC0 clustered moment covariance with its own
-    # finite-cluster adjustment. The conventional first-stage Wald F is computed
-    # separately with the HC1 covariance used for the first-stage regression.
+    # MOPtest() uses clustered HC0 moment covariance with its finite-cluster
+    # adjustment here. The separately reported first-stage Wald F uses HC1, so the
+    # two statistics follow different covariance conventions.
     list(
       cluster = data.frame(cluster = cluster),
       type = "HC0", cadjust = TRUE, multi0 = FALSE

@@ -187,7 +187,7 @@ build_temporal_price_series <- function(
   if (any(missing_key)) {
     bad <- old_groups[missing_key, , drop = FALSE]
     stop(
-      "Pre-2013 price series lack a sufficient direct link to CPI-R/U: ",
+      "Pre-2013 price series have fewer than the required overlap months with CPI-R/U: ",
       paste(paste(bad$state_code, bad$sector, sep = "/"), collapse = ", "),
       call. = FALSE
     )
@@ -202,11 +202,13 @@ build_temporal_price_series <- function(
     pre_switch_start <- price_boundary(pre_switch_start)
     pre_switch_end <- price_boundary(pre_switch_end)
     if (pre_switch_end < pre_switch_start || pre_switch_end >= switch_date) {
-      stop("The pre-switch production window must end before the switch date.", call. = FALSE)
+      stop("The requested pre-2013 period must end before the CPI switch date.", call. = FALSE)
     }
     old <- old[old$period >= pre_switch_start & old$period <= pre_switch_end, , drop = FALSE]
   }
   old$index_unlinked <- old$index
+  # Put each historical CPI series on the CPI-R/U scale before appending the
+  # post-2013 observations.
   old$index <- num(old$index) * num(old$link_factor)
 
   new <- new[new$period >= switch_date, , drop = FALSE]

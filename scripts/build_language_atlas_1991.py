@@ -534,11 +534,11 @@ def merge_population_continuations(
 # sample-start: code-language-atlas-validation
 
 def cross_page_serial_evidence(cells: list[dict[str, object]]) -> dict[tuple[int, str], tuple[int, ...]]:
-    """Collect district serials printed beside the same Atlas row label.
+    """Collect district serials printed with repeated Language Atlas row labels.
 
-    Annexure IV repeats each district row on eight language pages. An exact label
-    repeated with one serial can therefore supply a serial omitted on another page.
-    Conflicting printed serials remain unresolved.
+    The Atlas prints each district on eight language pages. The district serial is
+    the within-state number paired with the Census state code. If one copy omits
+    that number, repeated copies can supply it only when their printed serials agree.
     """
     observed: dict[tuple[int, str], set[int]] = {}
     unique_rows = {
@@ -559,7 +559,7 @@ def reconcile_district_serial(
     cell: dict[str, object],
     evidence: dict[tuple[int, str], tuple[int, ...]],
 ) -> tuple[int | None, str, str]:
-    """Resolve one Atlas district serial using direct and exact-label evidence."""
+    """Choose a district serial from the row itself or agreeing repeated copies."""
     label = str(cell["row_label_raw"]).strip()
     serial_column = int(cell["serial_candidate"]) if str(cell["serial_candidate"]).strip() else None
     serial_label = parse_leading_serial(label)
@@ -572,9 +572,9 @@ def reconcile_district_serial(
     direct_source = "serial_column" if serial_column is not None else "label_prefix"
 
     if direct is not None:
-        # Use a serial printed on this row when it is available. Exact labels on
-        # repeated language pages supply a serial only when this field is missing;
-        # continuation pages occasionally contain isolated OCR errors.
+        # Prefer a serial printed on the current row. Use repeated copies of the
+        # same label only when the current row has no serial because continuation
+        # pages contain occasional OCR errors.
         return direct, direct_source, repeated_text
     if len(repeated) == 1:
         return repeated[0], "cross_page_exact_label", repeated_text
@@ -647,12 +647,12 @@ def build_district_population_validation(
         missing = sorted(expected_state_codes - seen_state_codes)
         extra = sorted(seen_state_codes - expected_state_codes)
         raise ValueError(
-            "Language Atlas state-heading coverage mismatch; "
+            "Language Atlas state headings do not match the expected 1991 states; "
             f"missing={missing}; extra={extra}"
         )
     pca_state_codes = {state_code for state_code, _ in pca91}
     if pca_state_codes != expected_state_codes:
-        raise ValueError("Language Atlas state crosswalk and SHRUG PCA91 state codes disagree")
+        raise ValueError("Language Atlas state names and 1991 Primary Census Abstract state codes disagree")
 
     key_counts: dict[tuple[str, str], int] = {}
     for row in candidates:

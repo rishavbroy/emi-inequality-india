@@ -488,7 +488,7 @@ build_public_ggplot_map <- function(plot_data, spec, boundary_reference = NULL) 
   plot_data <- fill$data
   overlay <- plot_data[map_overlay_rows(plot_data, fill$fill), , drop = FALSE]
   if (!nrow(overlay)) {
-    stop("Map figure '", spec$name, "' has no non-missing overlay districts for variable '", spec$variable, "'.", call. = FALSE)
+    stop("Map figure '", spec$name, "' has no district values to plot for variable '", spec$variable, "'.", call. = FALSE)
   }
 
   disputed_display <- public_map_disputed_display(plot_data, boundary_reference)
@@ -569,9 +569,8 @@ complete_public_map_geometry <- function(district_panel, map_geometry) {
   attributes <- attributes[!duplicated(attributes[[key]]), , drop = FALSE]
   out <- merge(map_geometry, attributes, by = key, all.x = TRUE, sort = FALSE)
 
-  # Derive state identity from the complete 2001 Census boundary identifier so
-  # state and national outlines include districts with missing analysis values.
-  # The district identifier stores the 2001 state code directly.
+  # Read the state code from each 2001 Census district identifier. This preserves
+  # complete state and national borders when a district has no value to plot.
   boundary_state <- public_map_state_code_2001(out[[key]])
   if ("state_code_2001" %in% names(out)) {
     panel_state <- plain_chr(out$state_code_2001)

@@ -84,20 +84,20 @@ stabilize_selection_model_formula <- function(model, formula) {
 
 # sample-start: code-survey-design
 
-#' Declare fields required to construct the NSS survey design
+#' List NSS fields needed to reproduce the survey sample design
 #'
 selection_survey_design_variables <- function() {
   c("FSU_SL_NO", "weight", "STATE", "SECTOR", "STRATUM", "SUB_STRATUM_NO")
 }
 
-#' Construct the NSS survey design used by the enrollment model
+#' Construct the NSS design used for weighted enrollment estimation
 #'
 build_survey_design_selection <- function(selection_df, require_all = FALSE) {
   required <- selection_survey_design_variables()
   missing <- setdiff(required, names(selection_df))
   if (isTRUE(require_all) && length(missing)) {
     stop(
-      "Selection survey design is missing required final analysis fields: ",
+      "NSS survey design is missing required fields: ",
       paste(missing, collapse = ", "),
       call. = FALSE
     )
@@ -108,10 +108,12 @@ build_survey_design_selection <- function(selection_df, require_all = FALSE) {
   strata_cols <- intersect(c("STATE", "SECTOR", "STRATUM", "SUB_STRATUM_NO"), names(selection_df))
   if (is.null(psu) || is.null(weight) || !length(strata_cols)) {
     if (isTRUE(require_all)) {
-      stop("The final selection survey design could not be constructed.", call. = FALSE)
+      stop("The required NSS survey design could not be constructed.", call. = FALSE)
     }
     return(NULL)
   }
+  # NSS strata are defined by the joint state, rural/urban sector, stratum, and
+  # substratum identifiers used in the survey files.
   selection_df$.survey_strata <- interaction(selection_df[strata_cols], drop = TRUE)
   survey::svydesign(
     ids = stats::as.formula(paste0("~", psu)),

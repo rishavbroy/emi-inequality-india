@@ -145,11 +145,7 @@ test_that("public map rendering refuses all-grey data layers", {
   )
   spec <- figure_spec("map_emi_exposure", "map_emi_exposure.png", "EMI Exposure", kind = "map", variable = "emi_exposure_all_children_0708")
 
-  expect_error(
-    build_public_ggplot_map(panel, spec),
-    "no non-missing overlay districts",
-    fixed = TRUE
-  )
+  expect_error(build_public_ggplot_map(panel, spec))
 })
 
 

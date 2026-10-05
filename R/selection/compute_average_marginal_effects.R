@@ -44,7 +44,7 @@ ame_out_of_pipeline <- function(status, reason) {
 }
 
 # sample-start: code-ame-estimation
-#' Recover the fitted sample and survey weights used to average marginal effects
+#' Recover the observations and sampling weights used to fit the enrollment model
 #'
 ame_model_data_and_weights <- function(model) {
   model_data <- as.data.frame(stats::model.frame(model))
@@ -67,13 +67,13 @@ ame_model_data_and_weights <- function(model) {
   list(data = model_data, wts = model_weights)
 }
 
-#' Average slopes over the fitted survey sample
+#' Compute average marginal effects over the fitted NSS sample
 #'
 compute_ames_marginaleffects <- function(model) {
-  # Pass the fitted model frame and survey weights explicitly because serialized
-  # svyglm objects need not expose those weights to downstream packages. This keeps
-  # the averaging population equal to the survey estimation sample. `marginaleffects`
-  # uses the model's design-based covariance matrix for uncertainty.
+  # Pass the fitted rows and sampling weights explicitly so avg_slopes() averages
+  # predicted changes over the same weighted observations used for estimation after
+  # the fitted model has been saved and reloaded. Uncertainty comes from the
+  # survey-weighted model's covariance matrix.
   amed <- ame_model_data_and_weights(model)
   marginaleffects::avg_slopes(
     model,

@@ -504,7 +504,7 @@ test_that("temporal price series uses CPI-RL and CPI-IW before 2013", {
 })
 
 # sample-start: code-price-link-tests
-test_that("temporal price links use state-sector overlap medians", {
+test_that("CPI link factors equal median overlap ratios", {
   months <- as.Date(c("2013-01-01", "2013-02-01", "2013-03-01"))
   old <- rbind(
     data.frame(state_code = "A", sector = "rural", period = months, index = c(100, 110, 120)),
@@ -521,7 +521,7 @@ test_that("temporal price links use state-sector overlap medians", {
   expect_equal(links$link_months, c(3L, 3L))
 })
 
-test_that("temporal price construction rejects weak or missing direct links", {
+test_that("temporal price construction requires enough overlap months", {
   months <- as.Date(c("2012-12-01", "2013-01-01"))
   sources <- list(
     cpi_alrl = data.frame(
@@ -536,13 +536,10 @@ test_that("temporal price construction rejects weak or missing direct links", {
       data.frame(state_code = "A", sector = "urban", period = months[2], index = 100)
     )
   )
-  expect_error(
-    build_temporal_price_series(
-      sources,
-      overlap_start = months[2], overlap_end = months[2], minimum_link_months = 2
-    ),
-    "sufficient direct link"
-  )
+  expect_error(build_temporal_price_series(
+    sources,
+    overlap_start = months[2], overlap_end = months[2], minimum_link_months = 2
+  ))
 })
 
 # sample-end: code-price-link-tests

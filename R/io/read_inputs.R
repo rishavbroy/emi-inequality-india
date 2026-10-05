@@ -65,10 +65,11 @@ join_district_carveout_wrapped_label <- function(previous, continuation) {
 
 # sample-start: code-district-carveout-repair
 
-#' Read the headerless table of district boundary changes from 1961 to 2001
+#' Rejoin district names split across rows in the historical boundary table
 #'
-#' The historical table has five data columns and no header row. Reading it with
-#' the ordinary CSV default would consume the first Anantapur observation as names.
+#' Rows with a blank 1991 population field are continuations. A trailing hyphen
+#' identifies a split 1991 district name; a 2001 name can continue on a row with
+#' no transfer percentages.
 repair_district_carveout_wrapped_rows <- function(x) {
   out <- safe_df(x)
   if (!nrow(out)) return(out)
@@ -114,6 +115,8 @@ repair_district_carveout_wrapped_rows <- function(x) {
 
 district_carveout_rounding_tolerance_pp <- function() 0.05
 
+#' Validate population shares in the 1991-to-2001 district transfer table
+#'
 validate_district_carveout_shares <- function(
     x,
     rounding_tolerance_pp = district_carveout_rounding_tolerance_pp()) {

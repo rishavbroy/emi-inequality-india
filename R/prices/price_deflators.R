@@ -345,10 +345,12 @@ build_state_sector_deflator <- function(
     out$reference_index[missing_reference] <- out$donor_reference_index[missing_reference]
     out$donor_reference_index <- NULL
   }
+  # The product adjusts for the rural/urban price level in each state and for
+  # price change from the reference period to the survey month.
   out$temporal_price_relative <- num(out$index) / num(out$reference_index)
   out$price_deflator <- num(out$spatial_price_relative) * num(out$temporal_price_relative)
   if (any(!positive_finite(out$price_deflator))) {
-    stop("Deflator construction left missing or invalid values.", call. = FALSE)
+    stop("Price deflators must be positive and finite for every retained state, sector, and month.", call. = FALSE)
   }
   out <- out[order(out$state_code, out$sector, out$period), , drop = FALSE]
   rownames(out) <- NULL
