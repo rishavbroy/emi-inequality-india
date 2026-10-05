@@ -1,5 +1,3 @@
-# sample-start: code-survey-probit
-
 selection_probit_variables <- function(selection_data, require_all = FALSE) {
   variables <- c(
     "AGE", "SEX", "HH_SIZE", "RELIGION", "SOCIAL_GROUP", "SECTOR",
@@ -21,16 +19,11 @@ selection_probit_variables <- function(selection_data, require_all = FALSE) {
   variables[variables %in% names(selection_data)]
 }
 
-selection_survey_design_variables <- function() {
-  c("FSU_SL_NO", "weight", "STATE", "SECTOR", "STRATUM", "SUB_STRATUM_NO")
-}
-
-#' Retain the variables used by the selection model and survey design
+#' Limit serialized model data to variables that affect estimation
 #'
-#' Earlier builds stored unrelated Block 5 schooling fields with the survey
-#' design. Editing one of those fields therefore recomputed the marginal effects
-#' even when the probit inputs were unchanged. Retain only variables used by the
-#' model and survey design.
+#' Keeping unrelated schooling fields in the saved survey design would invalidate
+#' downstream marginal effects when those fields change even though the fitted
+#' specification does not. Retain only model and survey-design inputs.
 project_selection_model_data <- function(selection_data) {
   selection_data <- safe_df(selection_data)
   design <- c("enrolled", selection_survey_design_variables())
@@ -58,7 +51,11 @@ estimate_selection_probit <- function(selection_data, cfg) {
     }
     design <- build_survey_design_selection(selection_data, require_all = TRUE)
     out <- with_survey_lonely_psu(
-      fit_selection_probit(design, f_probit)
+      survey::svyglm(
+        f_probit,
+        design = design,
+        family = stats::quasibinomial(link = "probit")
+      )
     )
     return(stabilize_selection_model_formula(out, f_probit))
   }
@@ -71,12 +68,11 @@ estimate_selection_probit <- function(selection_data, cfg) {
   stabilize_selection_model_formula(out, f_probit)
 }
 
-#' Store the fitted selection formula inside the saved model call
+#' Preserve the fitted selection formula after serialization
 #'
-#' Programmatic fitting originally left the local symbol `f_probit` in the saved
-#' call. After {targets} serialized the model, packages reconstructing model data
-#' could no longer resolve that local name. Store the formula itself in the call
-#' and keep the formula attribute used by downstream validation.
+#' Store the formula itself in the saved call rather than a local symbol so
+#' downstream packages can reconstruct model data after {targets} serialization.
+#' Keep the same formula as an attribute for downstream validation.
 stabilize_selection_model_formula <- function(model, formula) {
   if (!inherits(formula, "formula")) {
     stop("Selection model formula must inherit from formula.", call. = FALSE)
@@ -86,7 +82,15 @@ stabilize_selection_model_formula <- function(model, formula) {
   model
 }
 
-#' Build survey design selection
+# sample-start: code-survey-design
+
+#' Declare fields required to construct the NSS survey design
+#'
+selection_survey_design_variables <- function() {
+  c("FSU_SL_NO", "weight", "STATE", "SECTOR", "STRATUM", "SUB_STRATUM_NO")
+}
+
+#' Construct the NSS survey design used by the enrollment model
 #'
 build_survey_design_selection <- function(selection_df, require_all = FALSE) {
   required <- selection_survey_design_variables()
@@ -118,14 +122,4 @@ build_survey_design_selection <- function(selection_df, require_all = FALSE) {
   )
 }
 
-#' Fit selection probit
-#'
-fit_selection_probit <- function(selection_design, f_probit) {
-  survey::svyglm(
-    f_probit,
-    design = selection_design,
-    family = stats::quasibinomial(link = "probit")
-  )
-}
-
-# sample-end: code-survey-probit
+# sample-end: code-survey-design

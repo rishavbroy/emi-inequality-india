@@ -44,7 +44,7 @@ ame_out_of_pipeline <- function(status, reason) {
 }
 
 # sample-start: code-ame-estimation
-#' extract the fitted sample and survey weights used to average marginal effects
+#' Recover the fitted sample and survey weights used to average marginal effects
 #'
 ame_model_data_and_weights <- function(model) {
   model_data <- as.data.frame(stats::model.frame(model))
@@ -67,30 +67,21 @@ ame_model_data_and_weights <- function(model) {
   list(data = model_data, wts = model_weights)
 }
 
-#' Run the standard marginaleffects implementation
+#' Average slopes over the fitted survey sample
 #'
-run_avg_slopes <- function(model, newdata = NULL, wts = TRUE, numderiv = NULL) {
-  args <- list(
-    model = model,
-    newdata = newdata,
-    wts = wts,
+compute_ames_marginaleffects <- function(model) {
+  # Pass the fitted model frame and survey weights explicitly because serialized
+  # svyglm objects need not expose those weights to downstream packages. This keeps
+  # the averaging population equal to the survey estimation sample. `marginaleffects`
+  # uses the model's design-based covariance matrix for uncertainty.
+  amed <- ame_model_data_and_weights(model)
+  marginaleffects::avg_slopes(
+    model,
+    newdata = amed$data,
+    wts = amed$wts,
     vcov = TRUE,
     type = "response"
   )
-  if (!is.null(numderiv)) args$numderiv <- numderiv
-  do.call(marginaleffects::avg_slopes, args)
-}
-
-#' Compute AMEs with marginaleffects
-#'
-compute_ames_marginaleffects <- function(model) {
-  # Earlier calls relied on marginaleffects to recover weights from serialized
-  # svyglm objects. Some saved models no longer exposed those weights reliably,
-  # so pass the fitted model frame and sampling weights explicitly. This keeps the
-  # averaging population equal to the survey estimation sample. `marginaleffects`
-  # uses the model's design-based covariance matrix for uncertainty.
-  amed <- ame_model_data_and_weights(model)
-  run_avg_slopes(model, newdata = amed$data, wts = amed$wts)
 }
 # sample-end: code-ame-estimation
 
