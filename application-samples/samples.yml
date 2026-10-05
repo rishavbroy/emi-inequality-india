@@ -82,27 +82,29 @@ coding_outputs:
   main_maps:
     type: figure
     paper_label: fig-schooling-geography
-  iv_maps:
-    type: figure
-    paper_label: fig-linguistic-geography
   historical_language_persistence:
     type: figure
     paper_label: fig-linguistic-persistence
 coding:
   - id: short
     excerpts:
-      - id: code-survey-probit
-        file: R/selection/estimate_selection_probit.R
-        title: Survey-Weighted Enrollment Model
+      - id: code-language-atlas-validation
+        file: scripts/build_language_atlas_1991.py
+        title: Reconstructing District Data from the 1991 Language Atlas
         description: >-
-          The enrollment probit uses National Sample Survey (NSS) household weights, primary sampling units, and strata with a fixed set of child, household, and district covariates. The final analysis requires every variable used by the model and survey design, so incomplete inputs stop estimation instead of changing the specification.
+          Annexure IV repeats district rows across eight language pages. Exact repeated labels can recover a serial number omitted on one page, but conflicting evidence remains unresolved; candidate district identities are then checked against official 1991 Primary Census Abstract populations before acceptance.
+        outputs:
+          - historical_language_persistence
+      - id: code-survey-design
+        file: R/selection/estimate_selection_probit.R
+        title: Constructing the NSS Survey Design
+        description: >-
+          The enrollment model uses household sampling weights, sampled villages or urban blocks as primary sampling units, and strata formed from state, sector, stratum, and substratum. Final estimation requires all survey-design fields rather than silently falling back to an incomplete design.
       - id: code-ame-estimation
         file: R/selection/compute_average_marginal_effects.R
         title: Average Marginal Effects on the Estimation Sample
         description: >-
-          Average marginal effects are computed with `marginaleffects::avg_slopes()` over the observations used to fit the probit, weighted by their NSS sampling weights. The same calculation produces the enrollment table below.
-        outputs:
-          - selection_ame
+          Response-scale average marginal effects are delegated to `marginaleffects::avg_slopes()`. The fitted model frame and NSS sampling weights are passed explicitly so the averaging population remains the survey estimation sample after model serialization.
       - id: code-mop-effective-f
         file: R/iv/weak_identification.R
         title: Assessing Weak-Instrument Strength with the Montiel Olea--Pflueger Effective F
@@ -129,20 +131,13 @@ coding:
           The linked rural and urban CPI series is combined with state-specific price relatives for rural and urban areas derived from Tendulkar poverty lines. The resulting deflators express survey consumption in comparable 2011--12 rupees; the figure below compares district estimates across the 2022--23 and 2023--24 Household Consumption Expenditure Survey (HCES) rounds.
         outputs:
           - consumption_validation
+      - id: code-price-link-tests
+        file: tests/testthat/test-prices-and-controls.R
+        title: Behavioral Tests for CPI Linking
+        description: >-
+          Synthetic state-sector series verify the overlap rule directly: link factors equal the median month-by-month ratio, retain the number of common months, and reject a pre-switch series when the overlap is too short to meet the minimum evidence requirement.
   - id: long
     excerpts:
-      - id: code-survey-probit
-        file: R/selection/estimate_selection_probit.R
-        title: Survey-Weighted Enrollment Model
-        description: >-
-          The enrollment probit uses National Sample Survey (NSS) household weights, primary sampling units, and strata with a fixed set of child, household, and district covariates. The final analysis requires every variable used by the model and survey design, so incomplete inputs stop estimation instead of changing the specification.
-      - id: code-ame-estimation
-        file: R/selection/compute_average_marginal_effects.R
-        title: Average Marginal Effects on the Estimation Sample
-        description: >-
-          Average marginal effects are computed with `marginaleffects::avg_slopes()` over the observations used to fit the probit, weighted by their NSS sampling weights. The same calculation produces the enrollment table below.
-        outputs:
-          - selection_ame
       - id: code-district-carveout-repair
         file: R/io/read_inputs.R
         title: Reconstructing District Boundary Transfers Between 1991 and 2001
@@ -152,27 +147,21 @@ coding:
         file: scripts/build_language_atlas_1991.py
         title: Reconstructing District Data from the 1991 Language Atlas
         description: >-
-          Annexure IV of the 1991 Language Atlas repeats the same district rows across eight language pages. Exact repeated labels can supply a district serial number when one page omits it; extracted district populations are then compared with the official 1991 Primary Census Abstract (PCA), and disagreements are flagged for review.
+          Annexure IV repeats district rows across eight language pages. Exact repeated labels can recover a serial number omitted on one page, but conflicting evidence remains unresolved; candidate district identities are then checked against official 1991 Primary Census Abstract populations before acceptance.
         outputs:
           - historical_language_persistence
-      - id: code-spatial-weights-construction
-        file: R/diagnostics/diagnose_spatial_weights.R
-        title: Rook and Queen Contiguity from District Polygons
+      - id: code-survey-design
+        file: R/selection/estimate_selection_probit.R
+        title: Constructing the NSS Survey Design
         description: >-
-          Rook and queen neighbors are constructed directly from district polygons with `spdep` while retaining the fitted sample's row order. The routine records islands and connected components, allowing genuine offshore districts to be distinguished from unexpected disconnected components.
-      - id: code-spatial-residual-moran
-        file: R/diagnostics/diagnose_spatial_autocorrelation.R
-        title: Moran's I Permutation Test for Regression Residuals
+          The enrollment model uses household sampling weights, sampled villages or urban blocks as primary sampling units, and strata formed from state, sector, stratum, and substratum. Final estimation requires all survey-design fields rather than silently falling back to an incomplete design.
+      - id: code-ame-estimation
+        file: R/selection/compute_average_marginal_effects.R
+        title: Average Marginal Effects on the Estimation Sample
         description: >-
-          Moran's I is computed on the observations used to fit each model. The code reports both the analytical test and a permutation test with 9,999 randomizations from `spdep::moran.mc()` using a fixed random seed; the paper uses the permutation p-value for regression residuals.
-      - id: code-public-map-rendering
-        file: R/output/save_figures.R
-        title: Mapping District Estimates on 2001 Census Boundaries
-        description: >-
-          Each statistic is joined to the complete 2001 Census district boundary layer, leaving districts outside a particular estimation sample visible as missing data. Disputed territorial polygons are shown as no data, state outlines are reconstructed from the complete boundary layer, and the same functions draw categorical or numeric choropleths, including diverging scales.
+          Response-scale average marginal effects are delegated to `marginaleffects::avg_slopes()`. The fitted model frame and NSS sampling weights are passed explicitly so the averaging population remains the survey estimation sample after model serialization. The same calculation produces the enrollment table below.
         outputs:
-          - main_maps
-          - iv_maps
+          - selection_ame
       - id: code-mop-effective-f
         file: R/iv/weak_identification.R
         title: Assessing Weak-Instrument Strength with the Montiel Olea--Pflueger Effective F
@@ -180,6 +169,13 @@ coding:
           The fitted instrumental-variable model is passed to `momentfit::MOPtest()`, using state clusters when they are available, to obtain the Montiel Olea--Pflueger effective F, critical value, p-value, and effective degrees of freedom. The table below also contains two-stage least squares (2SLS) and Anderson--Rubin results produced by the additional implementation files linked immediately before the table.
         outputs:
           - weak_iv
+      - id: code-public-map-rendering
+        file: R/output/save_figures.R
+        title: Mapping District Estimates on 2001 Census Boundaries
+        description: >-
+          Each statistic is joined to the complete 2001 Census district boundary layer, leaving districts outside a particular estimation sample visible as missing data. Disputed territorial polygons are shown as no data, state outlines are reconstructed from the complete boundary layer, and the same functions draw categorical or numeric choropleths, including diverging scales.
+        outputs:
+          - main_maps
       - id: code-temporal-price-series
         file: R/prices/build_temporal_price_series.R
         title: Linking Rural and Urban State CPI Series Across Index Bases
@@ -192,8 +188,8 @@ coding:
           The linked rural and urban CPI series is combined with state-specific price relatives for rural and urban areas derived from Tendulkar poverty lines. The resulting deflators express survey consumption in comparable 2011--12 rupees; the figure below compares district estimates across the 2022--23 and 2023--24 Household Consumption Expenditure Survey (HCES) rounds.
         outputs:
           - consumption_validation
-      - id: code-reproducible-targets
-        file: R/pipeline/core_consumption_iv_targets.R
-        title: Reusing One Analysis Definition from Raw and Processed Inputs
+      - id: code-price-link-tests
+        file: tests/testthat/test-prices-and-controls.R
+        title: Behavioral Tests for CPI Linking
         description: >-
-          The analysis that begins from raw inputs and the replication that begins from processed data call the same `{targets}` definitions. These targets assemble the consumption panel and estimate the same instrumental-variable specifications; related targets verify outcome availability and construct the schooling-consumption comparisons.
+          Synthetic state-sector series verify the overlap rule directly: link factors equal the median month-by-month ratio, retain the number of common months, and reject a pre-switch series when the overlap is too short to meet the minimum evidence requirement.

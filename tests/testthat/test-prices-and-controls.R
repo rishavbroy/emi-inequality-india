@@ -503,6 +503,7 @@ test_that("temporal price series uses CPI-RL and CPI-IW before 2013", {
   expect_equal(out$index[out$sector == "urban"], c(100, 102, 104, 106))
 })
 
+# sample-start: code-price-link-tests
 test_that("temporal price links use state-sector overlap medians", {
   months <- as.Date(c("2013-01-01", "2013-02-01", "2013-03-01"))
   old <- rbind(
@@ -543,6 +544,8 @@ test_that("temporal price construction rejects weak or missing direct links", {
     "sufficient direct link"
   )
 })
+
+# sample-end: code-price-link-tests
 
 test_that("base-2010 and base-2012 CPI-R/U overlap remains a validation result", {
   months <- as.Date(c("2013-01-01", "2013-02-01"))
