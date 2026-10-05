@@ -17,6 +17,8 @@ Writing samples select ordinary Quarto section IDs from `paper/paper.qmd`, so th
 
 Coding samples use paired `sample-start:` / `sample-end:` comments in active R and Python files. Marker IDs are declared in `samples.yml`, and validation requires each selected marker pair to be unique and well formed.
 
+Each coding-sample description and each selected code comment should make sense to a technical reader who has not read the paper or the rest of the replication package. Spell out project-specific abbreviations at first use, explain the empirical quantity or data irregularity before implementation details, and reserve comments for methodological choices or data assumptions that the code does not make obvious.
+
 ## Build
 
 From the repository root:
