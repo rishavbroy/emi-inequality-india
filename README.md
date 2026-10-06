@@ -1,6 +1,6 @@
 # Inequality in a Potential Equalizer of Opportunity
 
-This repository contains the code, outputs, and replication materials for *Inequality in a Potential Equalizer of Opportunity: Variation in the Accessibility and Net Benefits of English-Medium Instruction in India*. The project studies how inherited linguistic conditions, access to English-medium instruction (EMI), and local economic conditions vary across Indian districts and relate to inequality.
+This repository contains the code, outputs, and replication materials for my paper "Inequality in a Potential Equalizer of Opportunity: Variation in the Accessibility and Net Benefits of English-Medium Instruction in India." The project studies how inherited linguistic conditions, access to English-medium instruction (EMI), and local economic conditions vary across Indian districts and relate to inequality.
 
 [Paper](paper/paper.pdf) · [Replication guide](REPLICATION.md) · [Data availability](DATA_AVAILABILITY.md) · [Application samples](application-samples/README.md)
 
