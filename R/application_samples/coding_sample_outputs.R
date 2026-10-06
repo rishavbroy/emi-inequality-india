@@ -1,4 +1,4 @@
-# Render paper-formatted empirical outputs next to the code that produces them.
+# Render paper-formatted empirical results next to the code excerpts they illustrate.
 
 coding_output_registry <- function(manifest) {
   entries <- manifest$coding_outputs %||% list()
@@ -14,9 +14,13 @@ resolve_coding_outputs <- function(ids, manifest) {
   registry <- coding_output_registry(manifest)
   missing <- setdiff(ids, names(registry))
   if (length(missing)) {
-    stop("Coding sample references unknown selected outputs: ", paste(missing, collapse = ", "), call. = FALSE)
+    stop("Code sample references unknown selected outputs: ", paste(missing, collapse = ", "), call. = FALSE)
   }
   unname(registry[ids])
+}
+
+coding_output_files <- function(item) {
+  as.character(unlist(item$files %||% character(), use.names = FALSE))
 }
 
 sample_output_path <- function(path) {
@@ -24,12 +28,16 @@ sample_output_path <- function(path) {
 }
 
 selected_latex_lines <- function(item, reference_labels) {
-  path <- item$file %||% ""
-  if (!file.exists(path)) stop("Selected coding-sample table does not exist: ", path, call. = FALSE)
+  files <- coding_output_files(item)
+  if (length(files) != 1L || !nzchar(files[[1L]])) {
+    stop("Selected code-sample tables must declare exactly one output file.", call. = FALSE)
+  }
+  path <- files[[1L]]
+  if (!file.exists(path)) stop("Selected code-sample table does not exist: ", path, call. = FALSE)
 
   paper_label <- item$paper_label %||% ""
   if (!grepl("^tbl-[A-Za-z0-9_-]+$", paper_label)) {
-    stop("Selected coding-sample table must name its paper_label: ", path, call. = FALSE)
+    stop("Selected code-sample table must name its paper_label: ", path, call. = FALSE)
   }
   number <- unname(reference_labels[paper_label])
   if (length(number) != 1L || is.na(number) || !grepl("^[0-9]+$", number)) {
@@ -49,7 +57,7 @@ selected_latex_lines <- function(item, reference_labels) {
 paper_figure_block <- function(source, paper_label) {
   if (!file.exists(source)) stop("Current paper source does not exist: ", source, call. = FALSE)
   if (!grepl("^fig-[A-Za-z0-9_-]+$", paper_label)) {
-    stop("Selected coding-sample figure must name its fig- paper_label.", call. = FALSE)
+    stop("Selected code-sample figure must name its fig- paper_label.", call. = FALSE)
   }
 
   lines <- readLines(source, warn = FALSE)
@@ -85,10 +93,12 @@ normalize_coding_sample_figure_paths <- function(lines) {
   gsub("../outputs/", "../../outputs/", lines, fixed = TRUE)
 }
 
-selected_figure_lines <- function(item, manifest, reference_labels) {
+selected_figure_lines <- function(
+    item, manifest, reference_labels, selective_rasterization = FALSE
+) {
   paper_label <- item$paper_label %||% ""
   if (!grepl("^fig-[A-Za-z0-9_-]+$", paper_label)) {
-    stop("Selected coding-sample figure must name its fig- paper_label.", call. = FALSE)
+    stop("Selected code-sample figure must name its fig- paper_label.", call. = FALSE)
   }
   number <- unname(reference_labels[paper_label])
   if (length(number) != 1L || is.na(number) || !grepl("^[0-9]+$", number)) {
@@ -96,6 +106,9 @@ selected_figure_lines <- function(item, manifest, reference_labels) {
   }
 
   figure <- paper_figure_block(manifest$paper$source, paper_label)
+  figure <- use_smaller_figure_assets(
+    figure, dirname(manifest$paper$source), selective_rasterization
+  )
   figure <- normalize_coding_sample_figure_paths(figure)
   c(
     "```{=latex}",
@@ -109,34 +122,67 @@ selected_figure_lines <- function(item, manifest, reference_labels) {
   )
 }
 
-coding_output_code_file_lines <- function(item, variant, manifest) {
-  files <- unlist(item$code_files %||% character(), use.names = FALSE)
-  if (!length(files)) return(character())
-  refs <- vapply(
-    files,
-    application_sample_file_reference,
-    character(1),
-    variant = variant,
-    manifest = manifest
+coding_output_display_files <- function(item, selective_rasterization = FALSE) {
+  files <- coding_output_files(item)
+  if (!identical(item$type %||% "", "figure") || !isTRUE(selective_rasterization)) return(files)
+  vapply(
+    files, smaller_figure_asset_path, character(1),
+    source_dir = ".", enabled = TRUE, USE.NAMES = FALSE
   )
-  output_name <- if (identical(item$type %||% "", "latex")) "table" else "figure"
-  c("", paste0("Additional code used for this ", output_name, ": ", paste(refs, collapse = ", "), "."), "")
 }
 
-coding_sample_output_lines <- function(output_ids, variant, manifest, reference_labels) {
+coding_output_annotation_lines <- function(
+    item, variant, manifest, selective_rasterization = FALSE
+) {
+  outputs <- coding_output_display_files(item, selective_rasterization)
+  if (!length(outputs)) {
+    stop("Selected code-sample results must declare at least one output file.", call. = FALSE)
+  }
+  output_label <- if (length(outputs) == 1L) "Output: " else "Outputs: "
+  lines <- c(
+    "",
+    paste0(output_label, application_sample_file_list(outputs, variant, manifest))
+  )
+
+  rendering_files <- unlist(item$rendering_files %||% character(), use.names = FALSE)
+  if (length(rendering_files)) {
+    lines <- c(
+      lines,
+      paste0(
+        "Rendering code: ",
+        application_sample_file_list(rendering_files, variant, manifest)
+      )
+    )
+  }
+  c(lines, "")
+}
+
+coding_sample_output_lines <- function(
+    output_ids, variant, manifest, reference_labels, selective_rasterization = FALSE
+) {
   items <- resolve_coding_outputs(output_ids, manifest)
   if (!length(items)) return(character())
   unlist(lapply(items, function(item) {
+    files <- coding_output_files(item)
+    missing <- files[!file.exists(files)]
+    if (length(missing)) {
+      stop(
+        "Selected code-sample output files do not exist: ",
+        paste(missing, collapse = ", "),
+        call. = FALSE
+      )
+    }
     type <- item$type %||% ""
     content <- switch(
       type,
       latex = selected_latex_lines(item, reference_labels),
-      figure = selected_figure_lines(item, manifest, reference_labels),
-      stop("Unsupported coding-sample output type: ", type, call. = FALSE)
+      figure = selected_figure_lines(
+        item, manifest, reference_labels, selective_rasterization
+      ),
+      stop("Unsupported code-sample output type: ", type, call. = FALSE)
     )
     c(
-      coding_output_code_file_lines(item, variant, manifest),
-      "",
+      coding_output_annotation_lines(item, variant, manifest, selective_rasterization),
       content,
       ""
     )

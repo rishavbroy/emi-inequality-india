@@ -217,6 +217,56 @@ render_qmd_to_pdf <- function(input_qmd, output_file) {
 }
 
 
+smaller_figure_asset_path <- function(path, source_dir = ".", enabled = TRUE) {
+  if (!isTRUE(enabled) || !grepl("[.]pdf$", path, ignore.case = TRUE)) return(path)
+  absolute <- grepl("^(?:/|[A-Za-z]:[/\\\\])", path, perl = TRUE)
+  pdf_file <- if (absolute) path else file.path(source_dir, path)
+  png <- sub("[.]pdf$", ".png", path, ignore.case = TRUE)
+  png_file <- if (absolute) png else file.path(source_dir, png)
+  if (!file.exists(pdf_file) || !file.exists(png_file)) return(path)
+  if (file.info(png_file)$size < file.info(pdf_file)$size) png else path
+}
+
+use_smaller_figure_assets <- function(lines, source_dir, enabled = FALSE) {
+  if (!isTRUE(enabled)) return(lines)
+
+  pattern <- "\\.\\./outputs/figures/[A-Za-z0-9_./-]+[.]pdf"
+  vapply(lines, function(line) {
+    matches <- gregexpr(pattern, line, perl = TRUE)[[1L]]
+    if (length(matches) == 1L && identical(matches[[1L]], -1L)) return(line)
+
+    paths <- regmatches(line, list(matches))[[1L]]
+    replacements <- vapply(
+      paths, smaller_figure_asset_path, character(1),
+      source_dir = source_dir, enabled = TRUE
+    )
+    regmatches(line, list(matches)) <- list(replacements)
+    line
+  }, character(1), USE.NAMES = FALSE)
+}
+
+application_sample_file_list <- function(paths, variant, manifest) {
+  paths <- as.character(unlist(paths %||% character(), use.names = FALSE))
+  paths <- paths[nzchar(paths)]
+  if (!length(paths)) return("")
+  refs <- vapply(
+    paths, application_sample_file_reference, character(1),
+    variant = variant, manifest = manifest
+  )
+  if (length(refs) == 1L) return(refs[[1L]])
+  if (length(refs) == 2L) return(paste(refs, collapse = " and "))
+  paste0(paste(refs[-length(refs)], collapse = ", "), ", and ", refs[[length(refs)]])
+}
+
+application_sample_size_description <- function(description, spec) {
+  if (is.null(spec$max_bytes)) return(description)
+  sub(
+    "[.]$",
+    ", with figures selectively rasterized to reduce file size.",
+    description
+  )
+}
+
 validate_application_sample_max_bytes <- function(path, max_bytes = NULL) {
   if (is.null(max_bytes)) return(invisible(TRUE))
   max_bytes <- as.numeric(max_bytes)

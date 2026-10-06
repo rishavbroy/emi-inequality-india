@@ -65,79 +65,49 @@ writing:
 coding_outputs:
   selection_ame:
     type: latex
-    file: outputs/tables/appendix/appendix_selection_ame.tex
+    files:
+      - outputs/tables/appendix/appendix_selection_ame.tex
     paper_label: tbl-appendix-selection-ame
+    rendering_files:
+      - R/output/appendix_selection_exhibits.R
+      - R/output/save_tables.R
   weak_iv:
     type: latex
-    file: outputs/tables/appendix/appendix_iv_weak_inference.tex
+    files:
+      - outputs/tables/appendix/appendix_iv_weak_inference.tex
     paper_label: tbl-app-iv-weak
-    code_files:
-      - R/iv/estimate_2sls.R
-      - R/iv/consumption_outcome_registry.R
+    rendering_files:
       - R/output/appendix_identification_exhibits.R
       - R/output/save_tables.R
   consumption_validation:
     type: figure
+    files:
+      - outputs/figures/appendix/appendix_consumption_hces_consistency.pdf
     paper_label: fig-app-consumption-hces
+    rendering_files:
+      - R/output/appendix_data_construction_exhibits.R
+      - R/output/save_figures.R
   main_maps:
     type: figure
+    files:
+      - outputs/figures/main/map_emi_share_enrolled.pdf
+      - outputs/figures/main/map_emi_exposure.pdf
+      - outputs/figures/main/map_public_emi_exposure.pdf
+      - outputs/figures/main/map_private_emi_exposure.pdf
     paper_label: fig-schooling-geography
+    rendering_files:
+      - R/output/make_figures.R
   historical_language_persistence:
     type: figure
+    files:
+      - outputs/figures/appendix/appendix_historical_language_persistence.pdf
     paper_label: fig-linguistic-persistence
+    rendering_files:
+      - R/output/appendix_data_construction_exhibits.R
+      - R/output/save_figures.R
 coding:
-  - id: short
-    excerpts:
-      - id: code-language-atlas-validation
-        file: scripts/build_language_atlas_1991.py
-        title: Reconstructing District Data from the 1991 Language Atlas
-        description: >-
-          The 1991 Census Language Atlas repeats each district across eight language pages. Districts are identified by a Census state code plus a within-state district number, printed in the Atlas as a serial; some repeated rows omit it or contain errors from optical character recognition (OCR). The code fills a missing serial only when matching row labels agree, then validates the resulting district code against the official 1991 Primary Census Abstract population.
-        outputs:
-          - historical_language_persistence
-      - id: code-survey-design
-        file: R/selection/estimate_selection_probit.R
-        title: Constructing the NSS Survey Design
-        description: >-
-          The 2007--08 National Sample Survey (NSS) education survey samples households within first-stage units such as villages or urban blocks. This function combines the state, rural/urban sector, stratum, and substratum fields into NSS survey strata, attaches household sampling weights, and constructs the `survey::svydesign()` specification used for the enrollment probit. Final estimation stops if a required design field is missing.
-      - id: code-ame-estimation
-        file: R/selection/compute_average_marginal_effects.R
-        title: Average Marginal Effects on the Estimation Sample
-        description: >-
-          The code extracts the exact observations and NSS sampling weights used to fit the enrollment probit, checks that the weights align with those observations, and passes both to `marginaleffects::avg_slopes()`. The result is an average change in predicted enrollment on the probability scale over the survey-weighted estimation sample.
-      - id: code-mop-effective-f
-        file: R/iv/weak_identification.R
-        title: Assessing Weak-Instrument Strength with the Montiel Olea--Pflueger Effective F
-        description: >-
-          The paper uses linguistic distance from Hindi as an instrument for district exposure to English-medium schooling. This function evaluates that first stage with the Montiel Olea--Pflueger effective F. It recovers the regressors and instruments from the fitted `ivreg` model, uses the same estimation rows, and calls `momentfit::MOPtest()` with state-clustered covariance when state identifiers are available. The table pairs this strength measure with two-stage least squares (2SLS) and Anderson--Rubin results.
-        outputs:
-          - weak_iv
-      - id: code-public-map-rendering
-        file: R/output/save_figures.R
-        title: Mapping District Estimates on 2001 Census Boundaries
-        description: >-
-          To display estimates on a common geography, the code joins analysis values to every 2001 Census district polygon before plotting. Districts outside an estimation sample remain visible with a no-data fill, disputed territories receive a separate no-data treatment, and state borders are drawn from the full district geometry. The plotting function handles both categorical and continuous measures; continuous measures can use diverging color scales.
-        outputs:
-          - main_maps
-      - id: code-temporal-price-series
-        file: R/prices/build_temporal_price_series.R
-        title: Linking Rural and Urban State CPI Series Across Index Bases
-        description: >-
-          The historical Consumer Price Index for Rural Labourers (CPI-RL) and Consumer Price Index for Industrial Workers (CPI-IW) use different index bases from the later state rural/urban CPI (CPI-R/U). For each state and rural/urban sector, the code rescales the pre-2013 index by the median monthly ratio of CPI-R/U to the historical index over January 2013--December 2014. It requires at least six overlap months and records both the overlap count and the dispersion of the monthly ratios.
-      - id: code-state-sector-deflator
-        file: R/prices/price_deflators.R
-        title: Rural and Urban State Price Deflators for Comparable Real Consumption
-        description: >-
-          Linking the CPI series accounts for price change over time. Comparing consumption across states also requires a rural/urban state price adjustment. The Tendulkar poverty lines provide separate rupee thresholds for each state and rural/urban sector; dividing them by the all-India rural reference yields the cross-state price relatives. The code combines those relatives with the linked CPI and expresses household consumption in comparable 2011--12 rupees. The figure below compares district consumption estimates from the 2022--23 and 2023--24 Household Consumption Expenditure Survey (HCES) rounds after this adjustment.
-        outputs:
-          - consumption_validation
-      - id: code-price-link-tests
-        file: tests/testthat/test-prices-and-controls.R
-        title: Testing CPI Linking Across Index Bases
-        description: >-
-          Small rural and urban CPI examples have link factors known in advance. The first test verifies that each link factor equals the median monthly ratio of the new index to the old index and that the overlap count is retained. The second verifies that construction stops when a historical series has fewer common months with CPI-R/U than the required minimum.
-  - id: long
-    excerpts:
+  - id: main
+    excerpts: &main_code_excerpts
       - id: code-district-carveout-repair
         file: R/io/read_inputs.R
         title: Reconstructing District Boundary Transfers Between 1991 and 2001
@@ -159,7 +129,7 @@ coding:
         file: R/selection/compute_average_marginal_effects.R
         title: Average Marginal Effects on the Estimation Sample
         description: >-
-          The code extracts the exact observations and NSS sampling weights used to fit the enrollment probit, checks that the weights align with those observations, and passes both to `marginaleffects::avg_slopes()`. The result is an average change in predicted enrollment on the probability scale over the survey-weighted estimation sample. The same calculation produces the enrollment table below.
+          The code extracts the exact observations and NSS sampling weights used to fit the enrollment probit, checks that the weights align with those observations, and passes both to `marginaleffects::avg_slopes()`. The result is an average change in predicted enrollment on the probability scale over the survey-weighted estimation sample.
         outputs:
           - selection_ame
       - id: code-mop-effective-f
@@ -193,3 +163,8 @@ coding:
         title: Testing CPI Linking Across Index Bases
         description: >-
           Small rural and urban CPI examples have link factors known in advance. The first test verifies that each link factor equals the median monthly ratio of the new index to the old index and that the overlap count is retained. The second verifies that construction stops when a historical series has fewer common months with CPI-R/U than the required minimum.
+  - id: Under10MB
+    label: UNDER-10MB COPY
+    max_bytes: 10000000
+    selective_rasterization: true
+    excerpts: *main_code_excerpts

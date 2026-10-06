@@ -322,13 +322,7 @@ writing_sample_notice <- function(spec, variant, manifest, source_lines, referen
       " of the titular paper."
     )
   }
-  if (!is.null(spec$max_bytes)) {
-    description <- sub(
-      "[.]$",
-      ", with figures selectively rasterized to reduce file size.",
-      description
-    )
-  }
+  description <- application_sample_size_description(description, spec)
   availability <- application_sample_availability_sentence(
     "writing", spec$id, variant, manifest, full_paper = !is_full
   )
@@ -433,27 +427,6 @@ normalize_sample_resource_paths <- function(lines) {
   gsub("../outputs/", "../../outputs/", lines, fixed = TRUE)
 }
 
-use_compact_writing_figure_assets <- function(lines, source_dir, enabled = FALSE) {
-  if (!isTRUE(enabled)) return(lines)
-
-  pattern <- "\\.\\./outputs/figures/[A-Za-z0-9_./-]+[.]pdf"
-  vapply(lines, function(line) {
-    matches <- gregexpr(pattern, line, perl = TRUE)[[1L]]
-    if (length(matches) == 1L && identical(matches[[1L]], -1L)) return(line)
-
-    paths <- regmatches(line, list(matches))[[1L]]
-    replacements <- vapply(paths, function(path) {
-      pdf_file <- file.path(source_dir, path)
-      png <- sub("[.]pdf$", ".png", path)
-      png_file <- file.path(source_dir, png)
-      if (!file.exists(png_file) || !file.exists(pdf_file)) return(path)
-      if (file.info(png_file)$size < file.info(pdf_file)$size) png else path
-    }, character(1))
-    regmatches(line, list(matches)) <- list(replacements)
-    line
-  }, character(1), USE.NAMES = FALSE)
-}
-
 writing_sample_reference_setup <- function(reference_labels) {
   table_labels <- reference_labels[grepl("^tbl-", names(reference_labels %||% character()))]
   if (!length(table_labels)) return(character())
@@ -481,7 +454,7 @@ assemble_writing_sample_qmd <- function(source, spec, variant, manifest, output_
     prepared$metadata$`sample-reference-labels` <- as.list(reference_labels)
   }
   yaml_lines <- quarto_yaml_lines(prepared$metadata, indent.mapping.sequence = TRUE)
-  body <- use_compact_writing_figure_assets(
+  body <- use_smaller_figure_assets(
     parts$body, dirname(source), spec$selective_rasterization %||% FALSE
   )
   body <- normalize_sample_resource_paths(body)

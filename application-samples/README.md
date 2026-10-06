@@ -7,7 +7,7 @@ Application samples are generated from the current paper and research code. [`sa
 The build writes named and anonymous variants under [`output/`](output/):
 
 - writing samples targeting 5, 10, and 15 pages, file-size-limited copies, and the full paper;
-- short and long coding samples.
+- one code sample plus a file-size-limited copy with the same excerpts.
 
 Generated PDFs are the maintained application files. Intermediate Markdown and LaTeX files are temporary build products.
 
@@ -15,9 +15,9 @@ Generated PDFs are the maintained application files. Intermediate Markdown and L
 
 Writing samples select ordinary Quarto section IDs from `paper/paper.qmd`, so the excerpts are generated directly from the paper.
 
-Coding samples use paired `sample-start:` / `sample-end:` comments in active R and Python files. Marker IDs are declared in `samples.yml`, and validation requires each selected marker pair to be unique and well formed.
+Code samples use paired `sample-start:` / `sample-end:` comments in active R and Python files. Marker IDs are declared in `samples.yml`, and validation requires each selected marker pair to be unique and well formed.
 
-Each coding-sample description and each selected code comment should make sense to a technical reader who has not read the paper or the rest of the replication package. Spell out project-specific abbreviations at first use, explain the empirical quantity or data irregularity before implementation details, and reserve comments for methodological choices or data assumptions that the code does not make obvious.
+Each code-sample description and each selected code comment should make sense to a technical reader who has not read the paper or the rest of the replication package. Spell out project-specific abbreviations at first use, explain the empirical quantity or data irregularity before implementation details, and reserve comments for methodological choices or data assumptions that the code does not make obvious.
 
 ## Build
 
@@ -41,9 +41,9 @@ Writing excerpts preserve the current full paper's section, table, figure, and e
 
 The low-level LaTeX/reference extraction is an implementation detail of the renderer; maintainers normally change section selections only in `samples.yml`.
 
-## Coding-sample outputs
+## Code-sample outputs
 
-Selected code excerpts may attach tables or figures from the paper listed under `coding_outputs`. Results appear immediately after the excerpt they illustrate. Selected tables and figures declare their paper cross-reference labels and retain the full paper's numbering and captions; figures are copied from the corresponding `paper.qmd` figure blocks rather than described again in the sample manifest. If an output combines results from code outside the displayed excerpt, `code_files` lists those files and the named sample links to them in the repository. Citations in named coding samples link to the full paper, while anonymous samples retain the citation text without the identifying URL. Output composition does not re-estimate results independently of the main analysis.
+Selected code excerpts may attach tables or figures from the paper listed under `coding_outputs`. Each attached result declares its generated file or files, the paper cross-reference label used to preserve the full paper's numbering and caption, and any separate files that format the displayed result. The sample prints these as `Output:` or `Outputs:` and, when applicable, `Rendering code:` before reproducing the result. Named samples link those paths to the repository; anonymous samples show only the paths. Figures are copied from the corresponding `paper.qmd` figure blocks, and tables include the generated LaTeX used by the paper. The file-size-limited code sample uses the same excerpts and substitutes a smaller PNG only when a figure's PNG counterpart is smaller than its PDF; the ordinary code sample retains the paper's PDF figures.
 
 ## Page-count policy
 

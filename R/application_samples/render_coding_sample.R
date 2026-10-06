@@ -19,7 +19,10 @@ coding_sample_body <- function(spec, variant, manifest, reference_labels) {
   unlist(lapply(spec$excerpts, function(excerpt) {
     c(
       extract_code_excerpt(excerpt, variant, manifest),
-      coding_sample_output_lines(excerpt$outputs %||% character(), variant, manifest, reference_labels)
+      coding_sample_output_lines(
+        excerpt$outputs %||% character(), variant, manifest, reference_labels,
+        spec$selective_rasterization %||% FALSE
+      )
     )
   }), use.names = FALSE)
 }
@@ -32,6 +35,7 @@ render_one_coding_sample <- function(spec, variant, manifest, reference_labels) 
   body <- coding_sample_body(spec, variant, manifest, reference_labels)
   assemble_coding_sample_qmd(spec, variant, manifest, body, output_qmd)
   render_qmd_to_pdf(output_qmd, output)
+  validate_application_sample_max_bytes(output, spec$max_bytes %||% NULL)
   if (identical(variant, "anonymous")) {
     validate_anonymous_sample(output, anonymous_sample_forbidden_strings(manifest))
   }

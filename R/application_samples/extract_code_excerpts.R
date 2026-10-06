@@ -52,8 +52,11 @@ coding_sample_notice <- function(spec, variant, manifest, source_metadata) {
   description <- paste0(
     "This document contains excerpts from the replication code of ",
     if (identical(variant, "anonymous")) "a paper titled " else "my paper ",
-    paper_title,
-    " When an excerpt corresponds to a table or figure reproduced from the paper, that result follows the code."
+    paper_title
+  )
+  description <- paste0(
+    application_sample_size_description(description, spec),
+    " Excerpts are followed by their corresponding outputs when appropriate."
   )
 
   c(
@@ -81,7 +84,8 @@ coding_sample_citeproc_fallback <- function(variant, manifest) {
 coding_sample_metadata <- function(spec, variant, manifest, source_metadata) {
   meta <- paper_sample_metadata(source_metadata, variant, manifest)
   meta$title <- "Code Sample"
-  meta$subtitle <- if (identical(spec$id, "short")) "Short Version" else "Long Version"
+  label <- as.character(spec$label %||% "")
+  meta$subtitle <- if (nzchar(label)) label else NULL
   meta$abstract <- NULL
   meta$bibliography <- "../../paper/references.bib"
   meta$`suppress-bibliography` <- TRUE

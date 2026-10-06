@@ -125,25 +125,57 @@ test_that("coding-output references are validated at the excerpt that displays t
 })
 
 
-test_that("coding-output implementation files must exist", {
+test_that("coding-output rendering files must exist", {
   env <- sample_test_env()
   manifest <- yaml::read_yaml(repo_file("application-samples", "samples.yml"))
   broken <- manifest
-  broken$coding_outputs[[1L]]$code_files <- "R/does-not-exist.R"
+  broken$coding_outputs[[1L]]$rendering_files <- "R/does-not-exist.R"
 
   expect_error(env$validate_application_sample_manifest(broken))
 })
 
-
-test_that("long coding sample contains every short-sample excerpt plus additional material", {
+test_that("coding outputs declare generated files", {
   env <- sample_test_env()
-  manifest <- env$read_application_sample_manifest(repo_file("application-samples", "samples.yml"))
-  specs <- setNames(manifest$coding, vapply(manifest$coding, `[[`, character(1), "id"))
-  short_ids <- vapply(specs$short$excerpts, `[[`, character(1), "id")
-  long_ids <- vapply(specs$long$excerpts, `[[`, character(1), "id")
+  manifest <- yaml::read_yaml(repo_file("application-samples", "samples.yml"))
 
-  expect_true(all(short_ids %in% long_ids))
-  expect_gt(length(long_ids), length(short_ids))
+  broken <- manifest
+  broken$coding_outputs[[1L]]$files <- NULL
+  expect_error(env$validate_application_sample_manifest(broken))
+
+  latex_id <- names(manifest$coding_outputs)[vapply(
+    manifest$coding_outputs, function(x) identical(x$type %||% "", "latex"), logical(1)
+  )][[1L]]
+  broken <- manifest
+  broken$coding_outputs[[latex_id]]$files <- c("first.tex", "second.tex")
+  expect_error(env$validate_application_sample_manifest(broken))
+
+  broken <- manifest
+  broken$coding_outputs[[1L]]$type <- "unknown"
+  expect_error(env$validate_application_sample_manifest(broken))
+})
+
+
+test_that("size-limited code samples support the same byte and figure options", {
+  env <- sample_test_env()
+  manifest <- yaml::read_yaml(repo_file("application-samples", "samples.yml"))
+  fixture <- manifest
+  fixture$coding <- list(list(
+    id = "limited",
+    label = "LIMITED COPY",
+    max_bytes = 1000,
+    selective_rasterization = TRUE,
+    excerpts = list()
+  ))
+
+  expect_no_error(env$validate_application_sample_manifest(fixture))
+
+  broken <- fixture
+  broken$coding[[1L]]$max_bytes <- 0
+  expect_error(env$validate_application_sample_manifest(broken))
+
+  broken <- fixture
+  broken$coding[[1L]]$selective_rasterization <- "yes"
+  expect_error(env$validate_application_sample_manifest(broken))
 })
 
 
@@ -194,7 +226,8 @@ test_that("application-sample outputs are unique across content and identity var
   expect_identical(anyDuplicated(outputs), 0L)
   expect_length(outputs, length(manifest$identity) * (length(manifest$writing) + length(manifest$coding)))
   expect_true(any(grepl("Anon_WritingSample_5pg[.]pdf$", outputs)))
-  expect_true(any(grepl("RishavRoy_CodeSample_Long[.]pdf$", outputs)))
+  expect_true(any(grepl("RishavRoy_CodeSample[.]pdf$", outputs)))
+  expect_true(any(grepl("RishavRoy_CodeSample_Under10MB[.]pdf$", outputs)))
 })
 
 test_that("Quarto metadata serialization uses YAML 1.2 booleans", {
@@ -226,7 +259,7 @@ test_that("writing sample labels may be configured independently of page targets
   )
 })
 
-test_that("size-limited writing samples use smaller raster figure assets", {
+test_that("size-limited samples use smaller raster figure assets", {
   env <- sample_test_env()
   root <- tempfile("writing-raster-")
   paper_dir <- file.path(root, "paper")
@@ -241,13 +274,13 @@ test_that("size-limited writing samples use smaller raster figure assets", {
   map <- "![Map](../outputs/figures/main/map.pdf)"
   chart <- "![Chart](../outputs/figures/main/chart.pdf)"
   expect_identical(
-    env$use_compact_writing_figure_assets(map, paper_dir, TRUE),
+    env$use_smaller_figure_assets(map, paper_dir, TRUE),
     "![Map](../outputs/figures/main/map.png)"
   )
-  expect_identical(env$use_compact_writing_figure_assets(map, paper_dir, FALSE), map)
-  expect_identical(env$use_compact_writing_figure_assets(chart, paper_dir, TRUE), chart)
+  expect_identical(env$use_smaller_figure_assets(map, paper_dir, FALSE), map)
+  expect_identical(env$use_smaller_figure_assets(chart, paper_dir, TRUE), chart)
   expect_identical(
-    env$use_compact_writing_figure_assets(
+    env$use_smaller_figure_assets(
       "![Other](../outputs/figures/main/other.pdf)", paper_dir, TRUE
     ),
     "![Other](../outputs/figures/main/other.pdf)"
@@ -433,8 +466,8 @@ test_that("sample availability links target the published named PDFs", {
   )
 
   expect_identical(
-    env$application_sample_document_url("coding", "short", "named", manifest),
-    "https://example.com/application-samples/Example_CodeSample_Short.pdf"
+    env$application_sample_document_url("coding", "main", "named", manifest),
+    "https://example.com/application-samples/Example_CodeSample.pdf"
   )
   expect_identical(
     env$application_sample_document_url("writing", "full", "named", manifest),
@@ -471,7 +504,7 @@ test_that("coding sample assembly uses paper typography and wrapped highlighted 
     "# sample-end: python-fixture"
   ), python_file)
   spec <- list(
-    id = "short",
+    id = "main",
     excerpts = list(
       list(file = code_file, id = "fixture", title = "Fixture", description = "Fixture context."),
       list(file = python_file, id = "python-fixture", title = "Python fixture")
@@ -499,10 +532,11 @@ test_that("coding sample assembly uses paper typography and wrapped highlighted 
   expect_match(rendered, env$application_sample_file_url(code_file, manifest), fixed = TRUE)
   expect_false(grepl("```{r}", rendered, fixed = TRUE))
   expect_false(grepl("CODING SAMPLE:", rendered, fixed = TRUE))
-  expect_match(rendered, env$application_sample_document_url("coding", "short", "named", manifest), fixed = TRUE)
+  expect_match(rendered, env$application_sample_document_url("coding", "main", "named", manifest), fixed = TRUE)
   expect_match(rendered, env$application_sample_makefile_url(manifest), fixed = TRUE)
   expect_match(rendered, env$application_sample_build_script_url(manifest), fixed = TRUE)
   meta <- env$read_qmd_metadata(readLines(out, warn = FALSE))
+  expect_null(meta$subtitle)
   expect_identical(meta$format$pdf$documentclass, "article")
   expect_identical(meta$format$pdf$`syntax-highlighting`, "tango")
   expect_identical(meta$format$pdf$`code-block-bg`, "#f7f7f7")
@@ -535,21 +569,25 @@ test_that("coding sample assembly uses paper typography and wrapped highlighted 
 })
 
 
-test_that("coding samples reuse paper-formatted tables and exact paper figures", {
+test_that("code samples reuse paper-formatted tables and exact paper figures", {
   env <- sample_test_env()
   sys.source(repo_file("R", "application_samples", "coding_sample_outputs.R"), envir = env)
   table_file <- tempfile(fileext = ".tex")
+  figure_file <- tempfile(fileext = ".pdf")
   paper_file <- tempfile(fileext = ".qmd")
   writeLines("\\begin{table}\\caption{Fixture}\\label{tbl-file-fixture}paper table\\end{table}", table_file)
+  writeBin(charToRaw("figure fixture"), figure_file)
   writeLines(c(
     "---", "title: Fixture", "---", "",
     "![Paper figure caption with source [@shastry2012a].](../outputs/figures/fixture.pdf){#fig-paper-fixture width=90%}"
   ), paper_file)
   manifest <- list(
-    paper = list(source = paper_file),
+    paper = list(source = paper_file, repository_url = "https://example.com/repository"),
     coding_outputs = list(
-      table = list(type = "latex", file = table_file, paper_label = "tbl-paper-fixture"),
-      figure = list(type = "figure", paper_label = "fig-paper-fixture")
+      table = list(type = "latex", files = table_file, paper_label = "tbl-paper-fixture"),
+      figure = list(
+        type = "figure", files = figure_file, paper_label = "fig-paper-fixture"
+      )
     )
   )
   text <- paste(
@@ -566,22 +604,67 @@ test_that("coding samples reuse paper-formatted tables and exact paper figures",
   expect_match(text, "Paper figure caption with source [@shastry2012a].", fixed = TRUE)
   expect_match(text, "{#fig-paper-fixture width=90%}", fixed = TRUE)
   expect_match(text, "../../outputs/figures/fixture.pdf", fixed = TRUE)
+  expect_match(text, env$application_sample_file_url(table_file, manifest), fixed = TRUE)
+  expect_match(text, env$application_sample_file_url(figure_file, manifest), fixed = TRUE)
   expect_false(grepl("\\clearpage", text, fixed = TRUE))
 })
 
-
-test_that("coding-sample outputs link additional implementation files when requested", {
+test_that("size-limited code samples rasterize only smaller figure counterparts", {
   env <- sample_test_env()
   sys.source(repo_file("R", "application_samples", "coding_sample_outputs.R"), envir = env)
-  code_file <- file.path("R", "iv", "weak_identification.R")
+  root <- tempfile("coding-raster-")
+  paper_dir <- file.path(root, "paper")
+  figure_dir <- file.path(root, "outputs", "figures", "main")
+  dir.create(paper_dir, recursive = TRUE)
+  dir.create(figure_dir, recursive = TRUE)
+  writeBin(as.raw(rep(1L, 20L)), file.path(figure_dir, "map.pdf"))
+  writeBin(as.raw(rep(1L, 5L)), file.path(figure_dir, "map.png"))
+  paper_file <- file.path(paper_dir, "paper.qmd")
+  writeLines(c(
+    "---", "title: Fixture", "---", "",
+    "![Fixture](../outputs/figures/main/map.pdf){#fig-fixture}"
+  ), paper_file)
+  manifest <- list(
+    paper = list(source = paper_file, repository_url = "https://example.com/repository"),
+    coding_outputs = list(figure = list(
+      type = "figure", files = file.path(figure_dir, "map.pdf"), paper_label = "fig-fixture"
+    ))
+  )
+
+  vector <- paste(env$coding_sample_output_lines(
+    "figure", "named", manifest, c(`fig-fixture` = "2"), FALSE
+  ), collapse = "\n")
+  compact <- paste(env$coding_sample_output_lines(
+    "figure", "named", manifest, c(`fig-fixture` = "2"), TRUE
+  ), collapse = "\n")
+
+  expect_match(vector, "../../outputs/figures/main/map.pdf", fixed = TRUE)
+  expect_match(compact, "../../outputs/figures/main/map.png", fixed = TRUE)
+  expect_match(vector, paste0("`", file.path(figure_dir, "map.pdf"), "`"), fixed = TRUE)
+  expect_match(compact, paste0("`", file.path(figure_dir, "map.png"), "`"), fixed = TRUE)
+})
+
+
+test_that("code-sample result annotations link outputs and rendering code", {
+  env <- sample_test_env()
+  sys.source(repo_file("R", "application_samples", "coding_sample_outputs.R"), envir = env)
+  output_files <- c("outputs/first.pdf", "outputs/second.pdf", "outputs/third.pdf")
+  rendering_files <- c("R/output/first.R", "R/output/second.R")
   manifest <- list(paper = list(repository_url = "https://example.com/repository"))
-  item <- list(code_files = code_file)
+  item <- list(type = "figure", files = output_files, rendering_files = rendering_files)
 
-  named <- paste(env$coding_output_code_file_lines(item, "named", manifest), collapse = "\n")
-  anonymous <- paste(env$coding_output_code_file_lines(item, "anonymous", manifest), collapse = "\n")
+  named <- paste(env$coding_output_annotation_lines(item, "named", manifest), collapse = "\n")
+  anonymous <- paste(env$coding_output_annotation_lines(item, "anonymous", manifest), collapse = "\n")
 
-  expect_match(named, env$application_sample_file_url(code_file, manifest), fixed = TRUE)
-  expect_match(anonymous, paste0("`", code_file, "`"), fixed = TRUE)
+  expect_match(named, "Outputs: ", fixed = TRUE)
+  expect_match(named, "Rendering code: ", fixed = TRUE)
+  expect_true(all(vapply(
+    c(output_files, rendering_files),
+    function(path) grepl(env$application_sample_file_url(path, manifest), named, fixed = TRUE),
+    logical(1)
+  )))
+  expect_match(anonymous, "`outputs/first.pdf`, `outputs/second.pdf`, and `outputs/third.pdf`", fixed = TRUE)
+  expect_match(anonymous, "`R/output/first.R` and `R/output/second.R`", fixed = TRUE)
 })
 
 
@@ -602,7 +685,7 @@ test_that("coding-sample results follow the excerpt that produces them", {
   manifest <- list(
     paper = list(source = paper_file, repository_url = "https://example.com/repository"),
     coding_outputs = list(
-      table = list(type = "latex", file = table_file, paper_label = "tbl-fixture")
+      table = list(type = "latex", files = table_file, paper_label = "tbl-fixture")
     )
   )
   spec <- list(excerpts = list(list(
@@ -611,11 +694,14 @@ test_that("coding-sample results follow the excerpt that produces them", {
 
   body <- env$coding_sample_body(spec, "named", manifest, c(`tbl-fixture` = "3"))
   code_heading <- match("## Fixture code", body)
+  annotation_line <- which(grepl("Output: ", body, fixed = TRUE))[[1L]]
   output_line <- which(grepl("\\input{../../", body, fixed = TRUE))[[1L]]
 
   expect_true(is.finite(code_heading))
+  expect_true(is.finite(annotation_line))
   expect_true(is.finite(output_line))
-  expect_lt(code_heading, output_line)
+  expect_lt(code_heading, annotation_line)
+  expect_lt(annotation_line, output_line)
   expect_true(any(grepl("answer <- 42", body, fixed = TRUE)))
 })
 
@@ -625,12 +711,12 @@ test_that("coding-sample tables require an unambiguous full-paper number", {
   sys.source(repo_file("R", "application_samples", "coding_sample_outputs.R"), envir = env)
   table_file <- tempfile(fileext = ".tex")
   writeLines("\\begin{table}\\caption{Fixture}\\label{tbl-file-fixture}x\\end{table}", table_file)
-  item <- list(type = "latex", file = table_file, paper_label = "tbl-paper-fixture")
+  item <- list(type = "latex", files = table_file, paper_label = "tbl-paper-fixture")
 
   expect_error(env$selected_latex_lines(item, character()))
   expect_error(env$selected_latex_lines(item, c(`tbl-paper-fixture` = "7a")))
   expect_error(env$selected_latex_lines(
-    list(type = "latex", file = table_file),
+    list(type = "latex", files = table_file),
     c(`tbl-paper-fixture` = "7")
   ))
 })

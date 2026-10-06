@@ -11,6 +11,21 @@ read_application_sample_manifest <- function(path = application_sample_manifest_
   manifest
 }
 
+validate_sample_size_options <- function(spec, kind) {
+  max_bytes <- spec$max_bytes %||% NULL
+  if (!is.null(max_bytes) &&
+      (length(max_bytes) != 1L || !is.finite(as.numeric(max_bytes)) || as.numeric(max_bytes) < 1)) {
+    stop(kind, " sample max_bytes must be a positive number when supplied.", call. = FALSE)
+  }
+  selective_rasterization <- spec$selective_rasterization %||% NULL
+  if (!is.null(selective_rasterization) &&
+      (length(selective_rasterization) != 1L || !is.logical(selective_rasterization) ||
+       is.na(selective_rasterization))) {
+    stop(kind, " sample selective_rasterization must be true or false when supplied.", call. = FALSE)
+  }
+  invisible(TRUE)
+}
+
 validate_application_sample_manifest <- function(manifest) {
   required <- c("schema_version", "paper", "identity", "writing", "coding_outputs", "coding")
   missing <- setdiff(required, names(manifest))
@@ -50,20 +65,12 @@ validate_application_sample_manifest <- function(manifest) {
         (length(target_pages) != 1L || !is.finite(as.numeric(target_pages)) || as.integer(target_pages) < 1L)) {
       stop("Writing-sample target_pages must be a positive integer when supplied.", call. = FALSE)
     }
-    max_bytes <- spec$max_bytes %||% NULL
-    if (!is.null(max_bytes) &&
-        (length(max_bytes) != 1L || !is.finite(as.numeric(max_bytes)) || as.numeric(max_bytes) < 1)) {
-      stop("Writing-sample max_bytes must be a positive number when supplied.", call. = FALSE)
-    }
-    selective_rasterization <- spec$selective_rasterization %||% NULL
-    if (!is.null(selective_rasterization) &&
-        (length(selective_rasterization) != 1L || !is.logical(selective_rasterization) || is.na(selective_rasterization))) {
-      stop("Writing-sample selective_rasterization must be true or false when supplied.", call. = FALSE)
-    }
+    validate_sample_size_options(spec, "Writing")
   }
   if (any(!nzchar(coding_ids)) || anyDuplicated(coding_ids)) {
     stop("Coding-sample IDs must be nonempty and unique.", call. = FALSE)
   }
+  for (spec in manifest$coding) validate_sample_size_options(spec, "Code")
   output_ids <- names(manifest$coding_outputs)
   if (is.null(output_ids) || any(!nzchar(output_ids)) || anyDuplicated(output_ids)) {
     stop("coding_outputs must be a named mapping with unique IDs.", call. = FALSE)
@@ -78,16 +85,43 @@ validate_application_sample_manifest <- function(manifest) {
   if (length(missing_outputs)) {
     stop("Coding samples reference unknown selected outputs: ", paste(missing_outputs, collapse = ", "), call. = FALSE)
   }
-  output_code_files <- unique(unlist(lapply(manifest$coding_outputs, function(x) {
-    unlist(x$code_files %||% character(), use.names = FALSE)
+  output_types <- vapply(manifest$coding_outputs, function(x) x$type %||% "", character(1))
+  bad_types <- names(output_types)[!output_types %in% c("latex", "figure")]
+  if (length(bad_types)) {
+    stop(
+      "Coding-sample results have unsupported types: ",
+      paste(bad_types, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  output_files <- lapply(manifest$coding_outputs, function(x) {
+    as.character(unlist(x$files %||% character(), use.names = FALSE))
+  })
+  missing_file_declarations <- names(output_files)[!lengths(output_files)]
+  if (length(missing_file_declarations)) {
+    stop(
+      "Coding-sample results must declare output files: ",
+      paste(missing_file_declarations, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  latex_file_counts <- lengths(output_files)[vapply(
+    manifest$coding_outputs, function(x) identical(x$type %||% "", "latex"), logical(1)
+  )]
+  if (any(latex_file_counts != 1L)) {
+    stop("LaTeX coding outputs must declare exactly one output file.", call. = FALSE)
+  }
+
+  rendering_files <- unique(unlist(lapply(manifest$coding_outputs, function(x) {
+    unlist(x$rendering_files %||% character(), use.names = FALSE)
   }), use.names = FALSE))
   project_root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
-  code_file_paths <- file.path(project_root, output_code_files)
-  missing_code_files <- output_code_files[!file.exists(code_file_paths)]
-  if (length(missing_code_files)) {
+  rendering_file_paths <- file.path(project_root, rendering_files)
+  missing_rendering_files <- rendering_files[!file.exists(rendering_file_paths)]
+  if (length(missing_rendering_files)) {
     stop(
-      "Coding-sample output code files do not exist: ",
-      paste(missing_code_files, collapse = ", "),
+      "Coding-sample rendering files do not exist: ",
+      paste(missing_rendering_files, collapse = ", "),
       call. = FALSE
     )
   }
@@ -143,10 +177,17 @@ application_sample_output_path <- function(kind, sample_id, variant, manifest = 
   kind_label <- if (identical(kind, "writing")) "WritingSample" else "CodeSample"
   suffix <- if (identical(kind, "writing")) {
     if (identical(sample_id, "full")) "Full" else sample_id
+  } else if (identical(sample_id, "main")) {
+    ""
+  } else if (identical(sample_id, "short")) {
+    "Short"
+  } else if (identical(sample_id, "long")) {
+    "Long"
   } else {
-    if (identical(sample_id, "short")) "Short" else if (identical(sample_id, "long")) "Long" else sample_id
+    sample_id
   }
-  filename <- paste0(prefix, "_", kind_label, "_", suffix, ".pdf")
+  separator <- if (nzchar(suffix)) "_" else ""
+  filename <- paste0(prefix, "_", kind_label, separator, suffix, ".pdf")
   file.path("application-samples", "output", filename)
 }
 
