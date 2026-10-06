@@ -260,11 +260,11 @@ application_sample_file_list <- function(paths, variant, manifest) {
 
 application_sample_size_description <- function(description, spec) {
   if (is.null(spec$max_bytes)) return(description)
-  sub(
-    "[.]$",
-    ", with figures selectively rasterized to reduce file size.",
-    description
-  )
+  suffix <- "with figures selectively rasterized to reduce file size."
+  if (grepl("[.]”$", description)) {
+    return(sub("[.]”$", paste0(",” ", suffix), description))
+  }
+  sub("[.]$", paste0(", ", suffix), description)
 }
 
 validate_application_sample_max_bytes <- function(path, max_bytes = NULL) {

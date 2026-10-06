@@ -8,6 +8,47 @@ sample_test_env <- function() {
   env
 }
 
+test_that("size-limited sample descriptions preserve terminal punctuation", {
+  env <- sample_test_env()
+  spec <- list(max_bytes = 10000000)
+
+  expect_identical(
+    env$application_sample_size_description("This document contains selected sections.", spec),
+    "This document contains selected sections, with figures selectively rasterized to reduce file size."
+  )
+  expect_identical(
+    env$application_sample_size_description("This document contains excerpts from my paper “Example Title.”", spec),
+    "This document contains excerpts from my paper “Example Title,” with figures selectively rasterized to reduce file size."
+  )
+})
+
+test_that("compressed named code sample uses the paper title with the compression qualifier inside the quotation", {
+  env <- sample_test_env()
+  manifest <- list(
+    identity = list(named = list(prefix = "Example")),
+    paper = list(
+      full_paper_url = "https://example.com/paper.pdf",
+      repository_url = "https://example.com/repository"
+    )
+  )
+  spec <- list(id = "Under10MB", max_bytes = 10000000)
+  metadata <- list(
+    title = "Inequality in a Potential Equalizer of Opportunity",
+    subtitle = "Variation in the Accessibility and Net Benefits of English-Medium Instruction in India"
+  )
+
+  notice <- env$coding_sample_notice(spec, "named", manifest, metadata)[[1L]]
+  expect_true(startsWith(
+    notice,
+    paste0(
+      "This document contains excerpts from the replication code of my paper ",
+      "“Inequality in a Potential Equalizer of Opportunity: Variation in the Accessibility ",
+      "and Net Benefits of English-Medium Instruction in India,” with figures selectively ",
+      "rasterized to reduce file size."
+    )
+  ))
+})
+
 test_that("application-sample manifest references current paper sections and code markers", {
   env <- sample_test_env()
   manifest <- env$read_application_sample_manifest(repo_file("application-samples", "samples.yml"))
