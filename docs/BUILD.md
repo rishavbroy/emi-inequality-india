@@ -122,7 +122,7 @@ Application-sample page targets currently emit a visible `WARNING:` when the ren
 
 ## GitHub Pages
 
-`.github/workflows/pages.yml` publishes the tracked current paper and named application-sample PDFs after pushes to `main`. The Pages job copies committed PDFs and does not rerun the empirical analysis. Historical named code-sample filenames are staged as aliases of the current code sample so previously distributed Pages URLs remain valid without duplicating generated PDFs in the repository. The staged custom 404 page sends browser requests for other missing paths back to the project landing page. Anonymous application samples are excluded because the repository itself identifies the author.
+`.github/workflows/pages.yml` publishes the tracked current paper and named application-sample PDFs after pushes to `main`. `scripts/stage_pages.sh` owns the static-site layout; the workflow does not rerun the empirical analysis. Historical named code-sample filenames are staged as aliases of the current code sample so previously distributed Pages URLs remain valid without duplicating generated PDFs in the repository. The staged custom 404 page sends browser requests for other missing paths back to the project landing page. Anonymous application samples are excluded because the repository itself identifies the author.
 
 ## Processed-data replication
 

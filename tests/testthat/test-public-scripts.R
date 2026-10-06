@@ -38,30 +38,65 @@ test_that("rendered and archived artifacts are treated as binary by Git", {
 })
 
 
-test_that("GitHub Pages preserves historical sample URLs and handles missing paths", {
-  workflow <- readLines(repo_file(".github", "workflows", "pages.yml"), warn = FALSE)
-  workflow <- gsub("[[:space:]]+", " ", paste(workflow, collapse = " "))
-  source <- "application-samples/output/RishavRoy_CodeSample.pdf"
+test_that("GitHub Pages staging preserves legacy sample URLs", {
+  skip_if(Sys.which("bash") == "")
 
-  for (legacy_name in c("Long", "Short")) {
-    expect_true(grepl(
-      paste(
-        "cp", source,
-        paste0("_site/application-samples/RishavRoy_CodeSample_", legacy_name, ".pdf")
-      ),
-      workflow,
-      fixed = TRUE
-    ))
+  root <- tempfile("pages-stage-")
+  dir.create(root, recursive = TRUE)
+  on.exit(unlink(root, recursive = TRUE, force = TRUE), add = TRUE)
+
+  for (dir in c("scripts", "pages", "paper", "application-samples/output")) {
+    dir.create(file.path(root, dir), recursive = TRUE, showWarnings = FALSE)
   }
-  expect_true(grepl("cp pages/404.html _site/404.html", workflow, fixed = TRUE))
-
-  missing_page <- paste(
-    readLines(repo_file("pages", "404.html"), warn = FALSE),
-    collapse = "\n"
+  file.copy(repo_file("scripts", "stage_pages.sh"), file.path(root, "scripts", "stage_pages.sh"))
+  writeLines("index fixture", file.path(root, "pages", "index.html"))
+  writeLines("404 fixture", file.path(root, "pages", "404.html"))
+  writeBin(charToRaw("paper fixture"), file.path(root, "paper", "paper.pdf"))
+  writeBin(
+    charToRaw("current code sample"),
+    file.path(root, "application-samples", "output", "RishavRoy_CodeSample.pdf")
   )
+  writeBin(
+    charToRaw("writing sample"),
+    file.path(root, "application-samples", "output", "RishavRoy_WritingSample_5pg.pdf")
+  )
+  writeBin(
+    charToRaw("anonymous sample"),
+    file.path(root, "application-samples", "output", "Anon_CodeSample.pdf")
+  )
+
+  old_wd <- setwd(root)
+  on.exit(setwd(old_wd), add = TRUE)
+  output <- system2("bash", c("scripts/stage_pages.sh", "site"), stdout = TRUE, stderr = TRUE)
+
+  expect_null(attr(output, "status"))
+  expect_true(file.exists(file.path("site", "index.html")))
+  expect_true(file.exists(file.path("site", "404.html")))
+  expect_true(file.exists(file.path("site", "paper.pdf")))
+  expect_true(file.exists(file.path("site", "application-samples", "RishavRoy_WritingSample_5pg.pdf")))
+  expect_false(file.exists(file.path("site", "application-samples", "Anon_CodeSample.pdf")))
+
+  current <- readBin(
+    file.path("site", "application-samples", "RishavRoy_CodeSample.pdf"),
+    what = "raw", n = 1e6
+  )
+  for (legacy_name in c("Long", "Short")) {
+    legacy <- readBin(
+      file.path("site", "application-samples", paste0("RishavRoy_CodeSample_", legacy_name, ".pdf")),
+      what = "raw", n = 1e6
+    )
+    expect_identical(legacy, current)
+  }
+})
+
+
+test_that("GitHub Pages missing-path page returns browsers to the project site", {
+  missing_page <- repo_text("pages", "404.html")
+
+  expect_match(missing_page, 'http-equiv="refresh"', ignore.case = TRUE)
   expect_match(
     missing_page,
-    'http-equiv="refresh" content="0; url=https://rishavbroy.github.io/emi-inequality-india/"',
+    "url=https://rishavbroy.github.io/emi-inequality-india/",
     fixed = TRUE
   )
 })

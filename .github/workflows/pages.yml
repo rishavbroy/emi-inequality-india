@@ -23,18 +23,7 @@ jobs:
       - name: Configure Pages
         uses: actions/configure-pages@v6
       - name: Stage tracked PDFs
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p _site/application-samples
-          cp pages/index.html _site/index.html
-          cp pages/404.html _site/404.html
-          cp paper/paper.pdf _site/paper.pdf
-          cp application-samples/output/RishavRoy_*.pdf _site/application-samples/
-          cp application-samples/output/RishavRoy_CodeSample.pdf \
-            _site/application-samples/RishavRoy_CodeSample_Long.pdf
-          cp application-samples/output/RishavRoy_CodeSample.pdf \
-            _site/application-samples/RishavRoy_CodeSample_Short.pdf
+        run: bash scripts/stage_pages.sh
       - name: Upload Pages files
         uses: actions/upload-pages-artifact@v5
         with:
