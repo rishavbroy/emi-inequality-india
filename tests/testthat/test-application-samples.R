@@ -526,6 +526,37 @@ test_that("anonymous sample availability offers links without exposing URLs", {
   }
 })
 
+test_that("named sample availability links the application-sample index", {
+  env <- sample_test_env()
+  manifest <- list(
+    identity = list(named = list(prefix = "Example")),
+    paper = list(
+      full_paper_url = "https://example.com/paper.pdf",
+      repository_url = "https://github.com/example/repository"
+    )
+  )
+  cases <- list(
+    list(kind = "coding", id = "main", full_paper = TRUE, output = "Example_CodeSample.pdf", paper = "the full "),
+    list(kind = "writing", id = "full", full_paper = FALSE, output = "Example_WritingSample_Full.pdf", paper = "the ")
+  )
+
+  for (case in cases) {
+    sentence <- env$application_sample_availability_sentence(
+      case$kind, case$id, "named", manifest, full_paper = case$full_paper
+    )
+    expect_identical(
+      sentence,
+      paste0(
+        "The project may have been updated since this file was generated; the most up-to-date versions of this ",
+        "[document](https://example.com/application-samples/", case$output, "), ",
+        case$paper, "[paper](https://example.com/paper.pdf), ",
+        "the [replication package](https://github.com/example/repository), and other ",
+        "[application samples](https://example.com/) are available online for those interested."
+      )
+    )
+  }
+})
+
 test_that("sample availability links target the published named PDFs", {
   env <- sample_test_env()
   manifest <- list(

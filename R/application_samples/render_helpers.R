@@ -87,10 +87,12 @@ application_sample_availability_sentence <- function(kind, sample_id, variant, m
   document <- paste0("[document](", application_sample_document_url(kind, sample_id, variant, manifest), ")")
   paper <- paste0("[paper](", manifest$paper$full_paper_url, ")")
   replication_package <- paste0("[replication package](", manifest$paper$repository_url, ")")
+  application_samples <- paste0("[application samples](", application_sample_site_root(manifest), ")")
   paper_phrase <- if (isTRUE(full_paper)) paste0("the full ", paper) else paste0("the ", paper)
   paste0(
     "The project may have been updated since this file was generated; the most up-to-date versions of this ",
-    document, ", ", paper_phrase, ", and the ", replication_package, " are available online for those interested."
+    document, ", ", paper_phrase, ", the ", replication_package, ", and other ", application_samples,
+    " are available online for those interested."
   )
 }
 
