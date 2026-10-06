@@ -148,6 +148,7 @@ coding_output_annotation_lines <- function(
   if (length(rendering_files)) {
     lines <- c(
       lines,
+      "",
       paste0(
         "Rendering code: ",
         application_sample_file_list(rendering_files, variant, manifest)

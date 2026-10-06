@@ -653,9 +653,15 @@ test_that("code-sample result annotations link outputs and rendering code", {
   manifest <- list(paper = list(repository_url = "https://example.com/repository"))
   item <- list(type = "figure", files = output_files, rendering_files = rendering_files)
 
-  named <- paste(env$coding_output_annotation_lines(item, "named", manifest), collapse = "\n")
-  anonymous <- paste(env$coding_output_annotation_lines(item, "anonymous", manifest), collapse = "\n")
+  named_lines <- env$coding_output_annotation_lines(item, "named", manifest)
+  anonymous_lines <- env$coding_output_annotation_lines(item, "anonymous", manifest)
+  named <- paste(named_lines, collapse = "\n")
+  anonymous <- paste(anonymous_lines, collapse = "\n")
 
+  output_line <- which(startsWith(named_lines, "Outputs: "))[[1L]]
+  rendering_line <- which(startsWith(named_lines, "Rendering code: "))[[1L]]
+  expect_identical(rendering_line, output_line + 2L)
+  expect_identical(named_lines[[output_line + 1L]], "")
   expect_match(named, "Outputs: ", fixed = TRUE)
   expect_match(named, "Rendering code: ", fixed = TRUE)
   expect_true(all(vapply(
