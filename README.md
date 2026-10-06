@@ -105,16 +105,16 @@ See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the module structure, ana
 ## Main outputs
 
 - [`paper/paper.pdf`](paper/paper.pdf) — current paper.
-- [`application-samples/output/`](application-samples/output/) — named and anonymous writing and coding samples.
+- [`application-samples/output/`](application-samples/output/) — named and anonymous writing and code samples.
 - [`outputs/tables/main/`](outputs/tables/main/) — principal generated tables used by the paper.
 - [`outputs/figures/main/`](outputs/figures/main/) — principal generated figures used by the paper.
 - [`outputs/replication/processed/verification.csv`](outputs/replication/processed/verification.csv) — comparison of shared results from the processed replication and full analysis when both are available.
 
 ## Application samples
 
-Writing and coding samples are generated directly from the paper and research code used by the main build. [`application-samples/samples.yml`](application-samples/samples.yml) contains the sample definitions, and [`application-samples/output/`](application-samples/output/) contains the generated PDFs.
+Writing and code samples are generated directly from the paper and research code used by the main build. [`application-samples/samples.yml`](application-samples/samples.yml) contains the sample definitions, and [`application-samples/output/`](application-samples/output/) contains the generated PDFs.
 
-For a quick review, see the named [`10-page writing sample`](application-samples/output/RishavRoy_WritingSample_10pg.pdf) and [`long code sample`](application-samples/output/RishavRoy_CodeSample_Long.pdf). [`application-samples/README.md`](application-samples/README.md) documents section selection, code markers, anonymity rules, paper numbering, and publication behavior.
+For a quick review, see the named [`10-page writing sample`](application-samples/output/RishavRoy_WritingSample_10pg.pdf) and [`code sample`](application-samples/output/RishavRoy_CodeSample.pdf). [`application-samples/README.md`](application-samples/README.md) documents section selection, code markers, anonymity rules, paper numbering, and publication behavior.
 
 ## Validation
 
