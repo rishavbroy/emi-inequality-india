@@ -38,6 +38,35 @@ test_that("rendered and archived artifacts are treated as binary by Git", {
 })
 
 
+test_that("GitHub Pages preserves historical sample URLs and handles missing paths", {
+  workflow <- readLines(repo_file(".github", "workflows", "pages.yml"), warn = FALSE)
+  workflow <- gsub("[[:space:]]+", " ", paste(workflow, collapse = " "))
+  source <- "application-samples/output/RishavRoy_CodeSample.pdf"
+
+  for (legacy_name in c("Long", "Short")) {
+    expect_true(grepl(
+      paste(
+        "cp", source,
+        paste0("_site/application-samples/RishavRoy_CodeSample_", legacy_name, ".pdf")
+      ),
+      workflow,
+      fixed = TRUE
+    ))
+  }
+  expect_true(grepl("cp pages/404.html _site/404.html", workflow, fixed = TRUE))
+
+  missing_page <- paste(
+    readLines(repo_file("pages", "404.html"), warn = FALSE),
+    collapse = "\n"
+  )
+  expect_match(
+    missing_page,
+    'http-equiv="refresh" content="0; url=https://rishavbroy.github.io/emi-inequality-india/"',
+    fixed = TRUE
+  )
+})
+
+
 test_that("current public build helper scripts parse", {
   expect_silent(parse(repo_file("_targets.R")))
   for (file in repo_pipeline_target_files()) {

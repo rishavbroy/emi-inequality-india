@@ -51,7 +51,7 @@ Writing-sample target lengths are checked after rendering. During the typography
 
 ## Publication
 
-GitHub Pages publishes the tracked application PDFs from this repository. The Pages job copies committed files and does not rerun the restricted-data analyses. Anonymous files are published only when that is explicitly intended by the Pages configuration and review policy.
+GitHub Pages publishes the tracked application PDFs from this repository. The Pages job copies committed files and does not rerun the restricted-data analyses. Historical named code-sample URLs remain compatibility aliases for the current code sample so links in previously submitted applications continue to resolve without retaining duplicate generated PDFs in the repository. Other missing Pages paths use the site's custom 404 page to send browser users back to the project landing page. Anonymous files are published only when that is explicitly intended by the Pages configuration and review policy.
 
 ## Maintenance
 

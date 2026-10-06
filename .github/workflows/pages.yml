@@ -28,8 +28,13 @@ jobs:
           set -euo pipefail
           mkdir -p _site/application-samples
           cp pages/index.html _site/index.html
+          cp pages/404.html _site/404.html
           cp paper/paper.pdf _site/paper.pdf
           cp application-samples/output/RishavRoy_*.pdf _site/application-samples/
+          cp application-samples/output/RishavRoy_CodeSample.pdf \
+            _site/application-samples/RishavRoy_CodeSample_Long.pdf
+          cp application-samples/output/RishavRoy_CodeSample.pdf \
+            _site/application-samples/RishavRoy_CodeSample_Short.pdf
       - name: Upload Pages files
         uses: actions/upload-pages-artifact@v5
         with:
