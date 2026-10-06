@@ -496,6 +496,36 @@ test_that("anonymous sample validation includes configured acknowledgment names"
   )
 })
 
+test_that("anonymous sample availability offers links without exposing URLs", {
+  env <- sample_test_env()
+  manifest <- list(
+    identity = list(named = list(prefix = "Example")),
+    paper = list(
+      full_paper_url = "https://example.com/paper.pdf",
+      repository_url = "https://github.com/example/repository"
+    )
+  )
+  cases <- list(
+    list(full_paper = TRUE, paper_phrase = "the full paper"),
+    list(full_paper = FALSE, paper_phrase = "the paper")
+  )
+
+  for (case in cases) {
+    sentence <- env$application_sample_availability_sentence(
+      "writing", "fixture", "anonymous", manifest, full_paper = case$full_paper
+    )
+    expect_identical(
+      sentence,
+      paste0(
+        "The project may have been updated since this file was generated; the most up-to-date versions of this document, ",
+        case$paper_phrase,
+        ", and its replication package are available online, and I would be happy to provide links for those interested."
+      )
+    )
+    expect_false(grepl("https://", sentence, fixed = TRUE))
+  }
+})
+
 test_that("sample availability links target the published named PDFs", {
   env <- sample_test_env()
   manifest <- list(

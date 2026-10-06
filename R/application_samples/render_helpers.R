@@ -80,7 +80,7 @@ application_sample_availability_sentence <- function(kind, sample_id, variant, m
   if (!identical(variant, "named")) {
     return(paste0(
       "The project may have been updated since this file was generated; the most up-to-date versions of this document, ",
-      paper_phrase, ", and its replication package are available online for those interested."
+      paper_phrase, ", and its replication package are available online, and I would be happy to provide links for those interested."
     ))
   }
 
