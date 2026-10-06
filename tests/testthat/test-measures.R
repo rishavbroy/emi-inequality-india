@@ -1859,7 +1859,6 @@ test_that("preferred historical Atlas source quality is frozen before outcome di
   expect_equal(language_atlas_1991_columns(), 4:117)
   expect_equal(rule$min_accepted_coverage, 0.99)
   expect_equal(rule$max_distance_bound_width, 0.5)
-  expect_match(rule$selection_basis, "Source-only rule")
 
   registry <- read_language_atlas_1991_languages()
   counts <- rep(0, nrow(registry))

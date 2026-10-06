@@ -1,13 +1,4 @@
 # Falsification-adaptive sets for overidentified linear IV specifications.
-#
-# For one endogenous regressor, Masten and Poirier (2021) show that the
-# exclusion-based FAS is the interval spanning the just-identified IV estimands
-# obtained by using each excluded instrument in turn while treating all other
-# excluded instruments as included controls. The construction is an identified
-# set, not a confidence interval. We report clustered uncertainty and conditional
-# first-stage strength for each constituent estimate, but we do not screen weak
-# constituents out of the FAS: doing so would replace the population relevance
-# assumption with a sample-dependent selection rule.
 
 iv_falsification_adaptive_specifications <- function(
     specifications = iv_diagnostic_specification_registry()) {
@@ -31,6 +22,12 @@ iv_falsification_adaptive_specifications <- function(
 }
 
 # sample-start: code-falsification-adaptive-set
+# Under the exclusion-relaxation FAS used here, one endogenous regressor and
+# multiple instruments assumed relevant yield an interval spanning the
+# just-identified IV estimates obtained by using each instrument in turn while
+# treating the others as included controls. This is an identified set, not a
+# confidence interval. Conditional first-stage diagnostics are reported, but weak
+# sample first stages never screen constituents out of the set.
 iv_fas_component_formula <- function(specification, instrument) {
   spec <- as_single_iv_specification(specification)
   excluded <- plain_chr(unlist(spec$excluded_instruments[[1L]], use.names = FALSE))

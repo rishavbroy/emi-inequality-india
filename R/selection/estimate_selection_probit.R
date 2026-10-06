@@ -115,6 +115,8 @@ build_survey_design_selection <- function(selection_df, require_all = FALSE) {
   # NSS strata are defined by the joint state, rural/urban sector, stratum, and
   # substratum identifiers used in the survey files.
   selection_df$.survey_strata <- interaction(selection_df[strata_cols], drop = TRUE)
+  # FSU identifiers can repeat across NSS strata; nest = TRUE relabels them to
+  # enforce nesting within the joint sampling stratum.
   survey::svydesign(
     ids = stats::as.formula(paste0("~", psu)),
     strata = ~.survey_strata,

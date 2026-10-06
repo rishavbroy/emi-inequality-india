@@ -10,13 +10,13 @@ The selection sample is constructed from the registered education microdata with
 
 ## Model
 
-The preferred model is a survey-weighted probit for enrollment. Model covariates, factor handling, weights, strata, PSUs, and the lonely-PSU convention are methodological inputs and should be declared centrally rather than inferred from whichever columns happen to be present. NSS 64 forms rural and urban strata separately and selects four FSUs from each sub-stratum, so the analysis stratum key includes state, sector, stratum, and sub-stratum. Single-PSU analytic strata are therefore not treated as certainty strata. The shared survey context uses `survey.lonely.psu = "adjust"` with domain adjustment, the conservative grand-mean centering rule documented by the `survey` package.
+The preferred model is a survey-weighted probit for enrollment. Model covariates, factor handling, weights, strata, PSUs, and the lonely-PSU convention are methodological inputs and should be declared centrally rather than inferred from whichever columns happen to be present. NSS 64 forms rural and urban strata separately and selects four FSUs from each sub-stratum, so the analysis stratum key includes state, sector, stratum, and sub-stratum. `survey::svydesign(..., nest = TRUE)` relabels cluster identifiers to enforce nesting within those strata. Single-PSU analytic strata are therefore not treated as certainty strata. The shared survey context uses `survey.lonely.psu = "adjust"` with domain adjustment, the conservative grand-mean centering rule documented by the `survey` package.
 
 Final mode should fail when the required survey design cannot be constructed; it should not change the estimator to an ordinary unweighted probit as a convenience fallback.
 
 ## Average marginal effects
 
-AMEs reported in the paper are evaluated on the fitted model's estimation sample with the corresponding survey weights. The implementation uses `marginaleffects::avg_slopes()` directly on the fitted model and relies on its delta-method uncertainty. Final mode stops if that calculation fails; it does not substitute a local approximation.
+AMEs reported in the paper are evaluated on the fitted model's estimation sample with the corresponding survey weights. The implementation uses `marginaleffects::avg_slopes()` directly on the fitted model and relies on its delta-method uncertainty. The supplied weights govern averaging over observation-level effects; they do not redefine the fitted survey model. Continuous regressors are summarized by average slopes, while binary and categorical regressors are handled as discrete comparisons by `marginaleffects`. Final mode stops if that calculation fails; it does not substitute a local approximation.
 
 `config/fast.yml` may omit expensive paper quantities for iteration, but it should not redefine the final estimand.
 

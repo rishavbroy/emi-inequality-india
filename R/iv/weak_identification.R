@@ -81,6 +81,8 @@ mop_effective_f <- function(
       vcov = covariance,
       vcovOptions = covariance_options
     )
+    # tau = 0.10 targets a 10% relative-bias benchmark for TSLS; the
+    # simplified test uses the more conservative critical value.
     momentfit::MOPtest(
       moment_model,
       tau = tau,

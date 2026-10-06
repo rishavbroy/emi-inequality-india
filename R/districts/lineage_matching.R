@@ -389,6 +389,7 @@ score_match_candidates <- function(source_roster, reference_units, excluded_sour
   ranked$reciprocal_nearest <- ranked$rank == 1L &
     unname(best_by_candidate[ranked$unit_id]) == ranked$source_row_id
   threshold <- district_match_candidate_thresholds()
+  # This flag prioritizes a pair for review; it does not accept a lineage edge.
   ranked$high_precision_candidate <- ranked$rank == 1L & ranked$preferred_vintage &
     ranked$reciprocal_nearest &
     directional_tokens_compatible(ranked$district_std_source, ranked$district_std_candidate) &

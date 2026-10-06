@@ -67,9 +67,9 @@ join_district_carveout_wrapped_label <- function(previous, continuation) {
 
 #' Rejoin district names split across rows in the historical boundary table
 #'
-#' Rows with a blank 1991 population field are continuations. A trailing hyphen
-#' identifies a split 1991 district name; a 2001 name can continue on a row with
-#' no transfer percentages.
+#' A blank 1991 population field marks a candidate continuation row. Transfer
+#' fields distinguish a genuine allocation record from a row that only continues
+#' a printed name. A trailing hyphen identifies a split 1991 district name.
 repair_district_carveout_wrapped_rows <- function(x) {
   out <- safe_df(x)
   if (!nrow(out)) return(out)

@@ -32,7 +32,7 @@ A linked series is formed only when the required overlap observations exist and 
 
 ## State and union-territory fallback rules
 
-When a state-sector series is unavailable, the code uses only the declared donor/fallback hierarchy. Output metadata identify observations that use a declared fallback instead of a directly observed state-sector index.
+When a state-sector series is unavailable, the code uses only the declared donor/fallback hierarchy. If a target series inherits a donor state's CPI history, its temporal normalization uses that donor's reference-period index as well, so the numerator and denominator belong to the same CPI series. Output metadata identify observations that use a declared fallback instead of a directly observed state-sector index.
 
 ## NSS sub-round aggregation
 

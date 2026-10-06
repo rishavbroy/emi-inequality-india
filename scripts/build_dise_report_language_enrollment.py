@@ -67,6 +67,8 @@ def parse_languages_as_rows(lines: list[str]) -> dict[str, int | None] | None:
 
 
 def _column_positions(header: str) -> dict[str, int]:
+    # `pdftotext -layout` preserves the reviewed page's horizontal layout as
+    # closely as possible, so character positions can identify language columns.
     positions = {}
     lower = header.lower()
     for language in LANGUAGES:

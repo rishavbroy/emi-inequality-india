@@ -243,6 +243,8 @@ historical_linguistic_distance_bounds <- function(
   english <- accepted & language == "English"
   known_nonzero <- accepted & is.finite(degree) & degree > 0 & !english
   known_zero <- accepted & is.finite(degree) & degree == 0 & !english
+  # These speakers are known and resolved, but the positive-distance mean excludes
+  # them by definition; "irrelevant" here refers only to that denominator.
   known_irrelevant <- known_zero | english
 
   nonzero_speakers <- sum(speakers[known_nonzero], na.rm = TRUE)
@@ -462,9 +464,9 @@ historical_linguistic_preferred_source_quality <- function() {
     min_accepted_coverage = 0.99,
     max_distance_bound_width = 0.50,
     selection_basis = paste(
-      "Source-only rule frozen before persistence/first-stage execution:",
+      "Pre-specified source-quality gate frozen before persistence/first-stage execution:",
       "at least 99% accepted speaker mass and at most half a Shastry degree",
-      "of worst-case unresolved-mass uncertainty."
+      "of worst-case unresolved-mass uncertainty; these are not confidence limits."
     ),
     stringsAsFactors = FALSE
   )
