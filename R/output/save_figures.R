@@ -479,8 +479,6 @@ public_map_state_outlines <- function(plot_data) {
   outlines
 }
 
-# sample-start: code-public-map-rendering
-
 build_public_ggplot_map <- function(plot_data, spec, boundary_reference = NULL) {
   need_pkg("ggplot2", "classified choropleth maps")
   style <- public_map_style(spec$variable)
@@ -551,6 +549,7 @@ build_public_ggplot_map <- function(plot_data, spec, boundary_reference = NULL) 
     )
 }
 
+# sample-start: code-public-map-rendering
 complete_public_map_geometry <- function(district_panel, map_geometry) {
   if (!has_sf_geometry(map_geometry)) {
     stop("District maps require the complete 2001 Census district geometry.", call. = FALSE)

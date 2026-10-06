@@ -49,6 +49,25 @@ test_that("compressed named code sample uses the paper title with the compressio
   ))
 })
 
+test_that("coding excerpt sections render as document-level headings before excerpt titles", {
+  env <- sample_test_env()
+  code_file <- tempfile(fileext = ".R")
+  writeLines(c(
+    "# sample-start: fixture",
+    "answer <- 42",
+    "# sample-end: fixture"
+  ), code_file)
+  excerpt <- list(
+    id = "fixture", file = code_file,
+    section = "Research Design", title = "Fixture code"
+  )
+
+  lines <- env$extract_code_excerpt(excerpt, "anonymous", list())
+
+  expect_lt(match("# Research Design", lines), match("## Fixture code", lines))
+  expect_true(any(grepl("answer <- 42", lines, fixed = TRUE)))
+})
+
 test_that("application-sample manifest references current paper sections and code markers", {
   env <- sample_test_env()
   manifest <- env$read_application_sample_manifest(repo_file("application-samples", "samples.yml"))

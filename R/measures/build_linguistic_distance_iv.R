@@ -221,6 +221,7 @@ speaker_weighted_mean <- function(speakers, values, index = rep(TRUE, length(spe
   sum(speakers[index] * values[index], na.rm = TRUE) / denominator
 }
 
+# sample-start: code-historical-linguistic-distance-bounds
 historical_linguistic_population_coherent <- function(speakers, population) {
   speakers <- num(speakers)
   if (!is.numeric(population) || length(population) != 1L ||
@@ -291,6 +292,7 @@ historical_linguistic_distance_bounds <- function(
     degree_max = degree_max
   )
 }
+# sample-end: code-historical-linguistic-distance-bounds
 
 historical_linguistic_distant_share_bounds <- function(
     speakers, degree, language, population, threshold = 3) {

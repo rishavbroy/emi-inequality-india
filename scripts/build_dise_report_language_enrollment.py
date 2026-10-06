@@ -24,6 +24,7 @@ from dise_report_common import (
     registered_reports,
 )
 
+# sample-start: code-dise-report-language-enrollment
 LANGUAGES = ("english", "hindi")
 NUMBER = re.compile(r"(?<![\w.])(?:\d{1,3}(?:,\d{3})+|\d+)(?![\w.])")
 MEDIUM_HEADING = re.compile(r"medium\s+of\s+instruction", re.IGNORECASE)
@@ -172,6 +173,7 @@ def rebuild(
         out["hindi_enrollment"] = "" if counts["hindi"] is None else str(counts["hindi"])
         rebuilt.append(out)
     return rebuilt
+# sample-end: code-dise-report-language-enrollment
 
 
 def write_csv(path: Path, rows: list[dict[str, str]]) -> None:

@@ -20,6 +20,7 @@ for path in paths:
 print(f"Parsed {len(paths)} active Python file(s).")
 PY
 python3 scripts/build_language_atlas_1991.py --self-test
+python3 scripts/build_dise_report_language_enrollment.py --self-test
 
 echo "=== JSON AND LOCKFILE CONTRACT ==="
 python3 - <<'PY'

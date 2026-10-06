@@ -15,9 +15,11 @@ extract_code_excerpt <- function(excerpt, variant, manifest) {
   file <- excerpt$file
   id <- excerpt$id
   title <- excerpt$title %||% id
+  section <- trimws(excerpt$section %||% "")
   description <- trimws(excerpt$description %||% "")
   code <- extract_between_sample_markers(file, id)
   c(
+    if (nzchar(section)) c("", paste0("# ", section)) else character(),
     "",
     paste0("## ", title),
     if (nzchar(description)) c("", description) else character(),

@@ -105,64 +105,99 @@ coding_outputs:
     rendering_files:
       - R/output/appendix_data_construction_exhibits.R
       - R/output/save_figures.R
+  dise_agreement:
+    type: figure
+    files:
+      - outputs/figures/appendix/appendix_nss_dise_agreement.pdf
+    paper_label: fig-nss-dise-agreement
+    rendering_files:
+      - R/output/appendix_data_construction_exhibits.R
+      - R/output/save_figures.R
 coding:
   - id: main
     excerpts: &main_code_excerpts
       - id: code-district-carveout-repair
         file: R/io/read_inputs.R
+        section: Historical Geography and Measurement
         title: Reconstructing District Boundary Transfers Between 1991 and 2001
         description: >-
-          A historical Census table reports how each 1991 district's population was apportioned among 2001 districts after boundary changes. The file has no header, and long district names are split across continuation rows. The reader repairs only row patterns that match the table's continuation structure, converts the transfer percentages to numbers, and requires the percentages assigned from every 1991 district to total 100% within 0.05 percentage points.
+          A historical Census table reports how each 1991 district's population was apportioned among 2001 districts after boundary changes. The headerless source also splits long district names across physical continuation rows. The reader repairs only continuation patterns supported by the table's structure, retains continuation rows that contain genuine transfer records, converts transfer shares to numbers, and requires the shares allocated from every 1991 source district to total 100% within 0.05 percentage points.
+      - id: code-lineage-candidate-scoring
+        file: R/districts/lineage_matching.R
+        title: Generating High-Precision District-Match Candidates
+        description: >-
+          District names vary across survey waves and administrative vintages, so standardized names generate candidates rather than establish identity by themselves. Within each state, the code scores candidate pairs using Jaro--Winkler similarity, normalized Damerau--Levenshtein similarity, trigram cosine similarity, and token Jaccard similarity. A high-precision flag additionally requires reciprocal nearest-neighbor agreement, compatible directional tokens, preferred reference vintage, metric-specific thresholds, and separation from the runner-up; downstream lineage review still decides whether a candidate becomes an accepted geographic link.
       - id: code-language-atlas-validation
         file: scripts/build_language_atlas_1991.py
         title: Reconstructing District Data from the 1991 Language Atlas
         description: >-
-          The 1991 Census Language Atlas repeats each district across eight language pages. Districts are identified by a Census state code plus a within-state district number, printed in the Atlas as a serial; some repeated rows omit it or contain errors from optical character recognition (OCR). The code fills a missing serial only when matching row labels agree, then validates the resulting district code against the official 1991 Primary Census Abstract population.
+          The 1991 Census Language Atlas repeats each district across eight language pages. Districts are identified by a Census state code plus a within-state serial, but some repeated rows omit the serial or contain errors introduced during text extraction. When a row itself has no serial, the code recovers one only if the same raw row label within the same Atlas block has exactly one distinct serial across repeated pages. The reconstructed code is then checked against the official 1991 Primary Census Abstract, and a candidate is promoted only when its Atlas population is within 1% of the corresponding Census population.
+      - id: code-historical-linguistic-distance-bounds
+        file: R/measures/build_linguistic_distance_iv.R
+        title: Bounding Historical Linguistic Distance with Unresolved Source Data
+        description: >-
+          Some 1991 Language Atlas population remains unresolved after language-name reconciliation. Rather than assigning that mass implicitly or dropping the affected district, the code bounds the speaker-weighted distance measure. It separates accepted positive-distance speakers from known zero-distance and native-English speakers, then lets unresolved population either leave the positive-distance mean unchanged or lie anywhere on the admissible positive-distance support. A source-only quality rule subsequently requires at least 99% accepted speaker coverage and no more than half a Shastry degree of bound width before the preferred historical measure enters the analysis.
         outputs:
           - historical_language_persistence
+      - id: code-dise-report-language-enrollment
+        file: scripts/build_dise_report_language_enrollment.py
+        section: Independent Schooling Measures and Survey Estimation
+        title: Reconstructing English-Medium Enrollment from Archived DISE Reports
+        description: >-
+          District Information System for Education (DISE) report cards encode medium-of-instruction totals in more than one layout. The parser accepts either language rows under an identifiable total column or language columns paired with an explicit total row, and refuses to infer counts when those structural cues are missing. Extraction is restricted to PDF pages whose district-year provenance has already been reviewed; when multiple archived reports cover the same district-year, an explicit priority must select one unique source.
+        outputs:
+          - dise_agreement
       - id: code-survey-design
         file: R/selection/estimate_selection_probit.R
         title: Constructing the NSS Survey Design
         description: >-
-          The 2007--08 National Sample Survey (NSS) education survey samples households within first-stage units such as villages or urban blocks. This function combines the state, rural/urban sector, stratum, and substratum fields into NSS survey strata, attaches household sampling weights, and constructs the `survey::svydesign()` specification used for the enrollment probit. Final estimation stops if a required design field is missing.
+          The 2007--08 National Sample Survey (NSS) education survey samples households within first-stage units such as villages or urban blocks. This function constructs the joint sampling stratum from state, rural/urban sector, stratum, and substratum, supplies the household multiplier as the sampling weight, and creates the `survey::svydesign()` used for the enrollment probit. `nest = TRUE` allows first-stage-unit identifiers to be interpreted within strata, and final estimation stops if a required design field is missing.
       - id: code-ame-estimation
         file: R/selection/compute_average_marginal_effects.R
         title: Average Marginal Effects on the Estimation Sample
         description: >-
-          The code extracts the exact observations and NSS sampling weights used to fit the enrollment probit, checks that the weights align with those observations, and passes both to `marginaleffects::avg_slopes()`. The result is an average change in predicted enrollment on the probability scale over the survey-weighted estimation sample.
+          The code recovers the exact observations and NSS sampling weights retained by the enrollment probit, checks that the weights align with those observations, and passes both to `marginaleffects::avg_slopes()`. The fitted survey design determines model estimation and its covariance matrix; the supplied weights separately determine how observation-level response-scale effects are averaged over the fitted sample.
         outputs:
           - selection_ame
       - id: code-mop-effective-f
         file: R/iv/weak_identification.R
+        section: Identification and Econometric Robustness
         title: Assessing Weak-Instrument Strength with the Montiel Olea--Pflueger Effective F
         description: >-
-          The paper uses linguistic distance from Hindi as an instrument for district exposure to English-medium schooling. This function evaluates that first stage with the Montiel Olea--Pflueger effective F. It recovers the regressors and instruments from the fitted `ivreg` model, uses the same estimation rows, and calls `momentfit::MOPtest()` with state-clustered covariance when state identifiers are available. The table pairs this strength measure with two-stage least squares (2SLS) and Anderson--Rubin results.
+          The paper uses linguistic distance from Hindi as an instrument for district exposure to English-medium schooling. For specifications with one endogenous regressor, this function evaluates first-stage strength with the Montiel Olea--Pflueger effective F, using a 10% relative-bias benchmark and 5% test size. It recovers the regressors, instruments, estimation rows, and state clusters from the fitted `ivreg` model before calling `momentfit::MOPtest()`. The table pairs this strength diagnostic with two-stage least squares and Anderson--Rubin inference robust to weak identification.
         outputs:
           - weak_iv
-      - id: code-public-map-rendering
-        file: R/output/save_figures.R
-        title: Mapping District Estimates on 2001 Census Boundaries
+      - id: code-falsification-adaptive-set
+        file: R/iv/falsification_adaptive_set.R
+        title: Constructing Falsification-Adaptive Sets for Overidentified IV Designs
         description: >-
-          To display estimates on a common geography, the code joins analysis values to every 2001 Census district polygon before plotting. Districts outside an estimation sample remain visible with a no-data fill, disputed territories receive a separate no-data treatment, and state borders are drawn from the full district geometry. The plotting function handles both categorical and continuous measures; continuous measures can use diverging color scales.
-        outputs:
-          - main_maps
+          With one endogenous regressor and several excluded instruments, the exclusion-based falsification-adaptive set is formed from just-identified IV estimands that use each excluded instrument in turn while conditioning on the others. The code constructs every constituent on one common complete-case sample, estimates state-clustered inference and its conditional first stage, and forms the set from the minimum and maximum constituent estimates only when every registered constituent is estimable. Weak conditional first stages are reported as cautions but do not cause instruments to be dropped, which would make the identified set depend on a sample-based selection rule.
       - id: code-temporal-price-series
         file: R/prices/build_temporal_price_series.R
+        section: Price Harmonization and Real Consumption
         title: Linking Rural and Urban State CPI Series Across Index Bases
         description: >-
-          The historical Consumer Price Index for Rural Labourers (CPI-RL) and Consumer Price Index for Industrial Workers (CPI-IW) use different index bases from the later state rural/urban CPI (CPI-R/U). For each state and rural/urban sector, the code rescales the pre-2013 index by the median monthly ratio of CPI-R/U to the historical index over January 2013--December 2014. It requires at least six overlap months and records both the overlap count and the dispersion of the monthly ratios.
+          The historical Consumer Price Index for Rural Labourers (CPI-RL) and Consumer Price Index for Industrial Workers (CPI-IW) must be put onto the scale of the later state rural/urban CPI (CPI-R/U). For each state and rural/urban sector, the code uses the median monthly ratio of CPI-R/U to the historical index over January 2013--December 2014 as a multiplicative splice factor, which limits the influence of a single anomalous overlap month. It requires at least six common months and retains the overlap count and dispersion diagnostics alongside each link factor.
       - id: code-state-sector-deflator
         file: R/prices/price_deflators.R
-        title: Rural and Urban State Price Deflators for Comparable Real Consumption
+        title: Constructing Comparable State-Sector Price Deflators
         description: >-
-          Linking the CPI series accounts for price change over time. Comparing consumption across states also requires a rural/urban state price adjustment. The Tendulkar poverty lines provide separate rupee thresholds for each state and rural/urban sector; dividing them by the all-India rural reference yields the cross-state price relatives. The code combines those relatives with the linked CPI and expresses household consumption in comparable 2011--12 rupees. The figure below compares district consumption estimates from the 2022--23 and 2023--24 Household Consumption Expenditure Survey (HCES) rounds after this adjustment.
+          Linking the CPI series handles price change over time, while Tendulkar state-sector poverty-line ratios provide a cross-sectional price-level adjustment relative to the all-India rural 2011--12 reference. The displayed core validates those spatial and temporal inputs, constructs or accepts a reference-period CPI for each state-sector series, preserves documented donor-series lineage when needed, and multiplies the spatial price relative by the temporal CPI relative. The resulting deflator places household consumption on a common spatial and temporal purchasing-power basis; the figure compares district estimates from the 2022--23 and 2023--24 Household Consumption Expenditure Survey rounds.
         outputs:
           - consumption_validation
       - id: code-price-link-tests
         file: tests/testthat/test-prices-and-controls.R
-        title: Testing CPI Linking Across Index Bases
+        title: Testing CPI Links Against Known Answers
         description: >-
-          Small rural and urban CPI examples have link factors known in advance. The first test verifies that each link factor equals the median monthly ratio of the new index to the old index and that the overlap count is retained. The second verifies that construction stops when a historical series has fewer common months with CPI-R/U than the required minimum.
+          A small rural example has monthly new-to-old CPI ratios of 2, 2, and 3, so its registered median link factor must equal 2 even though the final overlap month implies 3; the urban example has a constant ratio of 0.5. The behavioral test verifies those median links, the first and last monthly ratios retained for diagnostics, and the number of overlap months.
+      - id: code-public-map-rendering
+        file: R/output/save_figures.R
+        section: Spatial Presentation on a Common Geography
+        title: Preserving the Complete District Universe in Published Maps
+        description: >-
+          Published district maps start from the complete 2001 Census geometry and left-join analysis attributes onto it rather than plotting only observations retained by a particular estimation sample. Districts without estimates therefore remain in the national outline as no-data areas. The code also reconstructs state identity from the canonical 2001 district key, checks it against any analysis-side state code, and passes the completed geometry to the shared public-map renderer.
+        outputs:
+          - main_maps
   - id: Under10MB
     label: UNDER-10MB COPY
     max_bytes: 10000000

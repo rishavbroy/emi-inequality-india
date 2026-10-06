@@ -70,10 +70,10 @@ ame_model_data_and_weights <- function(model) {
 #' Compute average marginal effects over the fitted NSS sample
 #'
 compute_ames_marginaleffects <- function(model) {
-  # Pass the fitted rows and sampling weights explicitly so avg_slopes() averages
-  # predicted changes over the same weighted observations used for estimation after
-  # the fitted model has been saved and reloaded. Uncertainty comes from the
-  # survey-weighted model's covariance matrix.
+  # The survey design already determines model estimation and its covariance
+  # matrix. Pass the fitted rows and sampling weights explicitly here so
+  # avg_slopes() separately averages observation-level response-scale effects over
+  # the same weighted estimation sample after the model has been saved and reloaded.
   amed <- ame_model_data_and_weights(model)
   marginaleffects::avg_slopes(
     model,

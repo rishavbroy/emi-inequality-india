@@ -356,6 +356,7 @@ build_state_sector_deflator <- function(
   rownames(out) <- NULL
   out
 }
+# sample-end: code-state-sector-deflator
 
 build_state_sector_price_deflators <- function(
     temporal_series,
@@ -394,7 +395,6 @@ build_state_sector_price_deflators <- function(
     reference_index = reference_index
   )
 }
-# sample-end: code-state-sector-deflator
 
 validate_consumption_price_window <- function(deflators, price_window) {
   d <- safe_df(deflators)

@@ -30,6 +30,7 @@ iv_falsification_adaptive_specifications <- function(
   out
 }
 
+# sample-start: code-falsification-adaptive-set
 iv_fas_component_formula <- function(specification, instrument) {
   spec <- as_single_iv_specification(specification)
   excluded <- plain_chr(unlist(spec$excluded_instruments[[1L]], use.names = FALSE))
@@ -189,6 +190,7 @@ estimate_iv_falsification_adaptive_set_spec <- function(data, specification) {
   )
   list(summary = summary, components = components)
 }
+# sample-end: code-falsification-adaptive-set
 
 estimate_iv_falsification_adaptive_sets <- function(
     data,

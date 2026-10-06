@@ -520,6 +520,7 @@ test_that("CPI link factors equal median overlap ratios", {
   expect_equal(links$link_factor_last, c(3, 0.5))
   expect_equal(links$link_months, c(3L, 3L))
 })
+# sample-end: code-price-link-tests
 
 test_that("temporal price construction requires enough overlap months", {
   months <- as.Date(c("2012-12-01", "2013-01-01"))
@@ -542,7 +543,6 @@ test_that("temporal price construction requires enough overlap months", {
   ))
 })
 
-# sample-end: code-price-link-tests
 
 test_that("base-2010 and base-2012 CPI-R/U overlap remains a validation result", {
   months <- as.Date(c("2013-01-01", "2013-02-01"))

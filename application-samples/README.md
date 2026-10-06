@@ -15,7 +15,7 @@ Generated PDFs are the maintained application files. Intermediate Markdown and L
 
 Writing samples select ordinary Quarto section IDs from `paper/paper.qmd`, so the excerpts are generated directly from the paper.
 
-Code samples use paired `sample-start:` / `sample-end:` comments in active R and Python files. Marker IDs are declared in `samples.yml`, and validation requires each selected marker pair to be unique and well formed.
+Code samples use paired `sample-start:` / `sample-end:` comments in active R and Python files. Marker IDs are declared in `samples.yml`, and validation requires each selected marker pair to be unique and well formed. An excerpt may declare a `section` in the manifest; the renderer emits that section heading immediately before the excerpt, so thematic organization remains configuration rather than duplicated prose in generated files.
 
 Each code-sample description and each selected code comment should make sense to a technical reader who has not read the paper or the rest of the replication package. Spell out project-specific abbreviations at first use, explain the empirical quantity or data irregularity before implementation details, and reserve comments for methodological choices or data assumptions that the code does not make obvious.
 
