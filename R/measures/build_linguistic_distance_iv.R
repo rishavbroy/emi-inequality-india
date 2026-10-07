@@ -228,9 +228,9 @@ historical_linguistic_population_coherent <- function(speakers, population) {
       !is.finite(population) || population <= 0) {
     stop("Historical linguistic bounds require a positive district population.", call. = FALSE)
   }
-  accepted <- is.finite(speakers) & speakers >= 0
-  accepted_total <- sum(speakers[accepted], na.rm = TRUE)
-  isTRUE(accepted_total <= population)
+  valid_count <- is.finite(speakers) & speakers >= 0
+  valid_total <- sum(speakers[valid_count], na.rm = TRUE)
+  isTRUE(valid_total <= population)
 }
 
 historical_linguistic_distance_bounds <- function(
@@ -239,10 +239,10 @@ historical_linguistic_distance_bounds <- function(
   degree <- num(degree)
   language <- normalize_language_label(language)
   population_coherent <- historical_linguistic_population_coherent(speakers, population)
-  accepted <- is.finite(speakers) & speakers >= 0
-  english <- accepted & language == "English"
-  known_nonzero <- accepted & is.finite(degree) & degree > 0 & !english
-  known_zero <- accepted & is.finite(degree) & degree == 0 & !english
+  valid_count <- is.finite(speakers) & speakers >= 0
+  english <- valid_count & language == "English"
+  known_nonzero <- valid_count & is.finite(degree) & degree > 0 & !english
+  known_zero <- valid_count & is.finite(degree) & degree == 0 & !english
   # These speakers are known and resolved, but the positive-distance mean
   # excludes them by definition; "irrelevant" here refers only to that
   # denominator.
@@ -307,10 +307,10 @@ historical_linguistic_distant_share_bounds <- function(
       !is.finite(threshold) || threshold <= 0 || threshold > 5) {
     stop("Historical distant-speaker threshold must lie in (0, 5].", call. = FALSE)
   }
-  accepted <- is.finite(speakers) & speakers >= 0
-  english <- accepted & language == "English"
-  resolved <- accepted & (is.finite(degree) | english)
-  distant <- accepted & is.finite(degree) & degree >= threshold & !english
+  valid_count <- is.finite(speakers) & speakers >= 0
+  english <- valid_count & language == "English"
+  resolved <- valid_count & (is.finite(degree) | english)
+  distant <- valid_count & is.finite(degree) & degree >= threshold & !english
   resolved_speakers <- sum(speakers[resolved], na.rm = TRUE)
   distant_speakers <- sum(speakers[distant], na.rm = TRUE)
   if (population_coherent) {

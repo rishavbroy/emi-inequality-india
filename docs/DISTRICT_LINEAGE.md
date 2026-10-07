@@ -16,8 +16,8 @@ Final identities prioritize official codes/names and reviewed transition evidenc
 
 1. Normalize state/district identifiers and names without changing substantive identity.
 2. Resolve exact code/name evidence and registered aliases.
-3. Generate candidate matches for unresolved cases using the centralized fuzzy-distance machinery.
-4. Review candidates against independent lineage/boundary evidence.
+3. Generate candidate matches for unresolved cases within state using the centralized fuzzy-distance machinery. The candidate score averages Jaro--Winkler, length-normalized Damerau--Levenshtein, trigram cosine, and token Jaccard similarities; review priority additionally requires directional-token compatibility, reciprocal nearest-neighbor agreement, a margin over the runner-up, and the survey-wave-specific preferred reference vintage.
+4. Review candidates against independent lineage/boundary evidence; a high-precision fuzzy flag prioritizes review and never accepts an identity by itself.
 5. Record the accepted relationship, evidence class, and unresolved status in tracked metadata.
 
 ## Adjudication rules

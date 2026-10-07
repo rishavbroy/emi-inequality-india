@@ -50,6 +50,9 @@ list_ilo_figure_paths <- function(paths) {
 }
 
 #' Join one label split by table line wrapping
+#'
+#' Lowercase continuations remove a line-break hyphen; uppercase continuations
+#' preserve a hyphen that is part of the printed district name.
 join_district_carveout_wrapped_label <- function(previous, continuation) {
   previous <- trimws(as.character(previous))
   continuation <- trimws(as.character(continuation))
@@ -65,11 +68,12 @@ join_district_carveout_wrapped_label <- function(previous, continuation) {
 
 # sample-start: code-district-carveout-repair
 
-# Rejoin district names split across rows in the historical boundary table
+# Repair physical row wraps in the historical district-transfer table
 #
 # A blank 1991 population field marks a candidate continuation row. Transfer
 # fields distinguish a genuine allocation record from a row that only continues
-# a printed name. A trailing hyphen identifies a split 1991 district name.
+# a printed name. For split source names, lowercase continuations remove a
+# line-break hyphen while uppercase continuations preserve a semantic hyphen.
 repair_district_carveout_wrapped_rows <- function(x) {
   out <- safe_df(x)
   if (!nrow(out)) return(out)
@@ -134,6 +138,7 @@ validate_district_carveout_shares <- function(
   if (any(!is.finite(source_share))) {
     stop("Shares of each 1991 district assigned to 2001 districts must be complete.", call. = FALSE)
   }
+  # Use the source table's district-plus-population identity for the partition.
   source_key <- paste(out$district_1991, out$pop_1991, sep = "__")
   source_sum <- vapply(split(source_share, source_key), sum, numeric(1))
   if (any(abs(source_sum - 100) > rounding_tolerance_pp)) {
@@ -151,6 +156,8 @@ read_district_carveouts <- function(path) {
     na.strings = c("", "NA"),
     check.names = FALSE
   )
+  # Repair source-layout blanks before fill-down because the blanks themselves
+  # identify candidate continuation rows.
   out <- repair_district_carveout_wrapped_rows(out)
   out$district_1991 <- fill_down_missing(out$district_1991)
   out$pop_1991 <- num(gsub(",", "", fill_down_missing(out$pop_1991), fixed = TRUE))

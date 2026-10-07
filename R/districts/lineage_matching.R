@@ -357,7 +357,10 @@ score_match_candidates <- function(source_roster, reference_units, excluded_sour
   if (!nrow(pairs)) return(empty_source_candidates())
   source_name <- pairs$district_std_source
   candidate_name <- pairs$district_std_candidate
-  pairs$jw <- 1 - stringdist::stringdist(source_name, candidate_name, method = "jw", p = 0.1)
+  # p = 0.1 applies Winkler's prefix adjustment rather than plain Jaro distance.
+  pairs$jw <- 1 - stringdist::stringdist(
+    source_name, candidate_name, method = "jw", p = 0.1
+  )
   dl_distance <- stringdist::stringdist(source_name, candidate_name, method = "dl")
   denom <- pmax(nchar(source_name), nchar(candidate_name), 1L)
   pairs$dl <- pmax(0, 1 - dl_distance / denom)
@@ -367,6 +370,7 @@ score_match_candidates <- function(source_roster, reference_units, excluded_sour
 
   ranked <- safe_bind_rows(lapply(split(seq_len(nrow(pairs)), pairs$source_row_id), function(i) {
     x <- pairs[i, , drop = FALSE]
+    # Prefer the administrative vintage closest to the source survey wave.
     preference <- vintage_preference(x$wave[[1]])
     vintage_rank <- match(x$reference_vintage, preference, nomatch = length(preference) + 1L)
     x <- x[order(-x$score, -x$jw, vintage_rank, x$unit_id), , drop = FALSE]
@@ -378,6 +382,7 @@ score_match_candidates <- function(source_roster, reference_units, excluded_sour
     x
   }))
 
+  # Require mutual top-choice agreement, not only a strong one-way match.
   candidate_groups <- split(seq_len(nrow(ranked)), ranked$unit_id)
   best_by_candidate <- stats::setNames(
     vapply(candidate_groups, function(i) {

@@ -16,6 +16,8 @@ The Census of India Language Atlas 1991 is the principal historical language sou
 
 The extraction process separates machine-readable capture from reviewed acceptance. Reviewed cells record the published label/value, any ambiguity, and the decision used downstream. The active analysis uses the reviewed table.
 
+District reconstruction exploits the Atlas's repeated eight-page layout conservatively. A missing within-state district serial is recovered from repeated pages only when the same raw row label within the same block has one distinct observed serial. Before a row can be promoted, the observed state-heading universe must agree with the reviewed 1991 state crosswalk and the Primary Census Abstract, the reconstructed state--district code must be unique in that official district universe, and the Atlas district population must agree with the official population within 1%.
+
 ## Historical language allocation
 
 Historical language shares are assigned to the historical geographic units supported by the source and then transformed to the analysis geography through the registered historical-geography rules. Allocation occurs before linguistic-distance aggregation so totals and language composition can be validated on the native geography.
@@ -30,7 +32,7 @@ Ambiguous Indo-European identities and historical labels are resolved in tracked
 
 ## Validation
 
-Validation checks include extraction/accounting consistency, coverage of reviewed historical language cells, language-share support, agreement of alternative historical references where they overlap, and stability of the district-level historical-distance signal across declared constructions.
+Validation checks include extraction/accounting consistency, coverage of reviewed historical language cells, language-share support, agreement of alternative historical references where they overlap, and stability of the district-level historical-distance signal across declared constructions. Unresolved population is propagated into worst-case bounds for the positive-distance mean using the positive Shastry-degree support observed in the reviewed preferred mapping. The preferred historical measure requires at least 99% accepted speaker coverage and a bound width no greater than 0.5 Shastry degree; these are pre-specified source-quality gates, not confidence levels.
 
 ## Outputs
 

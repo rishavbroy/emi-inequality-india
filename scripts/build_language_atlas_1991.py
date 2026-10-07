@@ -574,7 +574,7 @@ def reconcile_district_serial(
     if direct is not None:
         # Prefer a serial printed on the current row. Use repeated copies of the
         # same label only when the current row has no serial because
-        # continuation pages contain occasional OCR errors.
+        # continuation pages contain occasional text extraction errors.
         return direct, direct_source, repeated_text
     if len(repeated) == 1:
         return repeated[0], "cross_page_exact_label", repeated_text
@@ -609,6 +609,8 @@ def build_district_population_validation(
         state_name = current_state["state_name_1991"] if current_state else ""
         district_code = f"{serial:02d}" if serial is not None else ""
         pca_population = pca91.get((state_code, district_code)) if state_code and district_code else None
+        # The extractor stores any parsed numeric cell in one candidate field;
+        # on the population page that field is the district population.
         atlas_population = (
             int(cell["speaker_count_candidate"])
             if str(cell["speaker_count_candidate"]).strip()
