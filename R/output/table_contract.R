@@ -187,7 +187,7 @@ public_table_note <- function(name) {
     ),
     appendix_iv_weak_inference = paste(
       "The table reports conventional 2SLS coefficients with state-clustered standard errors. Instrument strength is summarized by the Montiel Olea--Pflueger effective $F$ statistic, and Anderson--Rubin tests provide inference robust to weak instruments.",
-      "The 95\\% AR accepted sets are displayed as unions of closed intervals. A dagger marks a component that reaches an evaluated search boundary. Its outer endpoint is the numerical search limit and should not be interpreted as a finite confidence bound.",
+      "The 95\\% AR accepted sets are displayed as unions of closed intervals. $^{\\dagger}$A component reaches an evaluated search boundary; its outer endpoint is the numerical search limit and should not be interpreted as a finite confidence bound.",
       "The direct effect threshold is the smallest permitted direct effect, expressed as a share of the absolute reduced form, for which the AR set includes $\\beta = 0$."
     ),
     appendix_migration_summary = paste(
@@ -226,7 +226,7 @@ public_table_note <- function(name) {
   paste(parts, collapse = " ")
 }
 
-  # The kableExtra package inserts LaTeX footnotes through regex replacement.  With
+# The kableExtra package inserts LaTeX footnotes through regex replacement. With
 # `escape = FALSE`, a single backslash in the replacement text is consumed by
 # R's replacement-string semantics before the TeX file is written.  Double raw
 # LaTeX backslashes at this boundary so math escapes and citeproc links survive

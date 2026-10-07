@@ -1296,6 +1296,8 @@ test_that("weak-IV appendix table renders through modelsummary", {
   expect_match(tex, "\\cup", fixed = TRUE)
   expect_match(tex, "\\dagger", fixed = TRUE)
   expect_match(tex, "search boundary", fixed = TRUE)
+  expect_match(tex, "\\dagger}$A component", fixed = TRUE)
+  expect_false(grepl("A dagger marks", tex, fixed = TRUE))
   expect_match(tex, "41.7\\%", fixed = TRUE)
   expect_false(grepl("grid<=", tex, fixed = TRUE))
   expect_false(grepl("41.7%", tex, fixed = TRUE))
