@@ -22,18 +22,17 @@ iv_falsification_adaptive_specifications <- function(
 }
 
 # sample-start: code-falsification-adaptive-set
-# Under the exclusion-relaxation FAS used here, one endogenous regressor and
-# multiple instruments assumed relevant yield an interval spanning the
-# just-identified IV estimates obtained by using each instrument in turn while
-# treating the others as included controls. This is an identified set, not a
-# confidence interval. Conditional first-stage diagnostics are reported, but
-# weak sample first stages never screen constituents out of the set.
+# For the exclusion relaxation used here, each relevant instrument serves in
+# turn as the sole excluded instrument while the remaining instruments enter as
+# controls. The FAS spans the resulting just-identified IV estimates. Every
+# registered constituent enters the set calculation; conditional first-stage
+# statistics separately summarize evidence on instrument relevance.
 iv_fas_component_formula <- function(specification, instrument) {
   spec <- as_single_iv_specification(specification)
   excluded <- plain_chr(unlist(spec$excluded_instruments[[1L]], use.names = FALSE))
   instrument <- plain_chr(instrument)[[1L]]
   if (!instrument %in% excluded) {
-    stop("FAS component instrument is not registered as excluded by the IV specification.", call. = FALSE)
+    stop("Selected FAS instrument is absent from the specification's excluded instruments.", call. = FALSE)
   }
   included <- unique(c(
     unlist(spec$included_language_controls[[1L]], use.names = FALSE),
@@ -52,9 +51,8 @@ estimate_iv_fas_component <- function(data, specification, instrument) {
   excluded <- plain_chr(unlist(spec$excluded_instruments[[1L]], use.names = FALSE))
   instrument <- plain_chr(instrument)[[1L]]
   other_instruments <- setdiff(excluded, instrument)
-  # iv_specification_variables() resolves transformed formula terms such as
-  # factor(region) to their underlying data columns. Keep sample construction on
-  # that canonical contract instead of treating formula expressions as columns.
+  # Resolve transformed formula terms such as factor(region) to the underlying
+  # columns used to define the common estimation sample.
   needed <- iv_specification_variables(spec)
   missing <- setdiff(needed, names(data))
   if (length(missing)) {
@@ -118,15 +116,24 @@ estimate_iv_fas_component <- function(data, specification, instrument) {
   )
   first_stage_f <- unname(first_stage_joint[["statistic"]])
 
+  treatment_ok <- all(is.finite(
+    treatment_term[c("estimate", "std.error", "p.value")]
+  ))
+  first_stage_ok <- all(is.finite(
+    first_stage_term[c("estimate", "std.error", "p.value")]
+  ))
   status <- if (
     identical(inference$status, "estimated") &&
       identical(first_stage_inference$status, "estimated") &&
-      all(is.finite(treatment_term[c("estimate", "std.error", "p.value")])) &&
-      all(is.finite(first_stage_term[c("estimate", "std.error", "p.value")]))
+      treatment_ok && first_stage_ok
   ) "estimated" else "inference_unavailable"
   reasons <- unique(na.omit(c(
     if (identical(inference$status, "unavailable")) inference$reason else NA_character_,
-    if (identical(first_stage_inference$status, "unavailable")) first_stage_inference$reason else NA_character_
+    if (identical(first_stage_inference$status, "unavailable")) first_stage_inference$reason else NA_character_,
+    if (identical(inference$status, "estimated") && !treatment_ok)
+      "Treatment coefficient inference is nonfinite." else NA_character_,
+    if (identical(first_stage_inference$status, "estimated") && !first_stage_ok)
+      "Conditional first-stage coefficient inference is nonfinite." else NA_character_
   )))
 
   data.frame(
@@ -179,10 +186,10 @@ estimate_iv_falsification_adaptive_set_spec <- function(data, specification) {
     min_conditional_first_stage_f = if (all(is.finite(first_stage_f))) min(first_stage_f) else NA_real_,
     max_conditional_first_stage_f = if (all(is.finite(first_stage_f))) max(first_stage_f) else NA_real_,
     n_conditional_first_stage_f_below_10 = sum(is.finite(first_stage_f) & first_stage_f < 10),
-    constituent_relevance_caution = if (all(is.finite(first_stage_f))) any(first_stage_f < 10) else NA,
+    any_conditional_first_stage_f_below_10 = if (all(is.finite(first_stage_f))) any(first_stage_f < 10) else NA,
     n = if (nrow(components) && length(unique(components$n)) == 1L) components$n[[1L]] else NA_integer_,
     status = if (complete) "estimated" else "incomplete",
-    reason = if (complete) NA_character_ else "At least one just-identified constituent could not be estimated with clustered inference.",
+    reason = if (complete) NA_character_ else "At least one registered just-identified constituent could not be estimated.",
     stringsAsFactors = FALSE
   )
   list(summary = summary, components = components)

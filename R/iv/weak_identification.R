@@ -18,7 +18,7 @@ mop_effective_f <- function(
     return(unavailable("Package 'momentfit' is not installed."))
   }
   if (!is.finite(tau) || tau <= 0 || !is.finite(size) || size <= 0 || size >= 1) {
-    return(unavailable("Montiel Olea-Pflueger tau and size must be valid probabilities."))
+    return(unavailable("MOP tau must be positive, and size must lie strictly between 0 and 1."))
   }
 
   endogenous <- suppressWarnings(as.integer(model$endogenous))
@@ -35,7 +35,7 @@ mop_effective_f <- function(
     error = function(e) NULL
   )
   if (is.null(regression_formula) || is.null(instrument_formula)) {
-    return(unavailable("Could not recover ivreg component formulas for Montiel Olea-Pflueger effective F."))
+    return(unavailable("Could not recover the fitted regression and instrument formulas from ivreg."))
   }
   needed <- unique(c(all.vars(regression_formula), all.vars(instrument_formula)))
   data <- iv_analysis_frame(analysis_data, needed)
@@ -47,6 +47,8 @@ mop_effective_f <- function(
     )))
   }
   moment_data <- data[needed]
+  # Keep MOP on the fitted IV sample; deleting additional rows for missing
+  # values would change the calculation.
   if (any(!stats::complete.cases(moment_data))) {
     return(unavailable("Regressors or instruments used by the fitted IV model contain missing values."))
   }
@@ -64,9 +66,9 @@ mop_effective_f <- function(
   covariance_options <- if (is.null(cluster)) {
     list(type = "HC0")
   } else {
-    # MOPtest() uses clustered HC0 moment covariance with its finite-cluster
-    # adjustment here. The separately reported first-stage Wald F uses HC1,
-    # so the two statistics follow different covariance conventions.
+    # MOPtest() uses clustered HC0 moment covariance with its finite cluster
+    # adjustment here. The separate first-stage Wald statistic uses CR2
+    # covariance and the HTZ small sample reference.
     list(
       cluster = data.frame(cluster = cluster),
       type = "HC0", cadjust = TRUE, multi0 = FALSE
@@ -81,7 +83,7 @@ mop_effective_f <- function(
       vcov = covariance,
       vcovOptions = covariance_options
     )
-    # tau = 0.10 targets a 10% relative-bias benchmark for TSLS; the
+    # tau specifies the desired relative-bias benchmark for TSLS; the
     # simplified test uses the more conservative critical value.
     momentfit::MOPtest(
       moment_model,
@@ -97,7 +99,7 @@ mop_effective_f <- function(
   values <- suppressWarnings(as.numeric(result[c("Feff", "critValue", "pvalue", "Keff")]))
   names(values) <- c("statistic", "critical_value", "p.value", "effective_df")
   if (length(values) != 4L || any(!is.finite(values))) {
-    return(unavailable("momentfit::MOPtest() did not return finite effective-F statistics."))
+    return(unavailable("momentfit::MOPtest() did not return finite MOP results."))
   }
 
   c(

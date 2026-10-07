@@ -1205,7 +1205,7 @@ iv_weak_fixture <- function() {
     ),
     status = "estimated",
     fas_contains_zero = TRUE,
-    constituent_relevance_caution = TRUE,
+    any_conditional_first_stage_f_below_10 = TRUE,
     stringsAsFactors = FALSE
   )
   alternative <- structure(
@@ -1268,6 +1268,26 @@ test_that("IV appendix weak-inference summary preserves returned AR topology", {
   expect_error(
     appendix_iv_weak_inference(
       fixture$dynamics, fixture$exclusion, fixture$robustness, invalid_fas
+    ),
+    "state-FE rich-vector FAS results",
+    fixed = TRUE
+  )
+
+  missing_fas_field <- fixture$alternative
+  missing_fas_field$falsification_adaptive_summary$any_conditional_first_stage_f_below_10 <- NULL
+  expect_error(
+    appendix_iv_weak_inference(
+      fixture$dynamics, fixture$exclusion, fixture$robustness, missing_fas_field
+    ),
+    "missing required FAS fields",
+    fixed = TRUE
+  )
+
+  missing_fas_value <- fixture$alternative
+  missing_fas_value$falsification_adaptive_summary$any_conditional_first_stage_f_below_10[[1L]] <- NA
+  expect_error(
+    appendix_iv_weak_inference(
+      fixture$dynamics, fixture$exclusion, fixture$robustness, missing_fas_value
     ),
     "state-FE rich-vector FAS results",
     fixed = TRUE

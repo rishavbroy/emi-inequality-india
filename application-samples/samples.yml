@@ -156,14 +156,14 @@ coding:
         section: Identification and Econometric Robustness
         title: Assessing Weak-Instrument Strength with the Montiel Olea--Pflueger Effective F
         description: >-
-          The paper uses linguistic distance from Hindi as an instrument for district exposure to English-medium schooling. For specifications with one endogenous regressor, this function evaluates first-stage strength with the Montiel Olea--Pflueger effective F, using `momentfit::MOPtest()` with a 10% relative-bias benchmark for TSLS, 5% test size, and the conservative simplified critical value. It recovers the regressors, instruments, estimation rows, and state clusters from the fitted `ivreg` model first. The table pairs this strength diagnostic with two-stage least squares and Anderson--Rubin inference robust to weak identification.
+          The paper uses linguistic distance from Hindi as an instrument for district exposure to English-medium schooling. For specifications with one endogenous regressor, this function evaluates first-stage strength with the Montiel Olea--Pflueger effective F, using `momentfit::MOPtest()` with a 10% relative-bias benchmark for TSLS, 5% test size, and the conservative simplified critical value. It reconstructs the fitted regression and instrument formulas, checks the variables they require, and verifies that state clusters align with the fitted observations before constructing the MOP moment model. The table reports the effective F alongside two-stage least squares and Anderson--Rubin inference robust to weak identification.
         outputs:
           - weak_iv
       - id: code-falsification-adaptive-set
         file: R/iv/falsification_adaptive_set.R
         title: Constructing Falsification-Adaptive Sets for Overidentified IV Designs
         description: >-
-          Under the exclusion-relaxation construction used here, one endogenous regressor and multiple instruments assumed relevant yield a falsification-adaptive set spanning just-identified IV estimands that use each excluded instrument in turn while conditioning on the others. This is an identified set, not a confidence interval. The code constructs every constituent on one common complete-case sample, estimates state-clustered inference and its conditional first stage, and forms the set only when every registered constituent is estimable. Weak sample first stages are reported as relevance cautions but never screen constituents out, which would make the set depend on a sample-based instrument-selection rule.
+          Under the exclusion relaxation used here, one endogenous regressor and multiple instruments assumed relevant yield a falsification-adaptive set spanning just-identified IV estimands. Each instrument serves in turn as the sole excluded instrument while the remaining instruments enter as controls. All constituent estimates use the same observations, requiring complete data on every variable in the registered specification, and inference is clustered by state. Every registered constituent enters the FAS calculation. Conditional first-stage statistics separately summarize evidence on instrument relevance.
       - id: code-temporal-price-series
         file: R/prices/build_temporal_price_series.R
         section: Price Harmonization and Real Consumption

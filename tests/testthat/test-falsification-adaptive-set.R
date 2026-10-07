@@ -75,7 +75,7 @@ test_that("FAS is exactly the interval spanned by all registered just-identified
   )
 })
 
-test_that("FAS does not silently discard weak constituent instruments", {
+test_that("FAS retains weak constituent instruments", {
   testthat::skip_if_not_installed("ivreg")
   testthat::skip_if_not_installed("sandwich")
   skip_if_not_installed("clubSandwich")
@@ -103,6 +103,7 @@ test_that("FAS does not silently discard weak constituent instruments", {
   expect_equal(out$summary$n_components_estimated, 3L)
   expect_equal(out$summary$fas_lower, min(out$components$estimate))
   expect_equal(out$summary$fas_upper, max(out$components$estimate))
+  expect_true(out$summary$any_conditional_first_stage_f_below_10)
 })
 
 test_that("project FAS scope is a bounded six-design five-share family", {

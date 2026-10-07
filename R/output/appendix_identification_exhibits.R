@@ -164,6 +164,13 @@ appendix_iv_weak_inference <- function(
     stop("Weak-IV inference summary requires registered multi-instrument sensitivity results.", call. = FALSE)
   }
   fas <- safe_df(alternative_inference$falsification_adaptive_summary)
+  fas_required <- c(
+    "adjustment_id", "construction_id", "status", "fas_contains_zero",
+    "any_conditional_first_stage_f_below_10"
+  )
+  if (length(setdiff(fas_required, names(fas)))) {
+    stop("Weak-IV inference summary is missing required FAS fields.", call. = FALSE)
+  }
   fas <- fas[
     plain_chr(fas$adjustment_id) == "state_main" &
       plain_chr(fas$construction_id) %in% c(
@@ -171,9 +178,11 @@ appendix_iv_weak_inference <- function(
       ),
     , drop = FALSE
   ]
+  fas_contains_zero <- as.logical(fas$fas_contains_zero)
+  fas_has_weak_constituent <- as.logical(fas$any_conditional_first_stage_f_below_10)
   if (nrow(fas) != 3L || any(plain_chr(fas$status) != "estimated") ||
-      any(!as.logical(fas$fas_contains_zero)) ||
-      any(!as.logical(fas$constituent_relevance_caution))) {
+      anyNA(fas_contains_zero) || any(!fas_contains_zero) ||
+      anyNA(fas_has_weak_constituent) || any(!fas_has_weak_constituent)) {
     stop("Weak-IV inference summary requires the registered state-FE rich-vector FAS results.", call. = FALSE)
   }
 
