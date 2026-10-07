@@ -4,9 +4,11 @@
 
 DISE/UDISE provides administrative measures of EMI enrollment/provision and school quality used to validate and extend the household-survey schooling measures.
 
-## Raw and report-card sources
+## Raw and report-card inputs
 
-The active inputs include historical district report-card workbooks/PDFs and the registered administrative extracts preserved under the DISE archival source paths. Acquisition details and source records are stored in the metadata inventory; raw archival files remain local where redistribution is uncertain.
+The active inputs include historical district report-card workbooks/PDFs and registered DISE extracts retained with the project data. Acquisition details and file records are stored in the metadata inventory; raw archival files remain local where redistribution is uncertain.
+
+For 2008--09 through 2014--15, `scripts/build_dise_report_language_enrollment.py` reconstructs reviewed English/Hindi enrollment counts from registered PDF pages. `pdftotext -layout` retains the page spacing used by the two supported table layouts. Row-oriented tables require a nearby `Total` header and use the final numeric entry on each English or Hindi row. Column-oriented tables locate the language headings and read the nearest numeric entry on an explicit `Total` or `Grand Total` row. When several reports cover the same district-year, the recorded report priority must select one. The script compares rebuilt rows with the tracked count table when run without `--output`.
 
 ## Medium classification
 

@@ -370,7 +370,7 @@ score_match_candidates <- function(source_roster, reference_units, excluded_sour
 
   ranked <- safe_bind_rows(lapply(split(seq_len(nrow(pairs)), pairs$source_row_id), function(i) {
     x <- pairs[i, , drop = FALSE]
-    # Prefer the administrative vintage closest to the source survey wave.
+    # Prefer the reference year closest to the survey wave.
     preference <- vintage_preference(x$wave[[1]])
     vintage_rank <- match(x$reference_vintage, preference, nomatch = length(preference) + 1L)
     x <- x[order(-x$score, -x$jw, vintage_rank, x$unit_id), , drop = FALSE]
@@ -382,7 +382,7 @@ score_match_candidates <- function(source_roster, reference_units, excluded_sour
     x
   }))
 
-  # Require mutual top-choice agreement, not only a strong one-way match.
+  # Require the survey district and reference district to rank each other first.
   candidate_groups <- split(seq_len(nrow(ranked)), ranked$unit_id)
   best_by_candidate <- stats::setNames(
     vapply(candidate_groups, function(i) {
@@ -394,7 +394,7 @@ score_match_candidates <- function(source_roster, reference_units, excluded_sour
   ranked$reciprocal_nearest <- ranked$rank == 1L &
     unname(best_by_candidate[ranked$unit_id]) == ranked$source_row_id
   threshold <- district_match_candidate_thresholds()
-  # This flag prioritizes a pair for review; it does not accept a lineage edge.
+  # This flag prioritizes the pair for the subsequent lineage review.
   ranked$high_precision_candidate <- ranked$rank == 1L & ranked$preferred_vintage &
     ranked$reciprocal_nearest &
     directional_tokens_compatible(ranked$district_std_source, ranked$district_std_candidate) &

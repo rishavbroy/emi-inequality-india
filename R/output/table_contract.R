@@ -199,7 +199,7 @@ public_table_note <- function(name) {
     appendix_selection_ame = paste(
       "Entries are average changes in predicted enrollment probability.",
       "Continuous covariates are average slopes; categorical covariates are average discrete comparisons against the stated reference category, evaluated over the observed covariate distribution.",
-      "Standard errors use the NSS sampling design, including household weights, primary sampling units, and strata formed from state, stratum, and substratum identifiers.",
+      "Standard errors use the NSS sampling design, including household weights, primary sampling units, and strata formed from state, rural/urban sector, stratum, and substratum identifiers.",
       "The model also controls for district averages of schooling costs and benefits among enrolled children; the table displays marginal effects for child and household covariates."
     ),
     appendix_selection_missingness = paste(

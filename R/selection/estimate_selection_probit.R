@@ -93,6 +93,7 @@ selection_survey_design_variables <- function() {
 # Construct the NSS design used for weighted enrollment estimation
 #
 build_survey_design_selection <- function(selection_df, require_all = FALSE) {
+  # Final estimation calls this with require_all = TRUE.
   required <- selection_survey_design_variables()
   missing <- setdiff(required, names(selection_df))
   if (isTRUE(require_all) && length(missing)) {
@@ -105,7 +106,10 @@ build_survey_design_selection <- function(selection_df, require_all = FALSE) {
 
   psu <- first_col(selection_df, c("FSU_SL_NO", "fsu", "PSU", "psu"))
   weight <- first_col(selection_df, c("weight", "WEIGHT", "Multiplier", "multiplier"))
-  strata_cols <- intersect(c("STATE", "SECTOR", "STRATUM", "SUB_STRATUM_NO"), names(selection_df))
+  strata_cols <- intersect(
+    setdiff(required, c("FSU_SL_NO", "weight")),
+    names(selection_df)
+  )
   if (is.null(psu) || is.null(weight) || !length(strata_cols)) {
     if (isTRUE(require_all)) {
       stop("The required NSS survey design could not be constructed.", call. = FALSE)

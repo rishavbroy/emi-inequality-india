@@ -58,7 +58,7 @@ ame_model_data_and_weights <- function(model) {
   if (is.null(model_weights)) model_weights <- rep(1, nrow(model_data))
   model_weights <- as.numeric(model_weights)
   if (length(model_weights) != nrow(model_data)) {
-    stop("AME averaging weights do not align with the estimation sample.", call. = FALSE)
+    stop("AME averaging weights must have one value per fitted observation.", call. = FALSE)
   }
   if (any(!is.finite(model_weights)) || any(model_weights < 0) || sum(model_weights) <= 0) {
     stop("AME averaging weights must be finite, nonnegative, and have positive total weight.", call. = FALSE)
@@ -70,12 +70,9 @@ ame_model_data_and_weights <- function(model) {
 # Compute average marginal effects over the fitted NSS sample
 #
 compute_ames_marginaleffects <- function(model) {
-  # The survey design already determines model estimation and its covariance
-  # matrix. Pass the fitted rows and sampling weights explicitly here so
-  # avg_slopes() separately averages observation-level response-scale effects
-  # over the same weighted estimation sample after the model has been saved and
-  # reloaded. marginaleffects uses discrete comparisons, not derivatives, for
-  # binary and categorical regressors.
+  # Evaluate effects on the fitted model frame and use its sampling weights when
+  # averaging observation level quantities on the response scale. For binary and
+  # categorical regressors, marginaleffects reports discrete comparisons.
   amed <- ame_model_data_and_weights(model)
   marginaleffects::avg_slopes(
     model,

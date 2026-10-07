@@ -243,22 +243,20 @@ historical_linguistic_distance_bounds <- function(
   english <- valid_count & language == "English"
   known_nonzero <- valid_count & is.finite(degree) & degree > 0 & !english
   known_zero <- valid_count & is.finite(degree) & degree == 0 & !english
-  # These speakers are known and resolved, but the positive-distance mean
-  # excludes them by definition; "irrelevant" here refers only to that
-  # denominator.
-  known_irrelevant <- known_zero | english
+  # These resolved speakers are excluded from the positive distance mean.
+  known_excluded <- known_zero | english
 
   nonzero_speakers <- sum(speakers[known_nonzero], na.rm = TRUE)
   numerator <- sum(speakers[known_nonzero] * degree[known_nonzero], na.rm = TRUE)
-  known_irrelevant_speakers <- sum(speakers[known_irrelevant], na.rm = TRUE)
-  resolved_speakers <- nonzero_speakers + known_irrelevant_speakers
+  known_excluded_speakers <- sum(speakers[known_excluded], na.rm = TRUE)
+  resolved_speakers <- nonzero_speakers + known_excluded_speakers
   unresolved_mass <- max(0, population - resolved_speakers)
   point <- if (nonzero_speakers > 0) numerator / nonzero_speakers else NA_real_
 
   nonzero_degree_range <- sort(unique(num(nonzero_degree_range)))
   if (length(nonzero_degree_range) < 2L || any(!is.finite(nonzero_degree_range)) ||
       any(nonzero_degree_range <= 0)) {
-    stop("Historical linguistic-distance bounds require a finite positive degree range.", call. = FALSE)
+    stop("Historical linguistic distance bounds require a finite positive degree range.", call. = FALSE)
   }
   degree_min <- min(nonzero_degree_range)
   degree_max <- max(nonzero_degree_range)
@@ -274,8 +272,9 @@ historical_linguistic_distance_bounds <- function(
       (nonzero_speakers + unresolved_mass)
     upper_if_nonzero <- (numerator + unresolved_mass * degree_max) /
       (nonzero_speakers + unresolved_mass)
-    # Unresolved population may instead be Hindi/English/unmapped and therefore
-    # leave the accepted-speaker mean unchanged. Include both possibilities.
+    # Unresolved population may consist of Hindi speakers, English speakers, or
+    # language counts without an accepted distance value; in those cases the
+    # positive distance mean is unchanged.
     lower <- min(point, lower_if_nonzero)
     upper <- max(point, upper_if_nonzero)
     width <- upper - lower
@@ -287,7 +286,7 @@ historical_linguistic_distance_bounds <- function(
     upper = upper,
     width = width,
     nonzero_speakers = nonzero_speakers,
-    known_irrelevant_speakers = known_irrelevant_speakers,
+    known_excluded_speakers = known_excluded_speakers,
     resolved_speakers = resolved_speakers,
     unresolved_mass_upper_bound = unresolved_mass,
     population_coherent = population_coherent,

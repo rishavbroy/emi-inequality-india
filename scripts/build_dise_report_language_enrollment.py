@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-"""Rebuild DISE report-card English/Hindi counts from reviewed PDF/page provenance.
+"""Rebuild DISE report-card English/Hindi counts from reviewed PDF pages.
 
-This maintainer tool is intentionally outside the R/targets pipeline.  The tracked
-CSV supplies the reviewed district-to-page provenance; this script re-extracts
-only the numeric language counts from those registered pages using Poppler's
-`pdftotext -layout`.
+The tracked CSV records the district, report, and page chosen during review. This
+script re-extracts the numeric language counts from those registered pages with
+Poppler's `pdftotext -layout` and verifies that they reproduce the tracked counts.
 """
 
 from __future__ import annotations
@@ -28,9 +27,12 @@ from dise_report_common import (
 LANGUAGES = ("english", "hindi")
 NUMBER = re.compile(r"(?<![\w.])(?:\d{1,3}(?:,\d{3})+|\d+)(?![\w.])")
 MEDIUM_HEADING = re.compile(r"medium\s+of\s+instruction", re.IGNORECASE)
+# Keep both searches local to the table region covered by the supported layouts.
+MEDIUM_BLOCK_LINES = 28
+TOTAL_HEADER_LOOKBACK = 6
 
 
-def medium_block(text: str, radius: int = 28) -> list[str]:
+def medium_block(text: str, radius: int = MEDIUM_BLOCK_LINES) -> list[str]:
     lines = text.splitlines()
     hit = next((i for i, line in enumerate(lines) if MEDIUM_HEADING.search(line)), None)
     if hit is None:
@@ -39,7 +41,7 @@ def medium_block(text: str, radius: int = 28) -> list[str]:
 
 
 def _has_total_header(lines: list[str], row_index: int) -> bool:
-    start = max(0, row_index - 6)
+    start = max(0, row_index - TOTAL_HEADER_LOOKBACK)
     return any(re.search(r"\btotal\b", line, re.IGNORECASE) for line in lines[start:row_index])
 
 
@@ -59,7 +61,7 @@ def parse_languages_as_rows(lines: list[str]) -> dict[str, int | None] | None:
             continue
         if not _has_total_header(lines, i):
             raise ValueError(
-                f"{language} row found without a nearby Total column; refusing to guess"
+                f"{language} row has numeric fields but no nearby Total header"
             )
         values[language] = numbers[-1]
         matched = True
@@ -67,8 +69,8 @@ def parse_languages_as_rows(lines: list[str]) -> dict[str, int | None] | None:
 
 
 def _column_positions(header: str) -> dict[str, int]:
-    # `pdftotext -layout` preserves the reviewed page's horizontal layout as
-    # closely as possible, so character positions can identify language columns.
+    # pdftotext -layout retains page spacing closely enough here for character
+    # positions to identify the English and Hindi columns.
     positions = {}
     lower = header.lower()
     for language in LANGUAGES:
@@ -82,6 +84,7 @@ def _nearest_number_at_column(line: str, position: int) -> int | None:
     matches = list(NUMBER.finditer(line))
     if not matches:
         return None
+    # Match the language heading to the nearest numeric field on the Total row.
     nearest = min(matches, key=lambda m: abs(m.start() - position))
     return parse_int(nearest.group(0))
 
@@ -107,7 +110,7 @@ def parse_languages_as_columns(lines: list[str]) -> dict[str, int | None] | None
         None,
     )
     if total_line is None:
-        raise ValueError("language columns found without an explicit Total row; refusing to guess")
+        raise ValueError("language columns found, but no Total or Grand Total row was found")
 
     return {
         language: _nearest_number_at_column(total_line, position)
@@ -141,7 +144,7 @@ def preferred_rows(rows: Iterable[dict[str, str]]) -> list[dict[str, str]]:
         best = min(priorities)
         winners = [row for row in group if int(row["report_priority"]) == best]
         if len(winners) != 1:
-            raise ValueError(f"non-unique preferred report provenance for {key}")
+            raise ValueError(f"multiple reports share the highest priority for {key}")
         selected.append(winners[0])
     return sorted(
         selected,
@@ -164,7 +167,7 @@ def rebuild(
     for row in preferred_rows(read_csv(metadata)):
         source = row["source_pdf"].strip()
         if source not in report_map:
-            raise ValueError(f"unregistered source_pdf in report metadata: {source}")
+            raise ValueError(f"report metadata references an unregistered PDF: {source}")
         pdf = archive_root / report_map[source]
         if not pdf.is_file():
             raise FileNotFoundError(f"missing registered DISE report PDF: {pdf}")
@@ -241,7 +244,7 @@ TOTAL                          50,000     25,000     4,000
         "hindi": 25000,
     }
 
-    provenance = [
+    reports = [
         {
             "academic_year": "2009-10",
             "state_report": "State",
@@ -255,7 +258,7 @@ TOTAL                          50,000     25,000     4,000
             "report_priority": "1",
         },
     ]
-    assert preferred_rows(provenance)[0]["report_priority"] == "1"
+    assert preferred_rows(reports)[0]["report_priority"] == "1"
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -68,12 +68,13 @@ join_district_carveout_wrapped_label <- function(previous, continuation) {
 
 # sample-start: code-district-carveout-repair
 
-# Repair physical row wraps in the historical district-transfer table
+# Repair physical row wraps in the historical district transfer table
 #
 # A blank 1991 population field marks a candidate continuation row. Transfer
 # fields distinguish a genuine allocation record from a row that only continues
 # a printed name. For split source names, lowercase continuations remove a
-# line-break hyphen while uppercase continuations preserve a semantic hyphen.
+# hyphen inserted by a line break; uppercase continuations preserve a hyphen
+# that belongs to the district name.
 repair_district_carveout_wrapped_rows <- function(x) {
   out <- safe_df(x)
   if (!nrow(out)) return(out)
@@ -119,7 +120,7 @@ repair_district_carveout_wrapped_rows <- function(x) {
 
 district_carveout_rounding_tolerance_pp <- function() 0.05
 
-# Validate population shares in the 1991-to-2001 district transfer table
+# Validate population shares in the 1991 to 2001 district transfer table
 #
 validate_district_carveout_shares <- function(
     x,
@@ -138,7 +139,8 @@ validate_district_carveout_shares <- function(
   if (any(!is.finite(source_share))) {
     stop("Shares of each 1991 district assigned to 2001 districts must be complete.", call. = FALSE)
   }
-  # Use the source table's district-plus-population identity for the partition.
+  # Group transfers by the 1991 district name and population printed in the
+  # table.
   source_key <- paste(out$district_1991, out$pop_1991, sep = "__")
   source_sum <- vapply(split(source_share, source_key), sum, numeric(1))
   if (any(abs(source_sum - 100) > rounding_tolerance_pp)) {
@@ -156,7 +158,7 @@ read_district_carveouts <- function(path) {
     na.strings = c("", "NA"),
     check.names = FALSE
   )
-  # Repair source-layout blanks before fill-down because the blanks themselves
+  # Repair layout blanks before filling downward because the blanks themselves
   # identify candidate continuation rows.
   out <- repair_district_carveout_wrapped_rows(out)
   out$district_1991 <- fill_down_missing(out$district_1991)

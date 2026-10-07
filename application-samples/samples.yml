@@ -107,14 +107,6 @@ coding_outputs:
     rendering_files:
       - R/output/appendix_data_construction_exhibits.R
       - R/output/save_figures.R
-  dise_agreement:
-    type: figure
-    files:
-      - outputs/figures/appendix/appendix_nss_dise_agreement.pdf
-    paper_label: fig-nss-dise-agreement
-    rendering_files:
-      - R/output/appendix_data_construction_exhibits.R
-      - R/output/save_figures.R
 coding:
   - id: main
     excerpts: &main_code_excerpts
@@ -123,22 +115,22 @@ coding:
         section: Historical Geography and Measurement
         title: Reconstructing District Boundary Transfers Between 1991 and 2001
         description: >-
-          A historical Census table reports how each 1991 district's population was apportioned among 2001 districts after boundary changes. A blank 1991-population cell identifies a candidate continuation row in the headerless source: transfer fields distinguish a genuine allocation record from a row that only continues a printed district name. Structural repair runs before ordinary fill-down because those blank cells themselves carry layout information; transfer-bearing continuation rows remain observations after their source identity is reconstructed. The reader requires each 1991 source population's shares across 2001 successor districts to sum to 100% within 0.05 percentage points.
+          A historical Census table reports how each 1991 district's population was apportioned among 2001 districts after boundary changes. A blank 1991 population cell identifies a candidate continuation row in the headerless Census table: transfer fields distinguish an allocation record from a row that only continues a printed district name. Structural repair runs before ordinary fill-down because those blank cells carry layout information; continuation rows that contain transfer shares remain observations after the full 1991 district name and population are restored. The reader requires each 1991 district's population shares across 2001 successor districts to sum to 100% within 0.05 percentage points.
       - id: code-lineage-candidate-scoring
         file: R/districts/lineage_matching.R
-        title: Generating High-Precision District-Match Candidates
+        title: Generating District Match Candidates for Review
         description: >-
-          District names vary across survey waves and administrative vintages, so standardized names generate review candidates rather than establish identity by themselves. Within each state, the code averages Jaro--Winkler, normalized Damerau--Levenshtein, trigram cosine, and token Jaccard similarities to rank candidates. Reference-vintage preference is survey-wave-specific, favoring 2001 for the 2007--08 NSS and 2011 for later waves. A high-precision review flag additionally requires reciprocal nearest-neighbor agreement, compatible directional tokens, Jaro--Winkler >= 0.90, normalized Damerau--Levenshtein >= 0.70, trigram similarity >= 0.55, and a score margin >= 0.05 over the runner-up. Token Jaccard contributes to the composite score but has no separate cutoff; downstream lineage adjudication still decides whether a candidate becomes an accepted geographic link.
+          District names vary across survey waves and reference years, so standardized names rank candidates for subsequent district lineage review. Within each state, the code averages Jaro--Winkler, normalized Damerau--Levenshtein, trigram cosine, and token Jaccard similarities. The preferred reference year depends on survey wave: 2001 is preferred for the 2007--08 NSS and 2011 for later waves. The review flag also requires the survey district and reference district to rank each other first, compatible directional terms, Jaro--Winkler >= 0.90, normalized Damerau--Levenshtein >= 0.70, trigram similarity >= 0.55, and a score margin >= 0.05 over the runner-up. Token Jaccard contributes to the composite score without a separate cutoff. The resulting candidates then enter the reviewed district lineage process.
       - id: code-language-atlas-validation
         file: scripts/build_language_atlas_1991.py
         title: Reconstructing District Data from the 1991 Language Atlas
         description: >-
-          The 1991 Census Language Atlas repeats each district across eight language pages. Districts are identified by a Census state code plus a within-state serial, but some repeated rows omit the serial or contain errors introduced during text extraction. When a row itself has no serial, the code recovers one only if the same raw row label within the same Atlas block has exactly one distinct serial across repeated pages. Before row-level promotion, the parser also requires the complete set of observed state headings to match the reviewed 1991 state universe and the Primary Census Abstract. Promotion then requires two independent checks: the reconstructed state--district code must identify a unique official 1991 Primary Census Abstract district, and the Atlas population must be within 1% of that district's Census population.
+          The 1991 Census Language Atlas repeats each district across eight language pages. Districts are identified by a Census state code plus a serial within the state, but some repeated rows omit the serial or contain errors introduced during text extraction. When a row itself has no serial, the code recovers one only if the same raw row label within the same Atlas block has exactly one distinct serial across repeated pages. Before a district row can be promoted, the parser requires the observed state headings to equal the complete reviewed set of 1991 states and the state codes in the Primary Census Abstract. Promotion then requires two independent checks: the reconstructed state and district code pair must identify a unique official 1991 Primary Census Abstract district, and the Atlas population must be within 1% of that district's Census population.
       - id: code-historical-linguistic-distance-bounds
         file: R/measures/build_linguistic_distance_iv.R
-        title: Bounding Historical Linguistic Distance with Unresolved Source Data
+        title: Bounding Historical Linguistic Distance with Unresolved Population Counts
         description: >-
-          Some 1991 Language Atlas population remains unresolved after language-name reconciliation. Rather than assigning that mass implicitly or dropping the affected district, the code bounds the speaker-weighted distance measure. It separates accepted positive-distance speakers from known groups excluded from that mean (zero-distance and native-English speakers), then lets unresolved population either leave the mean unchanged or lie anywhere on the positive-distance support observed in the reviewed preferred mapping. Pre-specified source-quality gates--not confidence levels--subsequently require at least 99% accepted speaker coverage and no more than half a Shastry degree of worst-case bound width before the preferred historical measure enters the analysis.
+          Some 1991 Language Atlas population remains unresolved after language name reconciliation. The code carries that population into explicit bounds on the speaker-weighted distance measure. It separates accepted speakers whose distance is positive from known groups excluded from that mean (zero distance and native English speakers), then allows unresolved population either to leave the mean unchanged or to take any value on the positive distance support observed in the reviewed preferred mapping. The preferred historical measure requires at least 99% accepted speaker coverage and a worst case bound no wider than 0.5 Shastry degree.
         outputs:
           - historical_language_persistence
       - id: code-dise-report-language-enrollment
@@ -146,19 +138,17 @@ coding:
         section: Independent Schooling Measures and Survey Estimation
         title: Reconstructing English-Medium Enrollment from Archived DISE Reports
         description: >-
-          District Information System for Education (DISE) report cards provide an independent administrative check on the NSS-based English-medium-instruction measure rather than an input to it. Reviewed PDF pages are converted with Poppler's layout-preserving `pdftotext -layout`, and the parser accepts either language rows under an identifiable total column or language columns paired with an explicit total row. It refuses to infer counts when those structural cues are missing; when multiple archived reports cover the same district-year, an explicit provenance priority must select one unique source.
-        outputs:
-          - dise_agreement
+          District Information System for Education (DISE) report cards from 2008--09 through 2014--15 provide an independent validation of the NSS English-medium measure. Reviewed pages are converted with Poppler's `pdftotext -layout`, which preserves the physical text layout as far as possible. For tables with languages in rows, the parser requires a nearby `Total` header and takes the final numeric entry on each English or Hindi row. For tables with languages in columns, it locates the language headings and reads the nearest numeric entry on an explicit `Total` or `Grand Total` row. The full script reconstructs each registered district and year from its reviewed page and compares the result with the tracked count table. When several reports cover the same district and year, the recorded report priority must select exactly one.
       - id: code-survey-design
         file: R/selection/estimate_selection_probit.R
         title: Constructing the NSS Survey Design
         description: >-
-          The 2007--08 National Sample Survey (NSS) education survey samples households within first-stage units such as villages or urban blocks. This function constructs the joint sampling stratum from state, rural/urban sector, stratum, and substratum, supplies the household multiplier as the sampling weight, and creates the `survey::svydesign()` used for the enrollment probit. In the `survey` package, `nest = TRUE` relabels cluster identifiers to enforce nesting within strata; final estimation stops if any required design field is missing rather than falling back to an unweighted model.
+          The 2007--08 National Sample Survey (NSS) education survey samples households within first-stage units such as villages or urban blocks. This function defines each sampling stratum by state, rural/urban sector, stratum, and substratum, supplies the household multiplier as the sampling weight, and creates the `survey::svydesign()` used for the enrollment probit. In the `survey` package, `nest = TRUE` relabels cluster identifiers to enforce nesting within strata. Final estimation requires all six design fields before fitting the survey-weighted probit.
       - id: code-ame-estimation
         file: R/selection/compute_average_marginal_effects.R
         title: Average Marginal Effects on the Estimation Sample
         description: >-
-          The code recovers the exact observations and NSS sampling weights retained by the enrollment probit, checks that the weights align with those observations, and passes both to `marginaleffects::avg_slopes()`. The fitted survey design determines model estimation and its covariance matrix; the supplied weights separately determine how observation-level response-scale effects are averaged over the fitted sample. Continuous regressors are summarized by average response-scale slopes, while `marginaleffects` handles binary and categorical regressors as discrete comparisons rather than literal derivatives.
+          The code recovers the fitted model frame and NSS sampling weights stored with the enrollment probit, verifies one finite nonnegative weight per fitted observation and positive total weight, and passes both to `marginaleffects::avg_slopes()`. The fitted survey design determines model estimation and its covariance matrix. `newdata` fixes evaluation at the fitted observations, while `wts` determines the weighted average of observation level quantities on the response scale. Continuous regressors are summarized by average response-scale slopes; for binary and categorical regressors, `marginaleffects` reports discrete comparisons.
         outputs:
           - selection_ame
       - id: code-mop-effective-f
