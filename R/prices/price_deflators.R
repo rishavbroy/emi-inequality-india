@@ -338,8 +338,8 @@ build_state_sector_deflator <- function(
   out <- merge(out, ref_mean, by = c("state_code", "sector"), all.x = TRUE, sort = FALSE)
   if ("source_state_code" %in% names(out) && any(!positive_finite(out$reference_index))) {
     # When a target state-sector inherits a documented donor CPI series, use the
-    # donor's reference-period index too so numerator and denominator refer to the
-    # same temporal series.
+    # donor's reference-period index too so numerator and denominator refer
+    # to the same temporal series.
     donor_reference <- ref_mean
     names(donor_reference)[names(donor_reference) == "state_code"] <- "source_state_code"
     names(donor_reference)[names(donor_reference) == "reference_index"] <- "donor_reference_index"

@@ -26,8 +26,8 @@ iv_falsification_adaptive_specifications <- function(
 # multiple instruments assumed relevant yield an interval spanning the
 # just-identified IV estimates obtained by using each instrument in turn while
 # treating the others as included controls. This is an identified set, not a
-# confidence interval. Conditional first-stage diagnostics are reported, but weak
-# sample first stages never screen constituents out of the set.
+# confidence interval. Conditional first-stage diagnostics are reported, but
+# weak sample first stages never screen constituents out of the set.
 iv_fas_component_formula <- function(specification, instrument) {
   spec <- as_single_iv_specification(specification)
   excluded <- plain_chr(unlist(spec$excluded_instruments[[1L]], use.names = FALSE))
@@ -52,7 +52,7 @@ estimate_iv_fas_component <- function(data, specification, instrument) {
   excluded <- plain_chr(unlist(spec$excluded_instruments[[1L]], use.names = FALSE))
   instrument <- plain_chr(instrument)[[1L]]
   other_instruments <- setdiff(excluded, instrument)
-  # The iv_specification_variables() function resolves transformed formula terms such as
+  # iv_specification_variables() resolves transformed formula terms such as
   # factor(region) to their underlying data columns. Keep sample construction on
   # that canonical contract instead of treating formula expressions as columns.
   needed <- iv_specification_variables(spec)

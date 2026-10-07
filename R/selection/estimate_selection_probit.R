@@ -84,14 +84,14 @@ stabilize_selection_model_formula <- function(model, formula) {
 
 # sample-start: code-survey-design
 
-#' List NSS fields needed to reproduce the survey sample design
-#'
+# List NSS fields needed to reproduce the survey sample design
+#
 selection_survey_design_variables <- function() {
   c("FSU_SL_NO", "weight", "STATE", "SECTOR", "STRATUM", "SUB_STRATUM_NO")
 }
 
-#' Construct the NSS design used for weighted enrollment estimation
-#'
+# Construct the NSS design used for weighted enrollment estimation
+#
 build_survey_design_selection <- function(selection_df, require_all = FALSE) {
   required <- selection_survey_design_variables()
   missing <- setdiff(required, names(selection_df))

@@ -44,8 +44,8 @@ ame_out_of_pipeline <- function(status, reason) {
 }
 
 # sample-start: code-ame-estimation
-#' Recover the observations and sampling weights used to fit the enrollment model
-#'
+# Recover observations and sampling weights used to fit the enrollment model
+#
 ame_model_data_and_weights <- function(model) {
   model_data <- as.data.frame(stats::model.frame(model))
 
@@ -67,15 +67,15 @@ ame_model_data_and_weights <- function(model) {
   list(data = model_data, wts = model_weights)
 }
 
-#' Compute average marginal effects over the fitted NSS sample
-#'
+# Compute average marginal effects over the fitted NSS sample
+#
 compute_ames_marginaleffects <- function(model) {
   # The survey design already determines model estimation and its covariance
   # matrix. Pass the fitted rows and sampling weights explicitly here so
-  # avg_slopes() separately averages observation-level response-scale effects over
-  # the same weighted estimation sample after the model has been saved and reloaded.
-  # marginaleffects uses discrete comparisons, not derivatives, for binary and
-  # categorical regressors.
+  # avg_slopes() separately averages observation-level response-scale effects
+  # over the same weighted estimation sample after the model has been saved and
+  # reloaded. marginaleffects uses discrete comparisons, not derivatives, for
+  # binary and categorical regressors.
   amed <- ame_model_data_and_weights(model)
   marginaleffects::avg_slopes(
     model,

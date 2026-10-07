@@ -243,8 +243,9 @@ historical_linguistic_distance_bounds <- function(
   english <- accepted & language == "English"
   known_nonzero <- accepted & is.finite(degree) & degree > 0 & !english
   known_zero <- accepted & is.finite(degree) & degree == 0 & !english
-  # These speakers are known and resolved, but the positive-distance mean excludes
-  # them by definition; "irrelevant" here refers only to that denominator.
+  # These speakers are known and resolved, but the positive-distance mean
+  # excludes them by definition; "irrelevant" here refers only to that
+  # denominator.
   known_irrelevant <- known_zero | english
 
   nonzero_speakers <- sum(speakers[known_nonzero], na.rm = TRUE)

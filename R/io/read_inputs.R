@@ -65,11 +65,11 @@ join_district_carveout_wrapped_label <- function(previous, continuation) {
 
 # sample-start: code-district-carveout-repair
 
-#' Rejoin district names split across rows in the historical boundary table
-#'
-#' A blank 1991 population field marks a candidate continuation row. Transfer
-#' fields distinguish a genuine allocation record from a row that only continues
-#' a printed name. A trailing hyphen identifies a split 1991 district name.
+# Rejoin district names split across rows in the historical boundary table
+#
+# A blank 1991 population field marks a candidate continuation row. Transfer
+# fields distinguish a genuine allocation record from a row that only continues
+# a printed name. A trailing hyphen identifies a split 1991 district name.
 repair_district_carveout_wrapped_rows <- function(x) {
   out <- safe_df(x)
   if (!nrow(out)) return(out)
@@ -115,8 +115,8 @@ repair_district_carveout_wrapped_rows <- function(x) {
 
 district_carveout_rounding_tolerance_pp <- function() 0.05
 
-#' Validate population shares in the 1991-to-2001 district transfer table
-#'
+# Validate population shares in the 1991-to-2001 district transfer table
+#
 validate_district_carveout_shares <- function(
     x,
     rounding_tolerance_pp = district_carveout_rounding_tolerance_pp()) {

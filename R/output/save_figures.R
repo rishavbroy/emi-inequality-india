@@ -568,8 +568,9 @@ complete_public_map_geometry <- function(district_panel, map_geometry) {
   attributes <- attributes[!duplicated(attributes[[key]]), , drop = FALSE]
   out <- merge(map_geometry, attributes, by = key, all.x = TRUE, sort = FALSE)
 
-  # Read the state code from each 2001 Census district identifier. This preserves
-  # complete state and national borders when a district has no value to plot.
+  # Read the state code from each 2001 Census district identifier. This
+  # preserves complete state and national borders when a district has no value
+  # to plot.
   boundary_state <- public_map_state_code_2001(out[[key]])
   if ("state_code_2001" %in% names(out)) {
     panel_state <- plain_chr(out$state_code_2001)

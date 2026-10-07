@@ -573,8 +573,8 @@ def reconcile_district_serial(
 
     if direct is not None:
         # Prefer a serial printed on the current row. Use repeated copies of the
-        # same label only when the current row has no serial because continuation
-        # pages contain occasional OCR errors.
+        # same label only when the current row has no serial because
+        # continuation pages contain occasional OCR errors.
         return direct, direct_source, repeated_text
     if len(repeated) == 1:
         return repeated[0], "cross_page_exact_label", repeated_text
