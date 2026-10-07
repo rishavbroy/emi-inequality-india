@@ -3,6 +3,8 @@ paper:
   source: paper/paper.qmd
   full_paper_url: https://rishavbroy.github.io/emi-inequality-india/paper.pdf
   repository_url: https://github.com/rishavbroy/emi-inequality-india
+coding_acknowledgments: >-
+  GPT models 5.5 and 5.6 were used for troubleshooting, reviewing results, and generating certain portions of this code from my detailed outlines and pseudocode, after which I reviewed and edited their responses extensively. All ideas, analytical work, and errors are my own.
 identity:
   named:
     author: Rishav Roy

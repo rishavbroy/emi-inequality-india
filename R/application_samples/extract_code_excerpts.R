@@ -86,6 +86,7 @@ coding_sample_citeproc_fallback <- function(variant, manifest) {
 coding_sample_metadata <- function(spec, variant, manifest, source_metadata) {
   meta <- paper_sample_metadata(source_metadata, variant, manifest)
   meta$title <- "Code Sample"
+  meta$thanks <- manifest$coding_acknowledgments
   label <- as.character(spec$label %||% "")
   meta$subtitle <- if (nzchar(label)) label else NULL
   meta$abstract <- NULL

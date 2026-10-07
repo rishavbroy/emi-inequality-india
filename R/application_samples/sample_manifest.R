@@ -27,7 +27,10 @@ validate_sample_size_options <- function(spec, kind) {
 }
 
 validate_application_sample_manifest <- function(manifest) {
-  required <- c("schema_version", "paper", "identity", "writing", "coding_outputs", "coding")
+  required <- c(
+    "schema_version", "paper", "coding_acknowledgments", "identity",
+    "writing", "coding_outputs", "coding"
+  )
   missing <- setdiff(required, names(manifest))
   if (length(missing)) {
     stop("Application-sample manifest is missing: ", paste(missing, collapse = ", "), call. = FALSE)
@@ -37,6 +40,10 @@ validate_application_sample_manifest <- function(manifest) {
   }
   if (is.null(manifest$paper$source) || !nzchar(manifest$paper$source)) {
     stop("Application-sample manifest must name the current paper source.", call. = FALSE)
+  }
+  coding_acknowledgments <- as.character(manifest$coding_acknowledgments %||% "")
+  if (length(coding_acknowledgments) != 1L || !nzchar(trimws(coding_acknowledgments))) {
+    stop("Application-sample manifest must define coding acknowledgments.", call. = FALSE)
   }
   if (!all(c("named", "anonymous") %in% names(manifest$identity))) {
     stop("Application-sample manifest must define named and anonymous identities.", call. = FALSE)

@@ -49,6 +49,26 @@ test_that("compressed named code sample uses the paper title with the compressio
   ))
 })
 
+test_that("code-sample metadata carries the manifest acknowledgment", {
+  env <- sample_test_env()
+  manifest <- env$read_application_sample_manifest(
+    repo_file("application-samples", "samples.yml")
+  )
+  source_metadata <- list(
+    title = "Example paper",
+    author = "Example Author",
+    format = list(pdf = list())
+  )
+
+  for (variant in c("named", "anonymous")) {
+    meta <- env$coding_sample_metadata(
+      list(id = "main"), variant, manifest, source_metadata
+    )
+    expect_identical(meta$thanks, manifest$coding_acknowledgments)
+  }
+})
+
+
 test_that("coding excerpt sections render as document-level headings before excerpt titles", {
   env <- sample_test_env()
   code_file <- tempfile(fileext = ".R")

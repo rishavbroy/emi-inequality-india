@@ -371,6 +371,7 @@ test_that("review archives include every manifest-declared application sample", 
   )
   writeLines(c(
     "schema_version: 1",
+    "coding_acknowledgments: Fixture acknowledgment.",
     "paper:",
     "  source: paper/paper.qmd",
     "identity:",
