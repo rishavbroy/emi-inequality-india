@@ -441,7 +441,7 @@ mask_public_map_disputed_areas <- function(plot_data, disputed_areas = NULL) {
 public_map_state_polygons <- function(plot_data) {
   if (!inherits(plot_data, "sf") || !nrow(plot_data)) return(NULL)
   if (!"state_code_2001" %in% names(plot_data)) {
-    stop("Public map geometry is missing canonical Census-2001 state codes.", call. = FALSE)
+    stop("Map geometry is missing 2001 Census state codes.", call. = FALSE)
   }
   state <- plain_chr(plot_data$state_code_2001)
   keep <- !is.na(state) & nzchar(state)
@@ -565,12 +565,13 @@ complete_public_map_geometry <- function(district_panel, map_geometry) {
     stop("Complete 2001 Census map geometry must contain one row per district.", call. = FALSE)
   }
   attributes <- if (inherits(district_panel, "sf")) sf::st_drop_geometry(district_panel) else safe_df(district_panel)
-  attributes <- attributes[!duplicated(attributes[[key]]), , drop = FALSE]
+  if (anyDuplicated(attributes[[key]])) {
+    stop("Analysis data must contain at most one row per 2001 Census district.", call. = FALSE)
+  }
   out <- merge(map_geometry, attributes, by = key, all.x = TRUE, sort = FALSE)
 
-  # Read the state code from each 2001 Census district identifier. This
-  # preserves complete state and national borders when a district has no value
-  # to plot.
+  # Derive state codes from the 2001 Census district identifiers so state
+  # outlines include districts with missing analysis values.
   boundary_state <- public_map_state_code_2001(out[[key]])
   if ("state_code_2001" %in% names(out)) {
     panel_state <- plain_chr(out$state_code_2001)
@@ -583,14 +584,7 @@ complete_public_map_geometry <- function(district_panel, map_geometry) {
   out
 }
 
-save_map_plot_formats <- function(map_plot, path_base, formats, width = 8, height = 6, dpi = 300) {
-  save_plot_formats(map_plot, path_base, formats, width = width, height = height, dpi = dpi)
-}
-
 save_map_figure <- function(spec, path_base, district_panel, map_geometry, boundary_reference, formats) {
-  if (!has_sf_geometry(district_panel)) {
-    stop("Map figure '", spec$name, "' requires an sf district_panel with validated geometry.", call. = FALSE)
-  }
   if (is.null(spec$variable) || !spec$variable %in% names(district_panel)) {
     stop("Map figure '", spec$name, "' is missing variable '", spec$variable, "'.", call. = FALSE)
   }
@@ -598,7 +592,7 @@ save_map_figure <- function(spec, path_base, district_panel, map_geometry, bound
   plot_data <- complete_public_map_geometry(district_panel, map_geometry)
   plot_data <- prepare_public_map_data(plot_data, spec$variable)
   p <- build_public_ggplot_map(plot_data, spec, boundary_reference = boundary_reference)
-  save_map_plot_formats(p, path_base, formats, width = 7.2, height = 5.2, dpi = 300)
+  save_plot_formats(p, path_base, formats, width = 7.2, height = 5.2, dpi = 300)
 }
 
 # sample-end: code-public-map-rendering

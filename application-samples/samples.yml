@@ -185,9 +185,9 @@ coding:
       - id: code-public-map-rendering
         file: R/output/save_figures.R
         section: Spatial Presentation on a Common Geography
-        title: Preserving the Complete District Universe in Published Maps
+        title: Preserving All 2001 Census Districts in Published Maps
         description: >-
-          Published district maps start from the complete 2001 Census geometry and left-join analysis attributes onto it rather than plotting only observations retained by a particular estimation sample. Districts without estimates therefore remain in the national outline as no-data areas. The code also reconstructs state identity from the canonical 2001 district key, checks it against any analysis-side state code, and passes the completed geometry to the shared public-map renderer.
+          Published district maps begin with the full reviewed 2001 Census district geometry. Analysis values are joined by district identifier, so every district remains in the figure and missing estimates appear as the explicit "No data" category. State codes are derived from the 2001 Census district identifiers and checked against any state codes supplied with the analysis values. The completed district table is then passed to the shared geographic figure builder.
         outputs:
           - main_maps
   - id: Under10MB

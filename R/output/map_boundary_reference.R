@@ -149,7 +149,7 @@ public_map_state_code_2001 <- function(unit_id) {
   valid <- !is.na(unit_id) & grepl("^pc2001__[0-9]{2}__[0-9]{2}$", unit_id)
   if (any(!valid)) {
     stop(
-      "Public map geometry contains invalid canonical Census-2001 district IDs.",
+      "Map geometry contains invalid 2001 Census district identifiers.",
       call. = FALSE
     )
   }

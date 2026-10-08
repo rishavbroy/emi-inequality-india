@@ -30,6 +30,10 @@ Population-based allocation uses registered source and target population totals 
 
 Geography variants answer sensitivity questions about boundary change and historical comparability. Their definitions are fixed before first-stage and outcome results are compared.
 
+## Published district figures
+
+District figures begin with the full reviewed 2001 Census geometry and attach analysis values by district identifier. Districts without an estimate remain in the figure as `No data`. State codes are derived from the same district identifiers used for the join, and any state codes supplied with the analysis values must agree with them.
+
 ## Validation
 
 Validation covers component completeness, key uniqueness, weight sums, count preservation, expected support, and agreement between exact and interpolated variants where they overlap.

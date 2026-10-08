@@ -272,7 +272,7 @@ test_that("continuous map limits use rounded central quantiles rather than extre
   expect_true(limits[[2]] >= stats::quantile(values, 0.98))
 })
 
-test_that("complete Census-2001 map geometry keeps state identity for districts absent from the panel", {
+test_that("complete 2001 Census geometry retains districts without analysis values", {
   skip_if_not_installed("sf")
   geometry <- sf::st_sfc(
     sf::st_polygon(list(rbind(c(0, 0), c(1, 0), c(1, 1), c(0, 1), c(0, 0)))),
@@ -283,11 +283,11 @@ test_that("complete Census-2001 map geometry keeps state identity for districts 
     target_unit_2001 = c("pc2001__01__01", "pc2001__02__01"),
     geometry = geometry
   )
-  panel <- sf::st_sf(
+  panel <- data.frame(
     target_unit_2001 = "pc2001__01__01",
     state_code_2001 = "01",
     emi_exposure_all_children_0708 = 10,
-    geometry = geometry[1]
+    stringsAsFactors = FALSE
   )
 
   complete <- complete_public_map_geometry(panel, universe)
@@ -302,6 +302,29 @@ test_that("complete Census-2001 map geometry keeps state identity for districts 
   expect_equal(as.character(fill$data$.map_fill), c("2.5-10", "No data"))
   expect_equal(unname(fill$colors[["No data"]]), map_no_data_colour())
   expect_true(all(!sf::st_is_empty(fill$data)))
+})
+
+test_that("complete map geometry rejects duplicate analysis districts", {
+  skip_if_not_installed("sf")
+  geometry <- sf::st_sfc(
+    sf::st_polygon(list(rbind(c(0, 0), c(1, 0), c(1, 1), c(0, 1), c(0, 0)))),
+    crs = 4326
+  )
+  districts <- sf::st_sf(
+    target_unit_2001 = "pc2001__01__01",
+    geometry = geometry
+  )
+  panel <- data.frame(
+    target_unit_2001 = rep("pc2001__01__01", 2L),
+    emi_exposure_all_children_0708 = c(10, 20),
+    stringsAsFactors = FALSE
+  )
+
+  expect_error(
+    complete_public_map_geometry(panel, districts),
+    "at most one row per 2001 Census district",
+    fixed = TRUE
+  )
 })
 
 
