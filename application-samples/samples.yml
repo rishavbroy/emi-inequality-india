@@ -169,19 +169,19 @@ coding:
         section: Price Harmonization and Real Consumption
         title: Linking Historical and Later State CPI Series onto a Common Scale
         description: >-
-          The historical Consumer Price Index for Rural Labourers (CPI-RL) and Consumer Price Index for Industrial Workers (CPI-IW) must be put onto the scale of the later state rural/urban CPI (CPI-R/U). For each state and rural/urban sector, the code uses the median monthly ratio of CPI-R/U to the historical index over January 2013--December 2014 as a multiplicative splice factor, which limits the influence of a single anomalous overlap month. It requires at least six common months and retains the overlap count and dispersion diagnostics alongside each link factor.
+          Historical CPI-RL for rural areas and state CPI-IW for urban areas are linked to the later state rural/urban CPI (CPI-R/U). For each state and rural/urban sector, the link is the median monthly ratio of CPI-R/U to the historical CPI over January 2013--December 2014, reducing sensitivity to any one overlap month. Every historical series used before January 2013 must have at least six paired months in that interval. The link summary retains the number of paired months, first and last ratios, median absolute deviation, and range. The overlap interval estimates the link; the combined monthly series uses CPI-R/U itself from January 2013 onward and verifies that the intended CPI family appears on each side of the switch.
       - id: code-state-sector-deflator
         file: R/prices/price_deflators.R
-        title: Constructing Comparable State-Sector Price Deflators
+        title: Constructing Comparable Rural and Urban Price Deflators Across States
         description: >-
-          Linking the CPI series handles price change over time, while Tendulkar state-sector poverty-line ratios provide a cross-sectional price-level adjustment relative to the all-India rural 2011--12 reference. The displayed core validates those spatial and temporal inputs, constructs or accepts a reference-period CPI for each state-sector series, preserves documented donor-series lineage when needed, and multiplies the spatial price relative by the temporal CPI relative. The resulting deflator combines a state-sector spatial price adjustment with temporal CPI adjustment; it is not an international PPP construction. The figure compares district estimates from the 2022--23 and 2023--24 Household Consumption Expenditure Survey rounds.
+          The code uses each state and rural/urban Tendulkar poverty line divided by the all-India rural 2011--12 line of ₹816 as its spatial price relative. Production supplies a separately validated 2011--12 reference CPI table; the helper can also calculate a reference mean directly when used independently. For each month, the deflator multiplies the Tendulkar spatial relative by the CPI relative to that reference period. At the reference period, a nominal amount equal to the applicable Tendulkar poverty line therefore equals ₹816 on the common real-consumption scale. When a state relies on a declared donor CPI series, the donor state's reference CPI is used as well so the temporal numerator and denominator come from the same series. The figure provides a downstream check on the resulting real-consumption measures by comparing district estimates from the 2022--23 and 2023--24 Household Consumption Expenditure Survey rounds.
         outputs:
           - consumption_validation
       - id: code-price-link-tests
         file: tests/testthat/test-prices-and-controls.R
         title: Testing CPI Links Against Known Answers
         description: >-
-          A small rural example has monthly new-to-old CPI ratios of 2, 2, and 3, so its registered median link factor must equal 2 even though the final overlap month implies 3; the urban example has a constant ratio of 0.5. The behavioral test verifies those median links, the first and last monthly ratios retained for diagnostics, and the number of overlap months.
+          A small rural example has monthly ratios of the later CPI to the historical CPI equal to 2, 2, and 3, so the median link is 2 while the final overlap ratio is 3. The urban example has a constant ratio of 0.5. The test verifies the median link, the first and last overlap ratios, and the number of paired months.
       - id: code-public-map-rendering
         file: R/output/save_figures.R
         section: Spatial Presentation on a Common Geography

@@ -506,7 +506,7 @@ test_that("temporal price series uses CPI-RL and CPI-IW before 2013", {
 # sample-start: code-price-link-tests
 test_that("CPI link factors equal median overlap ratios", {
   months <- as.Date(c("2013-01-01", "2013-02-01", "2013-03-01"))
-  # Rural monthly ratios are 2, 2, and 3, so the registered median link is 2.
+  # Rural monthly ratios are 2, 2, and 3, so the median link is 2.
   old <- rbind(
     data.frame(state_code = "A", sector = "rural", period = months, index = c(100, 110, 120)),
     data.frame(state_code = "A", sector = "urban", period = months, index = c(200, 220, 240))

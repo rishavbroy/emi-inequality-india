@@ -1,4 +1,4 @@
-# Construct one monthly state-sector temporal price series from the validated
+# Construct monthly state and rural/urban CPI series from the validated
 # RBI/Labour Bureau source tables. The 2007-08 side uses CPI-RL for rural areas
 # and state-weighted CPI-IW for urban areas. State CPI-Rural and CPI-Urban on
 # the 2012 base take over in January 2013.
@@ -84,7 +84,7 @@ summarise_price_links <- function(old_index, new_index, overlap_start, overlap_e
     new[c("state_code", "sector", "period", "index")],
     by = c("state_code", "sector", "period"), suffixes = c("_old", "_new"), sort = FALSE
   )
-  if (!nrow(paired)) stop("Old and new price series have no common state-sector months in the link window.", call. = FALSE)
+  if (!nrow(paired)) stop("Old and new price series have no common state and sector months in the link window.", call. = FALSE)
 
   split_i <- split(seq_len(nrow(paired)), interaction(paired$state_code, paired$sector, drop = TRUE))
   out <- do.call(rbind, lapply(split_i, function(i) {
@@ -155,13 +155,23 @@ validate_temporal_price_chain <- function(index, switch_date) {
   wrong_pre <- out$period < switch_date & !out$price_source %in% c("cpi_rl_state", "cpi_iw_state")
   wrong_post <- out$period >= switch_date & !out$price_source %in% c("cpi_rural_2012", "cpi_urban_2012")
   if (any(wrong_pre | wrong_post)) {
-    stop("Temporal price chain violates the pre/post-2013 source rule.", call. = FALSE)
+    stop("Temporal price chain violates the CPI series rule around the January 2013 switch.", call. = FALSE)
   }
   if (any(!positive_finite(out$index))) stop("Temporal price chain contains invalid values.", call. = FALSE)
   invisible(out)
 }
 
 # sample-start: code-temporal-price-series
+# Link an earlier CPI series to a later one with the median ratio across valid
+# overlap months.
+price_link_factor <- function(old_index, new_index) {
+  old <- num(old_index)
+  new <- num(new_index)
+  keep <- positive_finite(old) & positive_finite(new)
+  if (!any(keep)) return(NA_real_)
+  stats::median(new[keep] / old[keep], na.rm = TRUE)
+}
+
 build_temporal_price_series <- function(
     price_sources,
     switch_date = as.Date("2013-01-01"),
@@ -202,13 +212,13 @@ build_temporal_price_series <- function(
     pre_switch_start <- price_boundary(pre_switch_start)
     pre_switch_end <- price_boundary(pre_switch_end)
     if (pre_switch_end < pre_switch_start || pre_switch_end >= switch_date) {
-      stop("The requested pre-2013 period must end before the CPI switch date.", call. = FALSE)
+      stop("The retained historical interval must be ordered and end before the CPI switch date.", call. = FALSE)
     }
     old <- old[old$period >= pre_switch_start & old$period <= pre_switch_end, , drop = FALSE]
   }
   old$index_unlinked <- old$index
-  # Put each historical CPI series on the CPI-R/U scale before appending the
-  # post-2013 observations.
+  # Put each historical CPI series on the CPI-R/U scale before appending
+  # observations from January 2013 onward.
   old$index <- num(old$index) * num(old$link_factor)
 
   new <- new[new$period >= switch_date, , drop = FALSE]

@@ -1,4 +1,4 @@
-# Shared construction and validation for state-sector price deflators.
+# Shared construction and validation for state and rural/urban price deflators.
 
 price_sector <- function(x) {
   value <- tolower(trimws(plain_chr(x)))
@@ -131,14 +131,6 @@ build_tendulkar_spatial_relatives <- function(
   }
   df$spatial_price_relative <- value / reference_rupees
   df
-}
-
-price_link_factor <- function(old_index, new_index) {
-  old <- num(old_index)
-  new <- num(new_index)
-  keep <- positive_finite(old) & positive_finite(new)
-  if (!any(keep)) return(NA_real_)
-  stats::median(new[keep] / old[keep], na.rm = TRUE)
 }
 
 apply_price_state_rules <- function(
@@ -323,10 +315,10 @@ build_state_sector_deflator <- function(
     required_reference <- c("state_code", "sector", "reference_index")
     missing_reference <- setdiff(required_reference, names(ref_mean))
     if (length(missing_reference)) {
-      stop("Reference-price table is missing columns: ", paste(missing_reference, collapse = ", "), call. = FALSE)
+      stop("Reference price table is missing columns: ", paste(missing_reference, collapse = ", "), call. = FALSE)
     }
     if (anyDuplicated(ref_mean[c("state_code", "sector")]) || any(!positive_finite(ref_mean$reference_index))) {
-      stop("Reference-price table must have one positive row per state and rural/urban sector.", call. = FALSE)
+      stop("Reference price table must have one positive row per state and rural/urban sector.", call. = FALSE)
     }
     ref_mean <- ref_mean[required_reference]
   }
@@ -337,9 +329,9 @@ build_state_sector_deflator <- function(
   )
   out <- merge(out, ref_mean, by = c("state_code", "sector"), all.x = TRUE, sort = FALSE)
   if ("source_state_code" %in% names(out) && any(!positive_finite(out$reference_index))) {
-    # When a target state-sector inherits a documented donor CPI series, use the
-    # donor's reference-period index too so numerator and denominator refer
-    # to the same temporal series.
+    # When a state and sector use a declared donor CPI series, use the donor's
+    # reference period index as well so both terms come from the same CPI
+    # series.
     donor_reference <- ref_mean
     names(donor_reference)[names(donor_reference) == "state_code"] <- "source_state_code"
     names(donor_reference)[names(donor_reference) == "reference_index"] <- "donor_reference_index"
