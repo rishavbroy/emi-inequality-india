@@ -81,19 +81,16 @@ I construct the district datasets used in the paper by reconciling changing dist
 The principal schooling measures come from the 2007--08 National Sample Survey (NSS) 64th Round, *Participation and Expenditure in Education* [@nationalsamplesurveyoffice2008]. I use survey weights when forming district aggregates. DISE provides a separate school-reported measure of medium of instruction, management, enrollment, and school characteristics. I reconstruct the DISE district series from report cards covering 2005--06 through 2007--08 that were preserved online after the original publication pages disappeared [@mehtaUDISEPublications2005062022; @diseDistrictReportCardsArchive2017]. 2001 Census language tables provide mother-tongue populations and language behavior [@officeoftheregistrargeneralandcensuscommissionerofindiaCensusIndia20012001]. Later sections also use 2001 Census and 2011 Census migration, household, housing, and worker tables. I use the 2005 and 2013--14 Economic Censuses for changes in local economic structure [@centralstatisticsofficeIndiaFifthEconomic2008; @office2019a]. Labor outcomes come from the 2009--10 NSS employment survey and the 2017--18 Periodic Labour Force Survey [@nationalsamplesurveyofficeIndiaEmploymentUnemployment2010; @nationalstatisticalofficeINDIAPeriodicLabour2019].
 
 **Access to English-medium instruction.** The NSS schooling variables separate school participation from medium of instruction. Let $N_d$ be the survey-weighted number of children ages 5--19 in district $d$, $E_d$ the number enrolled, $K_d$ the number enrolled for whom medium of instruction is observed, and $M_d$ the number in $K_d$ enrolled in English-medium instruction (EMI). I call
-
 $$
 \mathrm{Enrollment}_d = 100\frac{E_d}{N_d}
 $$ {#eq-enrollment}
 
 the *enrollment rate*. This is the extensive margin: whether a child is enrolled at all. Among enrolled children whose medium of instruction is observed, I call
-
 $$
 \mathrm{EnglishMediumShare}_d = 100\frac{M_d}{K_d}
 $$ {#eq-emi-enrolled}
 
 the *English-medium share among enrolled children*. This is the conditional medium-of-instruction margin among children with a reported medium. Finally,
-
 $$
 \mathrm{EnglishMediumExposure}_d = 100\frac{M_d}{N_d}
 $$ {#eq-emie}
@@ -101,7 +98,6 @@ $$ {#eq-emie}
 is *English-medium exposure among all children*. It incorporates enrollment, whether medium is reported among enrolled children, and EMI conditional on a reported medium. Enrolled children with unreported medium remain in an explicit unclassified category. EMI exposure among all children is therefore lower than the conditional English-medium share whenever some children are unenrolled or some enrolled children have unreported medium. I also distinguish *public-school English-medium exposure* and *private-school English-medium exposure*, each defined as the share of all children observed in English-medium schooling in the relevant management sector. Children whose medium or school management is unreported remain outside those sector-medium cells. *Private-school enrollment* is the share of enrolled children with observed school management who attend private aided or unaided schools. These measures describe observed formal-school enrollment and reported medium of instruction. NSS 64 excludes classes taken from private tutors and therefore does not measure supplemental English instruction [@nationalsamplesurveyoffice2008].
 
 **Inherited linguistic conditions.** The primary language measure begins with Shastry's 0--5 ordinal scale of separation from Hindi, developed with linguist Jay Jasanoff [@shastry2012a]. Shastry uses linguistic distance from Hindi to capture variation in the relative cost of acquiring English rather than Hindi as a lingua franca. For each mapped, non-English mother tongue $l$ in district $d$, let $S_{ld}$ denote its 2001 Census speaker population and $D_l$ its Shastry distance from Hindi. The *speaker-weighted distance from Hindi* is
-
 $$
 \overline{D}_d =
 \frac{\sum_l S_{ld}D_l\,\mathbf{1}\{D_l>0\}}
@@ -403,7 +399,6 @@ I construct comparable district consumption estimates from nine survey designs s
 **Spatial price adjustment.** The *spatial price relative* preserves cross-state and rural/urban price-level differences using the state-specific 2011--12 Tendulkar poverty lines [@planningCommissionPovertyEstimates2013]. Each state-sector poverty line is divided by the all-India rural reference of ₹816. A common denominator preserves the national rural-urban price difference. Direct state observations are used when available. For small states or union territories lacking a historical index, the price table permits documented donor or all-India substitutions and records the basis for each substitution.
 
 **Household deflation and survey timing.** The household price deflator is
-
 $$
 P_{srt}=P^{\text{spatial}}_{sr}\times P^{\text{temporal}}_{srt},
 $$
